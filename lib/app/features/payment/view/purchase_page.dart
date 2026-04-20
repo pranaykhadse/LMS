@@ -34,6 +34,8 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
     // Fetch product from the App Store after the first frame renders.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.course.id != null) {
+        // ignore: avoid_print
+        print('🛒 Course ID for IAP: ${widget.course.id}');
         ref
             .read(IAPViewModel.provider)
             .fetchProductForCourse(widget.course.id!);

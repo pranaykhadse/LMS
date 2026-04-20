@@ -100,7 +100,7 @@ class CoursesGrid extends StatelessWidget {
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 300,
-        childAspectRatio: 0.68,
+        childAspectRatio: 0.75,
         crossAxisSpacing: context.smallSpace,
         mainAxisSpacing: context.smallSpace,
       ),
@@ -197,54 +197,54 @@ class CourseCard extends ConsumerWidget {
           ),
 
           // ── Course info & action buttons ───────────────────────────────
-          Expanded(
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: context.smallSpace),
-              decoration: BoxDecoration(
-                color: context.appColorScheme.secondary,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // Course name
-                        Text(
-                          course.name ?? '',
-                          style: context.textTheme.labelLarge?.copyWith(
-                            color: context.colorScheme.onPrimary,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: context.appColorScheme.secondary,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Course name
+                      Text(
+                        course.name ?? '',
+                        style: context.textTheme.labelMedium?.copyWith(
+                          color: context.colorScheme.onPrimary,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      // Action buttons row
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: [
+                          // ── Buy button (paid & not purchased) ──────────
+                          if (!isAccessible)
+                            _BuyButton(course: course)
+                          // ── View Course button (free or purchased) ─────
+                          else
+                            _ViewButton(),
 
-                        // Action buttons row
-                        Wrap(
-                          spacing: context.minorSpace,
-                          runSpacing: context.minorSpace,
-                          children: [
-                            // ── Buy button (paid & not purchased) ──────────
-                            if (!isAccessible)
-                              _BuyButton(course: course)
-                            // ── View Course button (free or purchased) ─────
-                            else
-                              _ViewButton(),
-
-                            // ── Offline button (only for accessible courses)
-                            if (isAccessible)
-                              _OfflineButton(
-                                course: course,
-                                offlineVM: offlineVM,
-                                isDownloading: isDownloading,
-                                isAvailableOffline: isAvailableOffline,
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          // ── Offline button (only for accessible courses)
+                          if (isAccessible)
+                            _OfflineButton(
+                              course: course,
+                              offlineVM: offlineVM,
+                              isDownloading: isDownloading,
+                              isAvailableOffline: isAvailableOffline,
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
+                ),
 
                   // ── Completion progress ring ─────────────────────────────
                   SizedBox(
@@ -272,7 +272,6 @@ class CourseCard extends ConsumerWidget {
                 ],
               ),
             ),
-          ),
         ],
       ),
     );
