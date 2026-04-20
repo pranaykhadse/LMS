@@ -167,15 +167,17 @@ class IAPViewModel extends ChangeNotifier {
       await _savePurchasedCourseIds();
     }
 
+    // ⚠️  Apple / Google require completePurchase to be called or the
+    //     purchase will be re-delivered on the next app launch.
+    //     Must be called BEFORE notifyListeners() so it completes even
+    //     if the page pops and disposes the widget tree.
+    await _repository.completePurchase(purchase);
+
     _purchaseSuccess = true;
     _isPurchasing = false;
     _isRestoring = false;
     _error = null;
     notifyListeners();
-
-    // ⚠️  Apple / Google require completePurchase to be called or the
-    //     purchase will be re-delivered on the next app launch.
-    await _repository.completePurchase(purchase);
   }
 
   // ─── Public actions ───────────────────────────────────────────────────────

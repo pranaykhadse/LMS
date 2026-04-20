@@ -29,8 +29,8 @@ class CourseClassesPage extends ConsumerWidget {
                   dataState: state.data,
                   builder: (context, data) {
                     return SingleChildScrollView(
-                      child: SizedBox(
-                        width: double.maxFinite,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
                         child: DataTable(
                           headingTextStyle: context.textTheme.labelLarge
                               ?.copyWith(color: context.appColorScheme.primary),
