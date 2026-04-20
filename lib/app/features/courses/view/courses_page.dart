@@ -100,7 +100,7 @@ class CoursesGrid extends StatelessWidget {
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 300,
-        childAspectRatio: 1,
+        childAspectRatio: 0.78,
         crossAxisSpacing: context.smallSpace,
         mainAxisSpacing: context.smallSpace,
       ),
@@ -221,8 +221,9 @@ class CourseCard extends ConsumerWidget {
                         ),
 
                         // Action buttons row
-                        Row(
+                        Wrap(
                           spacing: context.minorSpace,
+                          runSpacing: context.minorSpace,
                           children: [
                             // ── Buy button (paid & not purchased) ──────────
                             if (!isAccessible)
@@ -246,22 +247,27 @@ class CourseCard extends ConsumerWidget {
                   ),
 
                   // ── Completion progress ring ─────────────────────────────
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CircularProgressIndicator(
-                        value: course.percentage,
-                        color: context.colorScheme.primary,
-                        backgroundColor: Colors.white,
-                      ),
-                      Center(
-                        child: Text(
-                          "${(course.percentage * 100).toInt()}%",
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 10),
+                  SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircularProgressIndicator(
+                          value: course.percentage,
+                          color: context.colorScheme.primary,
+                          backgroundColor: Colors.white,
+                          strokeWidth: 3,
                         ),
-                      ),
-                    ],
+                        Center(
+                          child: Text(
+                            "${(course.percentage * 100).toInt()}%",
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 8),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
