@@ -319,7 +319,7 @@ class _PurchaseCard extends ConsumerWidget {
           // Buy button
           SizedBox(
             height: 52,
-            child: ElevatedButton.icon(
+            child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: context.appColorScheme.primary,
                 foregroundColor: Colors.white,
@@ -330,7 +330,7 @@ class _PurchaseCard extends ConsumerWidget {
               onPressed: vm.isPurchasing
                   ? null
                   : () => ref.read(IAPViewModel.provider).purchase(product),
-              icon: vm.isPurchasing
+              child: vm.isPurchasing
                   ? const SizedBox.square(
                       dimension: 18,
                       child: CircularProgressIndicator(
@@ -338,14 +338,20 @@ class _PurchaseCard extends ConsumerWidget {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.lock_open_rounded),
-              label: Text(
-                vm.isPurchasing ? 'Processing…' : 'Buy for ${product.price}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.lock_open_rounded, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Buy for ${product.price}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           ),
         ],
