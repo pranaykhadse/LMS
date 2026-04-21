@@ -7,3 +7,25 @@ extension DateFormatExtension on DateTime {
   }
 }
 
+extension HtmlStringExtension on String {
+  /// Strips HTML tags and decodes common HTML entities, returning plain text.
+  ///
+  /// Example:
+  ///   '<p>test description - data</p>'  →  'test description - data'
+  ///   '<b>Bold</b> &amp; plain'         →  'Bold & plain'
+  String get stripHtml {
+    // Remove all HTML tags (e.g. <p>, </p>, <br />, etc.)
+    final withoutTags = replaceAll(RegExp(r'<[^>]*>'), '');
+
+    // Decode common HTML entities
+    return withoutTags
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .replaceAll('&nbsp;', ' ')
+        .trim();
+  }
+}
+
