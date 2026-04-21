@@ -34,8 +34,6 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
     // Fetch product from the App Store after the first frame renders.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.course.id != null) {
-        // ignore: avoid_print
-        print('🛒 Course ID for IAP: ${widget.course.id}');
         ref
             .read(IAPViewModel.provider)
             .fetchProductForCourse(widget.course.id!);
@@ -79,9 +77,9 @@ class _PurchasePageState extends ConsumerState<PurchasePage> {
               SizedBox(height: context.smallSpace),
               _ProductSection(course: widget.course),
               SizedBox(height: context.minorSpace),
-              _RestoreButton(),
+              const _RestoreButton(),
               SizedBox(height: context.smallSpace),
-              _LegalNote(),
+              const _LegalNote(),
             ],
           ),
         ),
@@ -136,7 +134,7 @@ class _CourseInfoCard extends StatelessWidget {
           if (course.description?.isNotEmpty == true) ...[
             SizedBox(height: context.minorSpace),
             Text(
-              course.description!,
+              course.description!.stripHtml,
               style: context.textTheme.bodyMedium?.copyWith(
                 color: Colors.grey[700],
               ),
@@ -159,7 +157,7 @@ class _CourseInfoCard extends StatelessWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    course.objective!,
+                    course.objective!.stripHtml,
                     style: context.textTheme.bodySmall,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -185,8 +183,9 @@ class _ProductSection extends ConsumerWidget {
     final vm = ref.watch(IAPViewModel.provider);
     final state = vm.currentProduct;
 
-    // Loading
-    if (state.state == DataProviderState.loading) {
+    // Idle or Loading — show spinner while product is being fetched
+    if (state.state == DataProviderState.idle ||
+        state.state == DataProviderState.loading) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 40),
@@ -317,42 +316,40 @@ class _PurchaseCard extends ConsumerWidget {
           SizedBox(height: context.smallSpace),
 
           // Buy button
-          SizedBox(
-            height: 52,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.appColorScheme.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(context.smallRadius),
-                ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.appColorScheme.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(context.smallRadius),
               ),
-              onPressed: vm.isPurchasing
-                  ? null
-                  : () => ref.read(IAPViewModel.provider).purchase(product),
-              child: vm.isPurchasing
-                  ? const SizedBox.square(
-                      dimension: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.lock_open_rounded, size: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Buy for ${product.price}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
             ),
+            onPressed: vm.isPurchasing
+                ? null
+                : () => ref.read(IAPViewModel.provider).purchase(product),
+            child: vm.isPurchasing
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.lock_open_rounded, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Buy for ${product.price}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -363,6 +360,8 @@ class _PurchaseCard extends ConsumerWidget {
 // ─── Restore button ───────────────────────────────────────────────────────────
 
 class _RestoreButton extends ConsumerWidget {
+  const _RestoreButton();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vm = ref.watch(IAPViewModel.provider);
@@ -388,6 +387,8 @@ class _RestoreButton extends ConsumerWidget {
 // ─── Legal disclaimer ─────────────────────────────────────────────────────────
 
 class _LegalNote extends StatelessWidget {
+  const _LegalNote();
+
   @override
   Widget build(BuildContext context) {
     return Text(
