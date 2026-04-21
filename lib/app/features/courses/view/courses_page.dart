@@ -97,18 +97,18 @@ class CoursesGrid extends StatelessWidget {
   final List<Course> data;
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 300,
-        childAspectRatio: 0.75,
-        crossAxisSpacing: context.smallSpace,
-        mainAxisSpacing: context.smallSpace,
-      ),
+    return ListView.builder(
       padding: EdgeInsets.all(context.smallSpace),
       itemCount: data.length,
       itemBuilder: (context, index) {
         final course = data[index];
-        return CourseCard(course: course);
+        return Padding(
+          padding: EdgeInsets.only(bottom: context.smallSpace),
+          child: SizedBox(
+            height: 180,
+            child: CourseCard(course: course),
+          ),
+        );
       },
     );
   }

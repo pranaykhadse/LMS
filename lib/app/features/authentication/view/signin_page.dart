@@ -6,6 +6,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/gen/assets.gen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../viewmodel/signin_viewmodel.dart';
 
@@ -122,6 +123,27 @@ class SignInPage extends ConsumerWidget {
                             ),
                           ),
                           SizedBox(height: context.mediumSpace),
+
+                          // ── Privacy Policy link (required by App Store) ──
+                          GestureDetector(
+                            onTap: () => launchUrl(
+                              Uri.parse(
+                                'https://leadershipedgelive.com/privacy-policy',
+                              ),
+                              mode: LaunchMode.externalApplication,
+                            ),
+                            child: Text(
+                              'Privacy Policy',
+                              textAlign: TextAlign.center,
+                              style: context.textTheme.bodySmall?.copyWith(
+                                color: context.appColorScheme.primary,
+                                decoration: TextDecoration.underline,
+                                decorationColor:
+                                    context.appColorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: context.smallSpace),
                         ],
                       ),
                     ),
