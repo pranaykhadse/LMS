@@ -48,7 +48,7 @@ class CourseClassesPage extends ConsumerWidget {
                               return DataRow(
                                 cells: [
                                   DataCell(Text("${index + 1}")),
-                                  DataCell(Text(item.classInfo?.name ?? "")),
+                                  DataCell(Text((item.classInfo?.name ?? "").stripHtml)),
                                   DataCell(Text("")),
                                   DataCell(ClassStatusChip(courseClass: item)),
                                   DataCell(
