@@ -8,8 +8,6 @@ import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/courses_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
-import 'package:lms/app/features/payment/module/payment_module.dart';
-import 'package:lms/app/features/payment/viewmodel/iap_viewmodel.dart';
 import 'package:lms/gen/assets.gen.dart';
 
 class CoursesPage extends ConsumerWidget {
@@ -46,7 +44,7 @@ class CoursesPage extends ConsumerWidget {
                       final offlineVM = ref.watch(OfflineViewModel.provider);
                       final data = offlineVM.courses.data;
                       if (data == null || data.isEmpty) {
-                        return Center(child: Text("No courses found"));
+                        return const Center(child: Text("No courses found"));
                       }
                       return CoursesGrid(data: data);
                     },
@@ -62,7 +60,7 @@ class CoursesPage extends ConsumerWidget {
                               dataState: state.data,
                               builder: (context, data) {
                                 if (data == null || data.isEmpty) {
-                                  return Center(
+                                  return const Center(
                                     child: Text("No courses found"),
                                   );
                                 }
@@ -95,6 +93,7 @@ class CoursesPage extends ConsumerWidget {
 class CoursesGrid extends StatelessWidget {
   const CoursesGrid({super.key, required this.data});
   final List<Course> data;
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
@@ -119,31 +118,16 @@ class CourseCard extends ConsumerWidget {
 
   final Course course;
 
-  /// A course requires purchase when [Course.isPayment] == 1.
-  bool _isPaidCourse() => (course.isPayment ?? 0) == 1;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final offlineVM = ref.watch(OfflineViewModel.provider);
-    final iapVM = ref.watch(IAPViewModel.provider);
 
     final isDownloading = offlineVM.isDownloading(course);
     final isAvailableOffline = offlineVM.isAvailable(course);
 
-    // True when the course is free OR the user has already purchased it.
-    final bool isAccessible =
-        !_isPaidCourse() || iapVM.isPurchased(course.id ?? 0);
-
     return SecondaryCard(
       onTap: () {
-        if (!isAccessible) {
-          // Navigate to purchase page; pass the full Course as route argument.
-          Modular.to.pushNamed(
-            PaymentModule.purchaseRoute,
-            arguments: course,
-          );
-          return;
-        }
+        // All courses are freely accessible — navigate directly to course detail.
         Modular.to.pushNamed(
           CoursesModule.construct("${CoursesModule.detail}/${course.id}"),
         );
@@ -152,51 +136,18 @@ class CourseCard extends ConsumerWidget {
       child: Column(
         spacing: context.smallSpace,
         children: [
-          // ── Course image / thumbnail ───────────────────────────────────
+          // ── Course image / thumbnail ─────────────────────────────────────
           Expanded(
             flex: 2,
             child: Stack(
               fit: StackFit.expand,
               children: [
                 Assets.images.loginBg.image(fit: BoxFit.cover),
-
-                // Lock badge for paid & unpurchased courses
-                if (!isAccessible)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.shade700,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.lock_rounded,
-                              size: 11, color: Colors.white),
-                          SizedBox(width: 4),
-                          Text(
-                            'Paid',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
 
-          // ── Course info & action buttons ───────────────────────────────
+          // ── Course info & action buttons ─────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
@@ -225,53 +176,50 @@ class CourseCard extends ConsumerWidget {
                         spacing: 4,
                         runSpacing: 4,
                         children: [
-                          // ── Buy button (paid & not purchased) ──────────
-                          if (!isAccessible)
-                            _BuyButton(course: course)
-                          // ── View Course button (free or purchased) ─────
-                          else
-                            _ViewButton(),
+                          // View Course button
+                          _ViewButton(),
 
-                          // ── Offline button (only for accessible courses)
-                          if (isAccessible)
-                            _OfflineButton(
-                              course: course,
-                              offlineVM: offlineVM,
-                              isDownloading: isDownloading,
-                              isAvailableOffline: isAvailableOffline,
-                            ),
+                          // Offline button
+                          _OfflineButton(
+                            course: course,
+                            offlineVM: offlineVM,
+                            isDownloading: isDownloading,
+                            isAvailableOffline: isAvailableOffline,
+                          ),
                         ],
                       ),
                     ],
                   ),
                 ),
 
-                  // ── Completion progress ring ─────────────────────────────
-                  SizedBox(
-                    width: 36,
-                    height: 36,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          value: course.percentage,
-                          color: context.colorScheme.primary,
-                          backgroundColor: Colors.white,
-                          strokeWidth: 3,
-                        ),
-                        Center(
-                          child: Text(
-                            "${(course.percentage * 100).toInt()}%",
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 8),
+                // ── Completion progress ring ───────────────────────────────
+                SizedBox(
+                  width: 36,
+                  height: 36,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CircularProgressIndicator(
+                        value: course.percentage,
+                        color: context.colorScheme.primary,
+                        backgroundColor: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                      Center(
+                        child: Text(
+                          "${(course.percentage * 100).toInt()}%",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ),
         ],
       ),
     );
@@ -279,55 +227,10 @@ class CourseCard extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Small action button widgets
+// Action button widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// "Buy Course" button — shown when course.isPayment == 1 and not purchased.
-class _BuyButton extends StatelessWidget {
-  const _BuyButton({required this.course});
-  final Course course;
-
-  @override
-  Widget build(BuildContext context) {
-    // Show price from the Course model if available, otherwise generic label.
-    final priceLabel = (course.amount != null && course.amount.toString().isNotEmpty)
-        ? '\$${course.amount}'
-        : 'Buy Course';
-
-    return InkWell(
-      onTap: () {
-        Modular.to.pushNamed(
-          PaymentModule.purchaseRoute,
-          arguments: course,
-        );
-      },
-      borderRadius: BorderRadius.circular(context.minorRadius),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(context.minorRadius),
-          color: Colors.amber.shade700,
-        ),
-        padding: EdgeInsets.all(context.minorSpace),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 4,
-          children: [
-            const Icon(Icons.lock_rounded, size: 12, color: Colors.white),
-            Text(
-              priceLabel,
-              style: context.textTheme.bodySmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// "View Course" button — shown for free or already-purchased courses.
+/// "View Course" button — shown for all courses.
 class _ViewButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

@@ -196,7 +196,8 @@ class IAPViewModel extends ChangeNotifier {
       final isAvailable = await _repository.isAvailable();
       if (!isAvailable) {
         _currentProduct = DataState.onError(
-          'The App Store is not available on this device.',
+          'In-App Purchases are not available on this device. '
+          'Please check your device settings.',
         );
         notifyListeners();
         return;
@@ -207,14 +208,18 @@ class IAPViewModel extends ChangeNotifier {
 
       if (products.isEmpty) {
         _currentProduct = DataState.onError(
-          'Product not found. Please contact support or check your '
-          'App Store Connect configuration.',
+          'This course is not yet available for purchase. '
+          'Please try again later or contact support.',
         );
       } else {
         _currentProduct = DataState.onData(products.first);
       }
     } catch (e) {
-      _currentProduct = DataState.onError(e.toString());
+      log('IAPViewModel: fetchProductForCourse error — $e');
+      _currentProduct = DataState.onError(
+        'Unable to connect to the App Store. '
+        'Please check your internet connection and try again.',
+      );
     }
 
     notifyListeners();
