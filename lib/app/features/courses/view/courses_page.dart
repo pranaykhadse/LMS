@@ -31,7 +31,7 @@ class CoursesPage extends ConsumerWidget {
                   bottom: context.minorSpace,
                 ),
                 child: Text(
-                  "ACME Solutions Courses",
+                  "Leadership Edge Live Courses",
                   style: context.textTheme.titleLarge?.copyWith(
                     color: context.appColorScheme.primary,
                   ),
