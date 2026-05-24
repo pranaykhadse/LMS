@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/features/courses/model/course.dart';
+import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/repository/offline_course_repository.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 
@@ -63,6 +64,12 @@ class OfflineViewModel extends ChangeNotifier {
 
   bool isAvailable(Course course) {
     return courses.data?.any((e) => e.id == course.id) ?? false;
+  }
+
+  /// Returns the locally-cached lesson list for [courseId].
+  /// This is what is shown on the course-detail page when the device is offline.
+  Future<List<CourseClass>> getCachedClasses(String courseId) {
+    return repository.getCachedClasses(courseId);
   }
 
   final List<Course> _downloading = [];

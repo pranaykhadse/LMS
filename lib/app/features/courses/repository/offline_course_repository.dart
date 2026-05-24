@@ -9,6 +9,9 @@ import 'package:lms/app/features/courses/model/course_class.dart';
 import 'course_class_repository.dart';
 import 'roaster_repository.dart';
 
+// Hive key prefix for per-course class lists
+const _classesKeyPrefix = "offline_classes_";
+
 class OfflineCourseRepository {
   static final provider = Provider<OfflineCourseRepository>((ref) {
     return OfflineCourseRepository(
@@ -55,7 +58,36 @@ class OfflineCourseRepository {
     await storage.setString(course.id?.toString() ?? "", course.toRawJson());
 
     await storage.setString("cached_courses", jsonEncode(updatedKeys));
+
+    // Persist the full class list so it is available offline (Netflix-style).
+    await saveClasses(course.id?.toString() ?? "", classes);
+
     return classes;
+  }
+
+  // ── Offline class list ─────────────────────────────────────────────────────
+
+  /// Saves [classes] for [courseId] to local storage.
+  Future<void> saveClasses(String courseId, List<CourseClass> classes) async {
+    final encoded = jsonEncode(
+      classes.map((c) => c.toJson()).toList(),
+    );
+    await storage.setString("$_classesKeyPrefix$courseId", encoded);
+  }
+
+  /// Returns the locally cached class list for [courseId], or an empty list.
+  Future<List<CourseClass>> getCachedClasses(String courseId) async {
+    try {
+      final raw = await storage.getString("$_classesKeyPrefix$courseId");
+      if (raw == null || raw.isEmpty) return [];
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return [];
+      return decoded
+          .map((e) => CourseClass.fromJson(e as Map<dynamic, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   Future<List<Course>> getCachedCourses() async {

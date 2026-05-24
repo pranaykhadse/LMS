@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/model/page_info.dart';
+import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
@@ -9,59 +10,162 @@ import 'package:lms/app/features/courses/view/widgets/class_status_chip.dart';
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/view/widgets/link_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_class_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 
 class CourseClassesPage extends ConsumerWidget {
   const CourseClassesPage({super.key, this.courseId});
   final String? courseId;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(CourseClassViewModel.provider(courseId));
-    final viewmodel = ref.watch(
-      CourseClassViewModel.provider(courseId).notifier,
-    );
     return Scaffold(
       appBar: FlatAppBar(title: "Course Details"),
-      body: Column(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.all(context.smallSpace),
-              child: PrimaryCard(
-                child: DataStateBuilder(
-                  dataState: state.data,
-                  builder: (context, data) {
-                    if (data == null || data.isEmpty) {
-                      return const Center(child: Text("No lessons available."));
-                    }
-                    return ListView.separated(
-                      padding: const EdgeInsets.all(8),
-                      itemCount: data.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final item = data[index];
-                        return _CourseClassTile(
-                          index: index,
-                          courseClass: item,
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-          PaginationWidget(
-            pageInfo: state.pageInfo ?? PageInfo(),
-            onPageChange: (value) {
-              viewmodel.fetch(value);
-            },
-          ),
-        ],
+      body: ConnectionAwareWidget(
+        // ── OFFLINE: load lessons from Hive (Netflix-style) ──────────────────
+        offlineChild: _OfflineCourseClassesList(courseId: courseId),
+        // ── ONLINE: fetch lessons from the API as normal ──────────────────────
+        onlineChild: _OnlineCourseClassesList(courseId: courseId),
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Online lesson list — fetches from network, paginated
+// ─────────────────────────────────────────────────────────────────────────────
+class _OnlineCourseClassesList extends ConsumerWidget {
+  const _OnlineCourseClassesList({this.courseId});
+  final String? courseId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(CourseClassViewModel.provider(courseId));
+    final viewmodel =
+        ref.watch(CourseClassViewModel.provider(courseId).notifier);
+
+    return Column(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.all(context.smallSpace),
+            child: PrimaryCard(
+              child: DataStateBuilder(
+                dataState: state.data,
+                builder: (context, data) {
+                  if (data == null || data.isEmpty) {
+                    return const Center(child: Text("No lessons available."));
+                  }
+                  return _LessonListView(lessons: data);
+                },
+              ),
+            ),
+          ),
+        ),
+        PaginationWidget(
+          pageInfo: state.pageInfo ?? PageInfo(),
+          onPageChange: (value) => viewmodel.fetch(value),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Offline lesson list — loads from Hive (downloaded classes)
+// ─────────────────────────────────────────────────────────────────────────────
+class _OfflineCourseClassesList extends ConsumerWidget {
+  const _OfflineCourseClassesList({this.courseId});
+  final String? courseId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final offlineVM = ref.watch(OfflineViewModel.provider);
+
+    return Column(
+      children: [
+        // Offline banner
+        Container(
+          width: double.infinity,
+          color: Colors.orange.shade700,
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+          child: Row(
+            children: [
+              const Icon(Icons.offline_bolt, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                "You're offline — showing downloaded content",
+                style: context.textTheme.bodySmall
+                    ?.copyWith(color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.all(context.smallSpace),
+            child: PrimaryCard(
+              child: FutureBuilder<List<CourseClass>>(
+                future: courseId != null
+                    ? offlineVM.getCachedClasses(courseId!)
+                    : Future.value([]),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final data = snapshot.data ?? [];
+                  if (data.isEmpty) {
+                    return const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+                          SizedBox(height: 12),
+                          Text(
+                            "No offline content found.\nConnect to the internet or download this course first.",
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return _LessonListView(lessons: data);
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared lesson list — used by both online and offline paths
+// ─────────────────────────────────────────────────────────────────────────────
+class _LessonListView extends StatelessWidget {
+  const _LessonListView({required this.lessons});
+  final List<CourseClass> lessons;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(8),
+      itemCount: lessons.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        return _CourseClassTile(
+          index: index,
+          courseClass: lessons[index],
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Single lesson tile
+// ─────────────────────────────────────────────────────────────────────────────
 class _CourseClassTile extends StatelessWidget {
   const _CourseClassTile({required this.index, required this.courseClass});
 
@@ -73,13 +177,11 @@ class _CourseClassTile extends StatelessWidget {
     final info = courseClass.classInfo;
     final name = (info?.name ?? '').stripHtml;
 
-    // Determine next session label from start date/time when available.
     String nextSession = '';
     if (info?.startDate != null && info!.startDate.toString().isNotEmpty) {
       nextSession = info.startDate.toString();
     }
 
-    // Build the list of content action buttons for every available content type.
     final actions = <Widget>[
       DownloadButton(
         icon: Icons.videocam,
@@ -129,7 +231,6 @@ class _CourseClassTile extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Index number
               SizedBox(
                 width: 32,
                 child: Text(
@@ -144,35 +245,24 @@ class _CourseClassTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Lesson name
-                    Text(
-                      name,
-                      style: context.textTheme.bodyMedium,
-                    ),
+                    Text(name, style: context.textTheme.bodyMedium),
                     if (nextSession.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
                         'Next session: $nextSession',
-                        style: context.textTheme.bodySmall?.copyWith(
-                          color: Colors.grey,
-                        ),
+                        style: context.textTheme.bodySmall
+                            ?.copyWith(color: Colors.grey),
                       ),
                     ],
                     const SizedBox(height: 6),
-                    // Status chip
                     ClassStatusChip(courseClass: courseClass),
                   ],
                 ),
               ),
             ],
           ),
-          // Content action buttons — only renders buttons that have a URL
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: actions,
-          ),
+          Wrap(spacing: 8, runSpacing: 6, children: actions),
         ],
       ),
     );
