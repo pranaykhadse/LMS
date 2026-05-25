@@ -315,7 +315,7 @@ class _ViewButton extends StatelessWidget {
   }
 }
 
-/// "Save offline" / progress bar / "Access Offline" button.
+/// "Browse Offline" / progress bar / "Remove from Offline" button.
 class _OfflineButton extends StatelessWidget {
   const _OfflineButton({
     required this.course,
@@ -398,7 +398,7 @@ class _OfflineButton extends StatelessWidget {
                     Icon(
                       isAvailableOffline
                           ? Icons.delete_outline_rounded
-                          : Icons.download_rounded,
+                          : Icons.offline_pin_outlined,
                       size: 12,
                       color: isAvailableOffline
                           ? Colors.red.shade600
@@ -406,7 +406,7 @@ class _OfflineButton extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isAvailableOffline ? "Remove Offline" : "Save Offline",
+                      isAvailableOffline ? "Remove from Offline" : "Browse Offline",
                       style: context.textTheme.bodySmall?.copyWith(
                         color: isAvailableOffline
                             ? Colors.red.shade600
