@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -32,12 +33,15 @@ class LinkButton extends ConsumerWidget {
     if (url == null || url!.isEmpty) return const SizedBox.shrink();
 
     final connectionVM = ref.watch(InternetConnectionProvider.provider);
+    final isManualOffline = ref.watch(OfflineModeNotifier.provider);
 
     return StreamBuilder<bool>(
       stream: connectionVM.connectionStream,
       initialData: connectionVM.isConnected,
       builder: (context, snapshot) {
-        final isOnline = snapshot.data ?? connectionVM.isConnected;
+        // Effectively offline when the manual toggle is ON OR no physical internet.
+        final isOnline = !isManualOffline &&
+            (snapshot.data ?? connectionVM.isConnected);
 
         if (!isOnline) {
           // ── Offline: show a greyed-out, disabled-looking button ──────────

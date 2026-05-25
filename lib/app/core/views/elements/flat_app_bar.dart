@@ -74,7 +74,7 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
               const SizedBox(width: 2),
               Text(
-                isOfflineMode ? "Online" : "Offline",
+                isOfflineMode ? "Offline" : "Go Offline",
                 style: context.textTheme.bodySmall?.copyWith(
                   color: isOfflineMode ? Colors.amber.shade700 : null,
                   fontWeight: FontWeight.w600,

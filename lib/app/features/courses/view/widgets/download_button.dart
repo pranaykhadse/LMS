@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
@@ -51,12 +52,16 @@ class DownloadButton extends ConsumerWidget {
 
     final fileCacheVM = ref.watch(FileCacheViewModel.provider);
     final connectionVM = ref.watch(InternetConnectionProvider.provider);
+    final isManualOffline = ref.watch(OfflineModeNotifier.provider);
 
     return StreamBuilder<bool>(
       stream: connectionVM.connectionStream,
       initialData: connectionVM.isConnected,
       builder: (context, connSnap) {
-        final isOnline = connSnap.data ?? connectionVM.isConnected;
+        // Effectively offline when the manual toggle is ON OR when there is no
+        // physical internet connection.
+        final isOnline = !isManualOffline &&
+            (connSnap.data ?? connectionVM.isConnected);
 
         return FutureBuilder<FileCacheState>(
           future: fileCacheVM.getFor(url!),
