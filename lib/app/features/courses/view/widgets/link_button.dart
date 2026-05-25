@@ -43,6 +43,9 @@ class LinkButton extends ConsumerWidget {
         final isOnline = !isManualOffline &&
             (snapshot.data ?? connectionVM.isConnected);
 
+        // Shared style keeps buttons the same height/padding as DownloadButton.
+        const _kButtonPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+
         if (!isOnline) {
           // ── Offline: show a greyed-out, disabled-looking button ──────────
           return Tooltip(
@@ -52,8 +55,12 @@ class LinkButton extends ConsumerWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.grey,
                 side: const BorderSide(color: Colors.grey),
+                padding: _kButtonPadding,
+                textStyle: context.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              icon: Icon(icon),
+              icon: Icon(icon, size: 18),
               label: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -80,8 +87,16 @@ class LinkButton extends ConsumerWidget {
               }
             }
           },
-          icon: Icon(icon),
+          icon: Icon(icon, size: 18),
           label: Text(label),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: context.appColorScheme.primary,
+            side: BorderSide(color: context.appColorScheme.primary),
+            padding: _kButtonPadding,
+            textStyle: context.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         );
       },
     );

@@ -15,6 +15,10 @@ import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 ///  ② Downloading               → progress ring + % label
 ///  ③ Downloaded                → [▶ Play / 📄 Open]  🗑️ delete
 ///  ④ Offline  + not downloaded → disabled "Not available offline" pill
+///
+/// Uses [FileCacheViewModel.ensureChecked] + [FileCacheViewModel.getSync]
+/// instead of FutureBuilder so the cached state is never lost on a rebuild
+/// (e.g. when the offline toggle fires).
 class DownloadButton extends ConsumerWidget {
   const DownloadButton({
     super.key,
@@ -63,51 +67,50 @@ class DownloadButton extends ConsumerWidget {
         final isOnline = !isManualOffline &&
             (connSnap.data ?? connectionVM.isConnected);
 
-        return FutureBuilder<FileCacheState>(
-          future: fileCacheVM.getFor(url!),
-          builder: (context, snapshot) {
-            // Still checking disk cache — show a small spinner while loading
-            // so we never prematurely hide a downloaded file.
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              );
-            }
+        // Kick off an async disk-cache check if not already known.
+        // This is idempotent — calling it on every rebuild is safe.
+        fileCacheVM.ensureChecked(url!);
+        final data = fileCacheVM.getSync(url!);
 
-            final data = snapshot.data;
-            final isCached = data?.file != null;
-            final isDownloading = data?.progress != null && !isCached;
+        // Still checking disk cache — show a small spinner while loading
+        // so we never prematurely hide a downloaded file.
+        if (data == null) {
+          return const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          );
+        }
 
-            // ── ③ DOWNLOADED — always show Open/Play even when offline ───────
-            if (isCached) {
-              return _DownloadedRow(
-                label: label,
-                onOpen: () => _open(context, ref, data!),
-                onDelete: () => fileCacheVM.delete(data!.url),
-              );
-            }
+        final isCached = data.file != null;
+        final isDownloading = data.progress != null && !isCached;
 
-            // ── ② DOWNLOADING ────────────────────────────────────────────────
-            if (isDownloading) {
-              return _DownloadingRow(
-                label: label,
-                progress: data?.progress ?? Stream.value(0.0),
-              );
-            }
+        // ── ③ DOWNLOADED — always show Open/Play even when offline ───────
+        if (isCached) {
+          return _DownloadedRow(
+            label: label,
+            onOpen: () => _open(context, ref, data),
+            onDelete: () => fileCacheVM.delete(data.url),
+          );
+        }
 
-            // ── ④ OFFLINE + NOT DOWNLOADED ──────────────────────────────────
-            if (!isOnline) {
-              return const _NotAvailableOfflinePill();
-            }
+        // ── ② DOWNLOADING ────────────────────────────────────────────────
+        if (isDownloading) {
+          return _DownloadingRow(
+            label: label,
+            progress: data.progress ?? Stream.value(0.0),
+          );
+        }
 
-            // ── ① ONLINE + NOT DOWNLOADED ───────────────────────────────────
-            return _DownloadTriggerButton(
-              label: label,
-              onTap: () => fileCacheVM.downloadFile(url!),
-            );
-          },
+        // ── ④ OFFLINE + NOT DOWNLOADED ──────────────────────────────────
+        if (!isOnline) {
+          return const _NotAvailableOfflinePill();
+        }
+
+        // ── ① ONLINE + NOT DOWNLOADED ───────────────────────────────────
+        return _DownloadTriggerButton(
+          label: label,
+          onTap: () => fileCacheVM.downloadFile(url!),
         );
       },
     );

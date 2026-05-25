@@ -10,18 +10,31 @@ class FileCacheViewModel extends ChangeNotifier {
 
   final Map<String, FileCacheState> cachedState = {};
 
-  Future<FileCacheState> getFor(String url) async {
-    if (cachedState[url] != null) return cachedState[url]!;
-    final info = await DefaultCacheManager().getFileFromCache(url);
-    FileCacheState cacheInfo;
-    if (info == null) {
-      cacheInfo = FileCacheState(url: url);
-    } else {
-      cacheInfo = FileCacheState(url: url, file: info.file);
-    }
+  // Tracks which URLs have an in-flight disk check so we never double-fire.
+  final Map<String, bool> _checking = {};
 
-    cachedState[url] = cacheInfo;
-    return cacheInfo;
+  // ── Public API ─────────────────────────────────────────────────────────────
+
+  /// Returns the known [FileCacheState] for [url] synchronously, or `null`
+  /// when the disk check has not completed yet.
+  FileCacheState? getSync(String url) => cachedState[url];
+
+  /// Kicks off an async disk-cache check for [url] if one is not already
+  /// running.  Calls [notifyListeners] when the result is ready so every
+  /// widget that watches this provider rebuilds with the correct state.
+  ///
+  /// Safe to call from `build()` — it is idempotent and never mutates state
+  /// synchronously.
+  void ensureChecked(String url) {
+    if (cachedState.containsKey(url) || (_checking[url] ?? false)) return;
+    _checking[url] = true;
+    DefaultCacheManager().getFileFromCache(url).then((info) {
+      _checking.remove(url);
+      cachedState[url] = info != null
+          ? FileCacheState(url: url, file: info.file)
+          : FileCacheState(url: url);
+      notifyListeners();
+    });
   }
 
   Future<void> downloadFile(String url) async {
@@ -57,7 +70,6 @@ class FileCacheViewModel extends ChangeNotifier {
 
 class FileCacheState {
   final String url;
-
   final Stream<double>? progress;
   File? file;
 
