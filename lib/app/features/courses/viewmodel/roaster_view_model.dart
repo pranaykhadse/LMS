@@ -116,18 +116,22 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     }
 
     // Online path — call API immediately.
-    await repository.saveRoaster(
-      courseId ?? "",
-      courseClass.classInfo?.id ?? "",
-      userId?.toString() ?? "",
-      courseClass.id ?? "",
-    );
+    try {
+      await repository.saveRoaster(
+        courseId ?? "",
+        courseClass.classInfo?.id ?? "",
+        userId?.toString() ?? "",
+        courseClass.id ?? "",
+      );
+    } catch (_) {
+      // Ignore API errors — still refetch so the UI reflects server state.
+    }
     fetch();
   }
 
   Roaster? getForClass(CourseClass courseClass) {
     return state.data.data?.firstWhereOrNull(
-      (value) => value.classId?.toString() == courseClass.classId,
+      (value) => value.classId?.toString() == courseClass.classId?.toString(),
     );
   }
 }

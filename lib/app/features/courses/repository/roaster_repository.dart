@@ -37,7 +37,6 @@ class RoasterRepository with RepoNetworkHelper {
       "user_id": int.tryParse(userId),
       "learning_event_class_id": int.tryParse(learningEventClassId),
     };
-    print(data);
     final response = await post(
       "learning-event/save-roaster",
       cacheType: RequestCacheType.post,

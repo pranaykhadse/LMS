@@ -49,11 +49,11 @@ class CourseClass {
 
   factory CourseClass.fromJson(Map<dynamic, dynamic> map) {
     return CourseClass(
-      id: map['id'],
-      courseId: map['course_id'],
-      classId: map['class_id'],
-      scannedPdf: map['scanned_pdf'],
-      order: map['order'],
+      id: map['id']?.toString(),
+      courseId: map['course_id']?.toString(),
+      classId: map['class_id']?.toString(),
+      scannedPdf: map['scanned_pdf']?.toString(),
+      order: map['order']?.toString(),
       classInfo: map['class'] != null ? ClassInfo.fromJson(map['class']) : null,
     );
   }
