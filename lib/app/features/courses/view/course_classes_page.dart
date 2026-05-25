@@ -355,18 +355,25 @@ class _CourseClassTile extends StatelessWidget {
                             ?.copyWith(color: Colors.grey),
                       ),
                     ],
-                    const SizedBox(height: 6),
-                    ClassStatusChip(courseClass: courseClass),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // Indent buttons to align with lesson name (skip the 32px number column)
+          const SizedBox(height: 6),
+          // All action buttons + status chip together so they wrap and align uniformly.
+          // Left-indented 40px to align under the lesson name (past the 32px number column).
           Padding(
             padding: const EdgeInsets.only(left: 40),
-            child: Wrap(spacing: 8, runSpacing: 6, children: actions),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                ClassStatusChip(courseClass: courseClass),
+                ...actions,
+              ],
+            ),
           ),
         ],
       ),
