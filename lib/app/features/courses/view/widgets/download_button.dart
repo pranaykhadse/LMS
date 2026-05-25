@@ -66,11 +66,21 @@ class DownloadButton extends ConsumerWidget {
         return FutureBuilder<FileCacheState>(
           future: fileCacheVM.getFor(url!),
           builder: (context, snapshot) {
+            // Still checking disk cache — show a small spinner while loading
+            // so we never prematurely hide a downloaded file.
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              );
+            }
+
             final data = snapshot.data;
             final isCached = data?.file != null;
             final isDownloading = data?.progress != null && !isCached;
 
-            // ── ③ DOWNLOADED ────────────────────────────────────────────────
+            // ── ③ DOWNLOADED — always show Open/Play even when offline ───────
             if (isCached) {
               return _DownloadedRow(
                 label: label,
