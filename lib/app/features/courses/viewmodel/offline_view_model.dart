@@ -103,6 +103,32 @@ class OfflineViewModel extends ChangeNotifier {
     _fetch();
   }
 
+  // ── Remove offline ────────────────────────────────────────────────────────
+
+  /// Deletes all locally cached files for [course] and removes it from the
+  /// offline course index so the card switches back to "Save Offline".
+  Future<void> removeOffline(Course course) async {
+    // Delete every cached file (video, article, participant guide).
+    final fileVM = ref.read(FileCacheViewModel.provider);
+    final classes = await repository.getCachedClasses(
+      course.id?.toString() ?? "",
+    );
+    for (final c in classes) {
+      if (_validUrl(c.classInfo?.videoUploadUrl)) {
+        fileVM.delete(c.classInfo!.videoUploadUrl!);
+      }
+      if (_validUrl(c.classInfo?.articleFile)) {
+        fileVM.delete(c.classInfo!.articleFile!);
+      }
+    }
+    final pgUrl = course.participantGuideFile?.toString();
+    if (_validUrl(pgUrl)) fileVM.delete(pgUrl!);
+
+    // Remove course metadata and class list from local storage.
+    await repository.removeCourse(course);
+    await _fetch();
+  }
+
   // ── Internal helpers ──────────────────────────────────────────────────────
 
   Future<void> _fetch() async {

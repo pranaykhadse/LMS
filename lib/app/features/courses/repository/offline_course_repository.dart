@@ -105,6 +105,23 @@ class OfflineCourseRepository {
     return [];
   }
 
+  /// Removes a course and its class list from local storage.
+  /// Does NOT delete the individual cached files (videos/PDFs) — the caller
+  /// ([OfflineViewModel]) handles that via [FileCacheViewModel].
+  Future<void> removeCourse(Course course) async {
+    final courseKey = course.id?.toString() ?? "";
+    final classesKey = "$_classesKeyPrefix$courseKey";
+
+    // Remove from the cached-keys index.
+    final keys = await _getCachedKeys();
+    keys.remove(courseKey);
+    await storage.setString("cached_courses", jsonEncode(keys));
+
+    // Delete course JSON and class-list JSON.
+    await storage.setString(courseKey, null);
+    await storage.setString(classesKey, null);
+  }
+
   Future<List<String>> _getCachedKeys() async {
     final cachedCoursesRaw = await storage.getString("cached_courses");
     if (cachedCoursesRaw == null || cachedCoursesRaw.isEmpty) return [];

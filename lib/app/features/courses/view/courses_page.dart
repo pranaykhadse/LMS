@@ -338,7 +338,11 @@ class _OfflineButton extends StatelessWidget {
           ? null
           : () async {
               try {
-                await offlineVM.download(course);
+                if (isAvailableOffline) {
+                  await offlineVM.removeOffline(course);
+                } else {
+                  await offlineVM.download(course);
+                }
               } catch (e) {
                 // ignore: use_build_context_synchronously
                 Toast.error(context, e.toString());
@@ -348,7 +352,12 @@ class _OfflineButton extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(context.minorRadius),
-          color: context.colorScheme.onPrimary,
+          color: isAvailableOffline
+              ? Colors.red.shade50
+              : context.colorScheme.onPrimary,
+          border: isAvailableOffline
+              ? Border.all(color: Colors.red.shade300)
+              : null,
         ),
         padding: EdgeInsets.all(context.minorSpace),
         child: AnimatedSize(
@@ -383,11 +392,28 @@ class _OfflineButton extends StatelessWidget {
                     ),
                   ],
                 )
-              : Text(
-                  isAvailableOffline ? "Access Offline" : "Save Offline",
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colorScheme.primary,
-                  ),
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isAvailableOffline
+                          ? Icons.delete_outline_rounded
+                          : Icons.download_rounded,
+                      size: 12,
+                      color: isAvailableOffline
+                          ? Colors.red.shade600
+                          : context.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      isAvailableOffline ? "Remove Offline" : "Save Offline",
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: isAvailableOffline
+                            ? Colors.red.shade600
+                            : context.colorScheme.primary,
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ),
