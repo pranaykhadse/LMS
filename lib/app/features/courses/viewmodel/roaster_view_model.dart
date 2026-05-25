@@ -50,6 +50,31 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     required this.userId,
   }) : super(PaginatedState(data: DataState.idle(), pageInfo: null)) {
     fetch();
+    // Automatically refetch after the sync queue is flushed so the
+    // ClassStatusChip flips to "Completed" without the user navigating away.
+    syncViewModel.addListener(_onSyncCompleted);
+  }
+
+  /// The [lastSyncTime] we last triggered a fetch for.
+  /// Guards against re-fetching on every [SyncViewModel.notifyListeners] call
+  /// (e.g. pending-count updates) — we only refetch when a new sync cycle
+  /// actually finishes.
+  DateTime? _lastFetchedSyncTime;
+
+  void _onSyncCompleted() {
+    final syncTime = syncViewModel.lastSyncTime;
+    if (!syncViewModel.isSyncing &&
+        syncTime != null &&
+        syncTime != _lastFetchedSyncTime) {
+      _lastFetchedSyncTime = syncTime;
+      fetch();
+    }
+  }
+
+  @override
+  void dispose() {
+    syncViewModel.removeListener(_onSyncCompleted);
+    super.dispose();
   }
 
   Future<void> fetch() async {
