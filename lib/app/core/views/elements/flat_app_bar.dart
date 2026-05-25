@@ -61,21 +61,28 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
           const Spacer(),
 
-          // ── "Go Offline" toggle ────────────────────────────────────────
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "Go Offline",
-                style: context.textTheme.bodySmall,
-              ),
-              Switch(
-                value: isOfflineMode,
-                onChanged: (_) =>
-                    ref.read(OfflineModeNotifier.provider.notifier).toggle(),
-                activeColor: Colors.amber.shade700,
-              ),
-            ],
+          // ── "Go Offline" toggle — compact icon + switch + tooltip ────────
+          Tooltip(
+            message: isOfflineMode ? "Offline Mode ON — tap to go online" : "Go Offline",
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isOfflineMode ? Icons.wifi_off_rounded : Icons.wifi_rounded,
+                  size: 18,
+                  color: isOfflineMode
+                      ? Colors.amber.shade700
+                      : context.textTheme.bodySmall?.color,
+                ),
+                Switch(
+                  value: isOfflineMode,
+                  onChanged: (_) =>
+                      ref.read(OfflineModeNotifier.provider.notifier).toggle(),
+                  activeColor: Colors.amber.shade700,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ],
+            ),
           ),
 
           SizedBox(width: context.minorSpace),
@@ -95,6 +102,7 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ],
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Avatar with badge when there are pending completions
                 Stack(
@@ -124,9 +132,15 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ],
                 ),
                 SizedBox(width: context.minorSpace),
-                Text(
-                  "${userProfile2?.firstname ?? ""} ${(userProfile2?.middlename ?? "")} ${userProfile2?.lastname ?? ""}",
-                  style: context.textTheme.labelLarge,
+                // Cap width so long names can't push buttons off-screen
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 140),
+                  child: Text(
+                    "${userProfile2?.firstname ?? ""} ${(userProfile2?.middlename ?? "")} ${userProfile2?.lastname ?? ""}",
+                    style: context.textTheme.labelLarge,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
                 ),
               ],
             ),

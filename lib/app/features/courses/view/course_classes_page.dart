@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/model/page_info.dart';
 import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
+import 'package:lms/app/core/views/elements/offline_banner.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
@@ -21,40 +22,89 @@ class CourseClassesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // The Course object is passed as route argument from CoursesPage so we can
-    // display course-level features (participant guide) without an extra API call.
+    // display course-level documents without an extra API call.
     final course = Modular.args.data is Course
         ? Modular.args.data as Course
         : null;
 
     final pgUrl = course?.participantGuideFile?.toString();
+    final wmUrl = course?.wrapMethodologyFile?.toString();
+    final wmLink = course?.wrapMethodologyLink?.toString();
+
     final hasPg = pgUrl != null && pgUrl.trim().isNotEmpty;
+    final hasWmFile = wmUrl != null && wmUrl.trim().isNotEmpty;
+    final hasWmLink = wmLink != null && wmLink.trim().isNotEmpty;
+    final hasDocs = hasPg || hasWmFile || hasWmLink;
 
     return Scaffold(
       appBar: FlatAppBar(title: "Course Details"),
       body: Column(
         children: [
-          // ── Participant Guide download bar ────────────────────────────────
-          if (hasPg)
+          // ── Offline / re-sync banner (replaces old orange strip) ──────────
+          const OfflineBanner(),
+
+          // ── Course-level documents header ─────────────────────────────────
+          if (hasDocs)
             Container(
               width: double.infinity,
-              color: context.appColorScheme.primary.withOpacity(0.08),
+              color: context.appColorScheme.primary.withOpacity(0.07),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.menu_book_rounded, size: 18),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      "Participant Guide",
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                  Text(
+                    "Course Documents",
+                    style: context.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: context.appColorScheme.primary,
                     ),
                   ),
-                  DownloadButton(
-                    icon: Icons.picture_as_pdf,
-                    label: "Participant Guide",
-                    url: pgUrl,
-                    courseClass: null,
-                    builder: (context, file) => PdfContentViewer(file: file),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    children: [
+                      // Participant Guide — downloadable PDF
+                      if (hasPg)
+                        _DocRow(
+                          icon: Icons.menu_book_rounded,
+                          label: "Participant Guide",
+                          child: DownloadButton(
+                            icon: Icons.picture_as_pdf,
+                            label: "Participant Guide",
+                            url: pgUrl,
+                            courseClass: null,
+                            builder: (ctx, file) => PdfContentViewer(file: file),
+                          ),
+                        ),
+
+                      // Wrap Methodology — downloadable file
+                      if (hasWmFile)
+                        _DocRow(
+                          icon: Icons.wrap_text_rounded,
+                          label: "Wrap Methodology",
+                          child: DownloadButton(
+                            icon: Icons.picture_as_pdf,
+                            label: "Wrap Methodology",
+                            url: wmUrl,
+                            courseClass: null,
+                            builder: (ctx, file) => PdfContentViewer(file: file),
+                          ),
+                        ),
+
+                      // Wrap Methodology — external link fallback
+                      if (!hasWmFile && hasWmLink)
+                        _DocRow(
+                          icon: Icons.wrap_text_rounded,
+                          label: "Wrap Methodology",
+                          child: LinkButton(
+                            icon: Icons.open_in_new_rounded,
+                            label: "Wrap Methodology",
+                            url: wmLink,
+                            courseClass: null,
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -63,14 +113,38 @@ class CourseClassesPage extends ConsumerWidget {
           // ── Lesson list ───────────────────────────────────────────────────
           Expanded(
             child: ConnectionAwareWidget(
-              // ── OFFLINE ──────────────────────────────────────────────────
               offlineChild: _OfflineCourseClassesList(courseId: courseId),
-              // ── ONLINE ───────────────────────────────────────────────────
               onlineChild: _OnlineCourseClassesList(courseId: courseId),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Small helper: icon + label + action widget in a row ──────────────────────
+class _DocRow extends StatelessWidget {
+  const _DocRow({
+    required this.icon,
+    required this.label,
+    required this.child,
+  });
+  final IconData icon;
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: context.appColorScheme.primary),
+        const SizedBox(width: 6),
+        Text(label, style: context.textTheme.bodySmall),
+        const SizedBox(width: 8),
+        child,
+      ],
     );
   }
 }
@@ -128,24 +202,6 @@ class _OfflineCourseClassesList extends ConsumerWidget {
 
     return Column(
       children: [
-        // Offline banner
-        Container(
-          width: double.infinity,
-          color: Colors.orange.shade700,
-          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
-          child: Row(
-            children: [
-              const Icon(Icons.offline_bolt, color: Colors.white, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                "You're offline — showing downloaded content",
-                style: context.textTheme.bodySmall
-                    ?.copyWith(color: Colors.white),
-              ),
-            ],
-          ),
-        ),
-
         Expanded(
           child: Padding(
             padding: EdgeInsets.all(context.smallSpace),

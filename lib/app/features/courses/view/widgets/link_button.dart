@@ -24,7 +24,8 @@ class LinkButton extends ConsumerWidget {
   final IconData icon;
   final String label;
   final String? url;
-  final CourseClass courseClass;
+  // Nullable: course-level link buttons (e.g. Wrap Methodology) have no lesson.
+  final CourseClass? courseClass;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
