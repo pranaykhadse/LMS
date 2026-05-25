@@ -54,6 +54,8 @@ class LinkButton extends ConsumerWidget {
             foregroundColor: Colors.grey,
             side: const BorderSide(color: Colors.grey),
             padding: padding,
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             textStyle: context.textTheme.bodySmall
                 ?.copyWith(fontWeight: FontWeight.w600),
           ),
@@ -90,6 +92,8 @@ class LinkButton extends ConsumerWidget {
         foregroundColor: context.appColorScheme.primary,
         side: BorderSide(color: context.appColorScheme.primary),
         padding: padding,
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: context.textTheme.bodySmall
             ?.copyWith(fontWeight: FontWeight.w600),
       ),

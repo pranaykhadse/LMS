@@ -127,6 +127,8 @@ class _DownloadTriggerButton extends StatelessWidget {
         foregroundColor: context.appColorScheme.primary,
         side: BorderSide(color: context.appColorScheme.primary),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: context.textTheme.bodySmall
             ?.copyWith(fontWeight: FontWeight.w600),
       ),
@@ -222,6 +224,8 @@ class _DownloadedRow extends StatelessWidget {
             backgroundColor: context.appColorScheme.primary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             textStyle: context.textTheme.bodySmall
                 ?.copyWith(fontWeight: FontWeight.w600),
             elevation: 0,
