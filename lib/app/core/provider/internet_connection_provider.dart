@@ -12,7 +12,7 @@ class InternetConnectionProvider {
   });
   final String serverUrl;
   InternetConnectionProvider(this.serverUrl) {
-    // intialize();
+    intialize();
   }
 
   late final connection = InternetConnection.createInstance(
