@@ -6,6 +6,17 @@ import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/repository/offline_course_repository.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 
+// ── Internal progress model ───────────────────────────────────────────────────
+
+class _CourseDownloadProgress {
+  int completed;
+  final int total;
+  _CourseDownloadProgress({required this.completed, required this.total});
+  double get fraction => total == 0 ? 0.0 : completed / total;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 class OfflineViewModel extends ChangeNotifier {
   static final provider = ChangeNotifierProvider<OfflineViewModel>((ref) {
     return OfflineViewModel(
@@ -20,37 +31,78 @@ class OfflineViewModel extends ChangeNotifier {
   OfflineViewModel({required this.repository, required this.ref}) {
     _fetch();
   }
+
   DataState<List<Course>> courses = DataState.idle();
+
+  // ── Per-course download progress ──────────────────────────────────────────
+
+  final Map<int, _CourseDownloadProgress> _progress = {};
+
+  /// Returns a 0.0–1.0 progress value while a course is downloading,
+  /// or `null` if the course is not currently being downloaded.
+  double? downloadProgress(Course course) {
+    final p = _progress[course.id];
+    return p?.fraction;
+  }
+
+  // ── Download ──────────────────────────────────────────────────────────────
+
   Future<void> download(Course course) async {
     _downloading.add(course);
     notifyListeners();
 
     try {
       final classes = await repository.download(course);
+
+      // ── Count total files (videos + articles + participant guide) ──────────
+      int total = 0;
+      for (final c in classes) {
+        if (_validUrl(c.classInfo?.videoUploadUrl)) total++;
+        if (_validUrl(c.classInfo?.articleFile)) total++;
+      }
+      final pgUrl = course.participantGuideFile?.toString();
+      if (_validUrl(pgUrl)) total++;
+
+      _progress[course.id ?? -1] = _CourseDownloadProgress(
+        completed: 0,
+        total: total,
+      );
+      notifyListeners();
+
+      // ── Queue all downloads, incrementing completed counter per file ───────
+      final fileVM = ref.read(FileCacheViewModel.provider);
       final futures = <Future>[];
-      for (var classInfo in classes) {
-        if (classInfo.classInfo?.videoUploadUrl != null) {
-          futures.add(
-            ref
-                .read(FileCacheViewModel.provider)
-                .downloadFile(classInfo.classInfo!.videoUploadUrl!),
-          );
+
+      void addDownload(String url) {
+        futures.add(
+          fileVM.downloadFile(url).then((_) {
+            _progress[course.id ?? -1]?.completed++;
+            notifyListeners();
+          }),
+        );
+      }
+
+      for (final c in classes) {
+        if (_validUrl(c.classInfo?.videoUploadUrl)) {
+          addDownload(c.classInfo!.videoUploadUrl!);
         }
-        if (classInfo.classInfo?.articleFile != null) {
-          futures.add(
-            ref
-                .read(FileCacheViewModel.provider)
-                .downloadFile(classInfo.classInfo!.articleFile!),
-          );
+        if (_validUrl(c.classInfo?.articleFile)) {
+          addDownload(c.classInfo!.articleFile!);
         }
       }
+      // Participant guide (course-level PDF)
+      if (_validUrl(pgUrl)) addDownload(pgUrl!);
+
       await Future.wait(futures);
     } finally {
       _downloading.remove(course);
+      _progress.remove(course.id);
       notifyListeners();
     }
     _fetch();
   }
+
+  // ── Internal helpers ──────────────────────────────────────────────────────
 
   Future<void> _fetch() async {
     courses = DataState.loading();
@@ -62,12 +114,16 @@ class OfflineViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  static bool _validUrl(String? url) =>
+      url != null && url.trim().isNotEmpty;
+
+  // ── Public helpers ────────────────────────────────────────────────────────
+
   bool isAvailable(Course course) {
     return courses.data?.any((e) => e.id == course.id) ?? false;
   }
 
   /// Returns the locally-cached lesson list for [courseId].
-  /// This is what is shown on the course-detail page when the device is offline.
   Future<List<CourseClass>> getCachedClasses(String courseId) {
     return repository.getCachedClasses(courseId);
   }

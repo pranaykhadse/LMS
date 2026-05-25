@@ -3,6 +3,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/model/page_info.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
 import 'package:lms/app/core/views/elements/offline_banner.dart';
 import 'package:lms/app/features/courses/model/course.dart';
@@ -46,9 +47,32 @@ class CoursesPage extends ConsumerWidget {
                   offlineChild: Consumer(
                     builder: (context, ref, child) {
                       final offlineVM = ref.watch(OfflineViewModel.provider);
+                      final isManualOffline =
+                          ref.watch(OfflineModeNotifier.provider);
                       final data = offlineVM.courses.data;
                       if (data == null || data.isEmpty) {
-                        return const Center(child: Text("No courses found"));
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.cloud_off_rounded,
+                                  size: 56,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  isManualOffline
+                                      ? "No courses downloaded yet.\nDisable Offline Mode to browse all courses."
+                                      : "No downloaded courses found.\nConnect to the internet to load your courses.",
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
                       }
                       return CoursesGrid(data: data);
                     },
@@ -131,9 +155,11 @@ class CourseCard extends ConsumerWidget {
 
     return SecondaryCard(
       onTap: () {
-        // All courses are freely accessible — navigate directly to course detail.
+        // Pass the full Course object so the detail page can show the
+        // participant guide and other course-level data.
         Modular.to.pushNamed(
           CoursesModule.construct("${CoursesModule.detail}/${course.id}"),
+          arguments: course,
         );
       },
       padding: EdgeInsets.zero,
@@ -147,6 +173,41 @@ class CourseCard extends ConsumerWidget {
               fit: StackFit.expand,
               children: [
                 Assets.images.loginBg.image(fit: BoxFit.cover),
+                // ── "Available Offline" badge ──────────────────────────────
+                if (isAvailableOffline)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade700,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.offline_pin_rounded,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            "Available Offline",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -254,7 +315,7 @@ class _ViewButton extends StatelessWidget {
   }
 }
 
-/// "Save offline" / "Access Offline" button.
+/// "Save offline" / progress bar / "Access Offline" button.
 class _OfflineButton extends StatelessWidget {
   const _OfflineButton({
     required this.course,
@@ -270,15 +331,19 @@ class _OfflineButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final progress = offlineVM.downloadProgress(course);
+
     return InkWell(
-      onTap: () async {
-        try {
-          await offlineVM.download(course);
-        } catch (e) {
-          // ignore: use_build_context_synchronously
-          Toast.error(context, e.toString());
-        }
-      },
+      onTap: isDownloading
+          ? null
+          : () async {
+              try {
+                await offlineVM.download(course);
+              } catch (e) {
+                // ignore: use_build_context_synchronously
+                Toast.error(context, e.toString());
+              }
+            },
       borderRadius: BorderRadius.circular(context.minorRadius),
       child: Container(
         decoration: BoxDecoration(
@@ -289,12 +354,37 @@ class _OfflineButton extends StatelessWidget {
         child: AnimatedSize(
           duration: Durations.medium1,
           child: isDownloading
-              ? const SizedBox.square(
-                  dimension: 20,
-                  child: CircularProgressIndicator(),
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      progress != null
+                          ? "Downloading ${(progress * 100).toInt()}%"
+                          : "Preparing…",
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: context.colorScheme.primary,
+                        fontSize: 10,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: 100,
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 4,
+                        borderRadius: BorderRadius.circular(2),
+                        backgroundColor:
+                            context.colorScheme.primary.withOpacity(0.2),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          context.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 )
               : Text(
-                  isAvailableOffline ? "Access Offline" : "Save offline",
+                  isAvailableOffline ? "Access Offline" : "Save Offline",
                   style: context.textTheme.bodySmall?.copyWith(
                     color: context.colorScheme.primary,
                   ),

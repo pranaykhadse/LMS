@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/logic/vm_helper/offline_vm_helper.dart';
@@ -73,6 +74,10 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     // Clear any queued offline completions so they don't bleed into the
     // next user's session.
     await syncQueueRepo.clear();
+    // Wipe all cached files (videos, PDFs) from disk on logout.
+    try {
+      await DefaultCacheManager().emptyCache();
+    } catch (_) {}
     state = null;
   }
 

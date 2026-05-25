@@ -27,13 +27,17 @@ class DownloadButton extends ConsumerWidget {
   final String? url;
   final String label;
   final IconData icon;
-  final CourseClass courseClass;
+  // Nullable: participant-guide downloads have no associated lesson class.
+  final CourseClass? courseClass;
   final Widget Function(BuildContext context, FileCacheState file) builder;
 
   void _open(BuildContext context, WidgetRef ref, FileCacheState file) {
-    ref
-        .read(RoasterViewModel.provider(courseClass.courseId).notifier)
-        .markAsRead(courseClass);
+    // Only mark as read when this button belongs to a lesson.
+    if (courseClass != null) {
+      ref
+          .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
+          .markAsRead(courseClass!);
+    }
     ContentViewPage.show(
       context: context,
       courseClass: courseClass,

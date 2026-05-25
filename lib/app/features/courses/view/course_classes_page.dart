@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/model/page_info.dart';
 import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
+import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
@@ -18,13 +20,56 @@ class CourseClassesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // The Course object is passed as route argument from CoursesPage so we can
+    // display course-level features (participant guide) without an extra API call.
+    final course = Modular.args.data is Course
+        ? Modular.args.data as Course
+        : null;
+
+    final pgUrl = course?.participantGuideFile?.toString();
+    final hasPg = pgUrl != null && pgUrl.trim().isNotEmpty;
+
     return Scaffold(
       appBar: FlatAppBar(title: "Course Details"),
-      body: ConnectionAwareWidget(
-        // ── OFFLINE: load lessons from Hive (Netflix-style) ──────────────────
-        offlineChild: _OfflineCourseClassesList(courseId: courseId),
-        // ── ONLINE: fetch lessons from the API as normal ──────────────────────
-        onlineChild: _OnlineCourseClassesList(courseId: courseId),
+      body: Column(
+        children: [
+          // ── Participant Guide download bar ────────────────────────────────
+          if (hasPg)
+            Container(
+              width: double.infinity,
+              color: context.appColorScheme.primary.withOpacity(0.08),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  const Icon(Icons.menu_book_rounded, size: 18),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      "Participant Guide",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  DownloadButton(
+                    icon: Icons.picture_as_pdf,
+                    label: "Participant Guide",
+                    url: pgUrl,
+                    courseClass: null,
+                    builder: (context, file) => PdfContentViewer(file: file),
+                  ),
+                ],
+              ),
+            ),
+
+          // ── Lesson list ───────────────────────────────────────────────────
+          Expanded(
+            child: ConnectionAwareWidget(
+              // ── OFFLINE ──────────────────────────────────────────────────
+              offlineChild: _OfflineCourseClassesList(courseId: courseId),
+              // ── ONLINE ───────────────────────────────────────────────────
+              onlineChild: _OnlineCourseClassesList(courseId: courseId),
+            ),
+          ),
+        ],
       ),
     );
   }
