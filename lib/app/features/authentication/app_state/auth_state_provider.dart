@@ -9,6 +9,7 @@ import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/local_storage_provider.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/features/authentication/repository/auth_repository.dart';
+import 'package:lms/app/features/courses/repository/sync_queue_repository.dart';
 
 import '../model/auth_state.dart';
 
@@ -20,6 +21,7 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
       baseUrl: ref.watch(ServerProvider.serverUrl),
       storage: ref.watch(LocalStorage.provider),
       connectionProvider: ref.watch(InternetConnectionProvider.provider),
+      syncQueueRepo: ref.watch(SyncQueueRepository.provider),
     );
   });
 
@@ -27,10 +29,11 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     required this.baseUrl,
     required this.storage,
     required this.connectionProvider,
+    required this.syncQueueRepo,
   }) : super(null);
   final String baseUrl;
-  // final Ref ref;
   final LocalStorage storage;
+  final SyncQueueRepository syncQueueRepo;
   @override
   final InternetConnectionProvider connectionProvider;
 
@@ -67,6 +70,9 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
 
   Future<void> logout() async {
     await storage.setString("session_data", null);
+    // Clear any queued offline completions so they don't bleed into the
+    // next user's session.
+    await syncQueueRepo.clear();
     state = null;
   }
 

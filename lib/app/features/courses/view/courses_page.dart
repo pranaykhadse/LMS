@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/model/page_info.dart';
 import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
+import 'package:lms/app/core/views/elements/offline_banner.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/courses_view_model.dart';
@@ -23,6 +24,9 @@ class CoursesPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── Offline / re-sync banner ───────────────────────────────
+              const OfflineBanner(),
+
               Padding(
                 padding: EdgeInsets.only(
                   left: context.smallSpace,
