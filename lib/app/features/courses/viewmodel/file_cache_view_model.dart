@@ -47,7 +47,9 @@ class FileCacheViewModel extends ChangeNotifier {
   }
 
   void delete(String url) {
-    cachedState[url]?.file?.deleteSync();
+    // Remove through the cache manager so its internal database stays in sync.
+    // Fire-and-forget is fine here — the UI updates immediately.
+    DefaultCacheManager().removeFile(url);
     cachedState.remove(url);
     notifyListeners();
   }

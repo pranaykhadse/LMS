@@ -17,14 +17,22 @@ class InternetConnectionProvider {
 
   late final connection = InternetConnection.createInstance(
     customCheckOptions: [
+      // Primary: ping the app's own server so we know it's reachable.
       InternetCheckOption(
         uri: Uri.parse(
           "${serverUrl}auth", //'https://staging.trainingpipeline.com/api/web/auth'
         ),
       ),
+      // Fallback: Cloudflare DNS — always up, ultra-reliable.
+      // If the app server is down but the device has internet this still
+      // returns true, which is correct (a real API error will surface on the
+      // login screen rather than the misleading "No Internet" message).
+      InternetCheckOption(uri: Uri.parse('https://1.1.1.1')),
     ],
     useDefaultOptions: false,
-    enableStrictCheck: true,
+    // ANY check passing = connected.  With strictCheck=true BOTH would have
+    // to pass, meaning a staging outage would make the app look offline.
+    enableStrictCheck: false,
   );
   Future<void> intialize() async {
     // connection.

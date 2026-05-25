@@ -85,6 +85,9 @@ class SyncViewModel extends ChangeNotifier {
   // ── Internal ──────────────────────────────────────────────────────────────
 
   void _onConnectionChange(bool isConnected) {
+    // Always notify so OfflineBanner and any other UI watching this VM
+    // rebuilds immediately when connectivity changes in either direction.
+    notifyListeners();
     if (isConnected) sync();
   }
 

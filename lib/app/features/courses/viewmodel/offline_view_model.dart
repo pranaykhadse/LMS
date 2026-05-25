@@ -96,7 +96,8 @@ class OfflineViewModel extends ChangeNotifier {
       await Future.wait(futures);
     } finally {
       _downloading.remove(course);
-      _progress.remove(course.id);
+      // Use the same null-safe key that was used when the entry was created.
+      _progress.remove(course.id ?? -1);
       notifyListeners();
     }
     _fetch();
