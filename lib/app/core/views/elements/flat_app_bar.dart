@@ -61,28 +61,32 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
           const Spacer(),
 
-          // ── "Go Offline" toggle — compact icon + switch + tooltip ────────
-          Tooltip(
-            message: isOfflineMode ? "Offline Mode ON — tap to go online" : "Go Offline",
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isOfflineMode ? Icons.wifi_off_rounded : Icons.wifi_rounded,
-                  size: 18,
-                  color: isOfflineMode
-                      ? Colors.amber.shade700
-                      : context.textTheme.bodySmall?.color,
+          // ── "Go Offline" toggle ────────────────────────────────────────
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isOfflineMode ? Icons.wifi_off_rounded : Icons.wifi_rounded,
+                size: 18,
+                color: isOfflineMode
+                    ? Colors.amber.shade700
+                    : context.textTheme.bodySmall?.color,
+              ),
+              const SizedBox(width: 2),
+              Text(
+                isOfflineMode ? "Online" : "Offline",
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: isOfflineMode ? Colors.amber.shade700 : null,
+                  fontWeight: FontWeight.w600,
                 ),
-                Switch(
-                  value: isOfflineMode,
-                  onChanged: (_) =>
-                      ref.read(OfflineModeNotifier.provider.notifier).toggle(),
-                  activeColor: Colors.amber.shade700,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ],
-            ),
+              ),
+              Switch(
+                value: isOfflineMode,
+                onChanged: (val) =>
+                    ref.read(OfflineModeNotifier.provider.notifier).setMode(val),
+                activeColor: Colors.amber.shade700,
+              ),
+            ],
           ),
 
           SizedBox(width: context.minorSpace),
