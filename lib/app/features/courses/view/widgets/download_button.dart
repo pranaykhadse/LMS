@@ -7,6 +7,7 @@ import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 
 /// A per-content-item download + play widget — Netflix style.
 ///
@@ -15,10 +16,6 @@ import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 ///  ② Downloading               → progress ring + % label
 ///  ③ Downloaded                → [▶ Play / 📄 Open]  🗑️ delete
 ///  ④ Offline  + not downloaded → disabled "Not available offline" pill
-///
-/// Uses [FileCacheViewModel.ensureChecked] + [FileCacheViewModel.getSync]
-/// instead of FutureBuilder so the cached state is never lost on a rebuild
-/// (e.g. when the offline toggle fires).
 class DownloadButton extends ConsumerWidget {
   const DownloadButton({
     super.key,
@@ -37,7 +34,6 @@ class DownloadButton extends ConsumerWidget {
   final Widget Function(BuildContext context, FileCacheState file) builder;
 
   void _open(BuildContext context, WidgetRef ref, FileCacheState file) {
-    // Only mark as read when this button belongs to a lesson.
     if (courseClass != null) {
       ref
           .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
@@ -54,65 +50,60 @@ class DownloadButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (url == null || url!.isEmpty) return const SizedBox.shrink();
 
+    // Watch all three providers so this widget rebuilds whenever any of them
+    // changes — no StreamBuilder needed.
     final fileCacheVM = ref.watch(FileCacheViewModel.provider);
-    final connectionVM = ref.watch(InternetConnectionProvider.provider);
     final isManualOffline = ref.watch(OfflineModeNotifier.provider);
+    final connectionVM = ref.watch(InternetConnectionProvider.provider);
+    // SyncViewModel notifies whenever physical connectivity changes, giving us
+    // reactive rebuilds for real network drops/restores.
+    ref.watch(SyncViewModel.provider);
 
-    return StreamBuilder<bool>(
-      stream: connectionVM.connectionStream,
-      initialData: connectionVM.isConnected,
-      builder: (context, connSnap) {
-        // Effectively offline when the manual toggle is ON OR when there is no
-        // physical internet connection.
-        final isOnline = !isManualOffline &&
-            (connSnap.data ?? connectionVM.isConnected);
+    final isOnline = !isManualOffline && connectionVM.isConnected;
 
-        // Kick off an async disk-cache check if not already known.
-        // This is idempotent — calling it on every rebuild is safe.
-        fileCacheVM.ensureChecked(url!);
-        final data = fileCacheVM.getSync(url!);
+    // Kick off an async disk-cache check if not already known.
+    // Idempotent — safe to call on every build.
+    fileCacheVM.ensureChecked(url!);
+    final data = fileCacheVM.getSync(url!);
 
-        // Still checking disk cache — show a small spinner while loading
-        // so we never prematurely hide a downloaded file.
-        if (data == null) {
-          return const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          );
-        }
+    // ── Still checking disk cache ─────────────────────────────────────────
+    if (data == null) {
+      return const SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
 
-        final isCached = data.file != null;
-        final isDownloading = data.progress != null && !isCached;
+    final isCached = data.file != null;
+    final isDownloading = data.progress != null && !isCached;
 
-        // ── ③ DOWNLOADED — always show Open/Play even when offline ───────
-        if (isCached) {
-          return _DownloadedRow(
-            label: label,
-            onOpen: () => _open(context, ref, data),
-            onDelete: () => fileCacheVM.delete(data.url),
-          );
-        }
+    // ── ③ DOWNLOADED — always show Open/Play even when offline ───────────
+    if (isCached) {
+      return _DownloadedRow(
+        label: label,
+        onOpen: () => _open(context, ref, data),
+        onDelete: () => fileCacheVM.delete(data.url),
+      );
+    }
 
-        // ── ② DOWNLOADING ────────────────────────────────────────────────
-        if (isDownloading) {
-          return _DownloadingRow(
-            label: label,
-            progress: data.progress ?? Stream.value(0.0),
-          );
-        }
+    // ── ② DOWNLOADING ────────────────────────────────────────────────────
+    if (isDownloading) {
+      return _DownloadingRow(
+        label: label,
+        progress: data.progress ?? Stream.value(0.0),
+      );
+    }
 
-        // ── ④ OFFLINE + NOT DOWNLOADED ──────────────────────────────────
-        if (!isOnline) {
-          return const _NotAvailableOfflinePill();
-        }
+    // ── ④ OFFLINE + NOT DOWNLOADED ───────────────────────────────────────
+    if (!isOnline) {
+      return const _NotAvailableOfflinePill();
+    }
 
-        // ── ① ONLINE + NOT DOWNLOADED ───────────────────────────────────
-        return _DownloadTriggerButton(
-          label: label,
-          onTap: () => fileCacheVM.downloadFile(url!),
-        );
-      },
+    // ── ① ONLINE + NOT DOWNLOADED ────────────────────────────────────────
+    return _DownloadTriggerButton(
+      label: label,
+      onTap: () => fileCacheVM.downloadFile(url!),
     );
   }
 }
@@ -121,10 +112,7 @@ class DownloadButton extends ConsumerWidget {
 // ① Download trigger button
 // ─────────────────────────────────────────────────────────────────────────────
 class _DownloadTriggerButton extends StatelessWidget {
-  const _DownloadTriggerButton({
-    required this.label,
-    required this.onTap,
-  });
+  const _DownloadTriggerButton({required this.label, required this.onTap});
 
   final String label;
   final VoidCallback onTap;
@@ -139,9 +127,8 @@ class _DownloadTriggerButton extends StatelessWidget {
         foregroundColor: context.appColorScheme.primary,
         side: BorderSide(color: context.appColorScheme.primary),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        textStyle: context.textTheme.bodySmall?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
+        textStyle: context.textTheme.bodySmall
+            ?.copyWith(fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -163,8 +150,6 @@ class _DownloadingRow extends StatelessWidget {
       initialData: 0.0,
       builder: (context, snapshot) {
         final pct = (snapshot.data ?? 0.0).clamp(0.0, 1.0);
-        final pctLabel = "${(pct * 100).toInt()}%";
-
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -172,7 +157,7 @@ class _DownloadingRow extends StatelessWidget {
               width: 28,
               height: 28,
               child: CircularProgressIndicator(
-                value: pct == 0.0 ? null : pct, // null → indeterminate
+                value: pct == 0.0 ? null : pct,
                 strokeWidth: 3,
                 color: context.appColorScheme.primary,
               ),
@@ -184,12 +169,11 @@ class _DownloadingRow extends StatelessWidget {
               children: [
                 Text(
                   "Downloading $label…",
-                  style: context.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: context.textTheme.bodySmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 Text(
-                  pctLabel,
+                  "${(pct * 100).toInt()}%",
                   style: context.textTheme.bodySmall?.copyWith(
                     color: Colors.grey,
                     fontSize: 10,
@@ -227,7 +211,6 @@ class _DownloadedRow extends StatelessWidget {
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        // ── Play / Open ─────────────────────────────────────────────────────
         ElevatedButton.icon(
           onPressed: onOpen,
           icon: Icon(
@@ -239,14 +222,11 @@ class _DownloadedRow extends StatelessWidget {
             backgroundColor: context.appColorScheme.primary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            textStyle: context.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            textStyle: context.textTheme.bodySmall
+                ?.copyWith(fontWeight: FontWeight.w600),
             elevation: 0,
           ),
         ),
-
-        // ── Delete offline copy ──────────────────────────────────────────────
         Tooltip(
           message: "Remove offline copy",
           child: InkWell(
