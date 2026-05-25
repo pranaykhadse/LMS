@@ -363,7 +363,11 @@ class _CourseClassTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Wrap(spacing: 8, runSpacing: 6, children: actions),
+          // Indent buttons to align with lesson name (skip the 32px number column)
+          Padding(
+            padding: const EdgeInsets.only(left: 40),
+            child: Wrap(spacing: 8, runSpacing: 6, children: actions),
+          ),
         ],
       ),
     );

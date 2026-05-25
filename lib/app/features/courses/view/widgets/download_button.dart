@@ -219,8 +219,10 @@ class _DownloadedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         // ── Play / Open ─────────────────────────────────────────────────────
         ElevatedButton.icon(
@@ -240,8 +242,6 @@ class _DownloadedRow extends StatelessWidget {
             elevation: 0,
           ),
         ),
-
-        const SizedBox(width: 6),
 
         // ── Delete offline copy ──────────────────────────────────────────────
         Tooltip(
