@@ -55,7 +55,7 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   Flexible(
                     child: Text(
                       title,
-                      style: context.textTheme.titleMedium?.copyWith(
+                      style: context.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                       overflow: TextOverflow.ellipsis,
