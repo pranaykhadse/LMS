@@ -25,149 +25,190 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final isOfflineMode = ref.watch(OfflineModeNotifier.provider);
     final syncVM = ref.watch(SyncViewModel.provider);
 
-    // Scaffold allocates statusBarHeight + preferredSize.height for the appBar.
-    // We must pad the content down by statusBarHeight so it sits below the
-    // system status bar (time / wifi / battery icons) on real devices.
     final topPadding = MediaQuery.of(context).padding.top;
+    // Treat anything narrower than 600px as a phone.
+    final isPhone = MediaQuery.of(context).size.width < 600;
+
+    final userName =
+        "${userProfile2?.firstname ?? ""} ${(userProfile2?.middlename ?? "").trim()} ${userProfile2?.lastname ?? ""}"
+            .trim();
 
     return PrimaryCard(
       child: Padding(
         padding: EdgeInsets.only(top: topPadding),
         child: Row(
-        children: [
-          // ── Back button ────────────────────────────────────────────────
-          Opacity(
-            opacity: enableBack ? 1.0 : 0.0,
-            child: AbsorbPointer(
-              absorbing: !enableBack,
-              child: IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: Icon(HugeIcons.strokeRoundedArrowLeft01),
+          children: [
+            // ── Back button ──────────────────────────────────────────────
+            Opacity(
+              opacity: enableBack ? 1.0 : 0.0,
+              child: AbsorbPointer(
+                absorbing: !enableBack,
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Icon(
+                    HugeIcons.strokeRoundedArrowLeft01,
+                    size: isPhone ? 20 : 24,
+                  ),
+                ),
               ),
             ),
-          ),
-          SizedBox(width: context.smallSpace),
 
-          // ── Title ──────────────────────────────────────────────────────
-          Text("Course Catalog", style: context.textTheme.titleLarge),
-          SizedBox(width: context.smallSpace),
-
-          // ── "OFFLINE" chip (auto-detected network loss) ────────────────
-          ConnectionAwareWidget(
-            offlineChild: Chip(
-              label: Text(
-                "OFFLINE",
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: Colors.white,
-                ),
+            // ── Title ────────────────────────────────────────────────────
+            Flexible(
+              child: Text(
+                "Course Catalog",
+                style: isPhone
+                    ? context.textTheme.titleMedium
+                    : context.textTheme.titleLarge,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
-              backgroundColor: Colors.redAccent,
             ),
-            onlineChild: const SizedBox.shrink(),
-          ),
 
-          const Spacer(),
-
-          // ── "Go Offline" toggle ────────────────────────────────────────
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isOfflineMode ? Icons.wifi_off_rounded : Icons.wifi_rounded,
-                size: 18,
-                color: isOfflineMode
-                    ? Colors.amber.shade700
-                    : context.textTheme.bodySmall?.color,
-              ),
-              const SizedBox(width: 2),
-              Text(
-                isOfflineMode ? "Offline" : "Go Offline",
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: isOfflineMode ? Colors.amber.shade700 : null,
-                  fontWeight: FontWeight.w600,
+            // ── "OFFLINE" chip (auto-detected network loss) ───────────────
+            ConnectionAwareWidget(
+              offlineChild: Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Chip(
+                  label: Text(
+                    isPhone ? "OFF" : "OFFLINE",
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: Colors.white,
+                      fontSize: isPhone ? 9 : null,
+                    ),
+                  ),
+                  padding: isPhone
+                      ? const EdgeInsets.symmetric(horizontal: 2)
+                      : null,
+                  backgroundColor: Colors.redAccent,
                 ),
               ),
-              Switch(
-                value: isOfflineMode,
-                onChanged: (val) =>
-                    ref.read(OfflineModeNotifier.provider.notifier).setMode(val),
-                activeColor: Colors.amber.shade700,
-              ),
-            ],
-          ),
+              onlineChild: const SizedBox.shrink(),
+            ),
 
-          SizedBox(width: context.minorSpace),
+            const Spacer(),
 
-          // ── User menu with pending-sync badge ─────────────────────────
-          PopupMenuButton(
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                onTap: () {
-                  ref.read(AuthStateNotifier.provider.notifier).logout();
-                  Modular.to.navigate("/");
-                },
-                child: Row(
-                  spacing: context.minorSpace,
-                  children: const [Icon(Icons.logout), Text("Logout")],
-                ),
-              ),
-            ],
-            child: Row(
+            // ── "Go Offline" toggle ───────────────────────────────────────
+            // Phone: icon + compact Switch only. Tablet: icon + label + Switch.
+            Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Avatar with badge when there are pending completions
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    const CircleAvatar(child: Icon(Icons.person)),
-                    if (syncVM.pendingCount > 0)
-                      Positioned(
-                        top: -4,
-                        right: -4,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
-                            color: Colors.amber,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '${syncVM.pendingCount}',
-                            style: const TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                Icon(
+                  isOfflineMode
+                      ? Icons.wifi_off_rounded
+                      : Icons.wifi_rounded,
+                  size: 16,
+                  color: isOfflineMode
+                      ? Colors.amber.shade700
+                      : context.textTheme.bodySmall?.color,
                 ),
-                SizedBox(width: context.minorSpace),
-                // Cap width so long names can't push buttons off-screen
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 140),
-                  child: Text(
-                    "${userProfile2?.firstname ?? ""} ${(userProfile2?.middlename ?? "")} ${userProfile2?.lastname ?? ""}",
-                    style: context.textTheme.labelLarge,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                if (!isPhone) ...[
+                  const SizedBox(width: 2),
+                  Text(
+                    isOfflineMode ? "Offline" : "Go Offline",
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: isOfflineMode ? Colors.amber.shade700 : null,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                Transform.scale(
+                  scale: isPhone ? 0.75 : 1.0,
+                  child: Switch(
+                    value: isOfflineMode,
+                    onChanged: (val) => ref
+                        .read(OfflineModeNotifier.provider.notifier)
+                        .setMode(val),
+                    activeColor: Colors.amber.shade700,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ],
             ),
-          ),
-          SizedBox(width: context.minorSpace),
-        ],
+
+            const SizedBox(width: 4),
+
+            // ── User avatar + name (name hidden on phone) ─────────────────
+            PopupMenuButton(
+              itemBuilder: (context) => [
+                PopupMenuItem(
+                  onTap: () {
+                    ref.read(AuthStateNotifier.provider.notifier).logout();
+                    Modular.to.navigate("/");
+                  },
+                  child: Row(
+                    spacing: context.minorSpace,
+                    children: const [Icon(Icons.logout), Text("Logout")],
+                  ),
+                ),
+              ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Avatar with pending-sync badge
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        CircleAvatar(
+                          radius: isPhone ? 16 : 20,
+                          child: Icon(
+                            Icons.person,
+                            size: isPhone ? 16 : 20,
+                          ),
+                        ),
+                        if (syncVM.pendingCount > 0)
+                          Positioned(
+                            top: -3,
+                            right: -3,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: const BoxDecoration(
+                                color: Colors.amber,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${syncVM.pendingCount}',
+                                style: const TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    // Hide name on phone to save space
+                    if (!isPhone && userName.isNotEmpty) ...[
+                      SizedBox(width: context.minorSpace),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 120),
+                        child: Text(
+                          userName,
+                          style: context.textTheme.labelLarge,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 4),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   @override
   Size get preferredSize {
-    // Include the top safe-area (status bar) height so Scaffold allocates
-    // enough room and the content isn't hidden behind system icons.
     final topPadding = WidgetsBinding
-        .instance.platformDispatcher.views.first.padding.top /
+            .instance.platformDispatcher.views.first.padding.top /
         WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
     return Size.fromHeight(kToolbarHeight + topPadding);
   }
