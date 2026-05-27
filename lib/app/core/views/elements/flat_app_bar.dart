@@ -31,9 +31,9 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return PrimaryCard(
       child: Padding(
-        padding: EdgeInsets.only(top: topPadding),
+        padding: EdgeInsets.only(top: topPadding, bottom: 10),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
 
             // ── Back button OR leading space ────────────────────────────
@@ -126,14 +126,9 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 16,
-                      backgroundColor: context.appColorScheme.primary.withOpacity(0.12),
-                      child: Icon(
-                        Icons.person_rounded,
-                        size: 18,
-                        color: context.appColorScheme.primary,
-                      ),
+                      child: Icon(Icons.person_rounded, size: 18),
                     ),
                     if (syncVM.pendingCount > 0)
                       Positioned(
