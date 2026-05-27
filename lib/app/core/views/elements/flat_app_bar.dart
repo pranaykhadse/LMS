@@ -47,43 +47,45 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
             else
               const SizedBox(width: 16),
 
-            // ── Title — Flexible so it shrinks before anything else ─────
-            Flexible(
-              fit: FlexFit.loose,
-              child: Text(
-                title,
-                style: context.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-
-            // ── "OFFLINE" chip (physical network loss indicator) ────────
-            ConnectionAwareWidget(
-              offlineChild: Container(
-                margin: const EdgeInsets.only(left: 6),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Text(
-                  'OFFLINE',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
+            // ── Title + OFFLINE chip — Expanded pushes avatar to far right
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: context.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
-                ),
+                  // "OFFLINE" chip (physical network loss indicator)
+                  ConnectionAwareWidget(
+                    offlineChild: Container(
+                      margin: const EdgeInsets.only(left: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        'OFFLINE',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    onlineChild: const SizedBox.shrink(),
+                  ),
+                ],
               ),
-              onlineChild: const SizedBox.shrink(),
             ),
-
-            // ── Push action items to the right ──────────────────────────
-            const Spacer(),
 
             // ── User avatar with popup menu ─────────────────────────────
             PopupMenuButton<String>(
