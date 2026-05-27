@@ -25,8 +25,15 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final isOfflineMode = ref.watch(OfflineModeNotifier.provider);
     final syncVM = ref.watch(SyncViewModel.provider);
 
+    // Scaffold allocates statusBarHeight + preferredSize.height for the appBar.
+    // We must pad the content down by statusBarHeight so it sits below the
+    // system status bar (time / wifi / battery icons) on real devices.
+    final topPadding = MediaQuery.of(context).padding.top;
+
     return PrimaryCard(
-      child: Row(
+      child: Padding(
+        padding: EdgeInsets.only(top: topPadding),
+        child: Row(
         children: [
           // ── Back button ────────────────────────────────────────────────
           Opacity(
@@ -152,9 +159,16 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
           SizedBox(width: context.minorSpace),
         ],
       ),
-    );
+    ));
   }
 
   @override
-  Size get preferredSize => AppBar().preferredSize;
+  Size get preferredSize {
+    // Include the top safe-area (status bar) height so Scaffold allocates
+    // enough room and the content isn't hidden behind system icons.
+    final topPadding = WidgetsBinding
+        .instance.platformDispatcher.views.first.padding.top /
+        WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
+    return Size.fromHeight(kToolbarHeight + topPadding);
+  }
 }
