@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -125,9 +124,14 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    const CircleAvatar(
-                      radius: 18,
-                      child: Icon(Icons.person, size: 18),
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: context.appColorScheme.primary.withOpacity(0.12),
+                      child: Icon(
+                        Icons.person_rounded,
+                        size: 18,
+                        color: context.appColorScheme.primary,
+                      ),
                     ),
                     if (syncVM.pendingCount > 0)
                       Positioned(
