@@ -38,20 +38,17 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
         padding: EdgeInsets.only(top: topPadding),
         child: Row(
           children: [
-            // ── Back button ──────────────────────────────────────────────
-            Opacity(
-              opacity: enableBack ? 1.0 : 0.0,
-              child: AbsorbPointer(
-                absorbing: !enableBack,
-                child: IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: Icon(
-                    HugeIcons.strokeRoundedArrowLeft01,
-                    size: isPhone ? 20 : 24,
-                  ),
+            // ── Back button (only rendered when navigation is possible) ──
+            if (enableBack)
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(
+                  HugeIcons.strokeRoundedArrowLeft01,
+                  size: isPhone ? 20 : 24,
                 ),
-              ),
-            ),
+              )
+            else
+              const SizedBox(width: 8),
 
             // ── Title ────────────────────────────────────────────────────
             Flexible(
