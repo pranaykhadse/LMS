@@ -15,78 +15,80 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.actions,
     this.enableBack = true,
   });
+
   final String title;
   final List<Widget>? actions;
   final bool enableBack;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userProfile2 = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final userProfile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final isOfflineMode = ref.watch(OfflineModeNotifier.provider);
     final syncVM = ref.watch(SyncViewModel.provider);
-
     final topPadding = MediaQuery.of(context).padding.top;
-    // Treat anything narrower than 600px as a phone.
-    final isPhone = MediaQuery.of(context).size.width < 600;
 
     final userName =
-        "${userProfile2?.firstname ?? ""} ${(userProfile2?.middlename ?? "").trim()} ${userProfile2?.lastname ?? ""}"
-            .trim();
+        '${userProfile?.firstname ?? ''} ${(userProfile?.middlename ?? '').trim()} ${userProfile?.lastname ?? ''}'
+            .trim()
+            .replaceAll(RegExp(r'\s+'), ' ');
 
     return PrimaryCard(
       child: Padding(
         padding: EdgeInsets.only(top: topPadding),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── Back button (only rendered when navigation is possible) ──
+
+            // ── Back button OR leading space ────────────────────────────
             if (enableBack)
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
-                icon: Icon(
-                  HugeIcons.strokeRoundedArrowLeft01,
-                  size: isPhone ? 20 : 24,
-                ),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                constraints: const BoxConstraints(),
               )
             else
-              const SizedBox(width: 8),
+              const SizedBox(width: 16),
 
-            // ── Title ────────────────────────────────────────────────────
+            // ── Title — Flexible so it shrinks before anything else ─────
             Flexible(
+              fit: FlexFit.loose,
               child: Text(
-                "Course Catalog",
-                style: isPhone
-                    ? context.textTheme.titleMedium
-                    : context.textTheme.titleLarge,
+                title,
+                style: context.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
             ),
 
-            // ── "OFFLINE" chip (auto-detected network loss) ───────────────
+            // ── "OFFLINE" chip (physical network loss indicator) ────────
             ConnectionAwareWidget(
-              offlineChild: Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Chip(
-                  label: Text(
-                    isPhone ? "OFF" : "OFFLINE",
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: Colors.white,
-                      fontSize: isPhone ? 9 : null,
-                    ),
+              offlineChild: Container(
+                margin: const EdgeInsets.only(left: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'OFFLINE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
                   ),
-                  padding: isPhone
-                      ? const EdgeInsets.symmetric(horizontal: 2)
-                      : null,
-                  backgroundColor: Colors.redAccent,
                 ),
               ),
               onlineChild: const SizedBox.shrink(),
             ),
 
+            // ── Push action items to the right ──────────────────────────
             const Spacer(),
 
-            // ── "Go Offline" toggle ───────────────────────────────────────
-            // Phone: icon + compact Switch only. Tablet: icon + label + Switch.
+            // ── Offline toggle (icon + Switch, no text label) ───────────
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -94,23 +96,13 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   isOfflineMode
                       ? Icons.wifi_off_rounded
                       : Icons.wifi_rounded,
-                  size: 16,
+                  size: 18,
                   color: isOfflineMode
                       ? Colors.amber.shade700
                       : context.textTheme.bodySmall?.color,
                 ),
-                if (!isPhone) ...[
-                  const SizedBox(width: 2),
-                  Text(
-                    isOfflineMode ? "Offline" : "Go Offline",
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: isOfflineMode ? Colors.amber.shade700 : null,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
                 Transform.scale(
-                  scale: isPhone ? 0.75 : 1.0,
+                  scale: 0.8,
                   child: Switch(
                     value: isOfflineMode,
                     onChanged: (val) => ref
@@ -123,79 +115,73 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ],
             ),
 
-            const SizedBox(width: 4),
-
-            // ── User avatar + name (name hidden on phone) ─────────────────
-            PopupMenuButton(
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  onTap: () {
-                    ref.read(AuthStateNotifier.provider.notifier).logout();
-                    Modular.to.navigate("/");
-                  },
+            // ── User avatar with popup menu ─────────────────────────────
+            PopupMenuButton<String>(
+              padding: EdgeInsets.zero,
+              itemBuilder: (_) => [
+                // Show user name at the top of the menu (non-tappable)
+                if (userName.isNotEmpty)
+                  PopupMenuItem<String>(
+                    enabled: false,
+                    height: 36,
+                    child: Text(
+                      userName,
+                      style: context.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                PopupMenuItem<String>(
+                  value: 'logout',
                   child: Row(
-                    spacing: context.minorSpace,
-                    children: const [Icon(Icons.logout), Text("Logout")],
+                    children: [
+                      const Icon(Icons.logout, size: 18),
+                      const SizedBox(width: 8),
+                      const Text('Logout'),
+                    ],
                   ),
                 ),
               ],
+              onSelected: (val) {
+                if (val == 'logout') {
+                  ref.read(AuthStateNotifier.provider.notifier).logout();
+                  Modular.to.navigate('/');
+                }
+              },
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    // Avatar with pending-sync badge
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        CircleAvatar(
-                          radius: isPhone ? 16 : 20,
-                          child: Icon(
-                            Icons.person,
-                            size: isPhone ? 16 : 20,
+                    const CircleAvatar(
+                      radius: 18,
+                      child: Icon(Icons.person, size: 18),
+                    ),
+                    if (syncVM.pendingCount > 0)
+                      Positioned(
+                        top: -3,
+                        right: -3,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            color: Colors.amber,
+                            shape: BoxShape.circle,
                           ),
-                        ),
-                        if (syncVM.pendingCount > 0)
-                          Positioned(
-                            top: -3,
-                            right: -3,
-                            child: Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: const BoxDecoration(
-                                color: Colors.amber,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Text(
-                                '${syncVM.pendingCount}',
-                                style: const TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
+                          child: Text(
+                            '${syncVM.pendingCount}',
+                            style: const TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
                             ),
                           ),
-                      ],
-                    ),
-                    // Hide name on phone to save space
-                    if (!isPhone && userName.isNotEmpty) ...[
-                      SizedBox(width: context.minorSpace),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 120),
-                        child: Text(
-                          userName,
-                          style: context.textTheme.labelLarge,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
                         ),
                       ),
-                    ],
                   ],
                 ),
               ),
             ),
-
-            const SizedBox(width: 4),
           ],
         ),
       ),
@@ -204,9 +190,10 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize {
-    final topPadding = WidgetsBinding
-            .instance.platformDispatcher.views.first.padding.top /
-        WidgetsBinding.instance.platformDispatcher.views.first.devicePixelRatio;
+    final topPadding =
+        WidgetsBinding.instance.platformDispatcher.views.first.padding.top /
+            WidgetsBinding
+                .instance.platformDispatcher.views.first.devicePixelRatio;
     return Size.fromHeight(kToolbarHeight + topPadding);
   }
 }
