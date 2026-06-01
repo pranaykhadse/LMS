@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
@@ -21,6 +22,7 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userProfile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final isOfflineMode = ref.watch(OfflineModeNotifier.provider);
     final syncVM = ref.watch(SyncViewModel.provider);
     final topPadding = MediaQuery.of(context).padding.top;
 
@@ -85,6 +87,33 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ),
                 ],
               ),
+            ),
+
+            // ── Offline toggle (wifi icon + Switch) ────────────────────
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isOfflineMode
+                      ? Icons.wifi_off_rounded
+                      : Icons.wifi_rounded,
+                  size: 18,
+                  color: isOfflineMode
+                      ? Colors.amber.shade700
+                      : context.textTheme.bodySmall?.color,
+                ),
+                Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: isOfflineMode,
+                    onChanged: (val) => ref
+                        .read(OfflineModeNotifier.provider.notifier)
+                        .setMode(val),
+                    activeColor: Colors.amber.shade700,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ],
             ),
 
             // ── User avatar with popup menu ─────────────────────────────
