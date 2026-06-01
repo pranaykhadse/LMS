@@ -195,6 +195,6 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
         WidgetsBinding.instance.platformDispatcher.views.first.padding.top /
             WidgetsBinding
                 .instance.platformDispatcher.views.first.devicePixelRatio;
-    return Size.fromHeight(kToolbarHeight + topPadding);
+    return Size.fromHeight(kToolbarHeight + topPadding + 10);
   }
 }
