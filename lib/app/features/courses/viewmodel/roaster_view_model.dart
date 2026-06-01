@@ -62,6 +62,7 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
   DateTime? _lastFetchedSyncTime;
 
   void _onSyncCompleted() {
+    if (!mounted) return;
     final syncTime = syncViewModel.lastSyncTime;
     if (!syncViewModel.isSyncing &&
         syncTime != null &&
@@ -78,6 +79,7 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
   }
 
   Future<void> fetch() async {
+    if (!mounted) return;
     state = state.copyWith(data: DataState.loading());
     try {
       final data = await repository.getData(
