@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
@@ -23,6 +24,7 @@ class RoasterRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
       data: {"course_id": courseId, "user_id": userId},
     );
+    debugPrint('[RoasterRepo] fetch-user-roaster raw: $response');
     return DataResponse.parse(response, Roaster.fromJson);
   }
 
@@ -47,6 +49,7 @@ class RoasterRepository with RepoNetworkHelper {
         validateStatus: (_) => true,
       ),
     );
+    debugPrint('[RoasterRepo] save-roaster status=${response.statusCode} body=${response.data}');
     final body = response.data;
     if (body == null) return;
     if (body is! Map) return;
