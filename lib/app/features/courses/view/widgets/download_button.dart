@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
-import 'package:lms/app/features/courses/view/widgets/link_button.dart' show _BtnRow;
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
@@ -254,6 +253,39 @@ class _DownloadedRow extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared: icon + label row with 4 px gap (matches Chip internal spacing)
+// ─────────────────────────────────────────────────────────────────────────────
+class _BtnRow extends StatelessWidget {
+  const _BtnRow({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+        ),
+        if (trailing != null) ...[const SizedBox(width: 4), trailing!],
       ],
     );
   }

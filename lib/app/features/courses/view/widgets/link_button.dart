@@ -93,7 +93,6 @@ class LinkButton extends ConsumerWidget {
 }
 
 /// Icon + label row with a 4 px gap, matching Chip's internal spacing.
-// ignore: library_private_types_in_public_api
 class _BtnRow extends StatelessWidget {
   const _BtnRow({
     required this.icon,
