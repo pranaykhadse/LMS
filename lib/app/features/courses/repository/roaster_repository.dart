@@ -20,7 +20,7 @@ class RoasterRepository with RepoNetworkHelper {
   }) async {
     final response = await post(
       "learning-event/fetch-user-roaster",
-      cacheType: RequestCacheType.fetch,
+      cacheType: RequestCacheType.none,
       data: {"course_id": courseId, "user_id": userId},
     );
     return DataResponse.parse(response, Roaster.fromJson);
