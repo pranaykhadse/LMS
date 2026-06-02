@@ -109,7 +109,7 @@ class DownloadButton extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ① Download trigger button — chip style
+// ① Download trigger button
 // ─────────────────────────────────────────────────────────────────────────────
 class _DownloadTriggerButton extends StatelessWidget {
   const _DownloadTriggerButton({required this.label, required this.onTap});
@@ -119,10 +119,19 @@ class _DownloadTriggerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _ActionChip(
-      icon: Icons.download_outlined,
-      label: "Download $label",
-      onTap: onTap,
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: const Icon(Icons.download_outlined, size: 16),
+      label: Text("Download $label"),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: context.appColorScheme.primary,
+        side: BorderSide(color: context.appColorScheme.primary),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
     );
   }
 }
@@ -182,7 +191,7 @@ class _DownloadingRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ③ Downloaded — Play/Open chip + Delete icon
+// ③ Downloaded — Play/Open button + Delete icon
 // ─────────────────────────────────────────────────────────────────────────────
 class _DownloadedRow extends StatelessWidget {
   const _DownloadedRow({
@@ -204,12 +213,23 @@ class _DownloadedRow extends StatelessWidget {
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        _ActionChip(
-          icon: _isVideo
-              ? Icons.play_arrow_rounded
-              : Icons.open_in_new_rounded,
-          label: _isVideo ? "Play $label" : "Open $label",
-          onTap: onOpen,
+        ElevatedButton.icon(
+          onPressed: onOpen,
+          icon: Icon(
+            _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded,
+            size: 16,
+          ),
+          label: Text(_isVideo ? "Play $label" : "Open $label"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: context.appColorScheme.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
         ),
         Tooltip(
           message: "Remove offline copy",
@@ -265,50 +285,3 @@ class _NotAvailableOfflinePill extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared chip-style action button — matches Chip / ClassStatusChip appearance
-// ─────────────────────────────────────────────────────────────────────────────
-class _ActionChip extends StatelessWidget {
-  const _ActionChip({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onTap != null;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: enabled ? Colors.grey.shade200 : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: enabled ? Colors.grey.shade400 : Colors.grey.shade300,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14,
-                color: enabled ? Colors.black87 : Colors.grey),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: enabled ? Colors.black87 : Colors.grey,
-                  ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

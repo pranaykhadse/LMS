@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
@@ -7,9 +8,7 @@ import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Renders a tappable chip that opens an external URL.
-/// Matches the visual style of [ClassStatusChip] (pill shape, same text size).
-///
+/// Renders a tappable button that opens an external URL.
 /// Returns an empty widget when [url] is null or empty.
 class LinkButton extends ConsumerWidget {
   const LinkButton({
@@ -35,24 +34,40 @@ class LinkButton extends ConsumerWidget {
 
     final isOnline = !isManualOffline && connectionVM.isConnected;
 
+    const padding = EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+    const textStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 12);
+
     if (!isOnline) {
-      // ── Offline: disabled chip ────────────────────────────────────────────
       return Tooltip(
         message: "Internet required — not available offline",
-        child: _ChipButton(
-          icon: icon,
-          label: label,
-          trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
-          onTap: null,
+        child: OutlinedButton.icon(
+          onPressed: null,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.grey,
+            side: const BorderSide(color: Colors.grey),
+            padding: padding,
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            textStyle: textStyle,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          icon: Icon(icon, size: 16),
+          label: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label),
+              const SizedBox(width: 4),
+              const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
+            ],
+          ),
         ),
       );
     }
 
-    // ── Online: tappable chip ─────────────────────────────────────────────────
-    return _ChipButton(
-      icon: icon,
-      label: label,
-      onTap: () async {
+    return OutlinedButton.icon(
+      onPressed: () async {
         if (courseClass != null) {
           ref
               .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
@@ -69,59 +84,17 @@ class LinkButton extends ConsumerWidget {
           }
         }
       },
-    );
-  }
-}
-
-/// Shared chip-style button used by [LinkButton] and exported for reuse.
-class _ChipButton extends StatelessWidget {
-  const _ChipButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onTap != null;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: enabled ? Colors.grey.shade200 : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: enabled ? Colors.grey.shade400 : Colors.grey.shade300,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: enabled ? Colors.black87 : Colors.grey,
-            ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: enabled ? Colors.black87 : Colors.grey,
-                  ),
-            ),
-            if (trailing != null) ...[
-              const SizedBox(width: 4),
-              trailing!,
-            ],
-          ],
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: context.appColorScheme.primary,
+        side: BorderSide(color: context.appColorScheme.primary),
+        padding: padding,
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: textStyle,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
     );
