@@ -47,4 +47,29 @@ class RoasterRepository with RepoNetworkHelper {
 
     throw response['message'];
   }
+
+  /// Called whenever a user opens (views) a video or PDF.
+  /// Tracks the learning event completion on the server.
+  Future<void> markLearningEventCompletion(
+    String courseId,
+    String classId,
+    String userId,
+    String learningEventClassId,
+  ) async {
+    final data = {
+      "course_id": int.tryParse(courseId),
+      "class_id": int.tryParse(classId),
+      "user_id": int.tryParse(userId),
+      "learning_event_class_id": int.tryParse(learningEventClassId),
+    };
+    final response = await post(
+      "learning-event/learning-event-completion",
+      cacheType: RequestCacheType.post,
+      data: data,
+    );
+    if (response == null) return;
+    if (response['success'] == 'true') return;
+
+    throw response['message'];
+  }
 }

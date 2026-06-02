@@ -117,14 +117,22 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
       return;
     }
 
-    // Online path — call API immediately.
+    // Online path — call both APIs immediately.
     try {
-      await repository.saveRoaster(
-        courseId ?? "",
-        courseClass.classInfo?.id ?? "",
-        userId?.toString() ?? "",
-        courseClass.id ?? "",
-      );
+      await Future.wait([
+        repository.saveRoaster(
+          courseId ?? "",
+          courseClass.classInfo?.id ?? "",
+          userId?.toString() ?? "",
+          courseClass.id ?? "",
+        ),
+        repository.markLearningEventCompletion(
+          courseId ?? "",
+          courseClass.classInfo?.id ?? "",
+          userId?.toString() ?? "",
+          courseClass.id ?? "",
+        ),
+      ]);
     } catch (_) {
       // Ignore API errors — still refetch so the UI reflects server state.
     }
