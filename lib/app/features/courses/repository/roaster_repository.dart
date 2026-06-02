@@ -28,6 +28,34 @@ class RoasterRepository with RepoNetworkHelper {
     return DataResponse.parse(response, Roaster.fromJson);
   }
 
+  /// Marks a class as completed using the same GET endpoint the web platform
+  /// uses when the user opens a video, article, PDF, or webpage.
+  ///
+  /// Web call: GET /learning-event-log/create?courseId=642&learningEventId=1965
+  ///
+  /// [learningEventId] = courseClass.id — the learning event (or learning-event-
+  /// class) ID embedded in the course-classes API response.
+  Future<void> createLearningEventLog({
+    required String courseId,
+    required String learningEventId,
+  }) async {
+    final response = await getRequest(
+      "learning-event-log/create",
+      queryParameters: {
+        "courseId": int.tryParse(courseId),
+        "learningEventId": int.tryParse(learningEventId),
+      },
+      cacheType: RequestCacheType.none,
+    );
+    debugPrint('[RoasterRepo] learning-event-log/create response: $response');
+    if (response == null) throw 'No response';
+    // Response shape: {status: 1, message: "success", payload: []}
+    if (response['message'] == 'success' ||
+        response['status'] == 1 ||
+        response['status'] == '1') return;
+    throw response['message'] ?? 'createLearningEventLog failed';
+  }
+
   Future<void> saveRoaster(
     String courseId,
     String classId,

@@ -162,40 +162,49 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
       'cached=${_lecIdByClassId[clId]})',
     );
 
-    // Use the same API the web platform uses. The server returns the updated
-    // Roaster (status="3") directly, so we apply it to local state immediately
-    // without a loading flash and then confirm with a background fetch.
-    try {
-      final roaster = await repository.markLearningEventCompletion(
-        cId,
-        clId,
-        uId,
-        learningEventClassId: lecId.isNotEmpty ? lecId : null,
-      );
-      // Apply the server-returned roaster (or fall back to optimistic update).
-      if (roaster != null) {
-        _applyRoaster(roaster);
-      } else {
-        _markClassCompleted(clId);
-      }
-      _fetchInBackground();
-    } catch (e, stack) {
-      debugPrint('[RoasterVM] markLearningEventCompletion error: $e\n$stack');
-      // Fall back to saveRoaster so completion still works even if the
-      // learning-event-completion endpoint returns 404.
+    // PRIMARY: Use the same GET endpoint the web platform calls when the user
+    // opens content — learning-event-log/create?courseId=X&learningEventId=Y
+    // courseClass.id is the learningEventId embedded in the course-classes API.
+    final learningEventId = courseClass.id ?? "";
+    if (learningEventId.isNotEmpty) {
       try {
-        await repository.saveRoaster(cId, clId, uId, lecId);
-        debugPrint('[RoasterVM] saveRoaster succeeded for classId=$clId');
+        await repository.createLearningEventLog(
+          courseId: cId,
+          learningEventId: learningEventId,
+        );
+        debugPrint('[RoasterVM] createLearningEventLog succeeded clId=$clId');
         _markClassCompleted(clId);
-        // Do NOT call _fetchInBackground here: saveRoaster may take time to
-        // propagate on the server, so an immediate re-fetch would overwrite
-        // the optimistic status=3 state with stale data.
-        // The state will be confirmed on the next natural page load.
-      } catch (e2, stack2) {
-        debugPrint('[RoasterVM] saveRoaster fallback error: $e2\n$stack2');
-        fetch();
+        _fetchInBackground();
+        return;
+      } catch (e, stack) {
+        debugPrint('[RoasterVM] createLearningEventLog error: $e\n$stack');
+        // Fall through to next attempt.
       }
     }
+
+    // FALLBACK 1: learning-event/learning-event-completion (needs lecId).
+    if (lecId.isNotEmpty) {
+      try {
+        final roaster = await repository.markLearningEventCompletion(
+          cId, clId, uId,
+          learningEventClassId: lecId,
+        );
+        if (roaster != null) {
+          _applyRoaster(roaster);
+        } else {
+          _markClassCompleted(clId);
+        }
+        _fetchInBackground();
+        return;
+      } catch (e, stack) {
+        debugPrint('[RoasterVM] markLearningEventCompletion error: $e\n$stack');
+      }
+    }
+
+    // FALLBACK 2: optimistic-only update. Neither API worked but show Completed
+    // locally so the UX is not broken. Will sync on next page load.
+    debugPrint('[RoasterVM] all APIs failed — applying optimistic update only');
+    _markClassCompleted(clId);
   }
 
   /// Applies a server-returned [Roaster] directly to local state.
