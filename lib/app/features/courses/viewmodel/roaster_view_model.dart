@@ -129,6 +129,11 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     final lecId = isVirtual ? (courseClass.id ?? "") : null;
 
     try {
+      await repository.saveRoaster(cId, clId, uId, courseClass.id ?? "");
+    } catch (e) {
+      debugPrint('[RoasterVM] saveRoaster error: $e');
+    }
+    try {
       await repository.markLearningEventCompletion(
         cId,
         clId,
