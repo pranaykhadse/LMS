@@ -24,6 +24,10 @@ class LinkButton extends ConsumerWidget {
   final String? url;
   final CourseClass? courseClass;
 
+  static const _padding = EdgeInsets.symmetric(horizontal: 8, vertical: 4);
+  static const _textStyle =
+      TextStyle(fontWeight: FontWeight.w600, fontSize: 12);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (url == null || url!.isEmpty) return const SizedBox.shrink();
@@ -34,30 +38,25 @@ class LinkButton extends ConsumerWidget {
 
     final isOnline = !isManualOffline && connectionVM.isConnected;
 
-    const padding = EdgeInsets.symmetric(horizontal: 8, vertical: 4);
-    const textStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 12);
-
     if (!isOnline) {
       return Tooltip(
         message: "Internet required — not available offline",
-        child: OutlinedButton.icon(
+        child: OutlinedButton(
           onPressed: null,
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.grey,
             side: const BorderSide(color: Colors.grey),
-            padding: padding,
+            padding: _padding,
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            textStyle: textStyle,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+            shape: const StadiumBorder(),
           ),
-          icon: Icon(icon, size: 16),
-          label: Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(label),
+              Icon(icon, size: 14, color: Colors.grey),
+              const SizedBox(width: 4),
+              Text(label, style: _textStyle.copyWith(color: Colors.grey)),
               const SizedBox(width: 4),
               const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
             ],
@@ -66,7 +65,7 @@ class LinkButton extends ConsumerWidget {
       );
     }
 
-    return OutlinedButton.icon(
+    return OutlinedButton(
       onPressed: () async {
         if (courseClass != null) {
           ref
@@ -84,16 +83,23 @@ class LinkButton extends ConsumerWidget {
           }
         }
       },
-      icon: Icon(icon, size: 16),
-      label: Text(label),
       style: OutlinedButton.styleFrom(
         foregroundColor: context.appColorScheme.primary,
         side: BorderSide(color: context.appColorScheme.primary),
-        padding: padding,
+        padding: _padding,
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: textStyle,
         shape: const StadiumBorder(),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: context.appColorScheme.primary),
+          const SizedBox(width: 4),
+          Text(label,
+              style: _textStyle.copyWith(
+                  color: context.appColorScheme.primary)),
+        ],
       ),
     );
   }

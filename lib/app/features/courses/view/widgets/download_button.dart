@@ -119,18 +119,12 @@ class _DownloadTriggerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
+    return OutlinedButton(
       onPressed: onTap,
-      icon: const Icon(Icons.download_outlined, size: 16),
-      label: Text("Download $label"),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: context.appColorScheme.primary,
-        side: BorderSide(color: context.appColorScheme.primary),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-        shape: const StadiumBorder(),
+      style: _chipButtonStyle(context, filled: false),
+      child: _ButtonContent(
+        icon: Icons.download_outlined,
+        label: "Download $label",
       ),
     );
   }
@@ -213,22 +207,15 @@ class _DownloadedRow extends StatelessWidget {
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        ElevatedButton.icon(
+        ElevatedButton(
           onPressed: onOpen,
-          icon: Icon(
-            _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded,
-            size: 16,
-          ),
-          label: Text(_isVideo ? "Play $label" : "Open $label"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: context.appColorScheme.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-            elevation: 0,
-            shape: const StadiumBorder(),
+          style: _chipButtonStyle(context, filled: true),
+          child: _ButtonContent(
+            icon: _isVideo
+                ? Icons.play_arrow_rounded
+                : Icons.open_in_new_rounded,
+            label: _isVideo ? "Play $label" : "Open $label",
+            color: Colors.white,
           ),
         ),
         Tooltip(
@@ -281,6 +268,59 @@ class _NotAvailableOfflinePill extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared helpers — chip-matching button style + icon-text row with 4 px gap
+// ─────────────────────────────────────────────────────────────────────────────
+
+ButtonStyle _chipButtonStyle(BuildContext context, {required bool filled}) {
+  if (filled) {
+    return ElevatedButton.styleFrom(
+      backgroundColor: context.appColorScheme.primary,
+      foregroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      minimumSize: Size.zero,
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      elevation: 0,
+      shape: const StadiumBorder(),
+    );
+  }
+  return OutlinedButton.styleFrom(
+    foregroundColor: context.appColorScheme.primary,
+    side: BorderSide(color: context.appColorScheme.primary),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    minimumSize: Size.zero,
+    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    shape: const StadiumBorder(),
+  );
+}
+
+class _ButtonContent extends StatelessWidget {
+  const _ButtonContent({
+    required this.icon,
+    required this.label,
+    this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = const TextStyle(fontWeight: FontWeight.w600, fontSize: 12);
+    final effectiveColor = color ?? context.appColorScheme.primary;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: effectiveColor),
+        const SizedBox(width: 4), // 4 px gap — matches Chip label spacing
+        Text(label,
+            style: style.copyWith(color: effectiveColor)),
+      ],
     );
   }
 }
