@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
@@ -126,7 +127,9 @@ class _DownloadTriggerButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: context.appColorScheme.primary,
         side: BorderSide(color: context.appColorScheme.primary),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: defaultTargetPlatform == TargetPlatform.macOS
+                ? const EdgeInsets.symmetric(horizontal: 16, vertical: 10)
+                : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: context.textTheme.bodySmall
@@ -223,7 +226,9 @@ class _DownloadedRow extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: context.appColorScheme.primary,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: defaultTargetPlatform == TargetPlatform.macOS
+                ? const EdgeInsets.symmetric(horizontal: 16, vertical: 10)
+                : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             textStyle: context.textTheme.bodySmall

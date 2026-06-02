@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
@@ -43,7 +44,9 @@ class LinkButton extends ConsumerWidget {
 
     final isOnline = !isManualOffline && connectionVM.isConnected;
 
-    const padding = EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+    final padding = defaultTargetPlatform == TargetPlatform.macOS
+        ? const EdgeInsets.symmetric(horizontal: 16, vertical: 10)
+        : const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
 
     if (!isOnline) {
       // ── Offline: greyed-out disabled button ───────────────────────────

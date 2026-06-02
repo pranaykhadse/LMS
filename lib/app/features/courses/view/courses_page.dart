@@ -19,11 +19,7 @@ class CoursesPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: FlatAppBar(title: "Courses", enableBack: false),
-      body: Center(
-        child: ConstrainedBox(
-          // Cap content width on large screens (macOS) for readability.
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Padding(
+      body: Padding(
         padding: EdgeInsets.all(context.smallSpace),
         child: PrimaryCard(
           child: Column(
@@ -115,8 +111,6 @@ class CoursesPage extends ConsumerWidget {
                 ),
               ),
             ],
-          ),
-        ),
           ),
         ),
       ),

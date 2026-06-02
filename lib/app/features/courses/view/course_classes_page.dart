@@ -38,10 +38,7 @@ class CourseClassesPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: FlatAppBar(title: "Course Details"),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: Column(
+      body: Column(
         children: [
           // ── Offline / re-sync banner (replaces old orange strip) ──────────
           const OfflineBanner(),
@@ -121,8 +118,6 @@ class CourseClassesPage extends ConsumerWidget {
             ),
           ),
         ],
-          ),
-        ),
       ),
     );
   }

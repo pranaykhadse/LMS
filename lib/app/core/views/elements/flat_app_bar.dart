@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +25,9 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final userProfile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final isOfflineMode = ref.watch(OfflineModeNotifier.provider);
     final syncVM = ref.watch(SyncViewModel.provider);
-    final topPadding = MediaQuery.of(context).padding.top;
+    final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
+    // macOS has no status bar — use zero top padding and center items vertically.
+    final topPadding = isMacOS ? 0.0 : MediaQuery.of(context).padding.top;
 
     final userName =
         '${userProfile?.firstname ?? ''} ${(userProfile?.middlename ?? '').trim()} ${userProfile?.lastname ?? ''}'
@@ -33,9 +36,10 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return PrimaryCard(
       child: Padding(
-        padding: EdgeInsets.only(top: topPadding, bottom: 10),
+        padding: EdgeInsets.only(top: topPadding, bottom: isMacOS ? 0 : 10),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment:
+              isMacOS ? CrossAxisAlignment.center : CrossAxisAlignment.end,
           children: [
 
             // ── Back button OR leading space ────────────────────────────
@@ -197,6 +201,10 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize {
+    // macOS has no status bar and no bottom padding — use a flat toolbar height.
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      return const Size.fromHeight(kToolbarHeight);
+    }
     final topPadding =
         WidgetsBinding.instance.platformDispatcher.views.first.padding.top /
             WidgetsBinding
