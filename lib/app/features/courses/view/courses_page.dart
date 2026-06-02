@@ -19,7 +19,11 @@ class CoursesPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: FlatAppBar(title: "Courses", enableBack: false),
-      body: Padding(
+      body: Center(
+        child: ConstrainedBox(
+          // Cap content width on large screens (macOS) for readability.
+          constraints: const BoxConstraints(maxWidth: 1200),
+          child: Padding(
         padding: EdgeInsets.all(context.smallSpace),
         child: PrimaryCard(
           child: Column(
@@ -113,6 +117,8 @@ class CoursesPage extends ConsumerWidget {
             ],
           ),
         ),
+          ),
+        ),
       ),
     );
   }
@@ -124,16 +130,38 @@ class CoursesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: EdgeInsets.all(context.smallSpace),
-      itemCount: data.length,
-      itemBuilder: (context, index) {
-        final course = data[index];
-        return Padding(
-          padding: EdgeInsets.only(bottom: context.smallSpace),
-          child: SizedBox(
-            height: 180,
-            child: CourseCard(course: course),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use a 2-column grid on screens wider than 700 px (macOS / tablets).
+        final wide = constraints.maxWidth >= 700;
+        final padding = EdgeInsets.all(context.smallSpace);
+        const cardHeight = 180.0;
+
+        if (wide) {
+          return GridView.builder(
+            padding: padding,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: context.smallSpace,
+              mainAxisSpacing: context.smallSpace,
+              mainAxisExtent: cardHeight,
+            ),
+            itemCount: data.length,
+            itemBuilder: (context, index) =>
+                CourseCard(course: data[index]),
+          );
+        }
+
+        // Narrow (mobile / narrow macOS window) — single column list.
+        return ListView.builder(
+          padding: padding,
+          itemCount: data.length,
+          itemBuilder: (context, index) => Padding(
+            padding: EdgeInsets.only(bottom: context.smallSpace),
+            child: SizedBox(
+              height: cardHeight,
+              child: CourseCard(course: data[index]),
+            ),
           ),
         );
       },
