@@ -149,8 +149,12 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
       // learning-event-completion endpoint returns 404.
       try {
         await repository.saveRoaster(cId, clId, uId, lecId);
+        debugPrint('[RoasterVM] saveRoaster succeeded for classId=$clId');
         _markClassCompleted(clId);
-        _fetchInBackground();
+        // Do NOT call _fetchInBackground here: saveRoaster may take time to
+        // propagate on the server, so an immediate re-fetch would overwrite
+        // the optimistic status=3 state with stale data.
+        // The state will be confirmed on the next natural page load.
       } catch (e2, stack2) {
         debugPrint('[RoasterVM] saveRoaster fallback error: $e2\n$stack2');
         fetch();
