@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
@@ -31,24 +32,26 @@ class RoasterRepository with RepoNetworkHelper {
     String userId,
     String learningEventClassId,
   ) async {
-    var data = {
+    final data = {
       "course_id": int.tryParse(courseId),
       "class_id": int.tryParse(classId),
       "user_id": int.tryParse(userId),
       "learning_event_class_id": int.tryParse(learningEventClassId),
     };
-    final response = await post(
+    // Use Dio directly to avoid caching/serialization issues.
+    final response = await dio.post(
       "learning-event/save-roaster",
-      cacheType: RequestCacheType.post,
       data: data,
+      options: Options(
+        headers: header,
+        validateStatus: (_) => true,
+      ),
     );
-    if (response == null) return;
-    // Response may be a Map or a List depending on server/error state.
-    final Map<dynamic, dynamic>? responseMap =
-        response is Map ? response as Map : null;
-    if (responseMap == null) return;
-    if (responseMap['success'] == 'true' || responseMap['success'] == true) return;
-    throw responseMap['message'];
+    final body = response.data;
+    if (body == null) return;
+    if (body is! Map) return;
+    if (body['success'] == 'true' || body['success'] == true) return;
+    throw body['message'] ?? 'saveRoaster failed';
   }
 
   /// Called whenever a user opens (views) a video or PDF.

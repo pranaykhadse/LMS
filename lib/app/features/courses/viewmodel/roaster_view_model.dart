@@ -131,8 +131,8 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     // record (created via web launch) which doesn't exist on iOS.
     try {
       await repository.saveRoaster(cId, clId, uId, lecId);
-    } catch (e) {
-      debugPrint('[RoasterVM] saveRoaster error: $e');
+    } catch (e, stack) {
+      debugPrint('[RoasterVM] saveRoaster error: $e\n$stack');
     }
     fetch();
   }
