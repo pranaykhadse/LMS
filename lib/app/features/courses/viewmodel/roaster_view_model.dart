@@ -123,9 +123,9 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     final cId = courseId ?? "";
     final clId = courseClass.classId ?? "";
     final uId = userId?.toString() ?? "";
-    // learning_event_class_id is required for all events to identify
-    // the specific learning event class record on the server.
     final lecId = courseClass.id ?? "";
+
+    debugPrint('[RoasterVM] markAsRead → course_id=$cId  class_id=$clId  user_id=$uId  learning_event_class_id=$lecId  classInfo.type=${courseClass.classInfo?.type}');
 
     try {
       await repository.markLearningEventCompletion(
