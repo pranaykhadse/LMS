@@ -120,22 +120,25 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
 
     // Online path — call both APIs independently so one failure doesn't
     // block the other.
+    final cId = courseId ?? "";
+    final clId = courseClass.classId ?? "";
+    final uId = userId?.toString() ?? "";
+    // learning_event_class_id is only needed for Virtual Class events.
+    final isVirtual =
+        courseClass.classInfo?.type?.toLowerCase().contains('virtual') == true;
+    final lecId = isVirtual ? (courseClass.id ?? "") : null;
+
     try {
-      await repository.saveRoaster(
-        courseId ?? "",
-        courseClass.classInfo?.id ?? "",
-        userId?.toString() ?? "",
-        courseClass.id ?? "",
-      );
+      await repository.saveRoaster(cId, clId, uId, courseClass.id ?? "");
     } catch (e) {
       debugPrint('[RoasterVM] saveRoaster error: $e');
     }
     try {
       await repository.markLearningEventCompletion(
-        courseId ?? "",
-        courseClass.classInfo?.id ?? "",
-        userId?.toString() ?? "",
-        courseClass.id ?? "",
+        cId,
+        clId,
+        uId,
+        learningEventClassId: lecId,
       );
     } catch (e) {
       debugPrint('[RoasterVM] markLearningEventCompletion error: $e');

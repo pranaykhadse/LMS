@@ -50,18 +50,22 @@ class RoasterRepository with RepoNetworkHelper {
 
   /// Called whenever a user opens (views) a video or PDF.
   /// Tracks the learning event completion on the server.
+  /// [learningEventClassId] is only required for Virtual Class events —
+  /// omit it (leave null) for Watch Video, Read Article, etc.
   Future<void> markLearningEventCompletion(
     String courseId,
     String classId,
-    String userId,
-    String learningEventClassId,
-  ) async {
-    final data = {
+    String userId, {
+    String? learningEventClassId,
+  }) async {
+    final data = <String, dynamic>{
       "course_id": int.tryParse(courseId),
       "class_id": int.tryParse(classId),
       "user_id": int.tryParse(userId),
-      "learning_event_class_id": int.tryParse(learningEventClassId),
     };
+    if (learningEventClassId != null && learningEventClassId.isNotEmpty) {
+      data["learning_event_class_id"] = int.tryParse(learningEventClassId);
+    }
     final response = await post(
       "learning-event/learning-event-completion",
       cacheType: RequestCacheType.post,

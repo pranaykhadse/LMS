@@ -72,7 +72,10 @@ class SyncViewModel extends ChangeNotifier {
               item.courseId,
               item.classId,
               item.userId,
-              item.learningEventClassId,
+              // learning_event_class_id only for virtual class items
+              learningEventClassId: item.learningEventClassId.isNotEmpty
+                  ? item.learningEventClassId
+                  : null,
             ),
           ]);
           await queueRepo.remove(item);
