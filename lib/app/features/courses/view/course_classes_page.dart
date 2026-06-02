@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,64 +44,41 @@ class CourseClassesPage extends ConsumerWidget {
           // ── Offline / re-sync banner (replaces old orange strip) ──────────
           const OfflineBanner(),
 
-          // ── Course-level documents — label + buttons on one horizontal line ──
+          // ── Course-level documents ────────────────────────────────────────
           if (hasDocs)
             Container(
               width: double.infinity,
               color: context.appColorScheme.primary.withOpacity(0.07),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Wrap(
-                spacing: 16,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    "Course Documents",
-                    style: context.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: context.appColorScheme.primary,
+              child: defaultTargetPlatform == TargetPlatform.macOS
+                  // macOS: label + buttons all on one horizontal line
+                  ? Wrap(
+                      spacing: 16,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: _docChildren(context, pgUrl, wmUrl, wmLink,
+                          hasPg, hasWmFile, hasWmLink, inline: true),
+                    )
+                  // iOS: original vertical layout (label on top, buttons below)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Course Documents",
+                          style: context.textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: context.appColorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          children: _docChildren(context, pgUrl, wmUrl, wmLink,
+                              hasPg, hasWmFile, hasWmLink, inline: false),
+                        ),
+                      ],
                     ),
-                  ),
-                  // Participant Guide — downloadable PDF
-                  if (hasPg)
-                    _DocRow(
-                      icon: Icons.menu_book_rounded,
-                      label: "Participant Guide",
-                      child: DownloadButton(
-                        icon: Icons.picture_as_pdf,
-                        label: "Participant Guide",
-                        url: pgUrl,
-                        courseClass: null,
-                        builder: (ctx, file) => PdfContentViewer(file: file),
-                      ),
-                    ),
-                  // Wrap Methodology — downloadable file
-                  if (hasWmFile)
-                    _DocRow(
-                      icon: Icons.wrap_text_rounded,
-                      label: "Wrap Methodology",
-                      child: DownloadButton(
-                        icon: Icons.picture_as_pdf,
-                        label: "Wrap Methodology",
-                        url: wmUrl,
-                        courseClass: null,
-                        builder: (ctx, file) => PdfContentViewer(file: file),
-                      ),
-                    ),
-                  // Wrap Methodology — external link fallback
-                  if (!hasWmFile && hasWmLink)
-                    _DocRow(
-                      icon: Icons.wrap_text_rounded,
-                      label: "Wrap Methodology",
-                      child: LinkButton(
-                        icon: Icons.open_in_new_rounded,
-                        label: "Wrap Methodology",
-                        url: wmLink,
-                        courseClass: null,
-                      ),
-                    ),
-                ],
-              ),
             ),
 
           // ── Lesson list ───────────────────────────────────────────────────
@@ -140,6 +118,63 @@ class _DocRow extends StatelessWidget {
       ],
     );
   }
+}
+
+List<Widget> _docChildren(
+  BuildContext context,
+  String? pgUrl,
+  String? wmUrl,
+  String? wmLink,
+  bool hasPg,
+  bool hasWmFile,
+  bool hasWmLink, {
+  required bool inline,
+}) {
+  return [
+    if (inline)
+      Text(
+        "Course Documents",
+        style: context.textTheme.labelMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: context.appColorScheme.primary,
+        ),
+      ),
+    if (hasPg)
+      _DocRow(
+        icon: Icons.menu_book_rounded,
+        label: "Participant Guide",
+        child: DownloadButton(
+          icon: Icons.picture_as_pdf,
+          label: "Participant Guide",
+          url: pgUrl,
+          courseClass: null,
+          builder: (ctx, file) => PdfContentViewer(file: file),
+        ),
+      ),
+    if (hasWmFile)
+      _DocRow(
+        icon: Icons.wrap_text_rounded,
+        label: "Wrap Methodology",
+        child: DownloadButton(
+          icon: Icons.picture_as_pdf,
+          label: "Wrap Methodology",
+          url: wmUrl,
+          courseClass: null,
+          builder: (ctx, file) => PdfContentViewer(file: file),
+        ),
+      ),
+    if (!hasWmFile && hasWmLink)
+      _DocRow(
+        icon: Icons.wrap_text_rounded,
+        label: "Wrap Methodology",
+        child: LinkButton(
+          icon: Icons.open_in_new_rounded,
+          label: "Wrap Methodology",
+          url: wmLink,
+          courseClass: null,
+        ),
+      ),
+  ];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

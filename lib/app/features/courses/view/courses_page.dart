@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -126,8 +127,9 @@ class CoursesGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Use a 2-column grid on screens wider than 700 px (macOS / tablets).
-        final wide = constraints.maxWidth >= 700;
+        // Use a 2-column grid on macOS when wide enough — never on iOS.
+        final wide = defaultTargetPlatform == TargetPlatform.macOS &&
+            constraints.maxWidth >= 700;
         final padding = EdgeInsets.all(context.smallSpace);
         const cardHeight = 180.0;
 
