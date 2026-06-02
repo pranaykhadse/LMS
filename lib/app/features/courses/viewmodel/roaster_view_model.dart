@@ -131,10 +131,58 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     // record (created via web launch) which doesn't exist on iOS.
     try {
       await repository.saveRoaster(cId, clId, uId, lecId);
+      // Optimistically update local state so the chip flips immediately
+      // without waiting for fetch-user-roaster to return the new record.
+      _markClassCompleted(clId);
     } catch (e, stack) {
       debugPrint('[RoasterVM] saveRoaster error: $e\n$stack');
     }
     fetch();
+  }
+
+  /// Optimistically marks a class as completed in local state so the chip
+  /// flips immediately after saveRoaster succeeds, without waiting for
+  /// fetch-user-roaster to return the updated record.
+  void _markClassCompleted(String classId) {
+    if (!mounted) return;
+    final existing = state.data.data ?? [];
+    final updated = existing.map((r) {
+      if (r.classId?.toString() == classId) {
+        return Roaster(
+          id: r.id,
+          courseId: r.courseId,
+          classId: r.classId,
+          userId: r.userId,
+          status: '3',
+          isActive: '1',
+          learningEventClassId: r.learningEventClassId,
+          cancellationTime: r.cancellationTime,
+          elearningLaunch: r.elearningLaunch,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+          isSignatureDone: r.isSignatureDone,
+          signatureImage: r.signatureImage,
+          learningEventClass: r.learningEventClass,
+        );
+      }
+      return r;
+    }).toList();
+
+    // If no existing roaster for this class, add a new one.
+    if (!existing.any((r) => r.classId?.toString() == classId)) {
+      updated.add(Roaster(
+        courseId: courseId,
+        classId: classId,
+        userId: userId?.toString(),
+        status: '3',
+        isActive: '1',
+      ));
+    }
+
+    state = PaginatedState(
+      data: DataState.onData(updated),
+      pageInfo: state.pageInfo,
+    );
   }
 
   Roaster? getForClass(CourseClass courseClass) {
