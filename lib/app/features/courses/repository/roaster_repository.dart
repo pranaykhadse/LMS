@@ -62,10 +62,8 @@ class RoasterRepository with RepoNetworkHelper {
       "course_id": int.tryParse(courseId),
       "class_id": int.tryParse(classId),
       "user_id": int.tryParse(userId),
+      "learning_event_class_id": int.tryParse(learningEventClassId ?? ""),
     };
-    if (learningEventClassId != null && learningEventClassId.isNotEmpty) {
-      data["learning_event_class_id"] = int.tryParse(learningEventClassId);
-    }
     final response = await post(
       "learning-event/learning-event-completion",
       cacheType: RequestCacheType.post,

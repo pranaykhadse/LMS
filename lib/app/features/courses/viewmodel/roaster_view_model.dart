@@ -123,16 +123,10 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     final cId = courseId ?? "";
     final clId = courseClass.classId ?? "";
     final uId = userId?.toString() ?? "";
-    // learning_event_class_id is only needed for Virtual Class events.
-    final isVirtual =
-        courseClass.classInfo?.type?.toLowerCase().contains('virtual') == true;
-    final lecId = isVirtual ? (courseClass.id ?? "") : null;
+    // learning_event_class_id is required for all events to identify
+    // the specific learning event class record on the server.
+    final lecId = courseClass.id ?? "";
 
-    try {
-      await repository.saveRoaster(cId, clId, uId, courseClass.id ?? "");
-    } catch (e) {
-      debugPrint('[RoasterVM] saveRoaster error: $e');
-    }
     try {
       await repository.markLearningEventCompletion(
         cId,

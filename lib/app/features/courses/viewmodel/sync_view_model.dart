@@ -61,19 +61,11 @@ class SyncViewModel extends ChangeNotifier {
       final queue = await queueRepo.getQueue();
       for (final item in queue) {
         try {
-          await roasterRepo.saveRoaster(
-            item.courseId,
-            item.classId,
-            item.userId,
-            item.learningEventClassId,
-          );
           await roasterRepo.markLearningEventCompletion(
             item.courseId,
             item.classId,
             item.userId,
-            learningEventClassId: item.learningEventClassId.isNotEmpty
-                ? item.learningEventClassId
-                : null,
+            learningEventClassId: item.learningEventClassId,
           );
           await queueRepo.remove(item);
         } catch (_) {
