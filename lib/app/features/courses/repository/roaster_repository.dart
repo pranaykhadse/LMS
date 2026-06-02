@@ -43,9 +43,12 @@ class RoasterRepository with RepoNetworkHelper {
       data: data,
     );
     if (response == null) return;
-    if (response['success'] == 'true') return;
-
-    throw response['message'];
+    // Response may be a Map or a List depending on server/error state.
+    final Map<dynamic, dynamic>? responseMap =
+        response is Map ? response as Map : null;
+    if (responseMap == null) return;
+    if (responseMap['success'] == 'true' || responseMap['success'] == true) return;
+    throw responseMap['message'];
   }
 
   /// Called whenever a user opens (views) a video or PDF.
