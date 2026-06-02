@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
@@ -8,8 +7,8 @@ import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Renders a tappable button that opens an external URL.
-/// Returns an empty widget when [url] is null or empty.
+/// Tappable chip that opens an external URL.
+/// Styled identically to [ClassStatusChip] ("Registered" chip).
 class LinkButton extends ConsumerWidget {
   const LinkButton({
     super.key,
@@ -24,10 +23,6 @@ class LinkButton extends ConsumerWidget {
   final String? url;
   final CourseClass? courseClass;
 
-  static const _padding = EdgeInsets.symmetric(horizontal: 8, vertical: 4);
-  static const _textStyle =
-      TextStyle(fontWeight: FontWeight.w600, fontSize: 12);
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (url == null || url!.isEmpty) return const SizedBox.shrink();
@@ -41,31 +36,20 @@ class LinkButton extends ConsumerWidget {
     if (!isOnline) {
       return Tooltip(
         message: "Internet required — not available offline",
-        child: OutlinedButton(
+        child: actionChip(
+          context: context,
+          icon: icon,
+          label: label,
           onPressed: null,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.grey,
-            side: const BorderSide(color: Colors.grey),
-            padding: _padding,
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            shape: const StadiumBorder(),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: Colors.grey),
-              const SizedBox(width: 4),
-              Text(label, style: _textStyle.copyWith(color: Colors.grey)),
-              const SizedBox(width: 4),
-              const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
-            ],
-          ),
+          trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
         ),
       );
     }
 
-    return OutlinedButton(
+    return actionChip(
+      context: context,
+      icon: icon,
+      label: label,
       onPressed: () async {
         if (courseClass != null) {
           ref
@@ -83,24 +67,35 @@ class LinkButton extends ConsumerWidget {
           }
         }
       },
-      style: OutlinedButton.styleFrom(
-        foregroundColor: context.appColorScheme.primary,
-        side: BorderSide(color: context.appColorScheme.primary),
-        padding: _padding,
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: const StadiumBorder(),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: context.appColorScheme.primary),
-          const SizedBox(width: 4),
-          Text(label,
-              style: _textStyle.copyWith(
-                  color: context.appColorScheme.primary)),
-        ],
-      ),
     );
   }
+}
+
+/// Shared chip widget used by [LinkButton] and [DownloadButton].
+/// Matches the visual style of the "Registered" [Chip] exactly.
+Widget actionChip({
+  required BuildContext context,
+  required IconData icon,
+  required String label,
+  required VoidCallback? onPressed,
+  Widget? trailing,
+}) {
+  return ActionChip(
+    onPressed: onPressed,
+    avatar: Icon(icon, size: 14),
+    label: trailing == null
+        ? Text(label)
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label),
+              const SizedBox(width: 4),
+              trailing,
+            ],
+          ),
+    labelStyle: const TextStyle(fontSize: 12),
+    labelPadding: const EdgeInsets.only(left: 2, right: 4),
+    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+    side: BorderSide.none,
+  );
 }
