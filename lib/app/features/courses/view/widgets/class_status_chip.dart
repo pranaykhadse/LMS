@@ -15,7 +15,7 @@ class ClassStatusChip extends ConsumerWidget {
     );
 
     final isActive = viewModel.getForClass(courseClass);
-    if (isActive != null && isActive.isActive == '1') {
+    if (isActive != null && isActive.status == '3') {
       return Chip(
         label: Text(
           "Completed",
