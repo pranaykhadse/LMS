@@ -123,9 +123,13 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     final cId = courseId ?? "";
     final clId = courseClass.classId ?? "";
     final uId = userId?.toString() ?? "";
-    final lecId = courseClass.id ?? "";
+    // learning_event_class_id must come from the roaster record returned
+    // by fetch-user-roaster, NOT from courseClass.id. The roaster record
+    // contains the actual learning_event_class_id the server expects.
+    final existingRoaster = getForClass(courseClass);
+    final lecId = existingRoaster?.learningEventClassId?.toString() ?? courseClass.id ?? "";
 
-    debugPrint('[RoasterVM] markAsRead → course_id=$cId  class_id=$clId  user_id=$uId  learning_event_class_id=$lecId  classInfo.type=${courseClass.classInfo?.type}');
+    debugPrint('[RoasterVM] markAsRead → course_id=$cId  class_id=$clId  user_id=$uId  learning_event_class_id=$lecId  roaster.lecId=${existingRoaster?.learningEventClassId}');
 
     try {
       await repository.markLearningEventCompletion(
