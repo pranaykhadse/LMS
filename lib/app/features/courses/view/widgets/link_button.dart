@@ -8,8 +8,8 @@ import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Tappable outlined button that opens an external URL.
-/// Same pill shape / padding as [ClassStatusChip]; keeps original purple color.
+/// Tappable chip that opens an external URL.
+/// Same shape/size/padding as [ClassStatusChip]; uses purple outlined style.
 class LinkButton extends ConsumerWidget {
   const LinkButton({
     super.key,
@@ -33,31 +33,29 @@ class LinkButton extends ConsumerWidget {
     ref.watch(SyncViewModel.provider);
 
     final isOnline = !isManualOffline && connectionVM.isConnected;
+    final primary = context.appColorScheme.primary;
 
     if (!isOnline) {
       return Tooltip(
         message: "Internet required — not available offline",
-        child: OutlinedButton(
+        child: appActionChip(
+          icon: icon,
+          label: label,
+          fgColor: Colors.grey,
+          bgColor: Colors.transparent,
+          borderColor: Colors.grey,
           onPressed: null,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.grey,
-            side: const BorderSide(color: Colors.grey),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            shape: const StadiumBorder(),
-          ),
-          child: _BtnRow(
-            icon: icon,
-            label: label,
-            color: Colors.grey,
-            trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
-          ),
+          trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
         ),
       );
     }
 
-    return OutlinedButton(
+    return appActionChip(
+      icon: icon,
+      label: label,
+      fgColor: primary,
+      bgColor: Colors.transparent,
+      borderColor: primary,
       onPressed: () async {
         if (courseClass != null) {
           ref
@@ -75,50 +73,43 @@ class LinkButton extends ConsumerWidget {
           }
         }
       },
-      style: OutlinedButton.styleFrom(
-        foregroundColor: context.appColorScheme.primary,
-        side: BorderSide(color: context.appColorScheme.primary),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: const StadiumBorder(),
-      ),
-      child: _BtnRow(
-        icon: icon,
-        label: label,
-        color: context.appColorScheme.primary,
-      ),
     );
   }
 }
 
-/// Icon + label row with a 4 px gap, matching Chip's internal spacing.
-class _BtnRow extends StatelessWidget {
-  const _BtnRow({
-    required this.icon,
-    required this.label,
-    required this.color,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color color;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-        ),
-        if (trailing != null) ...[const SizedBox(width: 4), trailing!],
-      ],
-    );
-  }
+/// Shared chip widget matching [ClassStatusChip] size/shape with custom colors.
+/// Used by [LinkButton] and [DownloadButton].
+Widget appActionChip({
+  required IconData icon,
+  required String label,
+  required Color fgColor,
+  required Color bgColor,
+  required Color borderColor,
+  required VoidCallback? onPressed,
+  Widget? trailing,
+}) {
+  return ActionChip(
+    onPressed: onPressed,
+    backgroundColor: bgColor,
+    side: BorderSide(color: borderColor),
+    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+    labelPadding: const EdgeInsets.only(left: 2, right: 4),
+    avatar: Icon(icon, size: 14, color: fgColor),
+    label: trailing == null
+        ? Text(label,
+            style: TextStyle(
+                color: fgColor, fontSize: 12, fontWeight: FontWeight.w600))
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                      color: fgColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600)),
+              const SizedBox(width: 4),
+              trailing,
+            ],
+          ),
+  );
 }
