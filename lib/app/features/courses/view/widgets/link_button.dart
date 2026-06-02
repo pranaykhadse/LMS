@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
@@ -7,8 +8,8 @@ import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Tappable chip that opens an external URL.
-/// Styled identically to [ClassStatusChip] ("Registered" chip).
+/// Tappable outlined button that opens an external URL.
+/// Same pill shape / padding as [ClassStatusChip]; keeps original purple color.
 class LinkButton extends ConsumerWidget {
   const LinkButton({
     super.key,
@@ -36,20 +37,27 @@ class LinkButton extends ConsumerWidget {
     if (!isOnline) {
       return Tooltip(
         message: "Internet required — not available offline",
-        child: actionChip(
-          context: context,
-          icon: icon,
-          label: label,
+        child: OutlinedButton(
           onPressed: null,
-          trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.grey,
+            side: const BorderSide(color: Colors.grey),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            shape: const StadiumBorder(),
+          ),
+          child: _BtnRow(
+            icon: icon,
+            label: label,
+            color: Colors.grey,
+            trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
+          ),
         ),
       );
     }
 
-    return actionChip(
-      context: context,
-      icon: icon,
-      label: label,
+    return OutlinedButton(
       onPressed: () async {
         if (courseClass != null) {
           ref
@@ -67,35 +75,51 @@ class LinkButton extends ConsumerWidget {
           }
         }
       },
+      style: OutlinedButton.styleFrom(
+        foregroundColor: context.appColorScheme.primary,
+        side: BorderSide(color: context.appColorScheme.primary),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: const StadiumBorder(),
+      ),
+      child: _BtnRow(
+        icon: icon,
+        label: label,
+        color: context.appColorScheme.primary,
+      ),
     );
   }
 }
 
-/// Shared chip widget used by [LinkButton] and [DownloadButton].
-/// Matches the visual style of the "Registered" [Chip] exactly.
-Widget actionChip({
-  required BuildContext context,
-  required IconData icon,
-  required String label,
-  required VoidCallback? onPressed,
-  Widget? trailing,
-}) {
-  return ActionChip(
-    onPressed: onPressed,
-    avatar: Icon(icon, size: 14),
-    label: trailing == null
-        ? Text(label)
-        : Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(label),
-              const SizedBox(width: 4),
-              trailing,
-            ],
-          ),
-    labelStyle: const TextStyle(fontSize: 12),
-    labelPadding: const EdgeInsets.only(left: 2, right: 4),
-    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-    side: BorderSide.none,
-  );
+/// Icon + label row with a 4 px gap, matching Chip's internal spacing.
+// ignore: library_private_types_in_public_api
+class _BtnRow extends StatelessWidget {
+  const _BtnRow({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+        ),
+        if (trailing != null) ...[const SizedBox(width: 4), trailing!],
+      ],
+    );
+  }
 }

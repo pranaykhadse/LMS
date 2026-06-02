@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lms/app/features/courses/view/widgets/link_button.dart' show actionChip;
 import 'package:lms/app/core/core.dart';
+import 'package:lms/app/features/courses/view/widgets/link_button.dart' show _BtnRow;
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
@@ -120,11 +120,21 @@ class _DownloadTriggerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return actionChip(
-      context: context,
-      icon: Icons.download_outlined,
-      label: "Download $label",
+    return OutlinedButton(
       onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: context.appColorScheme.primary,
+        side: BorderSide(color: context.appColorScheme.primary),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: const StadiumBorder(),
+      ),
+      child: _BtnRow(
+        icon: Icons.download_outlined,
+        label: "Download $label",
+        color: context.appColorScheme.primary,
+      ),
     );
   }
 }
@@ -206,11 +216,24 @@ class _DownloadedRow extends StatelessWidget {
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        actionChip(
-          context: context,
-          icon: _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded,
-          label: _isVideo ? "Play $label" : "Open $label",
+        ElevatedButton(
           onPressed: onOpen,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: context.appColorScheme.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            elevation: 0,
+            shape: const StadiumBorder(),
+          ),
+          child: _BtnRow(
+            icon: _isVideo
+                ? Icons.play_arrow_rounded
+                : Icons.open_in_new_rounded,
+            label: _isVideo ? "Play $label" : "Open $label",
+            color: Colors.white,
+          ),
         ),
         Tooltip(
           message: "Remove offline copy",
