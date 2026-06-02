@@ -126,11 +126,11 @@ class _DownloadTriggerButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: context.appColorScheme.primary,
         side: BorderSide(color: context.appColorScheme.primary),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: const StadiumBorder(),
       ),
     );
   }
@@ -223,12 +223,12 @@ class _DownloadedRow extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: context.appColorScheme.primary,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: const StadiumBorder(),
           ),
         ),
         Tooltip(

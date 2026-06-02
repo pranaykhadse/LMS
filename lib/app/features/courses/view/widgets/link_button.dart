@@ -34,7 +34,7 @@ class LinkButton extends ConsumerWidget {
 
     final isOnline = !isManualOffline && connectionVM.isConnected;
 
-    const padding = EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+    const padding = EdgeInsets.symmetric(horizontal: 8, vertical: 4);
     const textStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 12);
 
     if (!isOnline) {
@@ -93,9 +93,7 @@ class LinkButton extends ConsumerWidget {
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: textStyle,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: const StadiumBorder(),
       ),
     );
   }
