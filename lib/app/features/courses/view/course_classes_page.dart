@@ -13,7 +13,6 @@ import 'package:lms/app/features/courses/view/widgets/class_status_chip.dart';
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/view/widgets/link_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_class_view_model.dart';
-import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 
 class CourseClassesPage extends ConsumerWidget {
@@ -27,17 +26,6 @@ class CourseClassesPage extends ConsumerWidget {
     final course = Modular.args.data is Course
         ? Modular.args.data as Course
         : null;
-
-    // Seed the RoasterViewModel with learning_event_class_ids from the Course's
-    // inline roasters.  The course-roaster API encodes learning_event_class_id
-    // as the map KEY; Course.fromJson now preserves it.  fetch-user-roaster
-    // omits this field, so without seeding markLearningEventCompletion would
-    // always fail with "Learning event not found".
-    if (course != null && (course.roasters?.isNotEmpty ?? false)) {
-      ref
-          .read(RoasterViewModel.provider(courseId).notifier)
-          .seedLecIds(course.roasters!);
-    }
 
     final pgUrl = course?.participantGuideFile?.toString();
     final wmUrl = course?.wrapMethodologyFile?.toString();

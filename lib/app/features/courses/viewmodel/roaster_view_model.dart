@@ -38,11 +38,6 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
   final InternetConnectionProvider connectionProvider;
   final bool isManualOffline;
 
-  /// classId → learningEventClassId cache.
-  /// Populated from the Course's inline roasters (which carry the map key
-  /// as learningEventClassId) since fetch-user-roaster omits that field.
-  final Map<String, String> _lecIdByClassId = {};
-
   bool get _isEffectivelyOffline =>
       isManualOffline || !connectionProvider.isConnected;
 
@@ -82,20 +77,6 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
   void dispose() {
     syncViewModel.removeListener(_onSyncCompleted);
     super.dispose();
-  }
-
-  /// Pre-populates the classId → learningEventClassId cache from the Course's
-  /// inline roasters.  Called by [CourseClassesPage] which has the [Course]
-  /// object (passed as route argument) that already carries the correct IDs.
-  void seedLecIds(List<Roaster> roasters) {
-    for (final r in roasters) {
-      final cId = r.classId;
-      final lecId = r.learningEventClassId?.toString();
-      if (cId != null && lecId != null) {
-        _lecIdByClassId[cId] = lecId;
-      }
-    }
-    debugPrint('[RoasterVM] seedLecIds: $_lecIdByClassId');
   }
 
   Future<void> fetch() async {
@@ -143,23 +124,19 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     final clId = courseClass.classId ?? "";
     final uId = userId?.toString() ?? "";
 
-    // Resolve learning_event_class_id from multiple fallback sources:
-    //  1. courseClass.id  — populated when the mobile API provides it
-    //  2. existing roaster's learningEventClassId — from fetch-user-roaster
-    //  3. _lecIdByClassId cache — seeded from Course inline roasters whose
-    //     map KEY is the learning_event_class_id (preserved by Course.fromJson)
+    // courseClass.id (learning_event_class_id) is often null on mobile because
+    // the mobile course-fetch API doesn't populate it. Fall back to the value
+    // carried by the already-fetched roaster record for this class, which DOES
+    // contain learning_event_class_id from fetch-user-roaster.
     final existingRoaster = getForClass(courseClass);
     final lecId = (courseClass.id?.isNotEmpty == true)
         ? courseClass.id!
-        : (existingRoaster?.learningEventClassId?.toString()?.isNotEmpty == true
-            ? existingRoaster!.learningEventClassId!.toString()
-            : (_lecIdByClassId[clId] ?? ""));
+        : (existingRoaster?.learningEventClassId?.toString() ?? "");
 
     debugPrint(
       '[RoasterVM] markAsRead — clId=$clId  lecId=$lecId  '
       '(courseClass.id=${courseClass.id}  '
-      'roasterLecId=${existingRoaster?.learningEventClassId}  '
-      'cached=${_lecIdByClassId[clId]})',
+      'roasterLecId=${existingRoaster?.learningEventClassId})',
     );
 
     // Use the same API the web platform uses. The server returns the updated
