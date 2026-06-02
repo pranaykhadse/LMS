@@ -57,6 +57,7 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
             Expanded(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Flexible(
                     child: Text(

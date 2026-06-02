@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
@@ -121,13 +122,29 @@ class _DownloadTriggerButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = context.appColorScheme.primary;
-    return appActionChip(
-      icon: Icons.download_outlined,
-      label: "Download $label",
-      fgColor: primary,
-      bgColor: Colors.transparent,
-      borderColor: primary,
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      return appActionChip(
+        icon: Icons.download_outlined,
+        label: "Download $label",
+        fgColor: primary,
+        bgColor: Colors.transparent,
+        borderColor: primary,
+        onPressed: onTap,
+      );
+    }
+    return OutlinedButton.icon(
       onPressed: onTap,
+      icon: const Icon(Icons.download_outlined, size: 18),
+      label: Text("Download $label"),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primary,
+        side: BorderSide(color: primary),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: context.textTheme.bodySmall
+            ?.copyWith(fontWeight: FontWeight.w600),
+      ),
     );
   }
 }
@@ -209,16 +226,36 @@ class _DownloadedRow extends StatelessWidget {
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        appActionChip(
-          icon: _isVideo
-              ? Icons.play_arrow_rounded
-              : Icons.open_in_new_rounded,
-          label: _isVideo ? "Play $label" : "Open $label",
-          fgColor: Colors.white,
-          bgColor: context.appColorScheme.primary,
-          borderColor: context.appColorScheme.primary,
-          onPressed: onOpen,
-        ),
+        if (defaultTargetPlatform == TargetPlatform.macOS)
+          appActionChip(
+            icon: _isVideo
+                ? Icons.play_arrow_rounded
+                : Icons.open_in_new_rounded,
+            label: _isVideo ? "Play $label" : "Open $label",
+            fgColor: Colors.white,
+            bgColor: context.appColorScheme.primary,
+            borderColor: context.appColorScheme.primary,
+            onPressed: onOpen,
+          )
+        else
+          ElevatedButton.icon(
+            onPressed: onOpen,
+            icon: Icon(
+              _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded,
+              size: 18,
+            ),
+            label: Text(_isVideo ? "Play $label" : "Open $label"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: context.appColorScheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              textStyle: context.textTheme.bodySmall
+                  ?.copyWith(fontWeight: FontWeight.w600),
+              elevation: 0,
+            ),
+          ),
         Tooltip(
           message: "Remove offline copy",
           child: InkWell(

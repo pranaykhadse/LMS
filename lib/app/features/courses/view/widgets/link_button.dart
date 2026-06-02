@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
@@ -8,8 +9,6 @@ import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/// Tappable chip that opens an external URL.
-/// Same shape/size/padding as [ClassStatusChip]; uses purple outlined style.
 class LinkButton extends ConsumerWidget {
   const LinkButton({
     super.key,
@@ -34,51 +33,93 @@ class LinkButton extends ConsumerWidget {
 
     final isOnline = !isManualOffline && connectionVM.isConnected;
     final primary = context.appColorScheme.primary;
+    final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
 
     if (!isOnline) {
       return Tooltip(
         message: "Internet required — not available offline",
-        child: appActionChip(
-          icon: icon,
-          label: label,
-          fgColor: Colors.grey,
-          bgColor: Colors.transparent,
-          borderColor: Colors.grey,
-          onPressed: null,
-          trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
-        ),
+        child: isMacOS
+            ? appActionChip(
+                icon: icon,
+                label: label,
+                fgColor: Colors.grey,
+                bgColor: Colors.transparent,
+                borderColor: Colors.grey,
+                onPressed: null,
+                trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
+              )
+            : OutlinedButton.icon(
+                onPressed: null,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.grey,
+                  side: const BorderSide(color: Colors.grey),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: context.textTheme.bodySmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                icon: Icon(icon, size: 18),
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(label),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
+                  ],
+                ),
+              ),
       );
     }
 
-    return appActionChip(
-      icon: icon,
-      label: label,
-      fgColor: primary,
-      bgColor: Colors.transparent,
-      borderColor: primary,
-      onPressed: () async {
-        if (courseClass != null) {
-          ref
-              .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
-              .markAsRead(courseClass!);
+    final onTap = () async {
+      if (courseClass != null) {
+        ref
+            .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
+            .markAsRead(courseClass!);
+      }
+      final uri = Uri.tryParse(url!);
+      if (uri != null && await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open link.')),
+          );
         }
-        final uri = Uri.tryParse(url!);
-        if (uri != null && await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } else {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Could not open link.')),
-            );
-          }
-        }
-      },
+      }
+    };
+
+    if (isMacOS) {
+      return appActionChip(
+        icon: icon,
+        label: label,
+        fgColor: primary,
+        bgColor: Colors.transparent,
+        borderColor: primary,
+        onPressed: onTap,
+      );
+    }
+
+    // ── iOS / other platforms: original outlined button ───────────────────────
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primary,
+        side: BorderSide(color: primary),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: context.textTheme.bodySmall
+            ?.copyWith(fontWeight: FontWeight.w600),
+      ),
     );
   }
 }
 
-/// Shared chip widget matching [ClassStatusChip] size/shape with custom colors.
-/// Used by [LinkButton] and [DownloadButton].
+/// ActionChip with custom colors — macOS-only action button style.
 Widget appActionChip({
   required IconData icon,
   required String label,
