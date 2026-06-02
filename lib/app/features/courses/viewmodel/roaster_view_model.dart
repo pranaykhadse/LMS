@@ -119,12 +119,25 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
       return;
     }
 
-    // Online path — call both APIs independently so one failure doesn't
-    // block the other.
+    // Online path.
     final cId = courseId ?? "";
     final clId = courseClass.classId ?? "";
     final uId = userId?.toString() ?? "";
-    final lecId = courseClass.id ?? "";
+
+    // courseClass.id (learning_event_class_id) is often null on mobile because
+    // the mobile course-fetch API doesn't populate it. Fall back to the value
+    // carried by the already-fetched roaster record for this class, which DOES
+    // contain learning_event_class_id from fetch-user-roaster.
+    final existingRoaster = getForClass(courseClass);
+    final lecId = (courseClass.id?.isNotEmpty == true)
+        ? courseClass.id!
+        : (existingRoaster?.learningEventClassId?.toString() ?? "");
+
+    debugPrint(
+      '[RoasterVM] markAsRead — clId=$clId  lecId=$lecId  '
+      '(courseClass.id=${courseClass.id}  '
+      'roasterLecId=${existingRoaster?.learningEventClassId})',
+    );
 
     // Use the same API the web platform uses. The server returns the updated
     // Roaster (status="3") directly, so we apply it to local state immediately
