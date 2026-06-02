@@ -123,23 +123,16 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     final cId = courseId ?? "";
     final clId = courseClass.classId ?? "";
     final uId = userId?.toString() ?? "";
-    // learning_event_class_id must come from the roaster record returned
-    // by fetch-user-roaster, NOT from courseClass.id. The roaster record
-    // contains the actual learning_event_class_id the server expects.
-    final existingRoaster = getForClass(courseClass);
-    final lecId = existingRoaster?.learningEventClassId?.toString() ?? courseClass.id ?? "";
+    final lecId = courseClass.id ?? "";
 
-    debugPrint('[RoasterVM] markAsRead → course_id=$cId  class_id=$clId  user_id=$uId  learning_event_class_id=$lecId  roaster.lecId=${existingRoaster?.learningEventClassId}');
-
+    // saveRoaster directly creates a roaster record with status:3, which
+    // is what fetch-user-roaster reads to show the Completed chip.
+    // markLearningEventCompletion requires a pre-existing learning event
+    // record (created via web launch) which doesn't exist on iOS.
     try {
-      await repository.markLearningEventCompletion(
-        cId,
-        clId,
-        uId,
-        learningEventClassId: lecId,
-      );
+      await repository.saveRoaster(cId, clId, uId, lecId);
     } catch (e) {
-      debugPrint('[RoasterVM] markLearningEventCompletion error: $e');
+      debugPrint('[RoasterVM] saveRoaster error: $e');
     }
     fetch();
   }
