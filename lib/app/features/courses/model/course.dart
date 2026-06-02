@@ -218,11 +218,19 @@ class Course {
             ? null
             : List<Roaster>.from(
               (json["roasters"] is List
-                      ? json["roasters"]
+                      ? (json["roasters"] as List).map((x) => x)
                       : json["roasters"] is Map
-                      ? json["roasters"]!.values
-                      : [])
-                  .map((x) => Roaster.fromJson(x)),
+                      // When the server sends roasters as a Map the KEY is the
+                      // learning_event_class_id.  Inject it into each value so
+                      // it survives the conversion to a flat List.
+                      ? (json["roasters"] as Map).entries.map((e) {
+                          final roasterJson =
+                              Map<dynamic, dynamic>.from(e.value as Map);
+                          roasterJson['learning_event_class_id'] ??= e.key;
+                          return roasterJson;
+                        })
+                      : <dynamic>[])
+                  .map((x) => Roaster.fromJson(x as Map)),
             ),
   );
 
