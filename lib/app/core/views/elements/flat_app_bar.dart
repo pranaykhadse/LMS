@@ -106,9 +106,15 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   scale: 0.8,
                   child: Switch(
                     value: isOfflineMode,
-                    onChanged: (val) => ref
-                        .read(OfflineModeNotifier.provider.notifier)
-                        .setMode(val),
+                    onChanged: (val) {
+                      ref
+                          .read(OfflineModeNotifier.provider.notifier)
+                          .setMode(val);
+                      // When switching back to online, flush the sync queue.
+                      if (!val) {
+                        ref.read(SyncViewModel.provider).onManualOnline();
+                      }
+                    },
                     activeColor: Colors.amber.shade700,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),

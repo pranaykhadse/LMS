@@ -99,6 +99,12 @@ class SyncViewModel extends ChangeNotifier {
     if (isConnected) sync();
   }
 
+  /// Call this when the manual offline toggle is switched OFF so any
+  /// queued completions are flushed immediately.
+  void onManualOnline() {
+    if (connectionProvider.isConnected) sync();
+  }
+
   Future<void> _refreshCount() async {
     _pendingCount = await queueRepo.getPendingCount();
     notifyListeners();
