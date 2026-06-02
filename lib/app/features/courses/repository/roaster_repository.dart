@@ -54,11 +54,12 @@ class RoasterRepository with RepoNetworkHelper {
     throw body['message'] ?? 'saveRoaster failed';
   }
 
-  /// Called whenever a user opens (views) a video or PDF.
-  /// Tracks the learning event completion on the server.
-  /// [learningEventClassId] is only required for Virtual Class events —
-  /// omit it (leave null) for Watch Video, Read Article, etc.
-  Future<void> markLearningEventCompletion(
+  /// Marks a learning event as completed.
+  ///
+  /// This is the same API the web platform uses. On success the server returns
+  /// the updated [Roaster] record (status = "3") which can be applied directly
+  /// to local state without a separate fetch.
+  Future<Roaster?> markLearningEventCompletion(
     String courseId,
     String classId,
     String userId, {
@@ -72,12 +73,18 @@ class RoasterRepository with RepoNetworkHelper {
     };
     final response = await post(
       "learning-event/learning-event-completion",
-      cacheType: RequestCacheType.post,
+      cacheType: RequestCacheType.none,
       data: data,
     );
-    if (response == null) return;
-    if (response['success'] == 'true') return;
-
-    throw response['message'];
+    if (response == null) throw 'No response from server';
+    final success = response['success'];
+    if (success == 'true' || success == true) {
+      final roasterJson = response['roaster'];
+      if (roasterJson != null && roasterJson is Map) {
+        return Roaster.fromJson(roasterJson);
+      }
+      return null;
+    }
+    throw response['message'] ?? 'markLearningEventCompletion failed';
   }
 }

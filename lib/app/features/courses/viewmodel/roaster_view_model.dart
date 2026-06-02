@@ -126,22 +126,54 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     final uId = userId?.toString() ?? "";
     final lecId = courseClass.id ?? "";
 
-    // saveRoaster directly creates a roaster record with status:3, which
-    // is what fetch-user-roaster reads to show the Completed chip.
-    // markLearningEventCompletion requires a pre-existing learning event
-    // record (created via web launch) which doesn't exist on iOS.
+    // Use the same API the web platform uses. The server returns the updated
+    // Roaster (status="3") directly, so we apply it to local state immediately
+    // without a loading flash and then confirm with a background fetch.
     try {
-      await repository.saveRoaster(cId, clId, uId, lecId);
-      // Optimistically update local state so the chip flips immediately
-      // without waiting for fetch-user-roaster to return the new record.
-      _markClassCompleted(clId);
-      // Background-confirm with the server without wiping the optimistic state.
+      final roaster = await repository.markLearningEventCompletion(
+        cId,
+        clId,
+        uId,
+        learningEventClassId: lecId.isNotEmpty ? lecId : null,
+      );
+      // Apply the server-returned roaster (or fall back to optimistic update).
+      if (roaster != null) {
+        _applyRoaster(roaster);
+      } else {
+        _markClassCompleted(clId);
+      }
       _fetchInBackground();
     } catch (e, stack) {
-      debugPrint('[RoasterVM] saveRoaster error: $e\n$stack');
-      // Refetch on failure so the UI reflects actual server state.
-      fetch();
+      debugPrint('[RoasterVM] markLearningEventCompletion error: $e\n$stack');
+      // Fall back to saveRoaster so completion still works even if the
+      // learning-event-completion endpoint returns 404.
+      try {
+        await repository.saveRoaster(cId, clId, uId, lecId);
+        _markClassCompleted(clId);
+        _fetchInBackground();
+      } catch (e2, stack2) {
+        debugPrint('[RoasterVM] saveRoaster fallback error: $e2\n$stack2');
+        fetch();
+      }
     }
+  }
+
+  /// Applies a server-returned [Roaster] directly to local state.
+  /// Replaces an existing record for the same classId, or appends if none exists.
+  void _applyRoaster(Roaster roaster) {
+    if (!mounted) return;
+    final classId = roaster.classId;
+    final existing = state.data.data ?? [];
+    final updated = existing.map((r) {
+      return r.classId?.toString() == classId?.toString() ? roaster : r;
+    }).toList();
+    if (!existing.any((r) => r.classId?.toString() == classId?.toString())) {
+      updated.add(roaster);
+    }
+    state = PaginatedState(
+      data: DataState.onData(updated),
+      pageInfo: state.pageInfo,
+    );
   }
 
   /// Optimistically marks a class as completed in local state so the chip
