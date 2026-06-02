@@ -43,14 +43,16 @@ class CourseClassesPage extends ConsumerWidget {
           // ── Offline / re-sync banner (replaces old orange strip) ──────────
           const OfflineBanner(),
 
-          // ── Course-level documents header ─────────────────────────────────
+          // ── Course-level documents — label + buttons on one horizontal line ──
           if (hasDocs)
             Container(
               width: double.infinity,
               color: context.appColorScheme.primary.withOpacity(0.07),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
                     "Course Documents",
@@ -59,53 +61,44 @@ class CourseClassesPage extends ConsumerWidget {
                       color: context.appColorScheme.primary,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      // Participant Guide — downloadable PDF
-                      if (hasPg)
-                        _DocRow(
-                          icon: Icons.menu_book_rounded,
-                          label: "Participant Guide",
-                          child: DownloadButton(
-                            icon: Icons.picture_as_pdf,
-                            label: "Participant Guide",
-                            url: pgUrl,
-                            courseClass: null,
-                            builder: (ctx, file) => PdfContentViewer(file: file),
-                          ),
-                        ),
-
-                      // Wrap Methodology — downloadable file
-                      if (hasWmFile)
-                        _DocRow(
-                          icon: Icons.wrap_text_rounded,
-                          label: "Wrap Methodology",
-                          child: DownloadButton(
-                            icon: Icons.picture_as_pdf,
-                            label: "Wrap Methodology",
-                            url: wmUrl,
-                            courseClass: null,
-                            builder: (ctx, file) => PdfContentViewer(file: file),
-                          ),
-                        ),
-
-                      // Wrap Methodology — external link fallback
-                      if (!hasWmFile && hasWmLink)
-                        _DocRow(
-                          icon: Icons.wrap_text_rounded,
-                          label: "Wrap Methodology",
-                          child: LinkButton(
-                            icon: Icons.open_in_new_rounded,
-                            label: "Wrap Methodology",
-                            url: wmLink,
-                            courseClass: null,
-                          ),
-                        ),
-                    ],
-                  ),
+                  // Participant Guide — downloadable PDF
+                  if (hasPg)
+                    _DocRow(
+                      icon: Icons.menu_book_rounded,
+                      label: "Participant Guide",
+                      child: DownloadButton(
+                        icon: Icons.picture_as_pdf,
+                        label: "Participant Guide",
+                        url: pgUrl,
+                        courseClass: null,
+                        builder: (ctx, file) => PdfContentViewer(file: file),
+                      ),
+                    ),
+                  // Wrap Methodology — downloadable file
+                  if (hasWmFile)
+                    _DocRow(
+                      icon: Icons.wrap_text_rounded,
+                      label: "Wrap Methodology",
+                      child: DownloadButton(
+                        icon: Icons.picture_as_pdf,
+                        label: "Wrap Methodology",
+                        url: wmUrl,
+                        courseClass: null,
+                        builder: (ctx, file) => PdfContentViewer(file: file),
+                      ),
+                    ),
+                  // Wrap Methodology — external link fallback
+                  if (!hasWmFile && hasWmLink)
+                    _DocRow(
+                      icon: Icons.wrap_text_rounded,
+                      label: "Wrap Methodology",
+                      child: LinkButton(
+                        icon: Icons.open_in_new_rounded,
+                        label: "Wrap Methodology",
+                        url: wmLink,
+                        courseClass: null,
+                      ),
+                    ),
                 ],
               ),
             ),
