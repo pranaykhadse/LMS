@@ -102,6 +102,7 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
   /// automatically be pushed to the server the next time the device goes
   /// online ([SyncViewModel] handles that).
   Future<void> markAsRead(CourseClass courseClass) async {
+    debugPrint('[RoasterVM] markAsRead called — classId=${courseClass.classId}  offline=$_isEffectivelyOffline');
     if (_isEffectivelyOffline) {
       // Queue the completion locally.
       await syncQueueRepo.enqueue(
@@ -134,10 +135,13 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
       // Optimistically update local state so the chip flips immediately
       // without waiting for fetch-user-roaster to return the new record.
       _markClassCompleted(clId);
+      // Background-confirm with the server without wiping the optimistic state.
+      _fetchInBackground();
     } catch (e, stack) {
       debugPrint('[RoasterVM] saveRoaster error: $e\n$stack');
+      // Refetch on failure so the UI reflects actual server state.
+      fetch();
     }
-    fetch();
   }
 
   /// Optimistically marks a class as completed in local state so the chip
@@ -185,9 +189,32 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     );
   }
 
+  /// Fetches fresh data from the server without wiping the existing local state
+  /// first (avoids the DataState.loading null-data flash that clears chips).
+  Future<void> _fetchInBackground() async {
+    if (!mounted) return;
+    try {
+      final data = await repository.getData(
+        courseId: courseId ?? "",
+        userId: userId?.toString() ?? "",
+      );
+      if (!mounted) return;
+      state = PaginatedState(
+        data: DataState.onData(data.data),
+        pageInfo: data.pageInfo,
+      );
+    } catch (_) {
+      // Swallow — the optimistic state is still correct.
+    }
+  }
+
   Roaster? getForClass(CourseClass courseClass) {
-    return state.data.data?.firstWhereOrNull(
-      (value) => value.classId?.toString() == courseClass.classId?.toString(),
+    final matches = state.data.data?.where(
+      (r) => r.classId?.toString() == courseClass.classId?.toString(),
     );
+    if (matches == null || matches.isEmpty) return null;
+    // Prefer the completed record (status=3) when the server returns both the
+    // original registered record and the new completed one for the same class.
+    return matches.firstWhereOrNull((r) => r.status == '3') ?? matches.first;
   }
 }

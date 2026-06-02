@@ -4,6 +4,7 @@ import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
+import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -75,6 +76,12 @@ class LinkButton extends ConsumerWidget {
     // ── Online: normal tappable button ────────────────────────────────────
     return OutlinedButton.icon(
       onPressed: () async {
+        // Mark the lesson complete when the user taps the link.
+        if (courseClass != null) {
+          ref
+              .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
+              .markAsRead(courseClass!);
+        }
         final uri = Uri.tryParse(url!);
         if (uri != null && await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
