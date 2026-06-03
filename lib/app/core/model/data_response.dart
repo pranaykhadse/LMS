@@ -13,18 +13,7 @@ class DataResponse<T> {
     final payload = response['payload'];
     if (payload is! List) throw "Invalid response from server";
 
-    List<T> courses = [];
-    for (var element in payload) {
-      if (element['roasters'] != null) {
-        if (element['roasters'] is List && element['roasters'].length > 0) {
-          print(element);
-        } else if (element['roasters'] is Map &&
-            element['roasters'].length > 0) {
-          print(element);
-        }
-      }
-      courses.add(fromMap(element));
-    }
+    final List<T> courses = payload.map<T>((e) => fromMap(e)).toList();
     return DataResponse(data: courses, pageInfo: pageInfo);
   }
 }
