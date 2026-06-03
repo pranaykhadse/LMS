@@ -7,6 +7,7 @@ import 'package:lms/app/core/model/page_info.dart';
 import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
 import 'package:lms/app/core/views/elements/offline_banner.dart';
 import 'package:lms/app/features/courses/model/course.dart';
+import 'package:lms/app/features/courses/model/class_info.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
