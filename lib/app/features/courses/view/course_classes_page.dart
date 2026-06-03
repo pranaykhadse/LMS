@@ -296,9 +296,9 @@ class _LessonTableView extends StatelessWidget {
   const _LessonTableView({required this.lessons});
   final List<CourseClass> lessons;
 
-  // Fixed column widths; COURSE DETAILS and ACTION share remaining space via flex.
-  static const double _colNum     = 48.0;
-  static const double _colSession = 140.0;
+  // Fixed column widths; COURSE DETAILS fills the remaining space via Expanded.
+  static const double _colNum     = 40.0;
+  static const double _colSession = 90.0;
   static const double _colStatus  = 130.0;
   static const double _colAction  = 280.0;
 
@@ -590,8 +590,8 @@ class _CourseClassTile extends ConsumerWidget {
             SizedBox(
               width: colAction,
               child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
+                spacing: 10,
+                runSpacing: 8,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: actions,
               ),
