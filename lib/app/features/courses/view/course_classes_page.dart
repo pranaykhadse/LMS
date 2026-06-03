@@ -312,11 +312,29 @@ class _CourseClassTile extends StatelessWidget {
     }
 
     // ── Type-aware action buttons ─────────────────────────────────────────
-    // customTypeName matches the parenthetical label shown on the web platform.
-    // alternativeLearningEvent is the universal primary-action URL used by most
-    // event types — the label changes based on the type.
     final t   = (info?.customTypeName ?? info?.type ?? '').toLowerCase().trim();
     final alt = info?.alternativeLearningEvent;
+
+    // DEBUG — remove once type values are confirmed
+    debugPrint(
+      '[Tile] #${courseClass.classId} name="$name" '
+      'customTypeName="${info?.customTypeName}" '
+      'type="${info?.type}" '
+      't="$t" '
+      'alt=${alt?.isNotEmpty == true ? "✓" : "null"} '
+      'videoUrl=${info?.videoUploadUrl?.isNotEmpty == true ? "✓" : "null"} '
+      'watchVideoLink=${info?.watchVideoLink?.isNotEmpty == true ? "✓" : "null"} '
+      'readWebpageLink=${info?.readWebpageLink?.isNotEmpty == true ? "✓" : "null"} '
+      'virtualClassLink=${info?.virtualClassLink?.isNotEmpty == true ? "✓" : "null"} '
+      'discussionForumLink=${info?.discussionForumLink != null ? "✓" : "null"} '
+      'discussionGuruLink=${info?.discussionGuruLink?.isNotEmpty == true ? "✓" : "null"} '
+      'peerCoachingLink=${info?.peerCoachingLink?.isNotEmpty == true ? "✓" : "null"} '
+      'onePagerPro=${info?.onePagerPro?.isNotEmpty == true ? "✓" : "null"} '
+      'customPrompt=${info?.customPrompt?.isNotEmpty == true ? "✓" : "null"} '
+      'storyLineFile=${info?.storyLineFile?.isNotEmpty == true ? "✓" : "null"} '
+      's3ClassLink=${info?.s3ClassLink != null ? "✓" : "null"} '
+      'classLink=${info?.classLink != null ? "✓" : "null"}',
+    );
 
     // Always-present offline-capable downloads (hidden by DownloadButton when
     // the URL is null/empty, so safe to add unconditionally).
