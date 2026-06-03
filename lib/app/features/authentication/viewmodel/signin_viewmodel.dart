@@ -21,7 +21,7 @@ class SignInViewModel with FormHandlerMixin<bool>, ChangeNotifier {
   SignInViewModel(this.authenticator, this.authStateProvider);
 
   final email = TextEditingController(
-    text: kDebugMode ? "shilpatests@gmail.com" : null,
+    text: kDebugMode ? "shilpa.handysolver@gmail.com" : null,
   );
   final password = TextEditingController(
     text: kDebugMode ? "1234567890" : null,

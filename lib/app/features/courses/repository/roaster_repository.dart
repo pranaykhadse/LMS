@@ -68,17 +68,22 @@ class RoasterRepository with RepoNetworkHelper {
     String userId, {
     String? learningEventClassId,
   }) async {
-    final data = <String, dynamic>{
+    // Build the full param map, then drop every falsy entry
+    // (null / 0 / empty string) so the server only receives valid values.
+    final raw = <String, dynamic>{
       "course_id": int.tryParse(courseId),
       "class_id": int.tryParse(classId),
       "user_id": int.tryParse(userId),
       "learning_event_class_id": int.tryParse(learningEventClassId ?? ""),
+      "course_status": 3,
     };
-    debugPrint('[RoasterRepo] learning-event-completion REQUEST → $data');
+    raw.removeWhere((_, v) => v == null || v == 0 || v == '');
+
+    debugPrint('[RoasterRepo] learning-event-completion REQUEST → $raw');
     final response = await post(
       "learning-event/learning-event-completion",
       cacheType: RequestCacheType.none,
-      data: data,
+      data: raw,
     );
     debugPrint('[RoasterRepo] learning-event-completion RESPONSE → $response');
     if (response == null) throw 'No response from server';
