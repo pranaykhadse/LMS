@@ -311,8 +311,16 @@ class _CourseClassTile extends StatelessWidget {
       nextSession = info.startDate.toString();
     }
 
+    // ── Type-aware action buttons ─────────────────────────────────────────
+    // customTypeName matches the parenthetical label shown on the web platform.
+    // alternativeLearningEvent is the universal primary-action URL used by most
+    // event types — the label changes based on the type.
+    final t   = (info?.customTypeName ?? info?.type ?? '').toLowerCase().trim();
+    final alt = info?.alternativeLearningEvent;
+
+    // Always-present offline-capable downloads (hidden by DownloadButton when
+    // the URL is null/empty, so safe to add unconditionally).
     final actions = <Widget>[
-      // ── Downloadable files ────────────────────────────────────────────
       DownloadButton(
         icon: Icons.videocam,
         label: "Video",
@@ -327,7 +335,6 @@ class _CourseClassTile extends StatelessWidget {
         courseClass: courseClass,
         builder: (context, file) => PdfContentViewer(file: file),
       ),
-      // Agreement PDF stored on the CourseClass record (scanned_pdf)
       DownloadButton(
         icon: Icons.assignment_outlined,
         label: "Agreement",
@@ -335,90 +342,55 @@ class _CourseClassTile extends StatelessWidget {
         courseClass: courseClass,
         builder: (context, file) => PdfContentViewer(file: file),
       ),
-
-      // ── External links ────────────────────────────────────────────────
-      LinkButton(
-        icon: Icons.play_circle_outline,
-        label: "Watch Video",
-        url: info?.watchVideoLink,
-        courseClass: courseClass,
-      ),
-      LinkButton(
-        icon: Icons.article_outlined,
-        label: "Read Article",
-        url: info?.readArticleLink,
-        courseClass: courseClass,
-      ),
-      LinkButton(
-        icon: Icons.language,
-        label: "Read Webpage",
-        url: info?.readWebpageLink,
-        courseClass: courseClass,
-      ),
-      // Virtual Class — renamed to match web ("Attend Class")
-      LinkButton(
-        icon: Icons.video_call_outlined,
-        label: "Attend Class",
-        url: info?.virtualClassLink,
-        courseClass: courseClass,
-      ),
-      // Watch Recording: prefer S3 link, fall back to classLink
-      LinkButton(
-        icon: Icons.play_circle_filled_rounded,
-        label: "Watch Recording",
-        url: info?.s3ClassLink?.toString() ?? info?.classLink?.toString(),
-        courseClass: courseClass,
-      ),
-      // eLearning / Storyline module launch
-      LinkButton(
-        icon: Icons.rocket_launch_rounded,
-        label: "Launch",
-        url: info?.storyLineFile,
-        courseClass: courseClass,
-      ),
-      // Discussion Board
-      LinkButton(
-        icon: Icons.forum_outlined,
-        label: "Discussion Board",
-        url: info?.discussionForumLink?.toString(),
-        courseClass: courseClass,
-      ),
-      // Receive Coaching / Coaches
-      LinkButton(
-        icon: Icons.people_outline_rounded,
-        label: "Coaches",
-        url: info?.peerCoachingLink,
-        courseClass: courseClass,
-      ),
-      // Discussion Guru
-      LinkButton(
-        icon: Icons.school_outlined,
-        label: "Discussion Guru",
-        url: info?.discussionGuruLink,
-        courseClass: courseClass,
-      ),
-      // One Page Form / OnePage Pro
-      LinkButton(
-        icon: Icons.description_outlined,
-        label: "One Page Form",
-        url: info?.onePagerPro,
-        courseClass: courseClass,
-      ),
-      // Simulation / Bridgework Link
-      LinkButton(
-        icon: Icons.link_rounded,
-        label: "Bridgework Link",
-        url: info?.customPrompt,
-        courseClass: courseClass,
-      ),
-      // Web Application / Launch Web Application
-      LinkButton(
-        icon: Icons.open_in_browser_rounded,
-        label: "Launch Web Application",
-        url: info?.alternativeLearningEvent,
-        courseClass: courseClass,
-      ),
     ];
+
+    // One primary-action block per type.
+    if (t.contains('virtual class')) {
+      // Attend Class (live link) + Watch Recording (S3/class recording)
+      actions.add(LinkButton(icon: Icons.video_call_outlined, label: "Attend Class",      url: alt,                                                                    courseClass: courseClass));
+      actions.add(LinkButton(icon: Icons.play_circle_filled_rounded, label: "Watch Recording", url: info?.s3ClassLink?.toString() ?? info?.classLink?.toString(), courseClass: courseClass));
+    } else if (t.contains('elearning') || t.contains('e-learning') || t.contains('e learning')) {
+      actions.add(LinkButton(icon: Icons.rocket_launch_rounded,  label: "Launch",         url: alt ?? info?.storyLineFile,                                            courseClass: courseClass));
+    } else if (t.contains('in person')) {
+      actions.add(LinkButton(icon: Icons.person_add_outlined,    label: "Register",       url: alt,                                                                    courseClass: courseClass));
+    } else if (t.contains('watch video')) {
+      actions.add(LinkButton(icon: Icons.play_circle_outline,    label: "Watch Video",    url: info?.watchVideoLink ?? alt,                                           courseClass: courseClass));
+    } else if (t.contains('read article')) {
+      actions.add(LinkButton(icon: Icons.article_outlined,       label: "Read Article",   url: info?.readArticleLink ?? alt,                                          courseClass: courseClass));
+    } else if (t.contains('read webpage')) {
+      actions.add(LinkButton(icon: Icons.language,               label: "Read Webpage",   url: info?.readWebpageLink ?? alt,                                          courseClass: courseClass));
+    } else if (t.contains('discussion board')) {
+      actions.add(LinkButton(icon: Icons.forum_outlined,         label: "Discussion Board", url: info?.discussionForumLink?.toString() ?? alt,                       courseClass: courseClass));
+    } else if (t.contains('perform') && t.contains('task')) {
+      actions.add(LinkButton(icon: Icons.task_alt,               label: "Tasks",          url: alt,                                                                    courseClass: courseClass));
+    } else if (t.contains('peer coaching')) {
+      // Peer Coaching: no action button (matches web — Details only)
+    } else if (t.contains('receive coaching') || t.contains('coaching')) {
+      actions.add(LinkButton(icon: Icons.people_outline_rounded, label: "Coaches",        url: alt,                                                                    courseClass: courseClass));
+    } else if (t.contains('insight')) {
+      actions.add(LinkButton(icon: Icons.bar_chart_rounded,      label: "Insights",       url: alt,                                                                    courseClass: courseClass));
+    } else if (t.contains('linkedin')) {
+      actions.add(LinkButton(icon: Icons.verified_outlined,      label: "Certification",  url: info?.readWebpageLink ?? alt,                                          courseClass: courseClass));
+    } else if (t.contains('certificate')) {
+      // Certificate: no action button (matches web)
+    } else if (t.contains('discussion guru')) {
+      actions.add(LinkButton(icon: Icons.school_outlined,        label: "Discussion Guru", url: info?.discussionGuruLink ?? alt,                                      courseClass: courseClass));
+    } else if (t.contains('one page') || t.contains('onepage')) {
+      actions.add(LinkButton(icon: Icons.description_outlined,   label: "OnePage Pro",    url: info?.onePagerPro ?? alt,                                              courseClass: courseClass));
+    } else if (t.contains('simulation') || t.contains('custom prompt')) {
+      actions.add(LinkButton(icon: Icons.link_rounded,           label: "Bridgework Link", url: info?.customPrompt ?? alt,                                            courseClass: courseClass));
+    } else if (t.contains('agreement')) {
+      actions.add(LinkButton(icon: Icons.assignment_outlined,    label: "Agreement",      url: alt,                                                                    courseClass: courseClass));
+    } else if (t.contains('test out') || t.contains('assessment')) {
+      // Test Out Assessment: no action button (matches web — Started status only)
+    } else if (t.contains('web application')) {
+      actions.add(LinkButton(icon: Icons.open_in_browser_rounded, label: "Launch Web Application", url: alt,                                                         courseClass: courseClass));
+    } else if (t.contains('text message')) {
+      // Text Message: no action button
+    } else if (alt != null && alt.trim().isNotEmpty) {
+      // Unknown type — show generic Launch so nothing is lost
+      actions.add(LinkButton(icon: Icons.open_in_browser_rounded, label: "Launch",        url: alt,                                                                    courseClass: courseClass));
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
