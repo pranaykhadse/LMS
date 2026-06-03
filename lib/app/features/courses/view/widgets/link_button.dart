@@ -49,27 +49,25 @@ class LinkButton extends ConsumerWidget {
                 onPressed: null,
                 trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.white),
               )
-            : Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade500,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.cloud_off,
-                        size: 12, color: Colors.white),
-                    const SizedBox(width: 5),
-                    Text(
-                      label,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+            : SizedBox(
+                height: 30,
+                child: ElevatedButton.icon(
+                  onPressed: null,
+                  icon: const Icon(Icons.cloud_off, size: 13, color: Colors.white),
+                  label: Text(label),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey.shade500,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: Colors.grey.shade500,
+                    disabledForegroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: context.textTheme.bodySmall
+                        ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  ),
                 ),
               ),
       );
@@ -111,19 +109,24 @@ class LinkButton extends ConsumerWidget {
       );
     }
 
-    // ── iOS / other platforms: original outlined button ───────────────────────
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: primary,
-        side: BorderSide(color: primary),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: context.textTheme.bodySmall
-            ?.copyWith(fontWeight: FontWeight.w600),
+    // ── iOS / other platforms: filled action button ───────────────────────────
+    return SizedBox(
+      height: 30,
+      child: ElevatedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: 13),
+        label: Text(label),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          textStyle: context.textTheme.bodySmall
+              ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
       ),
     );
   }

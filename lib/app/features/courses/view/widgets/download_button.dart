@@ -139,18 +139,23 @@ class _DownloadTriggerButton extends StatelessWidget {
         onPressed: onTap,
       );
     }
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: const Icon(Icons.download_outlined, size: 18),
-      label: Text("Download $label"),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: primary,
-        side: BorderSide(color: primary),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: context.textTheme.bodySmall
-            ?.copyWith(fontWeight: FontWeight.w600),
+    return SizedBox(
+      height: 30,
+      child: ElevatedButton.icon(
+        onPressed: onTap,
+        icon: const Icon(Icons.download_outlined, size: 13),
+        label: Text("Download $label"),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          textStyle: context.textTheme.bodySmall
+              ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
       ),
     );
   }

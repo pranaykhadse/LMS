@@ -18,42 +18,66 @@ import 'package:lms/app/features/courses/viewmodel/course_class_view_model.dart'
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 
+// Maps numeric type code to human-readable label shown as subtitle and dialog badge.
+String _typeDisplayName(String? typeCode, String? customTypeName) {
+  if (customTypeName != null && customTypeName.trim().isNotEmpty) {
+    return customTypeName.trim();
+  }
+  switch (typeCode) {
+    case '1':  return 'eLearning Module';
+    case '2':  return 'In Person';
+    case '3':  return 'Virtual Class';
+    case '4':  return 'Watch Video';
+    case '5':  return 'Read Article';
+    case '6':  return 'Read Webpage';
+    case '7':  return 'Discussion Board';
+    case '8':  return 'Perform Task With Observation';
+    case '9':  return 'Perform Task Without Observation';
+    case '10': return 'Receive Coaching';
+    case '11': return 'Insight Report';
+    case '12': return 'Certificate';
+    case '13': return 'LinkedIn Certification';
+    case '14': return 'Discussion Guru';
+    case '15': return 'Peer Coaching';
+    case '17': return 'OnePage Pro';
+    case '18': return 'Custom Prompt';
+    case '19': return 'Agreement';
+    case '20': return 'Test Out Assessment';
+    case '22': return 'Text Message';
+    case '23': return 'Web Application';
+    default:   return '';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────────────────────
 class CourseClassesPage extends ConsumerWidget {
   const CourseClassesPage({super.key, this.courseId});
   final String? courseId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // The Course object is passed as route argument from CoursesPage so we can
-    // display course-level documents without an extra API call.
-    final course = Modular.args.data is Course
-        ? Modular.args.data as Course
-        : null;
-
-    final pgUrl = course?.participantGuideFile?.toString();
-    final wmUrl = course?.wrapMethodologyFile?.toString();
-    final wmLink = course?.wrapMethodologyLink?.toString();
-
-    final hasPg = pgUrl != null && pgUrl.trim().isNotEmpty;
-    final hasWmFile = wmUrl != null && wmUrl.trim().isNotEmpty;
-    final hasWmLink = wmLink != null && wmLink.trim().isNotEmpty;
-    final hasDocs = hasPg || hasWmFile || hasWmLink;
+    final course = Modular.args.data is Course ? Modular.args.data as Course : null;
+    final pgUrl   = course?.participantGuideFile?.toString();
+    final wmUrl   = course?.wrapMethodologyFile?.toString();
+    final wmLink  = course?.wrapMethodologyLink?.toString();
+    final hasPg      = pgUrl  != null && pgUrl.trim().isNotEmpty;
+    final hasWmFile  = wmUrl  != null && wmUrl.trim().isNotEmpty;
+    final hasWmLink  = wmLink != null && wmLink.trim().isNotEmpty;
+    final hasDocs    = hasPg || hasWmFile || hasWmLink;
 
     return Scaffold(
       appBar: FlatAppBar(title: "Course Details"),
       body: Column(
         children: [
-          // ── Offline / re-sync banner (replaces old orange strip) ──────────
           const OfflineBanner(),
-
-          // ── Course-level documents ────────────────────────────────────────
           if (hasDocs)
             Container(
               width: double.infinity,
               color: context.appColorScheme.primary.withOpacity(0.07),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: defaultTargetPlatform == TargetPlatform.macOS
-                  // macOS: label + buttons all on one horizontal line
                   ? Wrap(
                       spacing: 16,
                       runSpacing: 8,
@@ -61,7 +85,6 @@ class CourseClassesPage extends ConsumerWidget {
                       children: _docChildren(context, pgUrl, wmUrl, wmLink,
                           hasPg, hasWmFile, hasWmLink, inline: true),
                     )
-                  // iOS: original vertical layout (label on top, buttons below)
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -82,8 +105,6 @@ class CourseClassesPage extends ConsumerWidget {
                       ],
                     ),
             ),
-
-          // ── Lesson list ───────────────────────────────────────────────────
           Expanded(
             child: ConnectionAwareWidget(
               offlineChild: _OfflineCourseClassesList(courseId: courseId),
@@ -96,13 +117,11 @@ class CourseClassesPage extends ConsumerWidget {
   }
 }
 
-// ── Small helper: icon + label + action widget in a row ──────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Course-document helpers (unchanged)
+// ─────────────────────────────────────────────────────────────────────────────
 class _DocRow extends StatelessWidget {
-  const _DocRow({
-    required this.icon,
-    required this.label,
-    required this.child,
-  });
+  const _DocRow({required this.icon, required this.label, required this.child});
   final IconData icon;
   final String label;
   final Widget child;
@@ -180,7 +199,7 @@ List<Widget> _docChildren(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Online lesson list — fetches from network, paginated
+// Online lesson list
 // ─────────────────────────────────────────────────────────────────────────────
 class _OnlineCourseClassesList extends ConsumerWidget {
   const _OnlineCourseClassesList({this.courseId});
@@ -188,9 +207,8 @@ class _OnlineCourseClassesList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(CourseClassViewModel.provider(courseId));
-    final viewmodel =
-        ref.watch(CourseClassViewModel.provider(courseId).notifier);
+    final state     = ref.watch(CourseClassViewModel.provider(courseId));
+    final viewmodel = ref.watch(CourseClassViewModel.provider(courseId).notifier);
 
     return Column(
       children: [
@@ -204,7 +222,7 @@ class _OnlineCourseClassesList extends ConsumerWidget {
                   if (data == null || data.isEmpty) {
                     return const Center(child: Text("No lessons available."));
                   }
-                  return _LessonListView(lessons: data);
+                  return _LessonTableView(lessons: data);
                 },
               ),
             ),
@@ -220,7 +238,7 @@ class _OnlineCourseClassesList extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Offline lesson list — loads from Hive (downloaded classes)
+// Offline lesson list
 // ─────────────────────────────────────────────────────────────────────────────
 class _OfflineCourseClassesList extends ConsumerWidget {
   const _OfflineCourseClassesList({this.courseId});
@@ -260,7 +278,7 @@ class _OfflineCourseClassesList extends ConsumerWidget {
                       ),
                     );
                   }
-                  return _LessonListView(lessons: data);
+                  return _LessonTableView(lessons: data);
                 },
               ),
             ),
@@ -272,131 +290,151 @@ class _OfflineCourseClassesList extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared lesson list — used by both online and offline paths
+// Lesson table view — "Course Structure" header + column headers + rows
 // ─────────────────────────────────────────────────────────────────────────────
-class _LessonListView extends StatelessWidget {
-  const _LessonListView({required this.lessons});
+class _LessonTableView extends StatelessWidget {
+  const _LessonTableView({required this.lessons});
   final List<CourseClass> lessons;
+
+  // Fixed column widths; COURSE DETAILS and ACTION share remaining space via flex.
+  static const double _colNum     = 48.0;
+  static const double _colSession = 140.0;
+  static const double _colStatus  = 130.0;
+  static const double _colAction  = 280.0;
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(8),
-      itemCount: lessons.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        return _CourseClassTile(
-          index: index,
-          courseClass: lessons[index],
-        );
-      },
+    const headerStyle = TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFF9E9E9E),
+      letterSpacing: 0.6,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── "Course Structure" title ──────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 4,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: context.appColorScheme.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Course Structure',
+                style: context.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Column headers ────────────────────────────────────────────────
+        Container(
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
+              children: [
+                SizedBox(width: _colNum,     child: const Text('#',             style: headerStyle)),
+                const Expanded(              child: Text('COURSE DETAILS',      style: headerStyle)),
+                SizedBox(width: _colSession, child: const Text('NEXT SESSION',  style: headerStyle)),
+                SizedBox(width: _colStatus,  child: const Text('STATUS',        style: headerStyle)),
+                SizedBox(width: _colAction,  child: const Text('ACTION',        style: headerStyle)),
+              ],
+            ),
+          ),
+        ),
+
+        // ── Rows ──────────────────────────────────────────────────────────
+        Expanded(
+          child: ListView.builder(
+            itemCount: lessons.length,
+            itemBuilder: (context, index) => _CourseClassTile(
+              index:       index,
+              courseClass: lessons[index],
+              colNum:      _colNum,
+              colSession:  _colSession,
+              colStatus:   _colStatus,
+              colAction:   _colAction,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Single lesson tile
+// Single lesson row
 // ─────────────────────────────────────────────────────────────────────────────
 class _CourseClassTile extends ConsumerWidget {
-  const _CourseClassTile({required this.index, required this.courseClass});
+  const _CourseClassTile({
+    required this.index,
+    required this.courseClass,
+    required this.colNum,
+    required this.colSession,
+    required this.colStatus,
+    required this.colAction,
+  });
 
   final int index;
   final CourseClass courseClass;
+  final double colNum;
+  final double colSession;
+  final double colStatus;
+  final double colAction;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = courseClass.classInfo;
+    final roasterVM = ref.watch(RoasterViewModel.provider(courseClass.courseId).notifier);
+    final roaster   = roasterVM.getForClass(courseClass);
+    final lec       = roaster?.learningEventClass;
 
-    // For Virtual Class: get training_session_link from the scheduled session
-    // (Roaster.learningEventClass) — this is the LIVE "Attend Class" URL.
-    // alternativeLearningEvent is the recording URL ("Watch Recording").
-    final roasterVM = ref.watch(
-      RoasterViewModel.provider(courseClass.courseId).notifier,
-    );
-    final roaster = roasterVM.getForClass(courseClass);
-    final lec = roaster?.learningEventClass;
-    final trainingLink = (lec is Map)
-        ? lec['training_session_link']?.toString()
-        : null;
+    final trainingLink = (lec is Map) ? lec['training_session_link']?.toString() : null;
     final name = (info?.name ?? '').stripHtml;
+    final t    = (info?.type?.isNotEmpty == true ? info!.type! : (info?.customTypeName ?? '')).trim();
+    final alt  = info?.alternativeLearningEvent;
 
+    final typeName = _typeDisplayName(t.isEmpty ? null : t, info?.customTypeName);
+
+    // Next session: prefer LEC dates, then classInfo dates.
     String nextSession = '';
-    if (info?.startDate != null && info!.startDate.toString().isNotEmpty) {
-      nextSession = info.startDate.toString();
-    }
-
-    // ── Type-aware action buttons ─────────────────────────────────────────
-    final t   = (info?.type?.isNotEmpty == true
-            ? info!.type!
-            : (info?.customTypeName ?? ''))
-        .trim();
-    final alt = info?.alternativeLearningEvent;
-
-    // ── COMPREHENSIVE DEBUG LOG ───────────────────────────────────────────
-    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    debugPrint('LESSON  classId=${courseClass.classId}  courseId=${courseClass.courseId}');
-    debugPrint('  name            : $name');
-    debugPrint('  type            : ${info?.type}');
-    debugPrint('  customTypeName  : ${info?.customTypeName}');
-    debugPrint('  order           : ${courseClass.order}');
-    debugPrint('── STATUS ───────────────────────────────────────────────────');
-    debugPrint('  roasterStatus   : ${roaster?.status ?? "no-record"}');
-    debugPrint('  roasterId       : ${roaster?.id}');
-    debugPrint('  lecId           : ${roaster?.learningEventClassId}');
-    debugPrint('── ROASTER learningEventClass ────────────────────────────────');
     if (lec is Map) {
-      lec.forEach((k, v) {
-        if (v != null && v.toString().isNotEmpty) {
-          debugPrint('  lec.$k : $v');
-        }
-      });
-    } else {
-      debugPrint('  learningEventClass: ${lec?.toString()}');
+      final s = lec['start_date']?.toString() ?? '';
+      final e = lec['end_date']?.toString() ?? '';
+      if (s.isNotEmpty) nextSession = e.isNotEmpty ? '$s – $e' : s;
+    } else if (info?.startDate != null && info!.startDate.toString().isNotEmpty) {
+      final s = info.startDate.toString();
+      final e = info.endDate?.toString() ?? '';
+      nextSession = e.isNotEmpty ? '$s – $e' : s;
     }
-    debugPrint('── URLs (ClassInfo) ─────────────────────────────────────────');
-    debugPrint('  alternativeLearningEvent : ${info?.alternativeLearningEvent}');
-    debugPrint('  virtualClassLink         : ${info?.virtualClassLink}');
-    debugPrint('  watchVideoLink           : ${info?.watchVideoLink}');
-    debugPrint('  readWebpageLink          : ${info?.readWebpageLink}');
-    debugPrint('  readArticleLink          : ${info?.readArticleLink}');
-    debugPrint('  videoUploadUrl           : ${info?.videoUploadUrl}');
-    debugPrint('  articleFile              : ${info?.articleFile}');
-    debugPrint('  discussionForumLink      : ${info?.discussionForumLink}');
-    debugPrint('  discussionGuruLink       : ${info?.discussionGuruLink}');
-    debugPrint('  peerCoachingLink         : ${info?.peerCoachingLink}');
-    debugPrint('  peerCoachingFile         : ${info?.peerCoachingFile}');
-    debugPrint('  onePagerPro              : ${info?.onePagerPro}');
-    debugPrint('  customPrompt             : ${info?.customPrompt}');
-    debugPrint('  storyLineFile            : ${info?.storyLineFile}');
-    debugPrint('  s3ClassLink              : ${info?.s3ClassLink}');
-    debugPrint('  classLink                : ${info?.classLink}');
-    debugPrint('  classPath                : ${info?.classPath}');
-    debugPrint('  scannedPdf (CourseClass) : ${courseClass.scannedPdf}');
-    debugPrint('── SCHEDULE (ClassInfo) ─────────────────────────────────────');
-    debugPrint('  startDate  : ${info?.startDate}');
-    debugPrint('  endDate    : ${info?.endDate}');
-    debugPrint('  startTime  : ${info?.startTime}');
-    debugPrint('  endTime    : ${info?.endTime}');
-    debugPrint('  location   : ${info?.location}');
-    debugPrint('  instructor : ${info?.instructor}');
-    debugPrint('── FLAGS ────────────────────────────────────────────────────');
-    debugPrint('  isLaunch        : ${info?.isLaunch}');
-    debugPrint('  isRise          : ${info?.isRise}');
-    debugPrint('  isOptional      : ${info?.isOptional}');
-    debugPrint('  isSignature     : ${info?.isSignature}');
-    debugPrint('  isCertificate   : ${info?.isCertificate}');
-    debugPrint('  isPreRequisite  : ${info?.isPreRequisite}');
 
-    // Types that show a "Details" button on the web platform.
-    // (14=Discussion Guru, 16=OnePage Pro, 20=Text Message, 21=Web App
-    //  have no Details button on web.)
-    const _detailsTypes = {'1','2','3','4','5','6','7','8','9','10','11','12','13','15','17','18','19'};
+    // Types that show a Details button (matches website behaviour).
+    const detailsTypes = {
+      '1','2','3','4','5','6','7','8','9','10','11','13','15','18','19','20',
+    };
 
-    // Always-present offline-capable downloads (hidden by DownloadButton
-    // when the URL is null/empty, so safe to add unconditionally).
     final actions = <Widget>[
-      if (_detailsTypes.contains(t))
-        _DetailsButton(info: info),
+      if (detailsTypes.contains(t))
+        _DetailsButton(
+          info:       info,
+          lec:        lec,
+          lessonName: name,
+          typeName:   typeName,
+        ),
       DownloadButton(
         icon: Icons.videocam,
         label: "Video",
@@ -420,200 +458,142 @@ class _CourseClassTile extends ConsumerWidget {
       ),
     ];
 
-    // Numeric type codes confirmed from API:
+    // Numeric type codes from API:
     //  1=eLearning  2=In Person  3=Virtual Class  4=Watch Video
     //  5=Read Article  6=Read Webpage  7=Discussion Board
     //  8=Task w/ Obs  9=Task w/o Obs  10=Coaching  11=Insight
     //  12=Certificate  13=LinkedIn Cert  14=Discussion Guru
-    //  15=Peer Coaching  16=OnePage Pro  17=Simulation
-    //  18=Agreement  19=Test Out  20=Text Message  21=Web App
+    //  15=Peer Coaching  17=OnePage Pro  18=Simulation/Custom Prompt
+    //  19=Agreement  20=Test Out  22=Text Message  23=Web Application
     switch (t) {
       case '3': // Virtual Class
-        // Attend Class → training_session_link from the Roaster session (falls back to alt)
-        // Watch Recording → alternativeLearningEvent (the recording URL)
         actions.add(LinkButton(icon: Icons.video_call_outlined,        label: "Attend Class",           url: trainingLink ?? info?.s3ClassLink?.toString() ?? info?.classLink?.toString(), courseClass: courseClass));
-        actions.add(LinkButton(icon: Icons.play_circle_filled_rounded, label: "Watch Recording",        url: alt,                                                    courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.play_circle_filled_rounded, label: "Watch Recording",        url: alt,           courseClass: courseClass));
       case '1': // eLearning Module
-        actions.add(LinkButton(icon: Icons.rocket_launch_rounded,      label: "Launch",                 url: alt ?? info?.storyLineFile,                            courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.rocket_launch_rounded,      label: "Launch",                 url: alt ?? info?.storyLineFile, courseClass: courseClass));
       case '2': // In Person
-        actions.add(LinkButton(icon: Icons.person_add_outlined,        label: "Register",               url: alt,                                                    courseClass: courseClass));
-      case '4': // Watch Video — DownloadButton already handles this
+        actions.add(LinkButton(icon: Icons.person_add_outlined,        label: "Register",               url: alt,           courseClass: courseClass));
+      case '4': // Watch Video — DownloadButton already handles
         break;
-      case '5': // Read Article — DownloadButton already handles this
+      case '5': // Read Article — DownloadButton already handles
         break;
       case '6': // Read Webpage
-        actions.add(LinkButton(icon: Icons.language,                   label: "Read Webpage",           url: info?.readWebpageLink ?? alt,                          courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.language,                   label: "Webpage",                url: info?.readWebpageLink ?? alt, courseClass: courseClass));
       case '7': // Discussion Board
-        actions.add(LinkButton(icon: Icons.forum_outlined,             label: "Discussion Board",       url: info?.discussionForumLink?.toString() ?? alt,          courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.forum_outlined,             label: "Discussion Board",       url: info?.discussionForumLink?.toString() ?? alt, courseClass: courseClass));
       case '8': // Perform a Task with Observation
       case '9': // Perform a Task without Observation
-        actions.add(LinkButton(icon: Icons.task_alt,                   label: "Tasks",                  url: alt,                                                    courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.task_alt,                   label: "Tasks",                  url: alt,           courseClass: courseClass));
       case '10': // Receive Coaching
-        actions.add(LinkButton(icon: Icons.people_outline_rounded,     label: "Coaches",                url: alt,                                                    courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.people_outline_rounded,     label: "Coaches",                url: alt,           courseClass: courseClass));
       case '11': // Insight Report
-        actions.add(LinkButton(icon: Icons.bar_chart_rounded,          label: "Insights",               url: alt,                                                    courseClass: courseClass));
-      case '12': // Certificate — no button
+        actions.add(LinkButton(icon: Icons.bar_chart_rounded,          label: "Insights",               url: alt,           courseClass: courseClass));
+      case '12': // Certificate — no action button
         break;
       case '13': // LinkedIn Certification
-        actions.add(LinkButton(icon: Icons.verified_outlined,          label: "Certification",          url: info?.readWebpageLink ?? alt,                          courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.verified_outlined,          label: "Certification",          url: info?.readWebpageLink ?? alt, courseClass: courseClass));
       case '14': // Discussion Guru
-        actions.add(LinkButton(icon: Icons.school_outlined,            label: "Discussion Guru",        url: info?.discussionGuruLink ?? alt,                       courseClass: courseClass));
-      case '15': // Peer Coaching — no button
+        actions.add(LinkButton(icon: Icons.school_outlined,            label: "Discussion Guru",        url: info?.discussionGuruLink ?? alt, courseClass: courseClass));
+      case '15': // Peer Coaching — no action button (just Details)
         break;
-      case '16': // One Page Form / OnePage Pro
-        actions.add(LinkButton(icon: Icons.description_outlined,       label: "OnePage Pro",            url: info?.onePagerPro ?? alt,                              courseClass: courseClass));
-      case '17': // Simulation / Custom Prompt
-        actions.add(LinkButton(icon: Icons.link_rounded,               label: "Bridgework Link",        url: info?.customPrompt ?? alt,                             courseClass: courseClass));
-      case '18': // Agreement
-        actions.add(LinkButton(icon: Icons.assignment_outlined,        label: "Agreement",              url: alt,                                                    courseClass: courseClass));
-      case '19': // Test Out Assessment — no button
+      case '16': // OnePage Pro (legacy type code)
+      case '17': // One Page Form / OnePage Pro
+        actions.add(LinkButton(icon: Icons.description_outlined,       label: "OnePage Pro",            url: info?.onePagerPro ?? alt, courseClass: courseClass));
+      case '18': // Simulation / Custom Prompt
+        actions.add(LinkButton(icon: Icons.link_rounded,               label: "Bridgework Link",        url: info?.customPrompt ?? alt, courseClass: courseClass));
+      case '19': // Agreement
+        actions.add(LinkButton(icon: Icons.assignment_outlined,        label: "Agreement",              url: alt,           courseClass: courseClass));
+      case '20': // Test Out Assessment — no action button (just Details)
         break;
-      case '20': // Text Message — no button
+      case '21': // Web Application (legacy type code)
+      case '23': // Web Application
+        actions.add(LinkButton(icon: Icons.open_in_browser_rounded,    label: "Launch Web Application", url: alt,           courseClass: courseClass));
+      case '22': // Text Message — no action button
         break;
-      case '21': // Web Application
-        actions.add(LinkButton(icon: Icons.open_in_browser_rounded,    label: "Launch Web Application", url: alt,                                                   courseClass: courseClass));
       default:
-        if (alt != null && alt.trim().isNotEmpty) {
-          actions.add(LinkButton(icon: Icons.open_in_browser_rounded,  label: "Launch",                 url: alt,                                                    courseClass: courseClass));
+        if (alt != null && alt.trim().isNotEmpty && alt != '0') {
+          actions.add(LinkButton(icon: Icons.open_in_browser_rounded,  label: "Launch",                 url: alt,           courseClass: courseClass));
         }
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 32,
-                child: Text(
-                  '${index + 1}',
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: context.appColorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // # column
+            SizedBox(
+              width: colNum,
+              child: Text(
+                '${index + 1}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: context.appColorScheme.primary,
                 ),
               ),
-              Expanded(
+            ),
+
+            // COURSE DETAILS column
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(name, style: context.textTheme.bodyMedium),
-                    if (nextSession.isNotEmpty) ...[
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1a1a2e),
+                      ),
+                    ),
+                    if (typeName.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
-                        'Next session: $nextSession',
-                        style: context.textTheme.bodySmall
-                            ?.copyWith(color: Colors.grey),
+                        '($typeName)',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF9E9E9E),
+                        ),
                       ),
                     ],
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          // All action buttons + status chip together so they wrap and align uniformly.
-          // Left-indented 40px to align under the lesson name (past the 32px number column).
-          Padding(
-            padding: const EdgeInsets.only(left: 40),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                ClassStatusChip(courseClass: courseClass),
-                ...actions,
-              ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Details button — opens a bottom sheet with class info
-// ─────────────────────────────────────────────────────────────────────────────
-class _DetailsButton extends StatelessWidget {
-  const _DetailsButton({required this.info});
-  final ClassInfo? info;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: () => _showDetails(context),
-      icon: const Icon(Icons.info_outline_rounded, size: 16),
-      label: const Text("Details"),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-
-  void _showDetails(BuildContext context) {
-    final rows = <_DetailRow>[];
-
-    void add(String label, dynamic value) {
-      final s = value?.toString().stripHtml.trim() ?? '';
-      if (s.isNotEmpty) rows.add(_DetailRow(label: label, value: s));
-    }
-
-    add("Type",        info?.customTypeName?.isNotEmpty == true ? info!.customTypeName : null);
-    add("Objective",   info?.objective);
-    add("Description", info?.description);
-    add("Instruction", info?.instruction);
-    add("Start Date",  info?.startDate);
-    add("End Date",    info?.endDate);
-    add("Start Time",  info?.startTime);
-    add("End Time",    info?.endTime);
-    add("Instructor",  info?.instructor);
-    add("Location",    info?.location);
-    add("Hours",       info?.instructionalHours);
-
-    if (rows.isEmpty) {
-      rows.add(const _DetailRow(label: "Info", value: "No additional details available."));
-    }
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.5,
-        maxChildSize: 0.9,
-        builder: (_, controller) => Column(
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
+            // NEXT SESSION column
+            SizedBox(
+              width: colSession,
+              child: nextSession.isNotEmpty
+                  ? Text(
+                      nextSession,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF666666)),
+                    )
+                  : const SizedBox.shrink(),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: Text(
-                (info?.name ?? 'Details').stripHtml,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
+
+            // STATUS column
+            SizedBox(
+              width: colStatus,
+              child: ClassStatusChip(courseClass: courseClass),
             ),
-            const Divider(height: 1),
-            Expanded(
-              child: ListView(
-                controller: controller,
-                padding: const EdgeInsets.all(16),
-                children: rows,
+
+            // ACTION column
+            SizedBox(
+              width: colAction,
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: actions,
               ),
             ),
           ],
@@ -623,28 +603,324 @@ class _DetailsButton extends StatelessWidget {
   }
 }
 
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
-  final String label;
-  final String value;
+// ─────────────────────────────────────────────────────────────────────────────
+// Details button — dark filled, opens centered dialog
+// ─────────────────────────────────────────────────────────────────────────────
+class _DetailsButton extends StatelessWidget {
+  const _DetailsButton({
+    required this.info,
+    required this.lec,
+    required this.lessonName,
+    required this.typeName,
+  });
+
+  final ClassInfo? info;
+  final dynamic lec;
+  final String lessonName;
+  final String typeName;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey),
+    return SizedBox(
+      height: 30,
+      child: ElevatedButton.icon(
+        onPressed: () => _showDetails(context),
+        icon: const Icon(Icons.info_outline_rounded, size: 13),
+        label: const Text("Details"),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF252535),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
+      ),
+    );
+  }
+
+  void _showDetails(BuildContext context) {
+    // Prefer LEC data for schedule fields; fall back to ClassInfo.
+    String _lecVal(String key, dynamic fallback) {
+      if (lec is Map) {
+        final v = lec[key]?.toString() ?? '';
+        if (v.isNotEmpty) return v;
+      }
+      return fallback?.toString() ?? '';
+    }
+
+    final objective    = (info?.objective   ?? '').stripHtml.trim();
+    final description  = (info?.description ?? '').stripHtml.trim();
+    final startDate    = _lecVal('start_date',    info?.startDate);
+    final endDate      = _lecVal('end_date',      info?.endDate);
+    final startTime    = _lecVal('start_time',    info?.startTime);
+    final endTime      = _lecVal('end_time',      info?.endTime);
+    final instructor   = _lecVal('instructor',    info?.instructor);
+    final instructions = _lecVal('instructions',  info?.instruction);
+    final location     = _lecVal('location',      info?.location);
+
+    final hasSchedule = [startDate, endDate, instructor, instructions, location]
+        .any((s) => s.isNotEmpty);
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final primary = Theme.of(ctx).colorScheme.primary;
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          clipBehavior: Clip.antiAlias,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 540, maxHeight: 560),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ── Header ──────────────────────────────────────────────
+                Container(
+                  color: primary,
+                  padding: const EdgeInsets.fromLTRB(20, 14, 8, 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Wrap(
+                          spacing: 10,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              lessonName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (typeName.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.22),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  typeName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        icon: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Body ────────────────────────────────────────────────
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (objective.isNotEmpty) ...[
+                          _sectionLabel('OBJECTIVE'),
+                          const SizedBox(height: 6),
+                          Text(objective, style: const TextStyle(fontSize: 13)),
+                          const Divider(height: 28),
+                        ],
+                        if (description.isNotEmpty) ...[
+                          _sectionLabel('DESCRIPTION'),
+                          const SizedBox(height: 6),
+                          Text(description, style: const TextStyle(fontSize: 13)),
+                          const Divider(height: 28),
+                        ],
+                        if (hasSchedule) ...[
+                          _sectionLabel('SCHEDULE'),
+                          const SizedBox(height: 10),
+                          _ScheduleCard(
+                            startDate:    startDate,
+                            endDate:      endDate,
+                            startTime:    startTime,
+                            endTime:      endTime,
+                            instructor:   instructor,
+                            instructions: instructions,
+                            location:     location,
+                          ),
+                        ],
+                        if (!hasSchedule && objective.isEmpty && description.isEmpty)
+                          const Text(
+                            'No additional details available.',
+                            style: TextStyle(fontSize: 13, color: Colors.grey),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          Expanded(
-            child: Text(value, style: const TextStyle(fontSize: 13)),
-          ),
+        );
+      },
+    );
+  }
+
+  Widget _sectionLabel(String text) => Text(
+    text,
+    style: const TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFF9E9E9E),
+      letterSpacing: 0.8,
+    ),
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Schedule card inside Details dialog
+// ─────────────────────────────────────────────────────────────────────────────
+class _ScheduleCard extends StatelessWidget {
+  const _ScheduleCard({
+    required this.startDate,
+    required this.endDate,
+    required this.startTime,
+    required this.endTime,
+    required this.instructor,
+    required this.instructions,
+    required this.location,
+  });
+
+  final String startDate;
+  final String endDate;
+  final String startTime;
+  final String endTime;
+  final String instructor;
+  final String instructions;
+  final String location;
+
+  static const _labelStyle = TextStyle(
+    fontSize: 10,
+    fontWeight: FontWeight.w700,
+    color: Color(0xFF9E9E9E),
+    letterSpacing: 0.6,
+  );
+  static const _valueStyle = TextStyle(fontSize: 13, color: Color(0xFF1a1a2e));
+  static const _timeStyle  = TextStyle(fontSize: 12, color: Color(0xFF555555));
+
+  @override
+  Widget build(BuildContext context) {
+    final hasStartEnd    = startDate.isNotEmpty || endDate.isNotEmpty;
+    final hasInstructor  = instructor.isNotEmpty;
+    final hasInstructions= instructions.isNotEmpty;
+    final hasLocation    = location.isNotEmpty;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          // Start / End row
+          if (hasStartEnd)
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('START', style: _labelStyle),
+                        const SizedBox(height: 4),
+                        if (startDate.isNotEmpty) Text(startDate, style: _valueStyle),
+                        if (startTime.isNotEmpty) Text(startTime, style: _timeStyle),
+                      ],
+                    ),
+                  ),
+                  if (endDate.isNotEmpty) ...[
+                    Container(width: 1, height: 40, color: Colors.grey.shade200),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('END', style: _labelStyle),
+                          const SizedBox(height: 4),
+                          Text(endDate, style: _valueStyle),
+                          if (endTime.isNotEmpty) Text(endTime, style: _timeStyle),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+          // Instructor / Instructions row
+          if (hasInstructor || hasInstructions) ...[
+            if (hasStartEnd) Divider(height: 1, color: Colors.grey.shade200),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasInstructor)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('INSTRUCTOR', style: _labelStyle),
+                          const SizedBox(height: 4),
+                          Text(instructor, style: _valueStyle),
+                        ],
+                      ),
+                    ),
+                  if (hasInstructions) ...[
+                    if (hasInstructor) ...[
+                      Container(width: 1, height: 36, color: Colors.grey.shade200),
+                      const SizedBox(width: 14),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('INSTRUCTIONS', style: _labelStyle),
+                          const SizedBox(height: 4),
+                          Text(instructions, style: _valueStyle),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
+          // Location row
+          if (hasLocation) ...[
+            if (hasStartEnd || hasInstructor || hasInstructions)
+              Divider(height: 1, color: Colors.grey.shade200),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('LOCATION', style: _labelStyle),
+                  const SizedBox(height: 4),
+                  Text(location, style: _valueStyle),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
