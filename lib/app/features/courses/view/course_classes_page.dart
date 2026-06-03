@@ -19,6 +19,14 @@ import 'package:lms/app/features/courses/viewmodel/course_class_view_model.dart'
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 
+// Returns [s] only when it looks like a real http(s) URL (strips HTML first).
+// Rejects empty strings, "0", and fields that contain HTML markup instead of a URL.
+String? _validUrl(String? s) {
+  if (s == null || s.isEmpty || s == '0') return null;
+  final plain = s.stripHtml.trim();
+  return (plain.startsWith('http://') || plain.startsWith('https://')) ? plain : null;
+}
+
 // Maps numeric type code to human-readable label shown as subtitle and dialog badge.
 String _typeDisplayName(String? typeCode, String? customTypeName) {
   if (customTypeName != null && customTypeName.trim().isNotEmpty) {
@@ -471,6 +479,9 @@ class _CourseClassTile extends ConsumerWidget {
       ),
     ];
 
+    // Shorthand: begin-class URL for this lesson (universal fallback, same as website).
+    final bc = '${webBaseUrl}lmsclass/begin-class?classId=${courseClass.classId}';
+
     // Numeric type codes from API:
     //  1=eLearning  2=In Person  3=Virtual Class  4=Watch Video
     //  5=Read Article  6=Read Webpage  7=Discussion Board
@@ -478,64 +489,93 @@ class _CourseClassTile extends ConsumerWidget {
     //  12=Certificate  13=LinkedIn Cert  14=Discussion Guru
     //  15=Peer Coaching  17=OnePage Pro  18=Simulation/Custom Prompt
     //  19=Agreement  20=Test Out  22=Text Message  23=Web Application
+    //
+    // URL priority per type:
+    //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
       case '3': // Virtual Class
-        actions.add(LinkButton(icon: Icons.video_call_outlined,        label: "Attend Class",           url: trainingLink ?? info?.s3ClassLink?.toString() ?? info?.classLink?.toString(), courseClass: courseClass));
-        actions.add(LinkButton(icon: Icons.play_circle_filled_rounded, label: "Watch Recording",        url: alt,           courseClass: courseClass));
+        // Attend Class: live session link from LEC, then classLink, then begin-class
+        actions.add(LinkButton(
+          icon: Icons.video_call_outlined,
+          label: "Attend Class",
+          url: _validUrl(trainingLink) ?? _validUrl(info?.s3ClassLink?.toString()) ?? _validUrl(info?.classLink?.toString()) ?? bc,
+          courseClass: courseClass,
+        ));
+        // Watch Recording: only when alt is a real recording URL
+        actions.add(LinkButton(
+          icon: Icons.play_circle_filled_rounded,
+          label: "Watch Recording",
+          url: alt,   // null if not configured — LinkButton hides itself
+          courseClass: courseClass,
+        ));
+
       case '1': // eLearning Module
-        // When isLaunch=1 use the begin-class endpoint (matches website behaviour).
-        // Otherwise fall back to the direct SCORM URL.
         final _elearningUrl = info?.isLaunch == '1'
-            ? '${webBaseUrl}lmsclass/begin-class?classId=${courseClass.classId}'
-            : (info?.s3ClassLink?.toString()?.isNotEmpty == true
-                ? info!.s3ClassLink.toString()
-                : (info?.classLink?.toString()?.isNotEmpty == true
-                    ? info!.classLink.toString()
-                    : alt));
+            ? bc   // begin-class handles SCORM tracking (matches website)
+            : (_validUrl(info?.s3ClassLink?.toString()) ?? _validUrl(info?.classLink?.toString()) ?? alt ?? bc);
         actions.add(LinkButton(icon: Icons.rocket_launch_rounded, label: "Launch", url: _elearningUrl, courseClass: courseClass));
-      case '2': // In Person
-        actions.add(LinkButton(icon: Icons.person_add_outlined,        label: "Register",               url: alt,           courseClass: courseClass));
+
+      case '2': // In Person — Register
+        actions.add(LinkButton(icon: Icons.person_add_outlined,    label: "Register",               url: alt ?? bc, courseClass: courseClass));
+
       case '4': // Watch Video — DownloadButton already handles
         break;
       case '5': // Read Article — DownloadButton already handles
         break;
-      case '6': // Read Webpage
-        actions.add(LinkButton(icon: Icons.language,                   label: "Webpage",                url: info?.readWebpageLink ?? alt, courseClass: courseClass));
+
+      case '6': // Read Webpage — URL must be configured; no begin-class fallback
+        actions.add(LinkButton(icon: Icons.language,               label: "Webpage",                url: _validUrl(info?.readWebpageLink) ?? alt, courseClass: courseClass));
+
       case '7': // Discussion Board
-        actions.add(LinkButton(icon: Icons.forum_outlined,             label: "Discussion Board",       url: info?.discussionForumLink?.toString() ?? alt, courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.forum_outlined,         label: "Discussion Board",       url: _validUrl(info?.discussionForumLink?.toString()) ?? alt ?? bc, courseClass: courseClass));
+
       case '8': // Perform a Task with Observation
       case '9': // Perform a Task without Observation
-        actions.add(LinkButton(icon: Icons.task_alt,                   label: "Tasks",                  url: alt,           courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.task_alt,               label: "Tasks",                  url: alt ?? bc, courseClass: courseClass));
+
       case '10': // Receive Coaching
-        actions.add(LinkButton(icon: Icons.people_outline_rounded,     label: "Coaches",                url: alt,           courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.people_outline_rounded, label: "Coaches",                url: alt ?? bc, courseClass: courseClass));
+
       case '11': // Insight Report
-        actions.add(LinkButton(icon: Icons.bar_chart_rounded,          label: "Insights",               url: alt,           courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.bar_chart_rounded,      label: "Insights",               url: alt ?? bc, courseClass: courseClass));
+
       case '12': // Certificate — no action button
         break;
-      case '13': // LinkedIn Certification
-        actions.add(LinkButton(icon: Icons.verified_outlined,          label: "Certification",          url: info?.readWebpageLink ?? alt, courseClass: courseClass));
+
+      case '13': // LinkedIn Certification — URL must be the LinkedIn add-cert link
+        actions.add(LinkButton(icon: Icons.verified_outlined,      label: "Certification",          url: _validUrl(info?.readWebpageLink) ?? alt, courseClass: courseClass));
+
       case '14': // Discussion Guru
-        actions.add(LinkButton(icon: Icons.school_outlined,            label: "Discussion Guru",        url: info?.discussionGuruLink ?? alt, courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.school_outlined,        label: "Discussion Guru",        url: _validUrl(info?.discussionGuruLink) ?? alt ?? bc, courseClass: courseClass));
+
       case '15': // Peer Coaching — no action button (just Details)
         break;
+
       case '16': // OnePage Pro (legacy type code)
       case '17': // One Page Form / OnePage Pro
-        actions.add(LinkButton(icon: Icons.description_outlined,       label: "OnePage Pro",            url: info?.onePagerPro ?? alt, courseClass: courseClass));
+        // onePagerPro may be empty; customPrompt not applicable here
+        actions.add(LinkButton(icon: Icons.description_outlined,   label: "OnePage Pro",            url: _validUrl(info?.onePagerPro) ?? alt ?? bc, courseClass: courseClass));
+
       case '18': // Simulation / Custom Prompt
-        actions.add(LinkButton(icon: Icons.link_rounded,               label: "Bridgework Link",        url: info?.customPrompt ?? alt, courseClass: courseClass));
+        // customPrompt sometimes stores HTML content, not a URL — validate first
+        actions.add(LinkButton(icon: Icons.link_rounded,           label: "Bridgework Link",        url: _validUrl(info?.customPrompt) ?? alt ?? bc, courseClass: courseClass));
+
       case '19': // Agreement
-        actions.add(LinkButton(icon: Icons.assignment_outlined,        label: "Agreement",              url: alt,           courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.assignment_outlined,    label: "Agreement",              url: alt ?? bc, courseClass: courseClass));
+
       case '20': // Test Out Assessment — no action button (just Details)
         break;
+
       case '21': // Web Application (legacy type code)
       case '23': // Web Application
-        actions.add(LinkButton(icon: Icons.open_in_browser_rounded,    label: "Launch Web Application", url: alt,           courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.open_in_browser_rounded, label: "Launch Web Application", url: alt ?? bc, courseClass: courseClass));
+
       case '22': // Text Message — no action button
         break;
+
       default:
-        if (alt != null && alt.trim().isNotEmpty && alt != '0') {
-          actions.add(LinkButton(icon: Icons.open_in_browser_rounded,  label: "Launch",                 url: alt,           courseClass: courseClass));
-        }
+        // Unknown type: open alt URL if real, otherwise fall back to begin-class
+        actions.add(LinkButton(icon: Icons.open_in_browser_rounded, label: "Launch", url: alt ?? bc, courseClass: courseClass));
     }
 
     return Container(
