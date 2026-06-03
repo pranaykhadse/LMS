@@ -7,6 +7,7 @@ import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 class ClassStatusChip extends ConsumerWidget {
   const ClassStatusChip({super.key, required this.courseClass});
   final CourseClass courseClass;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final _ = ref.watch(RoasterViewModel.provider(courseClass.courseId));
@@ -15,21 +16,29 @@ class ClassStatusChip extends ConsumerWidget {
     );
 
     final roaster = viewModel.getForClass(courseClass);
-    // Status '1' = Registered. Any other status (including '3') = Completed.
-    final isCompleted = roaster != null && roaster.status != '1';
 
-    debugPrint(
-      '[ClassStatusChip] classId=${courseClass.classId} '
-      'status=${roaster?.status ?? "no-record"} '
-      'isCompleted=$isCompleted',
-    );
+    // No roaster record — lesson not yet registered, show nothing (matches web)
+    if (roaster == null) return const SizedBox.shrink();
 
-    if (isCompleted) {
-      return Chip(
-        label: Text("Completed", style: context.textTheme.bodySmall),
-        backgroundColor: context.appColorScheme.success.withAlpha(50),
-      );
+    switch (roaster.status) {
+      case '1':
+        return Chip(
+          label: Text("Registered", style: context.textTheme.bodySmall),
+        );
+      case '2':
+        return Chip(
+          label: Text("Started", style: context.textTheme.bodySmall),
+          backgroundColor: Colors.amber.withAlpha(60),
+        );
+      case '3':
+        return Chip(
+          label: Text("Completed", style: context.textTheme.bodySmall),
+          backgroundColor: context.appColorScheme.success.withAlpha(50),
+        );
+      default:
+        return Chip(
+          label: Text("Registered", style: context.textTheme.bodySmall),
+        );
     }
-    return Chip(label: Text("Registered", style: context.textTheme.bodySmall));
   }
 }

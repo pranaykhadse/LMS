@@ -320,9 +320,16 @@ class _CourseClassTile extends StatelessWidget {
         .trim();
     final alt = info?.alternativeLearningEvent;
 
+    // Types that show a "Details" button on the web platform.
+    // (14=Discussion Guru, 16=OnePage Pro, 20=Text Message, 21=Web App
+    //  have no Details button on web.)
+    const _detailsTypes = {'1','2','3','4','5','6','7','8','9','10','11','12','13','15','17','18','19'};
+
     // Always-present offline-capable downloads (hidden by DownloadButton
     // when the URL is null/empty, so safe to add unconditionally).
     final actions = <Widget>[
+      if (_detailsTypes.contains(t))
+        _DetailsButton(info: info),
       DownloadButton(
         icon: Icons.videocam,
         label: "Video",
@@ -452,6 +459,122 @@ class _CourseClassTile extends StatelessWidget {
                 ...actions,
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Details button — opens a bottom sheet with class info
+// ─────────────────────────────────────────────────────────────────────────────
+class _DetailsButton extends StatelessWidget {
+  const _DetailsButton({required this.info});
+  final ClassInfo? info;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () => _showDetails(context),
+      icon: const Icon(Icons.info_outline_rounded, size: 16),
+      label: const Text("Details"),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  void _showDetails(BuildContext context) {
+    final rows = <_DetailRow>[];
+
+    void add(String label, dynamic value) {
+      final s = value?.toString().stripHtml.trim() ?? '';
+      if (s.isNotEmpty) rows.add(_DetailRow(label: label, value: s));
+    }
+
+    add("Type",        info?.customTypeName?.isNotEmpty == true ? info!.customTypeName : null);
+    add("Objective",   info?.objective);
+    add("Description", info?.description);
+    add("Instruction", info?.instruction);
+    add("Start Date",  info?.startDate);
+    add("End Date",    info?.endDate);
+    add("Start Time",  info?.startTime);
+    add("End Time",    info?.endTime);
+    add("Instructor",  info?.instructor);
+    add("Location",    info?.location);
+    add("Hours",       info?.instructionalHours);
+
+    if (rows.isEmpty) {
+      rows.add(const _DetailRow(label: "Info", value: "No additional details available."));
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (_, controller) => Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Text(
+                (info?.name ?? 'Details').stripHtml,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView(
+                controller: controller,
+                padding: const EdgeInsets.all(16),
+                children: rows,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey),
+            ),
+          ),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontSize: 13)),
           ),
         ],
       ),
