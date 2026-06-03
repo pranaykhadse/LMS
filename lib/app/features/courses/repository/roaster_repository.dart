@@ -74,15 +74,18 @@ class RoasterRepository with RepoNetworkHelper {
       "user_id": int.tryParse(userId),
       "learning_event_class_id": int.tryParse(learningEventClassId ?? ""),
     };
+    debugPrint('[RoasterRepo] learning-event-completion REQUEST → $data');
     final response = await post(
       "learning-event/learning-event-completion",
       cacheType: RequestCacheType.none,
       data: data,
     );
+    debugPrint('[RoasterRepo] learning-event-completion RESPONSE → $response');
     if (response == null) throw 'No response from server';
     final success = response['success'];
     if (success == 'true' || success == true) {
       final roasterJson = response['roaster'];
+      debugPrint('[RoasterRepo] roaster from response → $roasterJson');
       if (roasterJson != null && roasterJson is Map) {
         return Roaster.fromJson(roasterJson);
       }

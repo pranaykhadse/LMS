@@ -14,13 +14,19 @@ class ClassStatusChip extends ConsumerWidget {
       RoasterViewModel.provider(courseClass.courseId).notifier,
     );
 
-    final isActive = viewModel.getForClass(courseClass);
-    if (isActive != null && isActive.status == '3') {
+    final roaster = viewModel.getForClass(courseClass);
+    // Status '1' = Registered. Any other status (including '3') = Completed.
+    final isCompleted = roaster != null && roaster.status != '1';
+
+    debugPrint(
+      '[ClassStatusChip] classId=${courseClass.classId} '
+      'status=${roaster?.status ?? "no-record"} '
+      'isCompleted=$isCompleted',
+    );
+
+    if (isCompleted) {
       return Chip(
-        label: Text(
-          "Completed",
-          style: context.textTheme.bodySmall, //?.copyWith(color: Colors.white),
-        ),
+        label: Text("Completed", style: context.textTheme.bodySmall),
         backgroundColor: context.appColorScheme.success.withAlpha(50),
       );
     }
