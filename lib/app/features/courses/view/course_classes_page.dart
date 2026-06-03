@@ -16,6 +16,7 @@ import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/view/widgets/link_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_class_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 
 class CourseClassesPage extends ConsumerWidget {
   const CourseClassesPage({super.key, this.courseId});
@@ -296,15 +297,27 @@ class _LessonListView extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Single lesson tile
 // ─────────────────────────────────────────────────────────────────────────────
-class _CourseClassTile extends StatelessWidget {
+class _CourseClassTile extends ConsumerWidget {
   const _CourseClassTile({required this.index, required this.courseClass});
 
   final int index;
   final CourseClass courseClass;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final info = courseClass.classInfo;
+
+    // For Virtual Class: get training_session_link from the scheduled session
+    // (Roaster.learningEventClass) — this is the LIVE "Attend Class" URL.
+    // alternativeLearningEvent is the recording URL ("Watch Recording").
+    final roasterVM = ref.watch(
+      RoasterViewModel.provider(courseClass.courseId).notifier,
+    );
+    final roaster = roasterVM.getForClass(courseClass);
+    final lec = roaster?.learningEventClass;
+    final trainingLink = (lec is Map)
+        ? lec['training_session_link']?.toString()
+        : null;
     final name = (info?.name ?? '').stripHtml;
 
     String nextSession = '';
@@ -363,8 +376,10 @@ class _CourseClassTile extends StatelessWidget {
     //  18=Agreement  19=Test Out  20=Text Message  21=Web App
     switch (t) {
       case '3': // Virtual Class
-        actions.add(LinkButton(icon: Icons.video_call_outlined,        label: "Attend Class",           url: alt,                                                    courseClass: courseClass));
-        actions.add(LinkButton(icon: Icons.play_circle_filled_rounded, label: "Watch Recording",        url: info?.s3ClassLink?.toString() ?? info?.classLink?.toString(), courseClass: courseClass));
+        // Attend Class → training_session_link from the Roaster session (falls back to alt)
+        // Watch Recording → alternativeLearningEvent (the recording URL)
+        actions.add(LinkButton(icon: Icons.video_call_outlined,        label: "Attend Class",           url: trainingLink ?? info?.s3ClassLink?.toString() ?? info?.classLink?.toString(), courseClass: courseClass));
+        actions.add(LinkButton(icon: Icons.play_circle_filled_rounded, label: "Watch Recording",        url: alt,                                                    courseClass: courseClass));
       case '1': // eLearning Module
         actions.add(LinkButton(icon: Icons.rocket_launch_rounded,      label: "Launch",                 url: alt ?? info?.storyLineFile,                            courseClass: courseClass));
       case '2': // In Person

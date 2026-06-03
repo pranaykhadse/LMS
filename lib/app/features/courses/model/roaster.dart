@@ -85,7 +85,7 @@ class Roaster {
     learningEventClassId: json["learning_event_class_id"]?.toString(),
     isSignatureDone: json["is_signature_done"]?.toString(),
     signatureImage: json["signature_image"]?.toString(),
-    learningEventClass: json["learningEventClass"]?.toString(),
+    learningEventClass: json["learningEventClass"], // keep as Map so nested fields are accessible
   );
 
   Map<String, dynamic> toJson() => {
