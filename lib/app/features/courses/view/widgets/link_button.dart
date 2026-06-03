@@ -42,11 +42,12 @@ class LinkButton extends ConsumerWidget {
             ? appActionChip(
                 icon: icon,
                 label: label,
-                fgColor: Colors.grey,
-                bgColor: Colors.transparent,
-                borderColor: Colors.grey,
+                fgColor: Colors.white,
+                bgColor: Colors.grey.shade500,
+                borderColor: Colors.grey.shade500,
+                disabledColor: Colors.grey.shade500,
                 onPressed: null,
-                trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
+                trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.white),
               )
             : OutlinedButton.icon(
                 onPressed: null,
@@ -132,10 +133,12 @@ Widget appActionChip({
   required Color borderColor,
   required VoidCallback? onPressed,
   Widget? trailing,
+  Color? disabledColor,
 }) {
   return ActionChip(
     onPressed: onPressed,
     backgroundColor: bgColor,
+    disabledColor: disabledColor ?? bgColor,
     side: BorderSide(color: borderColor),
     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
     labelPadding: const EdgeInsets.only(left: 2, right: 4),
