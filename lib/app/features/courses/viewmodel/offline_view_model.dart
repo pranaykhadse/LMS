@@ -61,7 +61,9 @@ class OfflineViewModel extends ChangeNotifier {
         if (_validUrl(c.classInfo?.articleFile)) total++;
       }
       final pgUrl = course.participantGuideFile?.toString();
+      final wmUrl = course.wrapMethodologyFile?.toString();
       if (_validUrl(pgUrl)) total++;
+      if (_validUrl(wmUrl)) total++;
 
       _progress[course.id ?? -1] = _CourseDownloadProgress(
         completed: 0,
@@ -90,8 +92,9 @@ class OfflineViewModel extends ChangeNotifier {
           addDownload(c.classInfo!.articleFile!);
         }
       }
-      // Participant guide (course-level PDF)
+      // Participant guide + Wrap Methodology (course-level PDFs)
       if (_validUrl(pgUrl)) addDownload(pgUrl!);
+      if (_validUrl(wmUrl)) addDownload(wmUrl!);
 
       await Future.wait(futures);
     } finally {
