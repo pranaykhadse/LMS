@@ -350,7 +350,9 @@ class _LessonTableView extends StatelessWidget {
                 SizedBox(width: _colNum,     child: const Text('#',             style: headerStyle)),
                 const Expanded(              child: Text('COURSE DETAILS',      style: headerStyle)),
                 SizedBox(width: _colSession, child: const Text('NEXT SESSION',  style: headerStyle)),
+                const SizedBox(width: 24),
                 SizedBox(width: _colStatus,  child: const Text('STATUS',        style: headerStyle)),
+                const SizedBox(width: 24),
                 SizedBox(width: _colAction,  child: const Text('ACTION',        style: headerStyle)),
               ],
             ),
@@ -580,18 +582,22 @@ class _CourseClassTile extends ConsumerWidget {
                   : const SizedBox.shrink(),
             ),
 
+            const SizedBox(width: 24),
+
             // STATUS column
             SizedBox(
               width: colStatus,
               child: ClassStatusChip(courseClass: courseClass),
             ),
 
+            const SizedBox(width: 24),
+
             // ACTION column
             SizedBox(
               width: colAction,
               child: Wrap(
-                spacing: 10,
-                runSpacing: 8,
+                spacing: 6,
+                runSpacing: 6,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: actions,
               ),
