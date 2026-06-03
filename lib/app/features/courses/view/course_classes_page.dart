@@ -326,13 +326,66 @@ class _CourseClassTile extends ConsumerWidget {
     }
 
     // ── Type-aware action buttons ─────────────────────────────────────────
-    // API returns type as a numeric string (e.g. "3") in ClassInfo.type.
-    // customTypeName is always "" so we use type directly.
     final t   = (info?.type?.isNotEmpty == true
             ? info!.type!
             : (info?.customTypeName ?? ''))
         .trim();
     final alt = info?.alternativeLearningEvent;
+
+    // ── COMPREHENSIVE DEBUG LOG ───────────────────────────────────────────
+    debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    debugPrint('LESSON  classId=${courseClass.classId}  courseId=${courseClass.courseId}');
+    debugPrint('  name            : $name');
+    debugPrint('  type            : ${info?.type}');
+    debugPrint('  customTypeName  : ${info?.customTypeName}');
+    debugPrint('  order           : ${courseClass.order}');
+    debugPrint('── STATUS ───────────────────────────────────────────────────');
+    debugPrint('  roasterStatus   : ${roaster?.status ?? "no-record"}');
+    debugPrint('  roasterId       : ${roaster?.id}');
+    debugPrint('  lecId           : ${roaster?.learningEventClassId}');
+    debugPrint('── ROASTER learningEventClass ────────────────────────────────');
+    if (lec is Map) {
+      lec.forEach((k, v) {
+        if (v != null && v.toString().isNotEmpty) {
+          debugPrint('  lec.$k : $v');
+        }
+      });
+    } else {
+      debugPrint('  learningEventClass: ${lec?.toString()}');
+    }
+    debugPrint('── URLs (ClassInfo) ─────────────────────────────────────────');
+    debugPrint('  alternativeLearningEvent : ${info?.alternativeLearningEvent}');
+    debugPrint('  virtualClassLink         : ${info?.virtualClassLink}');
+    debugPrint('  watchVideoLink           : ${info?.watchVideoLink}');
+    debugPrint('  readWebpageLink          : ${info?.readWebpageLink}');
+    debugPrint('  readArticleLink          : ${info?.readArticleLink}');
+    debugPrint('  videoUploadUrl           : ${info?.videoUploadUrl}');
+    debugPrint('  articleFile              : ${info?.articleFile}');
+    debugPrint('  discussionForumLink      : ${info?.discussionForumLink}');
+    debugPrint('  discussionGuruLink       : ${info?.discussionGuruLink}');
+    debugPrint('  peerCoachingLink         : ${info?.peerCoachingLink}');
+    debugPrint('  peerCoachingFile         : ${info?.peerCoachingFile}');
+    debugPrint('  onePagerPro              : ${info?.onePagerPro}');
+    debugPrint('  customPrompt             : ${info?.customPrompt}');
+    debugPrint('  storyLineFile            : ${info?.storyLineFile}');
+    debugPrint('  s3ClassLink              : ${info?.s3ClassLink}');
+    debugPrint('  classLink                : ${info?.classLink}');
+    debugPrint('  classPath                : ${info?.classPath}');
+    debugPrint('  scannedPdf (CourseClass) : ${courseClass.scannedPdf}');
+    debugPrint('── SCHEDULE (ClassInfo) ─────────────────────────────────────');
+    debugPrint('  startDate  : ${info?.startDate}');
+    debugPrint('  endDate    : ${info?.endDate}');
+    debugPrint('  startTime  : ${info?.startTime}');
+    debugPrint('  endTime    : ${info?.endTime}');
+    debugPrint('  location   : ${info?.location}');
+    debugPrint('  instructor : ${info?.instructor}');
+    debugPrint('── FLAGS ────────────────────────────────────────────────────');
+    debugPrint('  isLaunch        : ${info?.isLaunch}');
+    debugPrint('  isRise          : ${info?.isRise}');
+    debugPrint('  isOptional      : ${info?.isOptional}');
+    debugPrint('  isSignature     : ${info?.isSignature}');
+    debugPrint('  isCertificate   : ${info?.isCertificate}');
+    debugPrint('  isPreRequisite  : ${info?.isPreRequisite}');
 
     // Types that show a "Details" button on the web platform.
     // (14=Discussion Guru, 16=OnePage Pro, 20=Text Message, 21=Web App
