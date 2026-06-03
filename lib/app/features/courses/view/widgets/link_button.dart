@@ -49,28 +49,26 @@ class LinkButton extends ConsumerWidget {
                 onPressed: null,
                 trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.white),
               )
-            : OutlinedButton.icon(
-                onPressed: null,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.grey.shade600,
-                  disabledForegroundColor: Colors.grey.shade600,
-                  disabledBackgroundColor: Colors.transparent,
-                  side: BorderSide(color: Colors.grey.shade400),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  textStyle: context.textTheme.bodySmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+            : Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade500,
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                icon: Icon(icon, size: 18, color: Colors.grey.shade600),
-                label: Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(label,
-                        style: TextStyle(color: Colors.grey.shade600)),
-                    const SizedBox(width: 4),
-                    Icon(Icons.cloud_off,
-                        size: 12, color: Colors.grey.shade500),
+                    const Icon(Icons.cloud_off,
+                        size: 12, color: Colors.white),
+                    const SizedBox(width: 5),
+                    Text(
+                      label,
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
               ),

@@ -38,8 +38,7 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
       child: Padding(
         padding: EdgeInsets.only(top: topPadding, bottom: isMacOS ? 0 : 10),
         child: Row(
-          crossAxisAlignment:
-              isMacOS ? CrossAxisAlignment.center : CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
 
             // ── Back button OR leading space ────────────────────────────
@@ -57,9 +56,7 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
             Expanded(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: isMacOS
-                    ? CrossAxisAlignment.center
-                    : CrossAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Flexible(
                     child: Text(
