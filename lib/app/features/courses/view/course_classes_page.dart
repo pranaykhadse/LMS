@@ -14,6 +14,7 @@ import 'package:lms/app/features/courses/view/content_viewer/video_content_viewe
 import 'package:lms/app/features/courses/view/widgets/class_status_chip.dart';
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/view/widgets/link_button.dart';
+import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/features/courses/viewmodel/course_class_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
@@ -405,10 +406,20 @@ class _CourseClassTile extends ConsumerWidget {
     final roaster   = roasterVM.getForClass(courseClass);
     final lec       = roaster?.learningEventClass;
 
+    // Derive backend web base URL from the API URL.
+    // API:  https://domain/api/web/  →  Web: https://domain/backend/web/
+    final serverUrl  = ref.watch(ServerProvider.serverUrl);
+    final webBaseUrl = serverUrl.replaceFirst('/api/web/', '/backend/web/');
+
     final trainingLink = (lec is Map) ? lec['training_session_link']?.toString() : null;
     final name = (info?.name ?? '').stripHtml;
     final t    = (info?.type?.isNotEmpty == true ? info!.type! : (info?.customTypeName ?? '')).trim();
-    final alt  = info?.alternativeLearningEvent;
+
+    // "0" is a falsy sentinel value from the API (not a real URL).  Filter it out.
+    final _rawAlt = info?.alternativeLearningEvent;
+    final alt = (_rawAlt != null && _rawAlt.isNotEmpty && _rawAlt != '0')
+        ? _rawAlt
+        : null;
 
     final typeName = _typeDisplayName(t.isEmpty ? null : t, info?.customTypeName);
 
@@ -472,7 +483,16 @@ class _CourseClassTile extends ConsumerWidget {
         actions.add(LinkButton(icon: Icons.video_call_outlined,        label: "Attend Class",           url: trainingLink ?? info?.s3ClassLink?.toString() ?? info?.classLink?.toString(), courseClass: courseClass));
         actions.add(LinkButton(icon: Icons.play_circle_filled_rounded, label: "Watch Recording",        url: alt,           courseClass: courseClass));
       case '1': // eLearning Module
-        actions.add(LinkButton(icon: Icons.rocket_launch_rounded,      label: "Launch",                 url: alt ?? info?.storyLineFile, courseClass: courseClass));
+        // When isLaunch=1 use the begin-class endpoint (matches website behaviour).
+        // Otherwise fall back to the direct SCORM URL.
+        final _elearningUrl = info?.isLaunch == '1'
+            ? '${webBaseUrl}lmsclass/begin-class?classId=${courseClass.classId}'
+            : (info?.s3ClassLink?.toString()?.isNotEmpty == true
+                ? info!.s3ClassLink.toString()
+                : (info?.classLink?.toString()?.isNotEmpty == true
+                    ? info!.classLink.toString()
+                    : alt));
+        actions.add(LinkButton(icon: Icons.rocket_launch_rounded, label: "Launch", url: _elearningUrl, courseClass: courseClass));
       case '2': // In Person
         actions.add(LinkButton(icon: Icons.person_add_outlined,        label: "Register",               url: alt,           courseClass: courseClass));
       case '4': // Watch Video — DownloadButton already handles
