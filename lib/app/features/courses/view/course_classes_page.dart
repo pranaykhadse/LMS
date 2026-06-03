@@ -312,6 +312,7 @@ class _CourseClassTile extends StatelessWidget {
     }
 
     final actions = <Widget>[
+      // ── Downloadable files ────────────────────────────────────────────
       DownloadButton(
         icon: Icons.videocam,
         label: "Video",
@@ -326,6 +327,16 @@ class _CourseClassTile extends StatelessWidget {
         courseClass: courseClass,
         builder: (context, file) => PdfContentViewer(file: file),
       ),
+      // Agreement PDF stored on the CourseClass record (scanned_pdf)
+      DownloadButton(
+        icon: Icons.assignment_outlined,
+        label: "Agreement",
+        url: courseClass.scannedPdf,
+        courseClass: courseClass,
+        builder: (context, file) => PdfContentViewer(file: file),
+      ),
+
+      // ── External links ────────────────────────────────────────────────
       LinkButton(
         icon: Icons.play_circle_outline,
         label: "Watch Video",
@@ -344,25 +355,67 @@ class _CourseClassTile extends StatelessWidget {
         url: info?.readWebpageLink,
         courseClass: courseClass,
       ),
+      // Virtual Class — renamed to match web ("Attend Class")
       LinkButton(
         icon: Icons.video_call_outlined,
-        label: "Virtual Class",
+        label: "Attend Class",
         url: info?.virtualClassLink,
         courseClass: courseClass,
       ),
-      // Virtual class recording — s3ClassLink is the S3-hosted recording,
-      // classLink is the fallback recording URL. Tapping either marks the
-      // lesson as Completed via markAsRead → learning-event-completion.
+      // Watch Recording: prefer S3 link, fall back to classLink
       LinkButton(
         icon: Icons.play_circle_filled_rounded,
         label: "Watch Recording",
-        url: info?.s3ClassLink?.toString(),
+        url: info?.s3ClassLink?.toString() ?? info?.classLink?.toString(),
         courseClass: courseClass,
       ),
+      // eLearning / Storyline module launch
       LinkButton(
-        icon: Icons.play_circle_filled_rounded,
-        label: "Watch Recording",
-        url: info?.classLink?.toString(),
+        icon: Icons.rocket_launch_rounded,
+        label: "Launch",
+        url: info?.storyLineFile,
+        courseClass: courseClass,
+      ),
+      // Discussion Board
+      LinkButton(
+        icon: Icons.forum_outlined,
+        label: "Discussion Board",
+        url: info?.discussionForumLink?.toString(),
+        courseClass: courseClass,
+      ),
+      // Receive Coaching / Coaches
+      LinkButton(
+        icon: Icons.people_outline_rounded,
+        label: "Coaches",
+        url: info?.peerCoachingLink,
+        courseClass: courseClass,
+      ),
+      // Discussion Guru
+      LinkButton(
+        icon: Icons.school_outlined,
+        label: "Discussion Guru",
+        url: info?.discussionGuruLink,
+        courseClass: courseClass,
+      ),
+      // One Page Form / OnePage Pro
+      LinkButton(
+        icon: Icons.description_outlined,
+        label: "One Page Form",
+        url: info?.onePagerPro,
+        courseClass: courseClass,
+      ),
+      // Simulation / Bridgework Link
+      LinkButton(
+        icon: Icons.link_rounded,
+        label: "Bridgework Link",
+        url: info?.customPrompt,
+        courseClass: courseClass,
+      ),
+      // Web Application / Launch Web Application
+      LinkButton(
+        icon: Icons.open_in_browser_rounded,
+        label: "Launch Web Application",
+        url: info?.alternativeLearningEvent,
         courseClass: courseClass,
       ),
     ];
