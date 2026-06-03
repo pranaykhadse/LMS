@@ -108,10 +108,27 @@ class OfflineViewModel extends ChangeNotifier {
 
   // ── Remove offline ────────────────────────────────────────────────────────
 
-  /// Removes [course] from the offline index so the card switches back to
-  /// "Save Offline". Downloaded files (videos, PDFs) are intentionally kept
-  /// on device so they don't need to be re-downloaded if saved offline again.
+  /// Removes [course] from the offline index and deletes all downloaded files.
   Future<void> removeOffline(Course course) async {
+    final fileVM = ref.read(FileCacheViewModel.provider);
+
+    // Delete all per-lesson cached files.
+    final classes = await repository.getCachedClasses(
+      course.id?.toString() ?? "",
+    );
+    for (final c in classes) {
+      final videoUrl = c.classInfo?.videoUploadUrl;
+      final articleUrl = c.classInfo?.articleFile;
+      if (_validUrl(videoUrl)) fileVM.delete(videoUrl!);
+      if (_validUrl(articleUrl)) fileVM.delete(articleUrl!);
+    }
+
+    // Delete course-level PDFs.
+    final pgUrl = course.participantGuideFile?.toString();
+    final wmUrl = course.wrapMethodologyFile?.toString();
+    if (_validUrl(pgUrl)) fileVM.delete(pgUrl!);
+    if (_validUrl(wmUrl)) fileVM.delete(wmUrl!);
+
     await repository.removeCourse(course);
     await _fetch();
   }
