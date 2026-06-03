@@ -350,6 +350,21 @@ class _CourseClassTile extends StatelessWidget {
         url: info?.virtualClassLink,
         courseClass: courseClass,
       ),
+      // Virtual class recording — s3ClassLink is the S3-hosted recording,
+      // classLink is the fallback recording URL. Tapping either marks the
+      // lesson as Completed via markAsRead → learning-event-completion.
+      LinkButton(
+        icon: Icons.play_circle_filled_rounded,
+        label: "Watch Recording",
+        url: info?.s3ClassLink?.toString(),
+        courseClass: courseClass,
+      ),
+      LinkButton(
+        icon: Icons.play_circle_filled_rounded,
+        label: "Watch Recording",
+        url: info?.classLink?.toString(),
+        courseClass: courseClass,
+      ),
     ];
 
     return Padding(
