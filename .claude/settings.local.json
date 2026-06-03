@@ -12,7 +12,14 @@
       "Bash(curl -s \"https://staging.trainingpipeline.com/api/web/courses\")",
       "Bash(python3 -m json.tool)",
       "Bash(git commit -m 'Add debug log to print course ID for IAP testing:*)",
-      "Bash(git commit -m 'Fix Buy button text visibility on Purchase screen:*)"
+      "Bash(git commit -m 'Fix Buy button text visibility on Purchase screen:*)",
+      "Bash(git commit -m ' *)",
+      "Bash(git checkout *)",
+      "Bash(git revert *)",
+      "Read(//Users/dev/Desktop/lms/**)",
+      "Bash(flutter config *)",
+      "Bash(find /Users -name \"pubspec.yaml\" -path \"*/LMS/*\" 2>/dev/null | head -5)",
+      "Bash(findstr /i macos)"
     ]
   }
 }

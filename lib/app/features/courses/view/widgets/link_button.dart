@@ -51,21 +51,25 @@ class LinkButton extends ConsumerWidget {
             : OutlinedButton.icon(
                 onPressed: null,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.grey,
-                  side: const BorderSide(color: Colors.grey),
+                  foregroundColor: Colors.grey.shade600,
+                  disabledForegroundColor: Colors.grey.shade600,
+                  disabledBackgroundColor: Colors.transparent,
+                  side: BorderSide(color: Colors.grey.shade400),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textStyle: context.textTheme.bodySmall
                       ?.copyWith(fontWeight: FontWeight.w600),
                 ),
-                icon: Icon(icon, size: 18),
+                icon: Icon(icon, size: 18, color: Colors.grey.shade600),
                 label: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(label),
+                    Text(label,
+                        style: TextStyle(color: Colors.grey.shade600)),
                     const SizedBox(width: 4),
-                    const Icon(Icons.cloud_off, size: 12, color: Colors.grey),
+                    Icon(Icons.cloud_off,
+                        size: 12, color: Colors.grey.shade500),
                   ],
                 ),
               ),
