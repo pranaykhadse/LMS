@@ -24,7 +24,11 @@ class RoasterRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
       data: {"course_id": courseId, "user_id": userId},
     );
-    debugPrint('[RoasterRepo] fetch-user-roaster raw: $response');
+    debugPrint(
+      '[RoasterRepo] fetch-user-roaster '
+      'success=${response?["success"]}  '
+      'count=${(response?["payload"] is List ? (response!["payload"] as List).length : "?")}',
+    );
     return DataResponse.parse(response, Roaster.fromJson);
   }
 
