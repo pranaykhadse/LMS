@@ -518,10 +518,17 @@ class _CourseClassTile extends ConsumerWidget {
       case '2': // In Person — Register
         actions.add(LinkButton(icon: Icons.person_add_outlined,    label: "Register",               url: alt ?? bc, courseClass: courseClass));
 
-      case '4': // Watch Video — DownloadButton already handles
+      case '4': // Watch Video — DownloadButton (videoUploadUrl) already handles
         break;
-      case '5': // Read Article — DownloadButton already handles
-        break;
+
+      case '5': // Read Article
+        // Website opens the read-article page (DownloadButton still provides offline PDF access).
+        actions.add(LinkButton(
+          icon: Icons.article_outlined,
+          label: "Article",
+          url: '${webBaseUrl}course/read-article?classId=${courseClass.classId}',
+          courseClass: courseClass,
+        ));
 
       case '6': // Read Webpage — URL must be configured; no begin-class fallback
         actions.add(LinkButton(icon: Icons.language,               label: "Webpage",                url: _validUrl(info?.readWebpageLink) ?? alt, courseClass: courseClass));
@@ -531,7 +538,13 @@ class _CourseClassTile extends ConsumerWidget {
 
       case '8': // Perform a Task with Observation
       case '9': // Perform a Task without Observation
-        actions.add(LinkButton(icon: Icons.task_alt,               label: "Tasks",                  url: alt ?? bc, courseClass: courseClass));
+        // Website uses forum/index/observe?id=X  (note: id=, not classId=)
+        actions.add(LinkButton(
+          icon: Icons.task_alt,
+          label: "Tasks",
+          url: alt ?? '${webBaseUrl}forum/index/observe?id=${courseClass.classId}',
+          courseClass: courseClass,
+        ));
 
       case '10': // Receive Coaching
         actions.add(LinkButton(icon: Icons.people_outline_rounded, label: "Coaches",                url: alt ?? bc, courseClass: courseClass));
