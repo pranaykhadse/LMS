@@ -501,11 +501,14 @@ class _CourseClassTile extends ConsumerWidget {
           url: _validUrl(trainingLink) ?? _validUrl(info?.s3ClassLink?.toString()) ?? _validUrl(info?.classLink?.toString()) ?? bc,
           courseClass: courseClass,
         ));
-        // Watch Recording: only when alt is a real recording URL
+        // Watch Recording: use real recording URL when configured; fall back to
+        // begin-class so the button is always visible (matches website behaviour).
+        // _rawAlt may be "0" (server sentinel), so we bypass the filtered `alt` here.
+        final _recordingUrl = _validUrl(_rawAlt) ?? bc;
         actions.add(LinkButton(
           icon: Icons.play_circle_filled_rounded,
           label: "Watch Recording",
-          url: alt,   // null if not configured — LinkButton hides itself
+          url: _recordingUrl,
           courseClass: courseClass,
         ));
 
@@ -546,11 +549,21 @@ class _CourseClassTile extends ConsumerWidget {
           courseClass: courseClass,
         ));
 
-      case '10': // Receive Coaching
-        actions.add(LinkButton(icon: Icons.people_outline_rounded, label: "Coaches",                url: alt ?? bc, courseClass: courseClass));
+      case '10': // Receive Coaching — learning-event-class/coaches?id=X
+        actions.add(LinkButton(
+          icon: Icons.people_outline_rounded,
+          label: "Coaches",
+          url: alt ?? '${webBaseUrl}learning-event-class/coaches?id=${courseClass.classId}',
+          courseClass: courseClass,
+        ));
 
-      case '11': // Insight Report
-        actions.add(LinkButton(icon: Icons.bar_chart_rounded,      label: "Insights",               url: alt ?? bc, courseClass: courseClass));
+      case '11': // Insight Report — insight/index?id=X
+        actions.add(LinkButton(
+          icon: Icons.bar_chart_rounded,
+          label: "Insights",
+          url: alt ?? '${webBaseUrl}insight/index?id=${courseClass.classId}',
+          courseClass: courseClass,
+        ));
 
       case '12': // Certificate — no action button
         break;
@@ -573,8 +586,13 @@ class _CourseClassTile extends ConsumerWidget {
         // customPrompt sometimes stores HTML content, not a URL — validate first
         actions.add(LinkButton(icon: Icons.link_rounded,           label: "Bridgework Link",        url: _validUrl(info?.customPrompt) ?? alt ?? bc, courseClass: courseClass));
 
-      case '19': // Agreement
-        actions.add(LinkButton(icon: Icons.assignment_outlined,    label: "Agreement",              url: alt ?? bc, courseClass: courseClass));
+      case '19': // Agreement — course/agreement-preview?id=X&course_id=Y
+        actions.add(LinkButton(
+          icon: Icons.assignment_outlined,
+          label: "Agreement",
+          url: alt ?? '${webBaseUrl}course/agreement-preview?id=${courseClass.classId}&course_id=${courseClass.courseId}',
+          courseClass: courseClass,
+        ));
 
       case '20': // Test Out Assessment — no action button (just Details)
         break;
