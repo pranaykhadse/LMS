@@ -497,23 +497,12 @@ class _CourseClassTile extends ConsumerWidget {
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
       case '3': // Virtual Class — Details + Download Recording only
-        // Diagnostic: log roaster lec vs rawLec from allcourse/events
-        debugPrint('[VirtualClass] classId=${courseClass.classId}  roasterLec=${lec.runtimeType}');
-        debugPrint('[VirtualClass] rawLec keys: ${courseClass.rawLec?.keys.toList()}');
-        if (courseClass.rawLec != null) {
-          for (final k in courseClass.rawLec!.keys) {
-            debugPrint('[VirtualClass]   $k = ${courseClass.rawLec![k]}');
-          }
-        }
-        debugPrint('[VirtualClass] effectiveLec type=${effectiveLec.runtimeType}');
-        debugPrint('[VirtualClass] info.alternativeLearningEvent = $_rawAlt');
-
-        // Prefer effectiveLec's training_session_recording_link; fall back to alternativeLearningEvent.
+        // effectiveLec is enriched by CourseClassViewModel._enrichVirtualClassData()
+        // which calls fetchLecView to populate training_session_recording_link.
         final _lecRecUrl = effectiveLec is Map
             ? _validUrl(effectiveLec['training_session_recording_link']?.toString())
             : null;
         final _recordingUrl = _lecRecUrl ?? _validUrl(_rawAlt);
-        debugPrint('[VirtualClass] _lecRecUrl=$_lecRecUrl  _recordingUrl=$_recordingUrl');
         actions.add(DownloadButton(
           icon: Icons.play_circle_outline_rounded,
           label: "Recording",
