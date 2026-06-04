@@ -61,6 +61,58 @@ class RoasterRepository with RepoNetworkHelper {
     throw body['message'] ?? 'saveRoaster failed';
   }
 
+  /// Fetches the full LEC record for a given LEC id.
+  /// Used to retrieve fields (e.g. training_session_recording_link) that
+  /// allcourse/events doesn't include.
+  Future<Map<dynamic, dynamic>?> fetchLecById(String lecId) async {
+    try {
+      final response = await post(
+        "learning-event-class/view",
+        cacheType: RequestCacheType.none,
+        data: {"id": int.tryParse(lecId)},
+      );
+      if (response == null) return null;
+      // The endpoint may return the record directly or nested under 'learningEventClass'.
+      if (response is Map) {
+        final nested = response['learningEventClass'];
+        if (nested is Map) return nested;
+        return response;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[RoasterRepo] fetchLecById($lecId) error: $e');
+      return null;
+    }
+  }
+
+  /// Fetches the LEC record by class_id + course_id.
+  /// Fallback when fetchLecById returns null.
+  Future<Map<dynamic, dynamic>?> fetchLecByClass({
+    required String classId,
+    required String courseId,
+  }) async {
+    try {
+      final response = await post(
+        "learning-event-class/view",
+        cacheType: RequestCacheType.none,
+        data: {
+          "class_id": int.tryParse(classId),
+          "course_id": int.tryParse(courseId),
+        },
+      );
+      if (response == null) return null;
+      if (response is Map) {
+        final nested = response['learningEventClass'];
+        if (nested is Map) return nested;
+        return response;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[RoasterRepo] fetchLecByClass(classId=$classId) error: $e');
+      return null;
+    }
+  }
+
   /// Marks a learning event as completed.
   ///
   /// This is the same API the web platform uses. On success the server returns
