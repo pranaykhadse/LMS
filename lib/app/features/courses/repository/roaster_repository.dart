@@ -88,6 +88,43 @@ class RoasterRepository with RepoNetworkHelper {
     }
   }
 
+  /// Fetches a LEC record by class_id + course_id via learning-event-class/index.
+  /// The endpoint returns a bare JSON array; this method returns the first element.
+  /// Used as a fallback when fetchLecView fails or returns no recording link.
+  Future<Map<dynamic, dynamic>?> fetchLecByClass({
+    required String classId,
+    required String courseId,
+  }) async {
+    try {
+      final response = await dio.post(
+        "learning-event-class/index",
+        data: {
+          "id": int.tryParse(classId),
+          "course_id": int.tryParse(courseId),
+        },
+        options: Options(headers: header, validateStatus: (_) => true),
+      );
+      final body = response.data;
+      debugPrint(
+        '[RoasterRepo] fetch-lec-by-class '
+        'classId=$classId courseId=$courseId '
+        'status=${response.statusCode} bodyType=${body.runtimeType}',
+      );
+      if (body == null) return null;
+      if (body is Map) return body as Map<dynamic, dynamic>;
+      if (body is List && body.isNotEmpty && body.first is Map) {
+        debugPrint(
+          '[RoasterRepo] fetch-lec-by-class — ${body.length} records, using first',
+        );
+        return body.first as Map<dynamic, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[RoasterRepo] fetch-lec-by-class error: $e');
+      return null;
+    }
+  }
+
   /// Marks a learning event as completed.
   ///
   /// This is the same API the web platform uses. On success the server returns

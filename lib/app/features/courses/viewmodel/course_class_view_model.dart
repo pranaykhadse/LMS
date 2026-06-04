@@ -102,45 +102,74 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
       if (existing.startsWith('http')) {
         debugPrint(
           '[VirtualClass] classId=${cc.classId} '
-          '— recording link already in rawLec',
+          '— recording link already in rawLec: $existing',
         );
         continue;
       }
 
+      Map<dynamic, dynamic>? lecData;
+
+      // Attempt 1: fetch by LEC id via learning-event-class/view
       final lecId = cc.id ?? '';
-      if (lecId.isEmpty) {
+      if (lecId.isNotEmpty) {
+        debugPrint(
+          '[VirtualClass] classId=${cc.classId} lecId=$lecId '
+          '— attempt 1: fetchLecView...',
+        );
+        lecData = await roasterRepository.fetchLecView(lecId);
+        if (!mounted) return;
         debugPrint(
           '[VirtualClass] classId=${cc.classId} '
-          '— lecId empty, cannot fetch LEC record',
+          '— fetchLecView keys: ${lecData?.keys.toList()}',
         );
-        continue;
       }
 
-      debugPrint(
-        '[VirtualClass] classId=${cc.classId} lecId=$lecId '
-        '— calling fetchLecView for full record...',
-      );
-      final lecData = await roasterRepository.fetchLecView(lecId);
-      if (!mounted) return;
+      // Attempt 2: fetch by class_id + course_id via learning-event-class/index
+      final recFromView =
+          lecData?['training_session_recording_link']?.toString() ?? '';
+      if (lecData == null || !recFromView.startsWith('http')) {
+        final classId  = cc.classId  ?? '';
+        final courseId = cc.courseId ?? '';
+        if (classId.isNotEmpty && courseId.isNotEmpty) {
+          debugPrint(
+            '[VirtualClass] classId=${cc.classId} '
+            '— attempt 2: fetchLecByClass classId=$classId courseId=$courseId...',
+          );
+          final byClass = await roasterRepository.fetchLecByClass(
+            classId: classId,
+            courseId: courseId,
+          );
+          if (!mounted) return;
+          debugPrint(
+            '[VirtualClass] classId=${cc.classId} '
+            '— fetchLecByClass keys: ${byClass?.keys.toList()}',
+          );
+          if (byClass != null) lecData = byClass;
+        }
+      }
 
       if (lecData == null) {
         debugPrint(
           '[VirtualClass] classId=${cc.classId} '
-          '— fetchLecView returned null',
+          '— both fetch attempts returned null',
         );
         continue;
       }
 
-      debugPrint(
-        '[VirtualClass] classId=${cc.classId} '
-        '— LEC keys: ${lecData.keys.toList()}',
-      );
+      // Log every non-empty field from the fetched LEC record
       for (final e in lecData.entries) {
         final v = e.value?.toString() ?? '';
         if (v.isNotEmpty && v != 'null' && v != '0') {
           debugPrint('[VirtualClass] classId=${cc.classId}   ${e.key}: $v');
         }
       }
+
+      final recLink =
+          lecData['training_session_recording_link']?.toString() ?? '';
+      debugPrint(
+        '[VirtualClass] classId=${cc.classId} '
+        '— training_session_recording_link = "$recLink"',
+      );
 
       final mergedLec = Map<dynamic, dynamic>.from(cc.rawLec ?? {})
         ..addAll(lecData);
