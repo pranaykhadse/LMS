@@ -63,39 +63,39 @@ class RoasterRepository with RepoNetworkHelper {
 
   /// Fetches LEC records for a given lms_class_id + course_id.
   ///
-  /// The backend never populates learningEventClass in fetch-user-roaster, so
-  /// we fetch it separately for Virtual Class events using the admin-equivalent
-  /// endpoint: learning-event-class/index?id={classId}&course_id={courseId}.
+  /// Uses dio.post() directly (bypassing the RepoNetworkHelper post() wrapper)
+  /// because the endpoint returns a bare JSON array which the wrapper can't handle.
   Future<Map<dynamic, dynamic>?> fetchLecByClass({
     required String classId,
     required String courseId,
   }) async {
     try {
-      final response = await post(
+      final response = await dio.post(
         "learning-event-class/index",
-        cacheType: RequestCacheType.none,
         data: {
           "id": int.tryParse(classId),
           "course_id": int.tryParse(courseId),
         },
+        options: Options(headers: header, validateStatus: (_) => true),
       );
-      debugPrint('[RoasterRepo] fetch-lec-by-class classId=$classId courseId=$courseId type=${response.runtimeType}');
-      if (response == null) return null;
+      final body = response.data;
+      debugPrint('[RoasterRepo] fetch-lec-by-class classId=$classId courseId=$courseId status=${response.statusCode} bodyType=${body.runtimeType}');
+      if (body == null) return null;
 
-      // Endpoint may return a bare JSON array OR a wrapped map — handle both.
+      // Endpoint returns a bare JSON array or a wrapped map — handle both.
       List<dynamic>? items;
-      if (response is List) {
-        items = response;
-      } else if (response is Map) {
-        final inner = response['payload'] ?? response['data'] ?? response;
+      if (body is List) {
+        items = body;
+      } else if (body is Map) {
+        final inner = body['payload'] ?? body['data'] ?? body;
         if (inner is List) {
           items = inner;
         } else if (inner is Map) {
           return inner as Map<dynamic, dynamic>;
         }
       }
-
       if (items == null || items.isEmpty) return null;
+
       // Prefer the LEC that has a recording link; otherwise take the first.
       for (final lec in items) {
         if (lec is Map) {
