@@ -305,11 +305,15 @@ class _LessonTableView extends StatelessWidget {
   const _LessonTableView({required this.lessons});
   final List<CourseClass> lessons;
 
-  // Fixed column widths; COURSE DETAILS fills the remaining space via Expanded.
+  // Fixed column widths used only in the wide (tablet/desktop) layout.
+  // COURSE DETAILS fills remaining space via Expanded.
   static const double _colNum     = 40.0;
   static const double _colSession = 90.0;
   static const double _colStatus  = 130.0;
   static const double _colAction  = 280.0;
+
+  // Switch to card layout when available width < 600 px (phone).
+  static const double _compactBreakpoint = 600.0;
 
   @override
   Widget build(BuildContext context) {
@@ -320,69 +324,77 @@ class _LessonTableView extends StatelessWidget {
       letterSpacing: 0.6,
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── "Course Structure" title ──────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          child: Row(
-            children: [
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < _compactBreakpoint;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── "Course Structure" title ────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: context.appColorScheme.primary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Course Structure',
+                    style: context.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Column headers (wide layout only) ──────────────────────
+            if (!isCompact)
               Container(
-                width: 4,
-                height: 22,
                 decoration: BoxDecoration(
-                  color: context.appColorScheme.primary,
-                  borderRadius: BorderRadius.circular(2),
+                  border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Row(
+                    children: [
+                      SizedBox(width: _colNum,     child: const Text('#',            style: headerStyle)),
+                      const Expanded(              child: Text('COURSE DETAILS',     style: headerStyle)),
+                      SizedBox(width: _colSession, child: const Text('NEXT SESSION', style: headerStyle)),
+                      const SizedBox(width: 24),
+                      SizedBox(width: _colStatus,  child: const Text('STATUS',       style: headerStyle)),
+                      const SizedBox(width: 24),
+                      SizedBox(width: _colAction,  child: const Text('ACTION',       style: headerStyle)),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Text(
-                'Course Structure',
-                style: context.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+
+            // ── Rows ────────────────────────────────────────────────────
+            Expanded(
+              child: ListView.builder(
+                itemCount: lessons.length,
+                itemBuilder: (context, index) => _CourseClassTile(
+                  index:       index,
+                  courseClass: lessons[index],
+                  isCompact:   isCompact,
+                  colNum:      _colNum,
+                  colSession:  _colSession,
+                  colStatus:   _colStatus,
+                  colAction:   _colAction,
                 ),
               ),
-            ],
-          ),
-        ),
-
-        // ── Column headers ────────────────────────────────────────────────
-        Container(
-          decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Row(
-              children: [
-                SizedBox(width: _colNum,     child: const Text('#',             style: headerStyle)),
-                const Expanded(              child: Text('COURSE DETAILS',      style: headerStyle)),
-                SizedBox(width: _colSession, child: const Text('NEXT SESSION',  style: headerStyle)),
-                const SizedBox(width: 24),
-                SizedBox(width: _colStatus,  child: const Text('STATUS',        style: headerStyle)),
-                const SizedBox(width: 24),
-                SizedBox(width: _colAction,  child: const Text('ACTION',        style: headerStyle)),
-              ],
             ),
-          ),
-        ),
-
-        // ── Rows ──────────────────────────────────────────────────────────
-        Expanded(
-          child: ListView.builder(
-            itemCount: lessons.length,
-            itemBuilder: (context, index) => _CourseClassTile(
-              index:       index,
-              courseClass: lessons[index],
-              colNum:      _colNum,
-              colSession:  _colSession,
-              colStatus:   _colStatus,
-              colAction:   _colAction,
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
@@ -394,6 +406,7 @@ class _CourseClassTile extends ConsumerWidget {
   const _CourseClassTile({
     required this.index,
     required this.courseClass,
+    required this.isCompact,
     required this.colNum,
     required this.colSession,
     required this.colStatus,
@@ -402,6 +415,7 @@ class _CourseClassTile extends ConsumerWidget {
 
   final int index;
   final CourseClass courseClass;
+  final bool isCompact;
   final double colNum;
   final double colSession;
   final double colStatus;
@@ -605,10 +619,90 @@ class _CourseClassTile extends ConsumerWidget {
         actions.add(LinkButton(icon: Icons.open_in_browser_rounded, label: "Launch", url: alt ?? bc, courseClass: courseClass));
     }
 
+    final divider = BoxDecoration(
+      border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+    );
+
+    // ── Compact card layout (phones) ──────────────────────────────────────
+    if (isCompact) {
+      return Container(
+        decoration: divider,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: index  ·  name + type  ·  status chip
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${index + 1}.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: context.appColorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1a1a2e),
+                          ),
+                        ),
+                        if (typeName.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            '($typeName)',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF9E9E9E),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ClassStatusChip(courseClass: courseClass),
+                ],
+              ),
+
+              // Row 2: next session date (when present)
+              if (nextSession.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  nextSession,
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF666666)),
+                ),
+              ],
+
+              // Row 3: action buttons
+              if (actions.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: actions,
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ── Wide table layout (tablet / desktop) ─────────────────────────────
     return Container(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
-      ),
+      decoration: divider,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
         child: Row(
