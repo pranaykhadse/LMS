@@ -54,11 +54,12 @@ class OfflineViewModel extends ChangeNotifier {
     try {
       final classes = await repository.download(course);
 
-      // ── Count total files (videos + articles + participant guide) ──────────
+      // ── Count total files (videos + articles + recordings + course PDFs) ───
       int total = 0;
       for (final c in classes) {
         if (_validUrl(c.classInfo?.videoUploadUrl)) total++;
         if (_validUrl(c.classInfo?.articleFile)) total++;
+        total += c.recordingUrls.length;
       }
       final pgUrl = course.participantGuideFile?.toString();
       final wmUrl = course.wrapMethodologyFile?.toString();
@@ -91,6 +92,9 @@ class OfflineViewModel extends ChangeNotifier {
         if (_validUrl(c.classInfo?.articleFile)) {
           addDownload(c.classInfo!.articleFile!);
         }
+        for (final url in c.recordingUrls) {
+          addDownload(url);
+        }
       }
       // Participant guide + Wrap Methodology (course-level PDFs)
       if (_validUrl(pgUrl)) addDownload(pgUrl!);
@@ -121,6 +125,9 @@ class OfflineViewModel extends ChangeNotifier {
       final articleUrl = c.classInfo?.articleFile;
       if (_validUrl(videoUrl)) fileVM.delete(videoUrl!);
       if (_validUrl(articleUrl)) fileVM.delete(articleUrl!);
+      for (final url in c.recordingUrls) {
+        fileVM.delete(url);
+      }
     }
 
     // Delete course-level PDFs.

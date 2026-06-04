@@ -76,6 +76,48 @@ class CourseClass {
     );
   }
 
+  /// Recording URLs for Virtual Class (type '3') events.
+  /// Priority: rawLec['recording_links'] list →
+  ///           rawLec['training_session_recording_link'] →
+  ///           classInfo.alternativeLearningEvent →
+  ///           dummy URL (temporary, until backend returns the field)
+  List<String> get recordingUrls {
+    if (classInfo?.type != '3') return const [];
+    final urls = <String>[];
+
+    if (rawLec != null) {
+      final links = rawLec!['recording_links'];
+      if (links is List) {
+        for (final l in links) {
+          final u = _cleanRecUrl(l?.toString());
+          if (u != null) urls.add(u);
+        }
+      }
+      if (urls.isEmpty) {
+        final u = _cleanRecUrl(
+            rawLec!['training_session_recording_link']?.toString());
+        if (u != null) urls.add(u);
+      }
+    }
+
+    if (urls.isEmpty) {
+      final u = _cleanRecUrl(classInfo?.alternativeLearningEvent);
+      if (u != null) urls.add(u);
+    }
+
+    // TODO: remove once backend reliably returns training_session_recording_link
+    if (urls.isEmpty) {
+      urls.add('https://dwpfuyia3u2j6.cloudfront.net/fdNb996MNYiX2CK.m3u8');
+    }
+
+    return urls;
+  }
+
+  static String? _cleanRecUrl(String? url) {
+    if (url == null || url.trim().isEmpty || url.trim() == '0') return null;
+    return url.trim();
+  }
+
   String toRawJson() => json.encode(toJson());
 
   factory CourseClass.fromRawJson(String source) =>
