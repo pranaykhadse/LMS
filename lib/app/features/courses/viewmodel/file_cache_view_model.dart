@@ -3,29 +3,17 @@ import 'dart:io';
 
 import 'package:dio/dio.dart' as http;
 import 'package:flutter/foundation.dart';
-import 'package:flutter_cache_manager/file.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Per-content-item download + play widget — Netflix style.
-///
-/// States:
-///  ① Online  + not downloaded  → [⬇ Download Video/PDF / Download Recording]
-///  ② Downloading               → progress ring + % label
-///  ③ Downloaded                → [▶ Play / 📄 Open]  🗑️ delete
-///  ④ Offline  + not downloaded → disabled "Not available offline" pill
 class FileCacheViewModel extends ChangeNotifier {
   static final provider = ChangeNotifierProvider<FileCacheViewModel>((ref) {
     return FileCacheViewModel();
   });
 
   final Map<String, FileCacheState> cachedState = {};
-
-  // Tracks which URLs have an in-flight disk check so we never double-fire.
   final Map<String, bool> _checking = {};
-
-  // Reusable Dio for HLS segment downloads — CloudFront is public, no auth needed.
   final _dio = http.Dio();
 
   // ── Public API ─────────────────────────────────────────────────────────────
@@ -44,7 +32,8 @@ class FileCacheViewModel extends ChangeNotifier {
     DefaultCacheManager().getFileFromCache(url).then((info) {
       _checking.remove(url);
       cachedState[url] = info != null
-          ? FileCacheState(url: url, file: info.file)
+          // Convert package:file/File → dart:io File via path.
+          ? FileCacheState(url: url, file: File(info.file.path))
           : FileCacheState(url: url);
       notifyListeners();
     });
@@ -70,7 +59,6 @@ class FileCacheViewModel extends ChangeNotifier {
 
   void delete(String url) {
     if (_isHls(url)) {
-      // Delete the concatenated .ts file from the documents directory.
       _hlsLocalFile(url).then((f) {
         if (f.existsSync()) f.deleteSync();
       });
@@ -81,26 +69,25 @@ class FileCacheViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Regular (non-HLS) download — unchanged ─────────────────────────────────
+  // ── Regular (non-HLS) download ─────────────────────────────────────────────
 
   Future<void> _downloadRegular(String url) async {
-    final downloadStream =
-        DefaultCacheManager()
-            .getFileStream(url, withProgress: true)
-            .asBroadcastStream();
+    final downloadStream = DefaultCacheManager()
+        .getFileStream(url, withProgress: true)
+        .asBroadcastStream();
     cachedState[url] = FileCacheState(
       url: url,
       progress: downloadStream.map(
-        (e) =>
-            (e is DownloadProgress)
-                ? e.downloaded / (e.totalSize ?? e.downloaded)
-                : 1.0,
+        (e) => (e is DownloadProgress)
+            ? e.downloaded / (e.totalSize ?? e.downloaded)
+            : 1.0,
       ),
     );
     notifyListeners();
     final fileInfo =
         await downloadStream.firstWhere((r) => r is FileInfo) as FileInfo;
-    cachedState[url] = FileCacheState(url: url, file: fileInfo.file);
+    // Convert package:file/File → dart:io File via path.
+    cachedState[url] = FileCacheState(url: url, file: File(fileInfo.file.path));
     notifyListeners();
   }
 
@@ -123,7 +110,7 @@ class FileCacheViewModel extends ChangeNotifier {
       String manifest = manifestResp.data ?? '';
       String baseUrl = _hlsBaseUrl(hlsUrl);
 
-      // 2. If master playlist (multiple quality variants), use highest bandwidth
+      // 2. Master playlist → pick highest-bandwidth variant
       if (manifest.contains('#EXT-X-STREAM-INF')) {
         final variantUrl = _highestBandwidthVariant(manifest, baseUrl);
         if (variantUrl != null) {
@@ -136,14 +123,14 @@ class FileCacheViewModel extends ChangeNotifier {
         }
       }
 
-      // 3. Parse media segment URLs (.ts lines, skip all # lines)
+      // 3. Parse .ts segment URLs
       final segments = _parseSegments(manifest, baseUrl);
-      if (segments.isEmpty) throw Exception('No segments found in HLS manifest');
-      debugPrint('[FileCacheVM] HLS: downloading ${segments.length} segments for $hlsUrl');
+      if (segments.isEmpty) throw Exception('No segments in HLS manifest');
+      debugPrint('[FileCacheVM] HLS: ${segments.length} segments → $hlsUrl');
 
-      // 4. Download each segment and concatenate into one local .ts file
+      // 4. Download + concatenate into one local .ts file
       final outputFile = await _hlsLocalFile(hlsUrl);
-      final sink = outputFile.openWrite(); // truncates any existing file
+      final sink = outputFile.openWrite();
 
       for (int i = 0; i < segments.length; i++) {
         final segResp = await _dio.get<List<int>>(
@@ -162,16 +149,16 @@ class FileCacheViewModel extends ChangeNotifier {
 
       cachedState[hlsUrl] = FileCacheState(url: hlsUrl, file: outputFile);
       notifyListeners();
-      debugPrint('[FileCacheVM] HLS download complete → ${outputFile.path}');
+      debugPrint('[FileCacheVM] HLS complete → ${outputFile.path}');
     } catch (e) {
-      debugPrint('[FileCacheVM] HLS download error: $e');
+      debugPrint('[FileCacheVM] HLS error: $e');
       progressController.close();
       cachedState.remove(hlsUrl);
       notifyListeners();
     }
   }
 
-  // ── HLS static helpers ──────────────────────────────────────────────────────
+  // ── HLS helpers ─────────────────────────────────────────────────────────────
 
   static bool _isHls(String url) => url.toLowerCase().contains('.m3u8');
 
@@ -180,10 +167,9 @@ class FileCacheViewModel extends ChangeNotifier {
     return i > 0 ? url.substring(0, i + 1) : url;
   }
 
-  static String _resolve(String segment, String base) =>
-      segment.startsWith('http') ? segment : '$base${segment.trim()}';
+  static String _resolve(String seg, String base) =>
+      seg.startsWith('http') ? seg : '$base${seg.trim()}';
 
-  /// Returns the variant URL with the highest BANDWIDTH from a master playlist.
   static String? _highestBandwidthVariant(String manifest, String base) {
     int? maxBw;
     String? best;
@@ -204,7 +190,6 @@ class FileCacheViewModel extends ChangeNotifier {
     return best;
   }
 
-  /// Extracts .ts segment URLs from a media playlist.
   static List<String> _parseSegments(String manifest, String base) =>
       manifest
           .split('\n')
@@ -213,8 +198,6 @@ class FileCacheViewModel extends ChangeNotifier {
           .map((l) => _resolve(l, base))
           .toList();
 
-  /// Local file path for the downloaded HLS recording.
-  /// Uses a hash of the URL so the same recording reuses the same file.
   static Future<File> _hlsLocalFile(String hlsUrl) async {
     final dir = await getApplicationDocumentsDirectory();
     return File('${dir.path}/hls_${hlsUrl.hashCode.abs()}.ts');
@@ -224,6 +207,7 @@ class FileCacheViewModel extends ChangeNotifier {
 class FileCacheState {
   final String url;
   final Stream<double>? progress;
+  // dart:io File — works for both flutter_cache_manager downloads and HLS .ts output.
   File? file;
 
   FileCacheState({required this.url, this.file, this.progress});
