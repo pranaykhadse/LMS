@@ -71,6 +71,13 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
           cc.rawLec?['training_session_recording_link']?.toString() ?? '';
       if (existingSingle.startsWith('http')) return cc;
 
+      // Only inject when allcourse/events returned a valid LEC id.
+      // Classes with no sessions have a null/empty/zero lecId — those should
+      // show no recording buttons. A non-zero lecId means at least one session
+      // was scheduled for this class.
+      final lecId = cc.id ?? '';
+      if (lecId.isEmpty || lecId == '0') return cc;
+
       // Inject TWO dummy recording links to simulate the two-session scenario
       // visible in the admin panel (LEC ids 1300 + 1301).
       // Remove once backend sends real recording_links in allcourse/events.
