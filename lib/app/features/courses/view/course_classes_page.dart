@@ -538,13 +538,12 @@ class _CourseClassTile extends ConsumerWidget {
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
       case '3': // Virtual Class
-        // Attend Class: training_session_link from LEC (direct or constructed from platform+id)
-        // Falls back to begin-class only when no LEC data is available at all.
+        // Attend Class: only shown when a real session link is available.
+        // Returns null (→ button hidden) when no LEC data exists for this class.
         final _attendUrl =
             _buildTrainingUrl(webBaseUrl, lec, courseClass.courseId, courseClass.classId) ??
             _validUrl(info?.virtualClassLink) ??
-            _validUrl(info?.classLink?.toString()) ??
-            bc;
+            _validUrl(info?.classLink?.toString());
         actions.add(LinkButton(
           icon: Icons.video_call_outlined,
           label: "Attend Class",
