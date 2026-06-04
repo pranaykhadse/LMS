@@ -54,11 +54,12 @@ class OfflineViewModel extends ChangeNotifier {
     try {
       final classes = await repository.download(course);
 
-      // ── Count total files (videos + articles + recordings + course PDFs) ───
+      // ── Count total files (videos + PDFs + agreements + recordings + course PDFs)
       int total = 0;
       for (final c in classes) {
         if (_validUrl(c.classInfo?.videoUploadUrl)) total++;
         if (_validUrl(c.classInfo?.articleFile)) total++;
+        if (_validUrl(c.scannedPdf)) total++;
         total += c.recordingUrls.length;
       }
       final pgUrl = course.participantGuideFile?.toString();
@@ -86,15 +87,10 @@ class OfflineViewModel extends ChangeNotifier {
       }
 
       for (final c in classes) {
-        if (_validUrl(c.classInfo?.videoUploadUrl)) {
-          addDownload(c.classInfo!.videoUploadUrl!);
-        }
-        if (_validUrl(c.classInfo?.articleFile)) {
-          addDownload(c.classInfo!.articleFile!);
-        }
-        for (final url in c.recordingUrls) {
-          addDownload(url);
-        }
+        if (_validUrl(c.classInfo?.videoUploadUrl)) addDownload(c.classInfo!.videoUploadUrl!);
+        if (_validUrl(c.classInfo?.articleFile)) addDownload(c.classInfo!.articleFile!);
+        if (_validUrl(c.scannedPdf)) addDownload(c.scannedPdf!);
+        for (final url in c.recordingUrls) addDownload(url);
       }
       // Participant guide + Wrap Methodology (course-level PDFs)
       if (_validUrl(pgUrl)) addDownload(pgUrl!);
@@ -121,13 +117,10 @@ class OfflineViewModel extends ChangeNotifier {
       course.id?.toString() ?? "",
     );
     for (final c in classes) {
-      final videoUrl = c.classInfo?.videoUploadUrl;
-      final articleUrl = c.classInfo?.articleFile;
-      if (_validUrl(videoUrl)) fileVM.delete(videoUrl!);
-      if (_validUrl(articleUrl)) fileVM.delete(articleUrl!);
-      for (final url in c.recordingUrls) {
-        fileVM.delete(url);
-      }
+      if (_validUrl(c.classInfo?.videoUploadUrl)) fileVM.delete(c.classInfo!.videoUploadUrl!);
+      if (_validUrl(c.classInfo?.articleFile)) fileVM.delete(c.classInfo!.articleFile!);
+      if (_validUrl(c.scannedPdf)) fileVM.delete(c.scannedPdf!);
+      for (final url in c.recordingUrls) fileVM.delete(url);
     }
 
     // Delete course-level PDFs.
