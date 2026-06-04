@@ -88,30 +88,6 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
         userId: userId?.toString() ?? "",
       );
 
-      // For Virtual Class (type 3) roasters whose learningEventClass is null
-      // (the backend JOIN is always broken), fetch the LEC separately using
-      // classId + courseId — the same params the admin uses.
-      final patched = <Roaster>[];
-      for (final r in data.data ?? <Roaster>[]) {
-        final type = r.classData is Map ? r.classData['type']?.toString() : null;
-        final isVirtualClass = type == '3';
-        if (isVirtualClass && r.learningEventClass == null) {
-          final classId  = r.classId  ?? '';
-          final courseId = r.courseId ?? '';
-          if (classId.isNotEmpty && courseId.isNotEmpty) {
-            final lecData = await repository.fetchLecByClass(
-              classId: classId,
-              courseId: courseId,
-            );
-            patched.add(lecData != null ? r.copyWith(learningEventClass: lecData) : r);
-          } else {
-            patched.add(r);
-          }
-        } else {
-          patched.add(r);
-        }
-      }
-
       if (!mounted) return;
       state = PaginatedState(
         data: DataState.onData(patched),

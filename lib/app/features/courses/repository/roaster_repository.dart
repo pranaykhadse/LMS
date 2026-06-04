@@ -61,54 +61,29 @@ class RoasterRepository with RepoNetworkHelper {
     throw body['message'] ?? 'saveRoaster failed';
   }
 
-  /// Fetches LEC records for a given lms_class_id + course_id.
+  /// Fetches a single LEC record by its ID (the id field from allcourse/events).
   ///
-  /// Uses dio.post() directly (bypassing the RepoNetworkHelper post() wrapper)
-  /// because the endpoint returns a bare JSON array which the wrapper can't handle.
-  Future<Map<dynamic, dynamic>?> fetchLecByClass({
-    required String classId,
-    required String courseId,
-  }) async {
+  /// The backend never populates learningEventClass in fetch-user-roaster,
+  /// so we fetch it separately using the learning_event_class_id returned by
+  /// allcourse/events (courseClass.id). Uses dio.post() directly to avoid
+  /// the RepoNetworkHelper wrapper's Map-only assumption.
+  Future<Map<dynamic, dynamic>?> fetchLecView(String lecId) async {
     try {
       final response = await dio.post(
-        "learning-event-class/index",
-        data: {
-          "id": int.tryParse(classId),
-          "course_id": int.tryParse(courseId),
-        },
+        "learning-event-class/view",
+        data: {"id": int.tryParse(lecId)},
         options: Options(headers: header, validateStatus: (_) => true),
       );
       final body = response.data;
-      debugPrint('[RoasterRepo] fetch-lec-by-class classId=$classId courseId=$courseId status=${response.statusCode} bodyType=${body.runtimeType}');
+      debugPrint('[RoasterRepo] fetch-lec-view id=$lecId status=${response.statusCode} bodyType=${body.runtimeType}');
       if (body == null) return null;
-
-      // Endpoint returns a bare JSON array or a wrapped map — handle both.
-      List<dynamic>? items;
-      if (body is List) {
-        items = body;
-      } else if (body is Map) {
-        final inner = body['payload'] ?? body['data'] ?? body;
-        if (inner is List) {
-          items = inner;
-        } else if (inner is Map) {
-          return inner as Map<dynamic, dynamic>;
-        }
+      if (body is Map) return body as Map<dynamic, dynamic>;
+      if (body is List && body.isNotEmpty && body.first is Map) {
+        return body.first as Map<dynamic, dynamic>;
       }
-      if (items == null || items.isEmpty) return null;
-
-      // Prefer the LEC that has a recording link; otherwise take the first.
-      for (final lec in items) {
-        if (lec is Map) {
-          final rec = lec['training_session_recording_link']?.toString() ?? '';
-          if (rec.isNotEmpty) {
-            debugPrint('[RoasterRepo] found LEC with recording link: $rec');
-            return lec as Map<dynamic, dynamic>;
-          }
-        }
-      }
-      return items.first is Map ? items.first as Map<dynamic, dynamic> : null;
+      return null;
     } catch (e) {
-      debugPrint('[RoasterRepo] fetch-lec-by-class error (classId=$classId): $e');
+      debugPrint('[RoasterRepo] fetch-lec-view error (id=$lecId): $e');
       return null;
     }
   }

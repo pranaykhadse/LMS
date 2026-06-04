@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/logic/data_state/paginated_data.dart';
 import 'package:lms/app/core/logic/vm_helper/base_view_model.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
