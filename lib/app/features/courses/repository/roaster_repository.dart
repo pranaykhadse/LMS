@@ -61,24 +61,47 @@ class RoasterRepository with RepoNetworkHelper {
     throw body['message'] ?? 'saveRoaster failed';
   }
 
-  /// Fetches the full LEC record (training links, dates, etc.) by LEC ID.
+  /// Fetches LEC records for a given lms_class_id + course_id.
   ///
-  /// Called when fetch-user-roaster returns a roaster with a learningEventClassId
-  /// but null learningEventClass (the backend JOIN is broken for some records).
-  Future<Map<dynamic, dynamic>?> fetchLecById(String lecId) async {
+  /// The backend never populates learningEventClass in fetch-user-roaster, so
+  /// we fetch it separately for Virtual Class events using the admin-equivalent
+  /// endpoint: learning-event-class/index?id={classId}&course_id={courseId}.
+  Future<Map<dynamic, dynamic>?> fetchLecByClass({
+    required String classId,
+    required String courseId,
+  }) async {
     try {
       final response = await post(
-        "learning-event-class/view",
+        "learning-event-class/index",
         cacheType: RequestCacheType.none,
-        data: {"id": int.tryParse(lecId)},
+        data: {
+          "id": int.tryParse(classId),
+          "course_id": int.tryParse(courseId),
+        },
       );
-      debugPrint('[RoasterRepo] fetch-lec id=$lecId keys=${response?.keys?.toList()}');
+      debugPrint('[RoasterRepo] fetch-lec-by-class classId=$classId courseId=$courseId keys=${response?.keys?.toList()}');
       if (response == null) return null;
-      // Server may wrap the LEC in payload/data, or return it directly.
+
+      // Response may wrap items in payload/data, or return a list/map directly.
       final payload = response['payload'] ?? response['data'] ?? response;
-      return payload is Map ? payload as Map<dynamic, dynamic> : null;
+      if (payload is List) {
+        if (payload.isEmpty) return null;
+        // Prefer the LEC that has a recording link; otherwise take the first.
+        for (final lec in payload) {
+          if (lec is Map) {
+            final rec = lec['training_session_recording_link']?.toString() ?? '';
+            if (rec.isNotEmpty) {
+              debugPrint('[RoasterRepo] found LEC with recording link: $rec');
+              return lec as Map<dynamic, dynamic>;
+            }
+          }
+        }
+        return payload.first is Map ? payload.first as Map<dynamic, dynamic> : null;
+      }
+      if (payload is Map) return payload as Map<dynamic, dynamic>;
+      return null;
     } catch (e) {
-      debugPrint('[RoasterRepo] fetch-lec error (id=$lecId): $e');
+      debugPrint('[RoasterRepo] fetch-lec-by-class error (classId=$classId): $e');
       return null;
     }
   }

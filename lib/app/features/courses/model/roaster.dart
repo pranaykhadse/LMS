@@ -16,6 +16,9 @@ class Roaster {
   final dynamic isSignatureDone;
   final String? signatureImage;
   final dynamic learningEventClass;
+  // The 'class' relationship returned by fetch-user-roaster (ClassInfo-level data).
+  // Used to detect class type (e.g. '3' = Virtual Class) without a separate fetch.
+  final dynamic classData;
 
   Roaster({
     this.id,
@@ -32,6 +35,7 @@ class Roaster {
     this.isSignatureDone,
     this.signatureImage,
     this.learningEventClass,
+    this.classData,
   });
 
   Roaster copyWith({
@@ -49,6 +53,7 @@ class Roaster {
     dynamic isSignatureDone,
     String? signatureImage,
     dynamic learningEventClass,
+    dynamic classData,
   }) => Roaster(
     id: id ?? this.id,
     courseId: courseId ?? this.courseId,
@@ -64,6 +69,7 @@ class Roaster {
     isSignatureDone: isSignatureDone ?? this.isSignatureDone,
     signatureImage: signatureImage ?? this.signatureImage,
     learningEventClass: learningEventClass ?? this.learningEventClass,
+    classData: classData ?? this.classData,
   );
 
   factory Roaster.fromRawJson(String str) => Roaster.fromJson(json.decode(str));
@@ -71,19 +77,6 @@ class Roaster {
   String toRawJson() => json.encode(toJson());
 
   factory Roaster.fromJson(Map<dynamic, dynamic> json) {
-    // Dump every key the API returns for roasters that are missing learningEventClass.
-    // This helps identify whether the recording/session data is under a different key.
-    if (json["learningEventClass"] == null) {
-      debugPrint('[Roaster] classId=${json["class_id"]} lecId=${json["learning_event_class_id"]} — learningEventClass null. All keys: ${json.keys.toList()}');
-      for (final k in json.keys) {
-        final v = json[k];
-        if (v is Map || v is List) {
-          debugPrint('[Roaster]   $k = (${v.runtimeType}) ${v}');
-        } else {
-          debugPrint('[Roaster]   $k = $v');
-        }
-      }
-    }
     return Roaster(
       id: json["id"]?.toString(),
       courseId: json["course_id"]?.toString(),
@@ -100,8 +93,8 @@ class Roaster {
       learningEventClassId: json["learning_event_class_id"]?.toString(),
       isSignatureDone: json["is_signature_done"]?.toString(),
       signatureImage: json["signature_image"]?.toString(),
-      // Also try snake_case variant in case the backend sends it differently.
       learningEventClass: json["learningEventClass"] ?? json["learning_event_class"],
+      classData: json["class"],
     );
   }
 
@@ -120,5 +113,6 @@ class Roaster {
     "is_signature_done": isSignatureDone,
     "signature_image": signatureImage,
     "learningEventClass": learningEventClass,
+    "class": classData,
   };
 }
