@@ -179,10 +179,48 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
         if (byGet != null) lecData = byGet;
       }
 
+      // Attempt 4: course/recordings as an API endpoint
+      final recFromIndex3 =
+          lecData?['training_session_recording_link']?.toString() ?? '';
+      if ((lecData == null || !recFromIndex3.startsWith('http')) &&
+          lecId.isNotEmpty) {
+        debugPrint(
+          '[VirtualClass] classId=${cc.classId} '
+          '— attempt 4: fetchCourseRecordingsApi lecId=$lecId...',
+        );
+        final byApi = await roasterRepository.fetchCourseRecordingsApi(lecId);
+        if (!mounted) return;
+        debugPrint(
+          '[VirtualClass] classId=${cc.classId} '
+          '— fetchCourseRecordingsApi keys: ${byApi?.keys.toList()}',
+        );
+        if (byApi != null) lecData = byApi;
+      }
+
+      // Attempt 5: parse backend web HTML for CloudFront/S3 video URL
+      final recFromApi =
+          lecData?['training_session_recording_link']?.toString() ?? '';
+      if (lecData == null || !recFromApi.startsWith('http')) {
+        debugPrint(
+          '[VirtualClass] classId=${cc.classId} '
+          '— attempt 5: fetchRecordingLinkFromHtml lecId=$lecId...',
+        );
+        final htmlLink = await roasterRepository.fetchRecordingLinkFromHtml(lecId);
+        if (!mounted) return;
+        if (htmlLink != null) {
+          // Wrap in a Map so the existing merge logic works.
+          lecData = {'training_session_recording_link': htmlLink};
+          debugPrint(
+            '[VirtualClass] classId=${cc.classId} '
+            '— HTML recording link: $htmlLink',
+          );
+        }
+      }
+
       if (lecData == null) {
         debugPrint(
           '[VirtualClass] classId=${cc.classId} '
-          '— all three fetch attempts returned null',
+          '— all five fetch attempts returned null',
         );
         continue;
       }

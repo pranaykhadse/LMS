@@ -150,6 +150,95 @@ class RoasterRepository with RepoNetworkHelper {
     }
   }
 
+  /// Attempt 4: call course/recordings as an API endpoint (POST with {id: lecId}).
+  /// The web page is at backend/web/course/recordings?id=X; there may be a
+  /// parallel API action at api/web/course/recordings.
+  Future<Map<dynamic, dynamic>?> fetchCourseRecordingsApi(String lecId) async {
+    try {
+      final response = await dio.post(
+        "course/recordings",
+        data: {"id": int.tryParse(lecId)},
+        options: Options(headers: header, validateStatus: (_) => true),
+      );
+      final body = response.data;
+      debugPrint(
+        '[RoasterRepo] fetch-course-recordings-api '
+        'lecId=$lecId status=${response.statusCode} bodyType=${body.runtimeType}',
+      );
+      if (body == null) return null;
+      if (body is Map) return body as Map<dynamic, dynamic>;
+      if (body is List && body.isNotEmpty && body.first is Map) {
+        return body.first as Map<dynamic, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[RoasterRepo] fetch-course-recordings-api error: $e');
+      return null;
+    }
+  }
+
+  /// Attempt 5: fetch the backend web recordings page HTML and extract the
+  /// CloudFront / S3 video URL via regex.
+  /// The recordings page at backend/web/course/recordings?id=X renders a video
+  /// player whose source URL contains the actual recording file.
+  Future<String?> fetchRecordingLinkFromHtml(String lecId) async {
+    try {
+      // Derive the backend web base URL from the API base URL.
+      final webBase = config.baseUrl
+          .replaceFirst('/api/web/', '/backend/web/')
+          .replaceFirst('/api/web', '/backend/web');
+      final url = '${webBase}course/recordings?id=$lecId';
+      debugPrint('[RoasterRepo] fetch-recording-html url=$url');
+
+      final response = await dio.get(
+        url,
+        options: Options(
+          headers: header,
+          validateStatus: (_) => true,
+          responseType: ResponseType.plain,
+        ),
+      );
+      final html = response.data?.toString() ?? '';
+      debugPrint(
+        '[RoasterRepo] fetch-recording-html '
+        'lecId=$lecId status=${response.statusCode} htmlLen=${html.length}',
+      );
+      if (html.isEmpty) return null;
+
+      // 1. CloudFront .m3u8 / .mp4 URL
+      final cfRegex = RegExp(
+        r'https://[a-zA-Z0-9.\-]+\.cloudfront\.net/[a-zA-Z0-9_\-./]+\.(?:m3u8|mp4|webm|mov)',
+        caseSensitive: false,
+      );
+      final cfMatch = cfRegex.firstMatch(html);
+      if (cfMatch != null) {
+        debugPrint('[RoasterRepo] fetch-recording-html cloudfront URL: ${cfMatch.group(0)}');
+        return cfMatch.group(0);
+      }
+
+      // 2. Any src/href pointing to a video file
+      final srcRegex = RegExp(
+        r'(?:src|href)\s*[=:]\s*["\']?(https://[^\s"\'<>]+\.(?:m3u8|mp4|webm|mov))',
+        caseSensitive: false,
+      );
+      final srcMatch = srcRegex.firstMatch(html);
+      if (srcMatch != null) {
+        debugPrint('[RoasterRepo] fetch-recording-html src URL: ${srcMatch.group(1)}');
+        return srcMatch.group(1);
+      }
+
+      // Log first 500 chars so we can see what the page actually returned.
+      debugPrint(
+        '[RoasterRepo] fetch-recording-html — no video URL found; '
+        'page preview: ${html.substring(0, html.length.clamp(0, 500))}',
+      );
+      return null;
+    } catch (e) {
+      debugPrint('[RoasterRepo] fetch-recording-html error: $e');
+      return null;
+    }
+  }
+
   /// Marks a learning event as completed.
   ///
   /// This is the same API the web platform uses. On success the server returns
