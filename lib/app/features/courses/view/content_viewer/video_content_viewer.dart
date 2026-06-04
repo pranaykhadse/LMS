@@ -30,14 +30,17 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
 
   Future<void> _initialize() async {
     try {
-      if (widget.file.file != null) {
-        // A local file exists — play it offline.
-        // For HLS recordings the file is a concatenated .ts;
-        // for regular videos it's an .mp4.  Both work with VideoPlayerController.file().
+      final isHls = widget.file.url.toLowerCase().contains('.m3u8');
+
+      if (widget.file.file != null && !isHls) {
+        // Non-HLS local file (.mp4 etc.) — play from disk.
         _videoController = VideoPlayerController.file(widget.file.file!);
       } else {
-        // No local file yet — stream from the network URL.
-        // This covers both .m3u8 HLS streams and direct MP4 links.
+        // HLS (.m3u8): always stream from network URL so iOS AVFoundation
+        // uses its native HLS stack.  Playing a concatenated .ts file via
+        // VideoPlayerController.file() fails on iOS (OSStatus -12847) because
+        // AVFoundation does not support raw MPEG-TS as a file format.
+        // Non-HLS with no local file: stream from network as well.
         _videoController = VideoPlayerController.networkUrl(
           Uri.parse(widget.file.url),
         );
