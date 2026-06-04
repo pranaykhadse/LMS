@@ -496,21 +496,39 @@ class _CourseClassTile extends ConsumerWidget {
     // URL priority per type:
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
-      case '3': // Virtual Class — Details + Download Recording
-        // training_session_recording_link is supplied by the backend in
-        // allcourse/events (top-level field alongside id/course_id/class_id).
-        // Each LEC row is one session; the button appears only when the URL is set.
-        final _lecRecUrl = effectiveLec is Map
-            ? _validUrl(effectiveLec['training_session_recording_link']?.toString())
-            : null;
-        final _recordingUrl = _lecRecUrl ?? _validUrl(_rawAlt);
-        actions.add(DownloadButton(
-          icon: Icons.download_rounded,
-          label: "Recording",
-          url: _recordingUrl,   // null → button is hidden automatically
-          courseClass: courseClass,
-          builder: (context, file) => VideoContentViewer(file: file),
-        ));
+      case '3': // Virtual Class — Details + one Download Recording per session
+        // Backend sends either:
+        //  • recording_links: ["url1","url2",...]  ← multiple sessions (preferred)
+        //  • training_session_recording_link: "url" ← single session
+        // Flutter shows one Download Recording button per valid URL.
+        final _recUrls = <String>[];
+        if (effectiveLec is Map) {
+          final links = effectiveLec['recording_links'];
+          if (links is List) {
+            for (final l in links) {
+              final u = _validUrl(l?.toString());
+              if (u != null) _recUrls.add(u);
+            }
+          }
+          if (_recUrls.isEmpty) {
+            final u = _validUrl(
+                effectiveLec['training_session_recording_link']?.toString());
+            if (u != null) _recUrls.add(u);
+          }
+        }
+        if (_recUrls.isEmpty) {
+          final u = _validUrl(_rawAlt);
+          if (u != null) _recUrls.add(u);
+        }
+        for (int _i = 0; _i < _recUrls.length; _i++) {
+          actions.add(DownloadButton(
+            icon: Icons.download_rounded,
+            label: _recUrls.length > 1 ? "Recording ${_i + 1}" : "Recording",
+            url: _recUrls[_i],
+            courseClass: courseClass,
+            builder: (context, file) => VideoContentViewer(file: file),
+          ));
+        }
 
       case '1': // eLearning Module
         final _elearningUrl = info?.isLaunch == '1'

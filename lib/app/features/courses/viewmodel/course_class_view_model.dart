@@ -63,11 +63,19 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
     bool changed = false;
     final result = classes.map((cc) {
       if (cc.classInfo?.type != '3') return cc;
-      final existing =
+
+      // Skip if real data already present
+      final existingArray = cc.rawLec?['recording_links'];
+      if (existingArray is List && (existingArray).isNotEmpty) return cc;
+      final existingSingle =
           cc.rawLec?['training_session_recording_link']?.toString() ?? '';
-      if (existing.startsWith('http')) return cc; // already real
+      if (existingSingle.startsWith('http')) return cc;
+
+      // Inject TWO dummy recording links to simulate the two-session scenario
+      // visible in the admin panel (LEC ids 1300 + 1301).
+      // Remove once backend sends real recording_links in allcourse/events.
       final mergedLec = Map<dynamic, dynamic>.from(cc.rawLec ?? {})
-        ..['training_session_recording_link'] = _dummyRecordingUrl;
+        ..['recording_links'] = [_dummyRecordingUrl, _dummyRecordingUrl];
       changed = true;
       return cc.copyWith(rawLec: mergedLec);
     }).toList();
