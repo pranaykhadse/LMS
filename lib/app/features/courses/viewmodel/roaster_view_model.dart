@@ -90,7 +90,7 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
 
       if (!mounted) return;
       state = PaginatedState(
-        data: DataState.onData(patched),
+        data: DataState.onData(data.data),
         pageInfo: data.pageInfo,
       );
     } catch (e) {
