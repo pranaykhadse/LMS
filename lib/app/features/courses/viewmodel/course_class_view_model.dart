@@ -33,60 +33,14 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
   @override
   Map<String, dynamic> get queryParams => {"course_id": courseId};
 
-  // TODO: remove once backend includes training_session_recording_link
-  //       in the allcourse/events response.
-  static const _dummyRecordingUrl =
-      'https://dwpfuyia3u2j6.cloudfront.net/fdNb996MNYiX2CK.m3u8';
-
   @override
   Future<void> fetch([int page = 0]) async {
     await super.fetch(page);
     final classes = state.data.data;
     if (classes != null && classes.isNotEmpty && courseId != null) {
-      final patched = _injectDummyRecordingLinks(classes);
-      _logAllEvents(patched);
-      offlineCourseRepository.saveClasses(courseId!, patched);
-      if (patched != classes) {
-        state = PaginatedState(
-          data: DataState.onData(patched),
-          pageInfo: state.pageInfo,
-        );
-      }
+      _logAllEvents(classes);
+      offlineCourseRepository.saveClasses(courseId!, classes);
     }
-  }
-
-  /// Temporary: injects a dummy recording URL into every Virtual Class (type 3)
-  /// session that the backend hasn't provided a recording link for yet.
-  /// Delete this method (and the _dummyRecordingUrl constant) once
-  /// allcourse/events returns training_session_recording_link.
-  List<CourseClass> _injectDummyRecordingLinks(List<CourseClass> classes) {
-    bool changed = false;
-    final result = classes.map((cc) {
-      if (cc.classInfo?.type != '3') return cc;
-
-      // Skip if real data already present
-      final existingArray = cc.rawLec?['recording_links'];
-      if (existingArray is List && (existingArray).isNotEmpty) return cc;
-      final existingSingle =
-          cc.rawLec?['training_session_recording_link']?.toString() ?? '';
-      if (existingSingle.startsWith('http')) return cc;
-
-      // Only inject when allcourse/events returned a valid LEC id.
-      // Classes with no sessions have a null/empty/zero lecId — those should
-      // show no recording buttons. A non-zero lecId means at least one session
-      // was scheduled for this class.
-      final lecId = cc.id ?? '';
-      if (lecId.isEmpty || lecId == '0') return cc;
-
-      // Inject TWO dummy recording links to simulate the two-session scenario
-      // visible in the admin panel (LEC ids 1300 + 1301).
-      // Remove once backend sends real recording_links in allcourse/events.
-      final mergedLec = Map<dynamic, dynamic>.from(cc.rawLec ?? {})
-        ..['recording_links'] = [_dummyRecordingUrl, _dummyRecordingUrl];
-      changed = true;
-      return cc.copyWith(rawLec: mergedLec);
-    }).toList();
-    return changed ? result : classes;
   }
 
   // Logs every event at course-load time for debugging.
