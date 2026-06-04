@@ -30,17 +30,17 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
 
   Future<void> _initialize() async {
     try {
-      final url = widget.file.url;
-      final isHls = url.toLowerCase().contains('.m3u8');
-
-      if (widget.file.file != null && !isHls) {
-        // Non-HLS file (e.g. MP4) — play from local cache for offline use.
+      if (widget.file.file != null) {
+        // A local file exists — play it offline.
+        // For HLS recordings the file is a concatenated .ts;
+        // for regular videos it's an .mp4.  Both work with VideoPlayerController.file().
         _videoController = VideoPlayerController.file(widget.file.file!);
       } else {
-        // HLS (.m3u8) streams must always play from the network URL.
-        // The manifest is a text playlist; the actual video segments live on
-        // the CDN and cannot be played from the locally-saved manifest file.
-        _videoController = VideoPlayerController.networkUrl(Uri.parse(url));
+        // No local file yet — stream from the network URL.
+        // This covers both .m3u8 HLS streams and direct MP4 links.
+        _videoController = VideoPlayerController.networkUrl(
+          Uri.parse(widget.file.url),
+        );
       }
 
       await _videoController!.initialize();
@@ -49,7 +49,8 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
         videoPlayerController: _videoController!,
         autoPlay: true,
         autoInitialize: true,
-        errorBuilder: (context, errorMessage) => _ErrorView(message: errorMessage),
+        errorBuilder: (context, errorMessage) =>
+            _ErrorView(message: errorMessage),
       );
 
       if (mounted) setState(() {});
