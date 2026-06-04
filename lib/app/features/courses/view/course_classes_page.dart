@@ -463,7 +463,6 @@ class _CourseClassTile extends ConsumerWidget {
     final serverUrl  = ref.watch(ServerProvider.serverUrl);
     final webBaseUrl = serverUrl.replaceFirst('/api/web/', '/backend/web/');
 
-    final trainingLink = (lec is Map) ? lec['training_session_link']?.toString() : null;
     final name = (info?.name ?? '').stripHtml;
     final t    = (info?.type?.isNotEmpty == true ? info!.type! : (info?.customTypeName ?? '')).trim();
 
@@ -499,6 +498,7 @@ class _CourseClassTile extends ConsumerWidget {
           lec:        lec,
           lessonName: name,
           typeName:   typeName,
+          typeCode:   t,
         ),
       DownloadButton(
         icon: Icons.videocam,
@@ -758,12 +758,14 @@ class _DetailsButton extends StatelessWidget {
     required this.lec,
     required this.lessonName,
     required this.typeName,
+    required this.typeCode,
   });
 
   final ClassInfo? info;
   final dynamic lec;
   final String lessonName;
   final String typeName;
+  final String typeCode;
 
   @override
   Widget build(BuildContext context) {
@@ -807,8 +809,29 @@ class _DetailsButton extends StatelessWidget {
     final instructions = _lecVal('instructions',  info?.instruction);
     final location     = _lecVal('location',      info?.location);
 
-    final hasSchedule = [startDate, endDate, instructor, instructions, location]
+    final hasSchedule = [startDate, endDate, startTime, endTime, instructor, instructions, location]
         .any((s) => s.isNotEmpty);
+
+    // Virtual Class-specific session info
+    String sessionLink = '';
+    String platformLabel = '';
+    String vcFilename = '';
+    if (typeCode == '3') {
+      if (lec is Map) {
+        final direct = lec['training_session_link']?.toString() ?? '';
+        if (direct.startsWith('http')) sessionLink = direct;
+        switch (lec['platform']?.toString()) {
+          case '1': platformLabel = 'Virtual Platform'; break;
+          case '2': platformLabel = 'Rapid Fire / Twilio'; break;
+        }
+      }
+      if (sessionLink.isEmpty) {
+        final vc = info?.virtualClassLink ?? '';
+        if (vc.startsWith('http')) sessionLink = vc;
+      }
+      vcFilename = info?.virtualClassFilename?.toString() ?? '';
+    }
+    final hasVirtualClassInfo = sessionLink.isNotEmpty || vcFilename.isNotEmpty;
 
     showDialog(
       context: context,
@@ -818,7 +841,7 @@ class _DetailsButton extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           clipBehavior: Clip.antiAlias,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 540, maxHeight: 560),
+            constraints: const BoxConstraints(maxWidth: 540, maxHeight: 600),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -888,6 +911,16 @@ class _DetailsButton extends StatelessWidget {
                           Text(description, style: const TextStyle(fontSize: 13)),
                           const Divider(height: 28),
                         ],
+                        if (hasVirtualClassInfo) ...[
+                          _sectionLabel('VIRTUAL CLASS SESSION'),
+                          const SizedBox(height: 10),
+                          _VirtualClassCard(
+                            sessionLink:   sessionLink,
+                            platformLabel: platformLabel,
+                            filename:      vcFilename,
+                          ),
+                          const Divider(height: 28),
+                        ],
                         if (hasSchedule) ...[
                           _sectionLabel('SCHEDULE'),
                           const SizedBox(height: 10),
@@ -901,7 +934,7 @@ class _DetailsButton extends StatelessWidget {
                             location:     location,
                           ),
                         ],
-                        if (!hasSchedule && objective.isEmpty && description.isEmpty)
+                        if (!hasVirtualClassInfo && !hasSchedule && objective.isEmpty && description.isEmpty)
                           const Text(
                             'No additional details available.',
                             style: TextStyle(fontSize: 13, color: Colors.grey),
@@ -927,6 +960,75 @@ class _DetailsButton extends StatelessWidget {
       letterSpacing: 0.8,
     ),
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Virtual Class session card inside Details dialog
+// ─────────────────────────────────────────────────────────────────────────────
+class _VirtualClassCard extends StatelessWidget {
+  const _VirtualClassCard({
+    required this.sessionLink,
+    required this.platformLabel,
+    required this.filename,
+  });
+
+  final String sessionLink;
+  final String platformLabel;
+  final String filename;
+
+  static const _labelStyle = TextStyle(
+    fontSize: 10,
+    fontWeight: FontWeight.w700,
+    color: Color(0xFF9E9E9E),
+    letterSpacing: 0.6,
+  );
+  static const _valueStyle = TextStyle(fontSize: 13, color: Color(0xFF1565C0));
+  static const _metaStyle  = TextStyle(fontSize: 12, color: Color(0xFF9E9E9E));
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (sessionLink.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('SESSION LINK', style: _labelStyle),
+                  const SizedBox(height: 6),
+                  SelectableText(sessionLink, style: _valueStyle),
+                  if (platformLabel.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text('Platform: $platformLabel', style: _metaStyle),
+                  ],
+                ],
+              ),
+            ),
+          if (sessionLink.isNotEmpty && filename.isNotEmpty)
+            Divider(height: 1, color: Colors.grey.shade200),
+          if (filename.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('ATTACHED FILE', style: _labelStyle),
+                  const SizedBox(height: 4),
+                  Text(filename, style: const TextStyle(fontSize: 13, color: Color(0xFF1a1a2e))),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
