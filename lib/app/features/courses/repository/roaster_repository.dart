@@ -216,15 +216,15 @@ class RoasterRepository with RepoNetworkHelper {
         return cfMatch.group(0);
       }
 
-      // 2. Any src/href pointing to a video file
-      final srcRegex = RegExp(
-        r'(?:src|href)\s*[=:]\s*["\']?(https://[^\s"\'<>]+\.(?:m3u8|mp4|webm|mov))',
+      // 2. Any https video URL in the page (regardless of HTML context)
+      final videoRegex = RegExp(
+        r'https://[^\s<>"]+\.(?:m3u8|mp4|webm|mov)',
         caseSensitive: false,
       );
-      final srcMatch = srcRegex.firstMatch(html);
-      if (srcMatch != null) {
-        debugPrint('[RoasterRepo] fetch-recording-html src URL: ${srcMatch.group(1)}');
-        return srcMatch.group(1);
+      final videoMatch = videoRegex.firstMatch(html);
+      if (videoMatch != null) {
+        debugPrint('[RoasterRepo] fetch-recording-html video URL: ${videoMatch.group(0)}');
+        return videoMatch.group(0);
       }
 
       // Log first 500 chars so we can see what the page actually returned.
