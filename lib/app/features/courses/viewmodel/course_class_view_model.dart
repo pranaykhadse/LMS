@@ -5,7 +5,6 @@ import 'package:lms/app/core/logic/data_state/paginated_data.dart';
 import 'package:lms/app/core/logic/vm_helper/base_view_model.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/repository/offline_course_repository.dart';
-import 'package:lms/app/features/courses/repository/roaster_repository.dart';
 
 import '../repository/course_class_repository.dart';
 
@@ -18,19 +17,16 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
         return CourseClassViewModel(
           repository: ref.watch(CourseClassRepository.provider),
           offlineCourseRepository: ref.watch(OfflineCourseRepository.provider),
-          roasterRepository: ref.watch(RoasterRepository.provider),
           courseId: courseId,
         );
       });
 
   final String? courseId;
   final OfflineCourseRepository offlineCourseRepository;
-  final RoasterRepository roasterRepository;
 
   CourseClassViewModel({
     required super.repository,
     required this.offlineCourseRepository,
-    required this.roasterRepository,
     required this.courseId,
   });
 
@@ -44,13 +40,11 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
     if (classes != null && classes.isNotEmpty && courseId != null) {
       _logAllEvents(classes);
       offlineCourseRepository.saveClasses(courseId!, classes);
-      // Enrich Virtual Class events with full LEC data (recording link etc.) in
-      // the background — state is already updated so the UI renders immediately.
-      _enrichVirtualClassData(classes);
     }
   }
 
-  // Dumps every event and every non-empty field at course-load time.
+  // Logs every event at course-load time for debugging.
+  // Virtual Class events log their rawLec fields so the recording link is visible.
   void _logAllEvents(List<CourseClass> classes) {
     if (!kDebugMode) return;
     debugPrint('══ [CourseEvents] courseId=$courseId  total=${classes.length} ══');
@@ -62,7 +56,6 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
         'classId=${cc.classId}  lecId=${cc.id}  '
         'type=${info?.type}  "${info?.name}"',
       );
-      // All top-level LEC fields from allcourse/events
       if (cc.rawLec != null) {
         for (final e in cc.rawLec!.entries) {
           final v = e.value?.toString() ?? '';
@@ -71,190 +64,15 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
           }
         }
       }
-      // For Virtual Class: dump ALL rawLec fields including nulls/zeros
-      // and ALL ClassInfo fields so the exact recording field name is visible.
+      // For Virtual Class: log the recording link status explicitly
       if (info?.type == '3') {
-        debugPrint('  [VirtualClass rawLec — ALL fields]:');
-        cc.rawLec?.forEach(
-          (k, v) => debugPrint('    $k = ${v?.toString() ?? "<null>"}'),
+        final rec = cc.rawLec?['training_session_recording_link']?.toString() ?? '';
+        debugPrint(
+          '    [VirtualClass] training_session_recording_link = '
+          '"${rec.isEmpty ? "<not provided by API>" : rec}"',
         );
-        debugPrint('  [VirtualClass ClassInfo — ALL fields]:');
-        info?.toJson().forEach(
-          (k, v) => debugPrint('    $k = ${v?.toString() ?? "<null>"}'),
-        );
-      } else {
-        // For other types: only log non-empty key ClassInfo fields
-        final vcLink = info?.virtualClassLink ?? '';
-        final alt    = info?.alternativeLearningEvent ?? '';
-        if (vcLink.isNotEmpty && vcLink != '0') {
-          debugPrint('    [ClassInfo.virtualClassLink] $vcLink');
-        }
-        if (alt.isNotEmpty && alt != '0') {
-          debugPrint('    [ClassInfo.alternativeLearningEvent] $alt');
-        }
       }
     }
     debugPrint('══ [CourseEvents] end ══');
-  }
-
-  // For each Virtual Class event that is missing a recording link in rawLec,
-  // call fetchLecView to get the full LEC record from the server and merge it
-  // into rawLec. Runs after the initial state update so it doesn't block render.
-  Future<void> _enrichVirtualClassData(List<CourseClass> classes) async {
-    if (!mounted) return;
-
-    final enriched = List<CourseClass>.from(classes);
-    bool changed = false;
-
-    for (var i = 0; i < enriched.length; i++) {
-      final cc = enriched[i];
-      if (cc.classInfo?.type != '3') continue;
-
-      final existing =
-          cc.rawLec?['training_session_recording_link']?.toString() ?? '';
-      if (existing.startsWith('http')) {
-        debugPrint(
-          '[VirtualClass] classId=${cc.classId} '
-          '— recording link already in rawLec: $existing',
-        );
-        continue;
-      }
-
-      Map<dynamic, dynamic>? lecData;
-
-      // Attempt 1: fetch by LEC id via learning-event-class/view
-      final lecId = cc.id ?? '';
-      if (lecId.isNotEmpty) {
-        debugPrint(
-          '[VirtualClass] classId=${cc.classId} lecId=$lecId '
-          '— attempt 1: fetchLecView...',
-        );
-        lecData = await roasterRepository.fetchLecView(lecId);
-        if (!mounted) return;
-        debugPrint(
-          '[VirtualClass] classId=${cc.classId} '
-          '— fetchLecView keys: ${lecData?.keys.toList()}',
-        );
-      }
-
-      // Attempt 2: fetch by class_id + course_id via learning-event-class/index
-      final recFromView =
-          lecData?['training_session_recording_link']?.toString() ?? '';
-      if (lecData == null || !recFromView.startsWith('http')) {
-        final classId  = cc.classId  ?? '';
-        final courseId = cc.courseId ?? '';
-        if (classId.isNotEmpty && courseId.isNotEmpty) {
-          debugPrint(
-            '[VirtualClass] classId=${cc.classId} '
-            '— attempt 2: fetchLecByClass classId=$classId courseId=$courseId...',
-          );
-          final byClass = await roasterRepository.fetchLecByClass(
-            classId: classId,
-            courseId: courseId,
-          );
-          if (!mounted) return;
-          debugPrint(
-            '[VirtualClass] classId=${cc.classId} '
-            '— fetchLecByClass keys: ${byClass?.keys.toList()}',
-          );
-          if (byClass != null) lecData = byClass;
-        }
-      }
-
-      // Attempt 3: REST GET learning-event-class/{lecId}
-      final recFromIndex =
-          lecData?['training_session_recording_link']?.toString() ?? '';
-      if ((lecData == null || !recFromIndex.startsWith('http')) &&
-          lecId.isNotEmpty) {
-        debugPrint(
-          '[VirtualClass] classId=${cc.classId} lecId=$lecId '
-          '— attempt 3: fetchLecByIdGet...',
-        );
-        final byGet = await roasterRepository.fetchLecByIdGet(lecId);
-        if (!mounted) return;
-        debugPrint(
-          '[VirtualClass] classId=${cc.classId} '
-          '— fetchLecByIdGet keys: ${byGet?.keys.toList()}',
-        );
-        if (byGet != null) lecData = byGet;
-      }
-
-      // Attempt 4: course/recordings as an API endpoint
-      final recFromIndex3 =
-          lecData?['training_session_recording_link']?.toString() ?? '';
-      if ((lecData == null || !recFromIndex3.startsWith('http')) &&
-          lecId.isNotEmpty) {
-        debugPrint(
-          '[VirtualClass] classId=${cc.classId} '
-          '— attempt 4: fetchCourseRecordingsApi lecId=$lecId...',
-        );
-        final byApi = await roasterRepository.fetchCourseRecordingsApi(lecId);
-        if (!mounted) return;
-        debugPrint(
-          '[VirtualClass] classId=${cc.classId} '
-          '— fetchCourseRecordingsApi keys: ${byApi?.keys.toList()}',
-        );
-        if (byApi != null) lecData = byApi;
-      }
-
-      // Attempt 5: parse backend web HTML for CloudFront/S3 video URL
-      final recFromApi =
-          lecData?['training_session_recording_link']?.toString() ?? '';
-      if (lecData == null || !recFromApi.startsWith('http')) {
-        debugPrint(
-          '[VirtualClass] classId=${cc.classId} '
-          '— attempt 5: fetchRecordingLinkFromHtml lecId=$lecId...',
-        );
-        final htmlLink = await roasterRepository.fetchRecordingLinkFromHtml(lecId);
-        if (!mounted) return;
-        if (htmlLink != null) {
-          // Wrap in a Map so the existing merge logic works.
-          lecData = {'training_session_recording_link': htmlLink};
-          debugPrint(
-            '[VirtualClass] classId=${cc.classId} '
-            '— HTML recording link: $htmlLink',
-          );
-        }
-      }
-
-      if (lecData == null) {
-        debugPrint(
-          '[VirtualClass] classId=${cc.classId} '
-          '— all five fetch attempts returned null',
-        );
-        continue;
-      }
-
-      // Log every non-empty field from the fetched LEC record
-      for (final e in lecData.entries) {
-        final v = e.value?.toString() ?? '';
-        if (v.isNotEmpty && v != 'null' && v != '0') {
-          debugPrint('[VirtualClass] classId=${cc.classId}   ${e.key}: $v');
-        }
-      }
-
-      final recLink =
-          lecData['training_session_recording_link']?.toString() ?? '';
-      debugPrint(
-        '[VirtualClass] classId=${cc.classId} '
-        '— training_session_recording_link = "$recLink"',
-      );
-
-      final mergedLec = Map<dynamic, dynamic>.from(cc.rawLec ?? {})
-        ..addAll(lecData);
-      enriched[i] = cc.copyWith(rawLec: mergedLec);
-      changed = true;
-    }
-
-    if (!changed || !mounted) return;
-
-    debugPrint('[CourseClassVM] Updating state with enriched Virtual Class data');
-    state = PaginatedState(
-      data: DataState.onData(enriched),
-      pageInfo: state.pageInfo,
-    );
-    if (courseId != null) {
-      offlineCourseRepository.saveClasses(courseId!, enriched);
-    }
   }
 }
