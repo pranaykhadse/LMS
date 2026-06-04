@@ -33,14 +33,45 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
   @override
   Map<String, dynamic> get queryParams => {"course_id": courseId};
 
+  // TODO: remove once backend includes training_session_recording_link
+  //       in the allcourse/events response.
+  static const _dummyRecordingUrl =
+      'https://dwpfuyia3u2j6.cloudfront.net/fdNb996MNYiX2CK.m3u8';
+
   @override
   Future<void> fetch([int page = 0]) async {
     await super.fetch(page);
     final classes = state.data.data;
     if (classes != null && classes.isNotEmpty && courseId != null) {
-      _logAllEvents(classes);
-      offlineCourseRepository.saveClasses(courseId!, classes);
+      final patched = _injectDummyRecordingLinks(classes);
+      _logAllEvents(patched);
+      offlineCourseRepository.saveClasses(courseId!, patched);
+      if (patched != classes) {
+        state = PaginatedState(
+          data: DataState.onData(patched),
+          pageInfo: state.pageInfo,
+        );
+      }
     }
+  }
+
+  /// Temporary: injects a dummy recording URL into every Virtual Class (type 3)
+  /// session that the backend hasn't provided a recording link for yet.
+  /// Delete this method (and the _dummyRecordingUrl constant) once
+  /// allcourse/events returns training_session_recording_link.
+  List<CourseClass> _injectDummyRecordingLinks(List<CourseClass> classes) {
+    bool changed = false;
+    final result = classes.map((cc) {
+      if (cc.classInfo?.type != '3') return cc;
+      final existing =
+          cc.rawLec?['training_session_recording_link']?.toString() ?? '';
+      if (existing.startsWith('http')) return cc; // already real
+      final mergedLec = Map<dynamic, dynamic>.from(cc.rawLec ?? {})
+        ..['training_session_recording_link'] = _dummyRecordingUrl;
+      changed = true;
+      return cc.copyWith(rawLec: mergedLec);
+    }).toList();
+    return changed ? result : classes;
   }
 
   // Logs every event at course-load time for debugging.
