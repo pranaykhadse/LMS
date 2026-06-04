@@ -413,6 +413,9 @@ class _CourseClassTile extends ConsumerWidget {
     final roasterVM = ref.watch(RoasterViewModel.provider(courseClass.courseId).notifier);
     final roaster   = roasterVM.getForClass(courseClass);
     final lec       = roaster?.learningEventClass;
+    // Prefer roaster's learningEventClass; fall back to rawLec from allcourse/events
+    // when fetch-user-roaster doesn't populate the nested LEC object.
+    final effectiveLec = (lec is Map) ? lec : courseClass.rawLec;
 
     // Derive backend web base URL from the API URL.
     // API:  https://domain/api/web/  →  Web: https://domain/backend/web/
@@ -432,9 +435,9 @@ class _CourseClassTile extends ConsumerWidget {
 
     // Next session: prefer LEC dates, then classInfo dates.
     String nextSession = '';
-    if (lec is Map) {
-      final s = lec['start_date']?.toString() ?? '';
-      final e = lec['end_date']?.toString() ?? '';
+    if (effectiveLec is Map) {
+      final s = effectiveLec['start_date']?.toString() ?? '';
+      final e = effectiveLec['end_date']?.toString() ?? '';
       if (s.isNotEmpty) nextSession = e.isNotEmpty ? '$s – $e' : s;
     } else if (info?.startDate != null && info!.startDate.toString().isNotEmpty) {
       final s = info.startDate.toString();
@@ -451,7 +454,7 @@ class _CourseClassTile extends ConsumerWidget {
       if (detailsTypes.contains(t))
         _DetailsButton(
           info:       info,
-          lec:        lec,
+          lec:        effectiveLec,
           lessonName: name,
           typeName:   typeName,
           typeCode:   t,
@@ -494,22 +497,20 @@ class _CourseClassTile extends ConsumerWidget {
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
       case '3': // Virtual Class — Details + Download Recording only
-        // Dump the full LEC map so we can identify the exact recording-URL field name.
-        debugPrint('[VirtualClass] classId=${courseClass.classId} lec type=${lec.runtimeType}');
-        if (lec is Map) {
-          debugPrint('[VirtualClass] LEC keys: ${lec.keys.toList()}');
-          for (final k in lec.keys) {
-            debugPrint('[VirtualClass]   $k = ${lec[k]}');
+        // Diagnostic: log roaster lec vs rawLec from allcourse/events
+        debugPrint('[VirtualClass] classId=${courseClass.classId}  roasterLec=${lec.runtimeType}');
+        debugPrint('[VirtualClass] rawLec keys: ${courseClass.rawLec?.keys.toList()}');
+        if (courseClass.rawLec != null) {
+          for (final k in courseClass.rawLec!.keys) {
+            debugPrint('[VirtualClass]   $k = ${courseClass.rawLec![k]}');
           }
-        } else {
-          debugPrint('[VirtualClass] lec is null — roaster has no learningEventClass data');
         }
+        debugPrint('[VirtualClass] effectiveLec type=${effectiveLec.runtimeType}');
         debugPrint('[VirtualClass] info.alternativeLearningEvent = $_rawAlt');
-        debugPrint('[VirtualClass] info.virtualClassLink = ${info?.virtualClassLink}');
 
-        // Prefer LEC's training_session_recording_link; fall back to alternativeLearningEvent.
-        final _lecRecUrl = lec is Map
-            ? _validUrl(lec['training_session_recording_link']?.toString())
+        // Prefer effectiveLec's training_session_recording_link; fall back to alternativeLearningEvent.
+        final _lecRecUrl = effectiveLec is Map
+            ? _validUrl(effectiveLec['training_session_recording_link']?.toString())
             : null;
         final _recordingUrl = _lecRecUrl ?? _validUrl(_rawAlt);
         debugPrint('[VirtualClass] _lecRecUrl=$_lecRecUrl  _recordingUrl=$_recordingUrl');
