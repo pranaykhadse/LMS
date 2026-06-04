@@ -258,12 +258,27 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
   }
 
   Roaster? getForClass(CourseClass courseClass) {
-    final matches = state.data.data?.where(
-      (r) => r.classId?.toString() == courseClass.classId?.toString(),
-    );
+    final matches = state.data.data
+        ?.where((r) => r.classId?.toString() == courseClass.classId?.toString())
+        .toList();
     if (matches == null || matches.isEmpty) return null;
-    // Prefer the completed record (status=3) when the server returns both the
-    // original registered record and the new completed one for the same class.
-    return matches.firstWhereOrNull((r) => r.status == '3') ?? matches.first;
+
+    // Warn when multiple roasters exist for the same class so we can diagnose
+    // status conflicts between Flutter and the website.
+    if (matches.length > 1) {
+      debugPrint(
+        '[RoasterVM] ${matches.length} roasters for classId=${courseClass.classId}: '
+        '${matches.map((r) => 'id=${r.id}/status=${r.status}').join(', ')}',
+      );
+    }
+
+    // Always return the MOST RECENTLY CREATED record (highest id).
+    // The old strategy of preferring status=3 caused stale "Completed" chips
+    // to survive when the server later downgraded the record to status=2 (Started).
+    return matches.reduce((a, b) {
+      final aId = int.tryParse(a.id ?? '0') ?? 0;
+      final bId = int.tryParse(b.id ?? '0') ?? 0;
+      return aId >= bId ? a : b;
+    });
   }
 }
