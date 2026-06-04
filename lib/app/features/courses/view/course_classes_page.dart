@@ -496,20 +496,34 @@ class _CourseClassTile extends ConsumerWidget {
     // URL priority per type:
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
-      case '3': // Virtual Class — Details + Download Recording only
+      case '3': // Virtual Class — Details + Recording button
         // effectiveLec is enriched by CourseClassViewModel._enrichVirtualClassData()
-        // which calls fetchLecView to populate training_session_recording_link.
+        // which tries three API approaches to populate training_session_recording_link.
         final _lecRecUrl = effectiveLec is Map
             ? _validUrl(effectiveLec['training_session_recording_link']?.toString())
             : null;
         final _recordingUrl = _lecRecUrl ?? _validUrl(_rawAlt);
-        actions.add(DownloadButton(
-          icon: Icons.play_circle_outline_rounded,
-          label: "Recording",
-          url: _recordingUrl,
-          courseClass: courseClass,
-          builder: (context, file) => VideoContentViewer(file: file),
-        ));
+
+        if (_recordingUrl != null) {
+          // Direct video URL available — download for offline access.
+          actions.add(DownloadButton(
+            icon: Icons.download_rounded,
+            label: "Recording",
+            url: _recordingUrl,
+            courseClass: courseClass,
+            builder: (context, file) => VideoContentViewer(file: file),
+          ));
+        } else if (courseClass.id != null && courseClass.id!.isNotEmpty) {
+          // No direct URL yet — open the web recordings page as fallback.
+          // When training_session_recording_link is set in admin, the
+          // DownloadButton above will appear automatically via enrichment.
+          actions.add(LinkButton(
+            icon: Icons.play_circle_outline_rounded,
+            label: "Watch Recording",
+            url: '${webBaseUrl}course/recordings?id=${courseClass.id}',
+            courseClass: courseClass,
+          ));
+        }
 
       case '1': // eLearning Module
         final _elearningUrl = info?.isLaunch == '1'

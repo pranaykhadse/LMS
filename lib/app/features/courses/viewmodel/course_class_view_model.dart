@@ -71,14 +71,27 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
           }
         }
       }
-      // Key ClassInfo fields not captured in rawLec
-      final vcLink = info?.virtualClassLink ?? '';
-      final alt    = info?.alternativeLearningEvent ?? '';
-      if (vcLink.isNotEmpty && vcLink != '0') {
-        debugPrint('    [ClassInfo.virtualClassLink] $vcLink');
-      }
-      if (alt.isNotEmpty && alt != '0') {
-        debugPrint('    [ClassInfo.alternativeLearningEvent] $alt');
+      // For Virtual Class: dump ALL rawLec fields including nulls/zeros
+      // and ALL ClassInfo fields so the exact recording field name is visible.
+      if (info?.type == '3') {
+        debugPrint('  [VirtualClass rawLec — ALL fields]:');
+        cc.rawLec?.forEach(
+          (k, v) => debugPrint('    $k = ${v?.toString() ?? "<null>"}'),
+        );
+        debugPrint('  [VirtualClass ClassInfo — ALL fields]:');
+        info?.toJson().forEach(
+          (k, v) => debugPrint('    $k = ${v?.toString() ?? "<null>"}'),
+        );
+      } else {
+        // For other types: only log non-empty key ClassInfo fields
+        final vcLink = info?.virtualClassLink ?? '';
+        final alt    = info?.alternativeLearningEvent ?? '';
+        if (vcLink.isNotEmpty && vcLink != '0') {
+          debugPrint('    [ClassInfo.virtualClassLink] $vcLink');
+        }
+        if (alt.isNotEmpty && alt != '0') {
+          debugPrint('    [ClassInfo.alternativeLearningEvent] $alt');
+        }
       }
     }
     debugPrint('══ [CourseEvents] end ══');
@@ -148,10 +161,28 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
         }
       }
 
+      // Attempt 3: REST GET learning-event-class/{lecId}
+      final recFromIndex =
+          lecData?['training_session_recording_link']?.toString() ?? '';
+      if ((lecData == null || !recFromIndex.startsWith('http')) &&
+          lecId.isNotEmpty) {
+        debugPrint(
+          '[VirtualClass] classId=${cc.classId} lecId=$lecId '
+          '— attempt 3: fetchLecByIdGet...',
+        );
+        final byGet = await roasterRepository.fetchLecByIdGet(lecId);
+        if (!mounted) return;
+        debugPrint(
+          '[VirtualClass] classId=${cc.classId} '
+          '— fetchLecByIdGet keys: ${byGet?.keys.toList()}',
+        );
+        if (byGet != null) lecData = byGet;
+      }
+
       if (lecData == null) {
         debugPrint(
           '[VirtualClass] classId=${cc.classId} '
-          '— both fetch attempts returned null',
+          '— all three fetch attempts returned null',
         );
         continue;
       }

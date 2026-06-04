@@ -88,6 +88,31 @@ class RoasterRepository with RepoNetworkHelper {
     }
   }
 
+  /// Fetches a LEC record using REST-style GET: learning-event-class/{id}.
+  /// Yii2 REST controllers expose `GET /model/{id}` as the canonical view action.
+  Future<Map<dynamic, dynamic>?> fetchLecByIdGet(String lecId) async {
+    try {
+      final response = await dio.get(
+        "learning-event-class/$lecId",
+        options: Options(headers: header, validateStatus: (_) => true),
+      );
+      final body = response.data;
+      debugPrint(
+        '[RoasterRepo] fetch-lec-get '
+        'id=$lecId status=${response.statusCode} bodyType=${body.runtimeType}',
+      );
+      if (body == null) return null;
+      if (body is Map) return body as Map<dynamic, dynamic>;
+      if (body is List && body.isNotEmpty && body.first is Map) {
+        return body.first as Map<dynamic, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('[RoasterRepo] fetch-lec-get error (id=$lecId): $e');
+      return null;
+    }
+  }
+
   /// Fetches a LEC record by class_id + course_id via learning-event-class/index.
   /// The endpoint returns a bare JSON array; this method returns the first element.
   /// Used as a fallback when fetchLecView fails or returns no recording link.
