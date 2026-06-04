@@ -87,8 +87,24 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
         courseId: courseId ?? "",
         userId: userId?.toString() ?? "",
       );
+
+      // For roasters that have a lecId but no learningEventClass data (broken JOIN
+      // on the backend), fetch the LEC record separately so we can surface the
+      // training_session_recording_link and other session fields.
+      final patched = <Roaster>[];
+      for (final r in data.data ?? <Roaster>[]) {
+        final lecId = r.learningEventClassId?.toString() ?? '';
+        if (lecId.isNotEmpty && lecId != 'null' && r.learningEventClass == null) {
+          final lecData = await repository.fetchLecById(lecId);
+          patched.add(lecData != null ? r.copyWith(learningEventClass: lecData) : r);
+        } else {
+          patched.add(r);
+        }
+      }
+
+      if (!mounted) return;
       state = PaginatedState(
-        data: DataState.onData(data.data),
+        data: DataState.onData(patched),
         pageInfo: data.pageInfo,
       );
     } catch (e) {
@@ -177,12 +193,20 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
 
   /// Applies a server-returned [Roaster] directly to local state.
   /// Replaces an existing record for the same classId, or appends if none exists.
+  /// Preserves learningEventClassId and learningEventClass from the old record when
+  /// the new one (returned by markLearningEventCompletion) doesn't carry them.
   void _applyRoaster(Roaster roaster) {
     if (!mounted) return;
     final classId = roaster.classId;
     final existing = state.data.data ?? [];
     final updated = existing.map((r) {
-      return r.classId?.toString() == classId?.toString() ? roaster : r;
+      if (r.classId?.toString() != classId?.toString()) return r;
+      final preservedLecId = roaster.learningEventClassId ?? r.learningEventClassId;
+      final preservedLec   = roaster.learningEventClass   ?? r.learningEventClass;
+      return roaster.copyWith(
+        learningEventClassId: preservedLecId,
+        learningEventClass:   preservedLec,
+      );
     }).toList();
     if (!existing.any((r) => r.classId?.toString() == classId?.toString())) {
       updated.add(roaster);
@@ -201,22 +225,7 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
     final existing = state.data.data ?? [];
     final updated = existing.map((r) {
       if (r.classId?.toString() == classId) {
-        return Roaster(
-          id: r.id,
-          courseId: r.courseId,
-          classId: r.classId,
-          userId: r.userId,
-          status: '3',
-          isActive: '1',
-          learningEventClassId: r.learningEventClassId,
-          cancellationTime: r.cancellationTime,
-          elearningLaunch: r.elearningLaunch,
-          createdAt: r.createdAt,
-          updatedAt: r.updatedAt,
-          isSignatureDone: r.isSignatureDone,
-          signatureImage: r.signatureImage,
-          learningEventClass: r.learningEventClass,
-        );
+        return r.copyWith(status: '3', isActive: '1');
       }
       return r;
     }).toList();

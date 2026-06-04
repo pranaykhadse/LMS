@@ -61,6 +61,28 @@ class RoasterRepository with RepoNetworkHelper {
     throw body['message'] ?? 'saveRoaster failed';
   }
 
+  /// Fetches the full LEC record (training links, dates, etc.) by LEC ID.
+  ///
+  /// Called when fetch-user-roaster returns a roaster with a learningEventClassId
+  /// but null learningEventClass (the backend JOIN is broken for some records).
+  Future<Map<dynamic, dynamic>?> fetchLecById(String lecId) async {
+    try {
+      final response = await post(
+        "learning-event-class/view",
+        cacheType: RequestCacheType.none,
+        data: {"id": int.tryParse(lecId)},
+      );
+      debugPrint('[RoasterRepo] fetch-lec id=$lecId keys=${response?.keys?.toList()}');
+      if (response == null) return null;
+      // Server may wrap the LEC in payload/data, or return it directly.
+      final payload = response['payload'] ?? response['data'] ?? response;
+      return payload is Map ? payload as Map<dynamic, dynamic> : null;
+    } catch (e) {
+      debugPrint('[RoasterRepo] fetch-lec error (id=$lecId): $e');
+      return null;
+    }
+  }
+
   /// Marks a learning event as completed.
   ///
   /// This is the same API the web platform uses. On success the server returns
