@@ -75,13 +75,6 @@ class LinkButton extends ConsumerWidget {
 
     final onTap = () async {
       if (courseClass != null) {
-        debugPrint(
-          '[LinkButton] onTap — label=$label '
-          'courseId=${courseClass!.courseId} '
-          'classId=${courseClass!.classId} '
-          'lecId=${courseClass!.id} '
-          'url=$url',
-        );
         ref
             .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
             .markAsRead(courseClass!);

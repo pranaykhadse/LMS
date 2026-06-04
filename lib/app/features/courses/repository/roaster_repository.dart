@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
@@ -23,11 +22,6 @@ class RoasterRepository with RepoNetworkHelper {
       "learning-event/fetch-user-roaster",
       cacheType: RequestCacheType.none,
       data: {"course_id": courseId, "user_id": userId},
-    );
-    debugPrint(
-      '[RoasterRepo] fetch-user-roaster '
-      'success=${response?["success"]}  '
-      'count=${(response?["payload"] is List ? (response!["payload"] as List).length : "?")}',
     );
     return DataResponse.parse(response, Roaster.fromJson);
   }
@@ -53,7 +47,6 @@ class RoasterRepository with RepoNetworkHelper {
         validateStatus: (_) => true,
       ),
     );
-    debugPrint('[RoasterRepo] save-roaster status=${response.statusCode} body=${response.data}');
     final body = response.data;
     if (body == null) return;
     if (body is! Map) return;
@@ -83,18 +76,15 @@ class RoasterRepository with RepoNetworkHelper {
     };
     raw.removeWhere((_, v) => v == null || v == 0 || v == '');
 
-    debugPrint('[RoasterRepo] learning-event-completion REQUEST → $raw');
     final response = await post(
       "learning-event/learning-event-completion",
       cacheType: RequestCacheType.none,
       data: raw,
     );
-    debugPrint('[RoasterRepo] learning-event-completion RESPONSE → $response');
     if (response == null) throw 'No response from server';
     final success = response['success'];
     if (success == 'true' || success == true) {
       final roasterJson = response['roaster'];
-      debugPrint('[RoasterRepo] roaster from response → $roasterJson');
       if (roasterJson != null && roasterJson is Map) {
         return Roaster.fromJson(roasterJson);
       }

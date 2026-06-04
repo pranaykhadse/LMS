@@ -37,13 +37,6 @@ class DownloadButton extends ConsumerWidget {
 
   void _open(BuildContext context, WidgetRef ref, FileCacheState file) {
     if (courseClass != null) {
-      debugPrint(
-        '[DownloadButton] _open — label=$label '
-        'courseId=${courseClass!.courseId} '
-        'classId=${courseClass!.classId} '
-        'lecId=${courseClass!.id} '
-        'url=$url',
-      );
       ref
           .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
           .markAsRead(courseClass!);

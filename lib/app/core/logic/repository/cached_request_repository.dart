@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
 
@@ -28,6 +27,5 @@ class CachedRequestRepository with RepoNetworkHelper {
       data: request.body,
       cacheType: RequestCacheType.none,
     );
-    debugPrint('[CachedRepo] synced ${request.path}  success=${response?["success"]}');
   }
 }

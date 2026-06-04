@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart' as http;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
@@ -126,7 +125,6 @@ class FileCacheViewModel extends ChangeNotifier {
       // 3. Parse .ts segment URLs
       final segments = _parseSegments(manifest, baseUrl);
       if (segments.isEmpty) throw Exception('No segments in HLS manifest');
-      debugPrint('[FileCacheVM] HLS: ${segments.length} segments → $hlsUrl');
 
       // 4. Download + concatenate into one local .ts file
       final outputFile = await _hlsLocalFile(hlsUrl);
@@ -149,9 +147,7 @@ class FileCacheViewModel extends ChangeNotifier {
 
       cachedState[hlsUrl] = FileCacheState(url: hlsUrl, file: outputFile);
       notifyListeners();
-      debugPrint('[FileCacheVM] HLS complete → ${outputFile.path}');
     } catch (e) {
-      debugPrint('[FileCacheVM] HLS error: $e');
       progressController.close();
       cachedState.remove(hlsUrl);
       notifyListeners();

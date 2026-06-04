@@ -104,7 +104,6 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
   /// automatically be pushed to the server the next time the device goes
   /// online ([SyncViewModel] handles that).
   Future<void> markAsRead(CourseClass courseClass) async {
-    debugPrint('[RoasterVM] markAsRead called — classId=${courseClass.classId}  offline=$_isEffectivelyOffline');
     if (_isEffectivelyOffline) {
       // Queue the completion locally.
       await syncQueueRepo.enqueue(
@@ -135,12 +134,6 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
         ? courseClass.id!
         : (existingRoaster?.learningEventClassId?.toString() ?? "");
 
-    debugPrint(
-      '[RoasterVM] markAsRead — clId=$clId  lecId=$lecId  '
-      '(courseClass.id=${courseClass.id}  '
-      'roasterLecId=${existingRoaster?.learningEventClassId})',
-    );
-
     // Use the same API the web platform uses. The server returns the updated
     // Roaster (status="3") directly, so we apply it to local state immediately
     // without a loading flash and then confirm with a background fetch.
@@ -158,20 +151,17 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
         _markClassCompleted(clId);
       }
       _fetchInBackground();
-    } catch (e, stack) {
-      debugPrint('[RoasterVM] markLearningEventCompletion error: $e\n$stack');
+    } catch (_) {
       // Fall back to saveRoaster so completion still works even if the
       // learning-event-completion endpoint returns 404.
       try {
         await repository.saveRoaster(cId, clId, uId, lecId);
-        debugPrint('[RoasterVM] saveRoaster succeeded for classId=$clId');
         _markClassCompleted(clId);
         // Do NOT call _fetchInBackground here: saveRoaster may take time to
         // propagate on the server, so an immediate re-fetch would overwrite
         // the optimistic status=3 state with stale data.
         // The state will be confirmed on the next natural page load.
-      } catch (e2, stack2) {
-        debugPrint('[RoasterVM] saveRoaster fallback error: $e2\n$stack2');
+      } catch (_) {
         fetch();
       }
     }
@@ -260,13 +250,6 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
 
     // Warn when multiple roasters exist for the same class so we can diagnose
     // status conflicts between Flutter and the website.
-    if (matches.length > 1) {
-      debugPrint(
-        '[RoasterVM] ${matches.length} roasters for classId=${courseClass.classId}: '
-        '${matches.map((r) => 'id=${r.id}/status=${r.status}').join(', ')}',
-      );
-    }
-
     // Always return the MOST RECENTLY CREATED record (highest id).
     // The old strategy of preferring status=3 caused stale "Completed" chips
     // to survive when the server later downgraded the record to status=2 (Started).
