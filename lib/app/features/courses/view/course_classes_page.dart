@@ -19,6 +19,50 @@ import 'package:lms/app/features/courses/viewmodel/course_class_view_model.dart'
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 
+// Builds the Virtual Class audience URL from LEC data.
+//
+// Priority:
+//  1. lec['training_session_link']  — direct URL returned by the server
+//  2. Construct from lec['platform'] + lec['id'] + courseId + classId
+//     when the direct link is absent.
+//
+// Known platform codes (add more as discovered):
+//   1 → virtual-platform/audience
+//   2 → rapid-fire-twilio/default/audience
+String? _buildTrainingUrl(
+  String webBase,
+  dynamic lec,
+  String? courseId,
+  String? classId,
+) {
+  if (lec is! Map) return null;
+
+  // 1. Prefer the ready-made training_session_link
+  final direct = lec['training_session_link']?.toString();
+  if (direct != null && direct.startsWith('http')) {
+    debugPrint('[VirtualClass] using training_session_link: $direct');
+    return direct;
+  }
+
+  // 2. Construct from platform + IDs
+  final lecId = lec['id']?.toString();
+  if (lecId == null || lecId.isEmpty) return null;
+
+  final String? platformPath;
+  switch (lec['platform']?.toString()) {
+    case '1': platformPath = 'virtual-platform/audience'; break;
+    case '2': platformPath = 'rapid-fire-twilio/default/audience'; break;
+    default:
+      debugPrint('[VirtualClass] unknown platform ${lec["platform"]} — falling back to begin-class');
+      platformPath = null;
+  }
+  if (platformPath == null) return null;
+
+  final url = '${webBase}${platformPath}?course_id=$courseId&lms_class_id=$classId&learning_event_class_id=$lecId';
+  debugPrint('[VirtualClass] constructed training URL: $url');
+  return url;
+}
+
 // Returns [s] only when it looks like a real http(s) URL (strips HTML first).
 // Rejects empty strings, "0", and fields that contain HTML markup instead of a URL.
 String? _validUrl(String? s) {
@@ -77,7 +121,7 @@ class CourseClassesPage extends ConsumerWidget {
     final hasDocs    = hasPg || hasWmFile || hasWmLink;
 
     return Scaffold(
-      appBar: FlatAppBar(title: "Course Details"),
+      appBar: FlatAppBar(title: course?.name?.isNotEmpty == true ? course!.name! : "Course Details"),
       body: Column(
         children: [
           const OfflineBanner(),
@@ -494,11 +538,17 @@ class _CourseClassTile extends ConsumerWidget {
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
       case '3': // Virtual Class
-        // Attend Class: live session link from LEC, then classLink, then begin-class
+        // Attend Class: training_session_link from LEC (direct or constructed from platform+id)
+        // Falls back to begin-class only when no LEC data is available at all.
+        final _attendUrl =
+            _buildTrainingUrl(webBaseUrl, lec, courseClass.courseId, courseClass.classId) ??
+            _validUrl(info?.virtualClassLink) ??
+            _validUrl(info?.classLink?.toString()) ??
+            bc;
         actions.add(LinkButton(
           icon: Icons.video_call_outlined,
           label: "Attend Class",
-          url: _validUrl(trainingLink) ?? _validUrl(info?.s3ClassLink?.toString()) ?? _validUrl(info?.classLink?.toString()) ?? bc,
+          url: _attendUrl,
           courseClass: courseClass,
         ));
         // Watch Recording: use real recording URL when configured; fall back to
