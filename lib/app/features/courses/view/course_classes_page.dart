@@ -494,11 +494,25 @@ class _CourseClassTile extends ConsumerWidget {
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
       case '3': // Virtual Class — Details + Download Recording only
+        // Dump the full LEC map so we can identify the exact recording-URL field name.
+        debugPrint('[VirtualClass] classId=${courseClass.classId} lec type=${lec.runtimeType}');
+        if (lec is Map) {
+          debugPrint('[VirtualClass] LEC keys: ${lec.keys.toList()}');
+          for (final k in lec.keys) {
+            debugPrint('[VirtualClass]   $k = ${lec[k]}');
+          }
+        } else {
+          debugPrint('[VirtualClass] lec is null — roaster has no learningEventClass data');
+        }
+        debugPrint('[VirtualClass] info.alternativeLearningEvent = $_rawAlt');
+        debugPrint('[VirtualClass] info.virtualClassLink = ${info?.virtualClassLink}');
+
         // Prefer LEC's training_session_recording_link; fall back to alternativeLearningEvent.
         final _lecRecUrl = lec is Map
             ? _validUrl(lec['training_session_recording_link']?.toString())
             : null;
         final _recordingUrl = _lecRecUrl ?? _validUrl(_rawAlt);
+        debugPrint('[VirtualClass] _lecRecUrl=$_lecRecUrl  _recordingUrl=$_recordingUrl');
         actions.add(DownloadButton(
           icon: Icons.play_circle_outline_rounded,
           label: "Recording",
