@@ -77,40 +77,45 @@ class CourseClass {
   }
 
   /// Recording URLs for Virtual Class (type '3') events.
-  /// Priority: rawLec['recording_links'] list →
+  /// Priority: rawLec['recording_links'] →
   ///           rawLec['training_session_recording_link'] →
-  ///           classInfo.alternativeLearningEvent →
-  ///           dummy URL (temporary, until backend returns the field)
+  ///           classInfo.alternativeLearningEvent
+  /// Both list fields accept a JSON array or a plain string.
   List<String> get recordingUrls {
     if (classInfo?.type != '3') return const [];
     final urls = <String>[];
 
     if (rawLec != null) {
-      final links = rawLec!['recording_links'];
-      if (links is List) {
-        for (final l in links) {
-          final u = _cleanRecUrl(l?.toString());
-          if (u != null) urls.add(u);
-        }
-      }
+      // Priority 1: recording_links
+      _extractUrls(rawLec!['recording_links'], urls);
+
+      // Priority 2: training_session_recording_link (array or single string)
       if (urls.isEmpty) {
-        final u = _cleanRecUrl(
-            rawLec!['training_session_recording_link']?.toString());
-        if (u != null) urls.add(u);
+        _extractUrls(rawLec!['training_session_recording_link'], urls);
       }
     }
 
+    // Priority 3: alternativeLearningEvent
     if (urls.isEmpty) {
       final u = _cleanRecUrl(classInfo?.alternativeLearningEvent);
       if (u != null) urls.add(u);
     }
 
-    // TODO: remove once backend reliably returns training_session_recording_link
-    if (urls.isEmpty) {
-      urls.add('https://dwpfuyia3u2j6.cloudfront.net/fdNb996MNYiX2CK.m3u8');
-    }
-
     return urls;
+  }
+
+  /// Appends valid URLs from [value] into [out].
+  /// [value] may be a List of strings or a single string.
+  static void _extractUrls(dynamic value, List<String> out) {
+    if (value is List) {
+      for (final item in value) {
+        final u = _cleanRecUrl(item?.toString());
+        if (u != null) out.add(u);
+      }
+    } else {
+      final u = _cleanRecUrl(value?.toString());
+      if (u != null) out.add(u);
+    }
   }
 
   static String? _cleanRecUrl(String? url) {
