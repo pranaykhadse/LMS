@@ -497,10 +497,6 @@ class _CourseClassTile extends ConsumerWidget {
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
       case '3': // Virtual Class — Details + one Download Recording per session
-        // Backend sends either:
-        //  • recording_links: ["url1","url2",...]  ← multiple sessions (preferred)
-        //  • training_session_recording_link: "url" ← single session
-        // Flutter shows one Download Recording button per valid URL.
         final _recUrls = <String>[];
         if (effectiveLec is Map) {
           final links = effectiveLec['recording_links'];
@@ -519,6 +515,10 @@ class _CourseClassTile extends ConsumerWidget {
         if (_recUrls.isEmpty) {
           final u = _validUrl(_rawAlt);
           if (u != null) _recUrls.add(u);
+        }
+        // TODO: remove — dummy recording URL for UI testing until backend returns the field
+        if (_recUrls.isEmpty) {
+          _recUrls.add('https://dwpfuyia3u2j6.cloudfront.net/fdNb996MNYiX2CK.m3u8');
         }
         for (int _i = 0; _i < _recUrls.length; _i++) {
           actions.add(DownloadButton(
