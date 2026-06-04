@@ -229,7 +229,9 @@ class _DownloadedRow extends StatelessWidget {
   final VoidCallback onOpen;
   final VoidCallback onDelete;
 
-  bool get _isVideo => label.toLowerCase().contains('video');
+  bool get _isVideo =>
+      label.toLowerCase().contains('video') ||
+      label.toLowerCase().contains('recording');
 
   @override
   Widget build(BuildContext context) {

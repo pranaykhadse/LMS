@@ -19,50 +19,6 @@ import 'package:lms/app/features/courses/viewmodel/course_class_view_model.dart'
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 
-// Builds the Virtual Class audience URL from LEC data.
-//
-// Priority:
-//  1. lec['training_session_link']  — direct URL returned by the server
-//  2. Construct from lec['platform'] + lec['id'] + courseId + classId
-//     when the direct link is absent.
-//
-// Known platform codes (add more as discovered):
-//   1 → virtual-platform/audience
-//   2 → rapid-fire-twilio/default/audience
-String? _buildTrainingUrl(
-  String webBase,
-  dynamic lec,
-  String? courseId,
-  String? classId,
-) {
-  if (lec is! Map) return null;
-
-  // 1. Prefer the ready-made training_session_link
-  final direct = lec['training_session_link']?.toString();
-  if (direct != null && direct.startsWith('http')) {
-    debugPrint('[VirtualClass] using training_session_link: $direct');
-    return direct;
-  }
-
-  // 2. Construct from platform + IDs
-  final lecId = lec['id']?.toString();
-  if (lecId == null || lecId.isEmpty) return null;
-
-  final String? platformPath;
-  switch (lec['platform']?.toString()) {
-    case '1': platformPath = 'virtual-platform/audience'; break;
-    case '2': platformPath = 'rapid-fire-twilio/default/audience'; break;
-    default:
-      debugPrint('[VirtualClass] unknown platform ${lec["platform"]} — falling back to begin-class');
-      platformPath = null;
-  }
-  if (platformPath == null) return null;
-
-  final url = '${webBase}${platformPath}?course_id=$courseId&lms_class_id=$classId&learning_event_class_id=$lecId';
-  debugPrint('[VirtualClass] constructed training URL: $url');
-  return url;
-}
-
 // Returns [s] only when it looks like a real http(s) URL (strips HTML first).
 // Rejects empty strings, "0", and fields that contain HTML markup instead of a URL.
 String? _validUrl(String? s) {
@@ -537,28 +493,18 @@ class _CourseClassTile extends ConsumerWidget {
     // URL priority per type:
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
-      case '3': // Virtual Class
-        // Attend Class: only shown when a real session link is available.
-        // Returns null (→ button hidden) when no LEC data exists for this class.
-        final _attendUrl =
-            _buildTrainingUrl(webBaseUrl, lec, courseClass.courseId, courseClass.classId) ??
-            _validUrl(info?.virtualClassLink) ??
-            _validUrl(info?.classLink?.toString());
-        actions.add(LinkButton(
-          icon: Icons.video_call_outlined,
-          label: "Attend Class",
-          url: _attendUrl,
-          courseClass: courseClass,
-        ));
-        // Watch Recording: use real recording URL when configured; fall back to
-        // begin-class so the button is always visible (matches website behaviour).
-        // _rawAlt may be "0" (server sentinel), so we bypass the filtered `alt` here.
-        final _recordingUrl = _validUrl(_rawAlt) ?? bc;
-        actions.add(LinkButton(
-          icon: Icons.play_circle_filled_rounded,
-          label: "Watch Recording",
+      case '3': // Virtual Class — Details + Download Recording only
+        // Prefer LEC's training_session_recording_link; fall back to alternativeLearningEvent.
+        final _lecRecUrl = lec is Map
+            ? _validUrl(lec['training_session_recording_link']?.toString())
+            : null;
+        final _recordingUrl = _lecRecUrl ?? _validUrl(_rawAlt);
+        actions.add(DownloadButton(
+          icon: Icons.play_circle_outline_rounded,
+          label: "Recording",
           url: _recordingUrl,
           courseClass: courseClass,
+          builder: (context, file) => VideoContentViewer(file: file),
         ));
 
       case '1': // eLearning Module
@@ -816,6 +762,7 @@ class _DetailsButton extends StatelessWidget {
     String sessionLink = '';
     String platformLabel = '';
     String vcFilename = '';
+    String recordingLink = '';
     if (typeCode == '3') {
       if (lec is Map) {
         final direct = lec['training_session_link']?.toString() ?? '';
@@ -824,14 +771,21 @@ class _DetailsButton extends StatelessWidget {
           case '1': platformLabel = 'Virtual Platform'; break;
           case '2': platformLabel = 'Rapid Fire / Twilio'; break;
         }
+        final rec = lec['training_session_recording_link']?.toString() ?? '';
+        if (rec.startsWith('http')) recordingLink = rec;
       }
       if (sessionLink.isEmpty) {
         final vc = info?.virtualClassLink ?? '';
         if (vc.startsWith('http')) sessionLink = vc;
       }
+      if (recordingLink.isEmpty) {
+        final alt = info?.alternativeLearningEvent ?? '';
+        if (alt.isNotEmpty && alt != '0' && alt.startsWith('http')) recordingLink = alt;
+      }
       vcFilename = info?.virtualClassFilename?.toString() ?? '';
     }
-    final hasVirtualClassInfo = sessionLink.isNotEmpty || vcFilename.isNotEmpty;
+    final hasVirtualClassInfo =
+        sessionLink.isNotEmpty || vcFilename.isNotEmpty || recordingLink.isNotEmpty;
 
     showDialog(
       context: context,
@@ -918,6 +872,7 @@ class _DetailsButton extends StatelessWidget {
                             sessionLink:   sessionLink,
                             platformLabel: platformLabel,
                             filename:      vcFilename,
+                            recordingLink: recordingLink,
                           ),
                           const Divider(height: 28),
                         ],
@@ -970,11 +925,13 @@ class _VirtualClassCard extends StatelessWidget {
     required this.sessionLink,
     required this.platformLabel,
     required this.filename,
+    required this.recordingLink,
   });
 
   final String sessionLink;
   final String platformLabel;
   final String filename;
+  final String recordingLink;
 
   static const _labelStyle = TextStyle(
     fontSize: 10,
@@ -982,11 +939,13 @@ class _VirtualClassCard extends StatelessWidget {
     color: Color(0xFF9E9E9E),
     letterSpacing: 0.6,
   );
-  static const _valueStyle = TextStyle(fontSize: 13, color: Color(0xFF1565C0));
-  static const _metaStyle  = TextStyle(fontSize: 12, color: Color(0xFF9E9E9E));
+  static const _linkStyle = TextStyle(fontSize: 13, color: Color(0xFF1565C0));
+  static const _metaStyle = TextStyle(fontSize: 12, color: Color(0xFF9E9E9E));
 
   @override
   Widget build(BuildContext context) {
+    Widget _divider() => Divider(height: 1, color: Colors.grey.shade200);
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade200),
@@ -995,7 +954,8 @@ class _VirtualClassCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (sessionLink.isNotEmpty)
+          // SESSION LINK
+          if (sessionLink.isNotEmpty) ...[
             Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
@@ -1003,7 +963,7 @@ class _VirtualClassCard extends StatelessWidget {
                 children: [
                   const Text('SESSION LINK', style: _labelStyle),
                   const SizedBox(height: 6),
-                  SelectableText(sessionLink, style: _valueStyle),
+                  SelectableText(sessionLink, style: _linkStyle),
                   if (platformLabel.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text('Platform: $platformLabel', style: _metaStyle),
@@ -1011,9 +971,27 @@ class _VirtualClassCard extends StatelessWidget {
                 ],
               ),
             ),
-          if (sessionLink.isNotEmpty && filename.isNotEmpty)
-            Divider(height: 1, color: Colors.grey.shade200),
-          if (filename.isNotEmpty)
+          ],
+
+          // RECORDING LINK
+          if (recordingLink.isNotEmpty) ...[
+            if (sessionLink.isNotEmpty) _divider(),
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('RECORDING LINK', style: _labelStyle),
+                  const SizedBox(height: 6),
+                  SelectableText(recordingLink, style: _linkStyle),
+                ],
+              ),
+            ),
+          ],
+
+          // ATTACHED FILE
+          if (filename.isNotEmpty) ...[
+            if (sessionLink.isNotEmpty || recordingLink.isNotEmpty) _divider(),
             Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
@@ -1025,6 +1003,7 @@ class _VirtualClassCard extends StatelessWidget {
                 ],
               ),
             ),
+          ],
         ],
       ),
     );
