@@ -515,43 +515,18 @@ class _CourseClassTile extends ConsumerWidget {
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
       case '3': // Virtual Class
-        // Recording URL resolution priority:
-        //  1. learningEventClass.training_session_recording_link  (scheduled LEC recording)
-        //  2. class.virtual_class_file  (video uploaded directly to the class)
-        //  3. learningEventClass.training_session_link  (live session URL — open in browser)
-        String? _vcUrl(String key) {
-          if (effectiveLec is! Map) return null;
-          final v = effectiveLec[key]?.toString().trim() ?? '';
-          return (v.isNotEmpty && v != '0' && v.startsWith('http')) ? v : null;
-        }
-        String? _classFileUrl(dynamic val) {
-          final v = val?.toString().trim() ?? '';
-          return (v.isNotEmpty && v != '0' && v.startsWith('http')) ? v : null;
-        }
-
-        final _recUrl        = _vcUrl('training_session_recording_link');
-        final _virtualFile   = _classFileUrl(info?.virtualClassFile);
-        final _sessionUrl    = _vcUrl('training_session_link');
-
-        final _downloadUrl = _recUrl ?? _virtualFile;
-
-        if (_downloadUrl != null) {
-          // Actual recording/video file — offer offline download.
+        // Show Download Recording only when fetch-user-roaster returns
+        // training_session_recording_link inside learningEventClass.
+        final _recLink = roaster?.learningEventClass is Map
+            ? roaster!.learningEventClass['training_session_recording_link']?.toString().trim()
+            : null;
+        if (_recLink != null && _recLink.isNotEmpty && _recLink != '0') {
           actions.add(DownloadButton(
             icon: Icons.download_rounded,
             label: 'Download Recording',
-            url: _downloadUrl,
+            url: _recLink,
             courseClass: courseClass,
             builder: (context, file) => VideoContentViewer(file: file),
-          ));
-        } else if (_sessionUrl != null) {
-          // No recording file — link to the virtual platform page
-          // (matches the web "Watch Recording" button behaviour).
-          actions.add(LinkButton(
-            icon: Icons.play_circle_outline_rounded,
-            label: 'Watch Recording',
-            url: _sessionUrl,
-            courseClass: courseClass,
           ));
         }
 

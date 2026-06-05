@@ -76,51 +76,14 @@ class CourseClass {
     );
   }
 
-  /// Recording URLs for Virtual Class (type '3') events.
-  /// Priority: rawLec['recording_links'] →
-  ///           rawLec['training_session_recording_link'] →
-  ///           classInfo.alternativeLearningEvent
-  /// Both list fields accept a JSON array or a plain string.
+  /// Recording URL for Virtual Class (type '3') events, used by the
+  /// offline download manager. Returns the training_session_recording_link
+  /// from rawLec if present and valid, otherwise empty list.
   List<String> get recordingUrls {
     if (classInfo?.type != '3') return const [];
-    final urls = <String>[];
-
-    if (rawLec != null) {
-      // Priority 1: recording_links
-      _extractUrls(rawLec!['recording_links'], urls);
-
-      // Priority 2: training_session_recording_link (array or single string)
-      if (urls.isEmpty) {
-        _extractUrls(rawLec!['training_session_recording_link'], urls);
-      }
-    }
-
-    // Priority 3: alternativeLearningEvent
-    if (urls.isEmpty) {
-      final u = _cleanRecUrl(classInfo?.alternativeLearningEvent);
-      if (u != null) urls.add(u);
-    }
-
-    return urls;
-  }
-
-  /// Appends valid URLs from [value] into [out].
-  /// [value] may be a List of strings or a single string.
-  static void _extractUrls(dynamic value, List<String> out) {
-    if (value is List) {
-      for (final item in value) {
-        final u = _cleanRecUrl(item?.toString());
-        if (u != null) out.add(u);
-      }
-    } else {
-      final u = _cleanRecUrl(value?.toString());
-      if (u != null) out.add(u);
-    }
-  }
-
-  static String? _cleanRecUrl(String? url) {
-    if (url == null || url.trim().isEmpty || url.trim() == '0') return null;
-    return url.trim();
+    final url = rawLec?['training_session_recording_link']?.toString().trim();
+    if (url == null || url.isEmpty || url == '0') return const [];
+    return [url];
   }
 
   String toRawJson() => json.encode(toJson());
