@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show debugPrint, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -426,13 +426,26 @@ class _CourseClassTile extends ConsumerWidget {
     final info = courseClass.classInfo;
     // Watch the STATE (not just .notifier) so the tile rebuilds when
     // fetch-user-roaster completes and learningEventClass data arrives.
-    ref.watch(RoasterViewModel.provider(courseClass.courseId));
+    final roasterState = ref.watch(RoasterViewModel.provider(courseClass.courseId));
     final roasterVM = ref.watch(RoasterViewModel.provider(courseClass.courseId).notifier);
     final roaster   = roasterVM.getForClass(courseClass);
     final lec       = roaster?.learningEventClass;
     // Prefer roaster's learningEventClass; fall back to rawLec from allcourse/events
     // when fetch-user-roaster doesn't populate the nested LEC object.
     final effectiveLec = (lec is Map) ? lec : courseClass.rawLec;
+
+    // DEBUG — remove once recording button issue is resolved
+    if (info?.type == '3') {
+      final allRoasters = roasterState.data.data ?? [];
+      debugPrint('══ [VC] class=${courseClass.classId} courseId=${courseClass.courseId} name=${info?.name}');
+      debugPrint('   roasterState=${roasterState.data.runtimeType} count=${allRoasters.length}');
+      debugPrint('   allRoasterClassIds=${allRoasters.map((r) => r.classId).toList()}');
+      debugPrint('   matched roaster=${roaster?.id} lecId=${roaster?.learningEventClassId}');
+      debugPrint('   learningEventClass=$lec');
+      debugPrint('   effectiveLec keys=${effectiveLec is Map ? (effectiveLec as Map).keys.toList() : "null"}');
+      debugPrint('   training_session_recording_link=${effectiveLec is Map ? effectiveLec["training_session_recording_link"] : "N/A"}');
+      debugPrint('══════════════════════════════════════');
+    }
 
     // Derive backend web base URL from the API URL.
     // API:  https://domain/api/web/  →  Web: https://domain/backend/web/
