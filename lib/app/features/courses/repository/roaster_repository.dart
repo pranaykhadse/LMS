@@ -36,11 +36,14 @@ class RoasterRepository with RepoNetworkHelper {
           final classType = classData is Map ? classData['type']?.toString() : null;
           if (classType != '3') continue; // log only Virtual Class events
           final lec = item['learningEventClass'] ?? item['learning_event_class'];
-          final recLink = lec is Map ? lec['training_session_recording_link'] : null;
-          debugPrint('   class_id=${item['class_id']}  class_name=${classData is Map ? classData['name'] : '?'}');
+          final localRecs = lec is Map ? lec['localRecordings'] : null;
+          final firstRec = (localRecs is List && localRecs.isNotEmpty) ? localRecs[0] : null;
+          final recUrl = firstRec is Map ? firstRec['recording_local_url'] : null;
+          debugPrint('   class_id=${item['class_id']}  name=${classData is Map ? classData['name'] : '?'}');
           debugPrint('   learning_event_class_id=${item['learning_event_class_id']}');
           debugPrint('   learningEventClass is Map: ${lec is Map}');
-          debugPrint('   training_session_recording_link: $recLink');
+          debugPrint('   localRecordings count: ${localRecs is List ? localRecs.length : 0}');
+          debugPrint('   localRecordings[0].recording_local_url: $recUrl');
           debugPrint('   ──────────────────────────────');
         }
       }

@@ -515,10 +515,16 @@ class _CourseClassTile extends ConsumerWidget {
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
       case '3': // Virtual Class
-        // Show Download Recording only when fetch-user-roaster returns
-        // training_session_recording_link inside learningEventClass.
-        final _recLink = roaster?.learningEventClass is Map
-            ? roaster!.learningEventClass['training_session_recording_link']?.toString().trim()
+        // Recording comes from learningEventClass.localRecordings[0].recording_local_url
+        // (fetch-user-roaster response). Show Download Recording for the first entry.
+        final _localRecs = roaster?.learningEventClass is Map
+            ? roaster!.learningEventClass['localRecordings']
+            : null;
+        final _firstRec = (_localRecs is List && _localRecs.isNotEmpty)
+            ? _localRecs[0]
+            : null;
+        final _recLink = _firstRec is Map
+            ? _firstRec['recording_local_url']?.toString().trim()
             : null;
         if (_recLink != null && _recLink.isNotEmpty && _recLink != '0') {
           actions.add(DownloadButton(
