@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
@@ -23,6 +24,28 @@ class RoasterRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
       data: {"course_id": courseId, "user_id": userId},
     );
+
+    // Log Virtual Class roasters to verify training_session_recording_link
+    debugPrint('══ [fetch-user-roaster] courseId=$courseId');
+    if (response is Map) {
+      final items = response['payload'];
+      if (items is List) {
+        for (final item in items) {
+          if (item is! Map) continue;
+          final classData = item['class'];
+          final classType = classData is Map ? classData['type']?.toString() : null;
+          if (classType != '3') continue; // log only Virtual Class events
+          final lec = item['learningEventClass'] ?? item['learning_event_class'];
+          final recLink = lec is Map ? lec['training_session_recording_link'] : null;
+          debugPrint('   class_id=${item['class_id']}  class_name=${classData is Map ? classData['name'] : '?'}');
+          debugPrint('   learning_event_class_id=${item['learning_event_class_id']}');
+          debugPrint('   learningEventClass is Map: ${lec is Map}');
+          debugPrint('   training_session_recording_link: $recLink');
+          debugPrint('   ──────────────────────────────');
+        }
+      }
+    }
+    debugPrint('══════════════════════════════════════');
 
     return DataResponse.parse(response, Roaster.fromJson);
   }
