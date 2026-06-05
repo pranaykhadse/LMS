@@ -28,29 +28,28 @@ class RoasterRepository with RepoNetworkHelper {
     // DEBUG — log raw fetch-user-roaster response to verify
     // training_session_recording_link is now included by the backend.
     debugPrint('══ [fetch-user-roaster] courseId=$courseId userId=$userId');
+    debugPrint('   response keys = ${response is Map ? (response as Map).keys.toList() : response.runtimeType}');
     if (response is Map) {
-      final items = response['data'];
+      final items = response['payload'];   // DataResponse uses 'payload', not 'data'
       if (items is List) {
         debugPrint('   total roasters=${items.length}');
         for (final item in items) {
           if (item is Map) {
             final lecRaw = item['learningEventClass'] ?? item['learning_event_class'];
             debugPrint('   ── roaster id=${item['id']} class_id=${item['class_id']} status=${item['status']}');
-            debugPrint('      learningEventClass = $lecRaw');
             if (lecRaw is Map) {
               debugPrint('      LEC keys = ${lecRaw.keys.toList()}');
               debugPrint('      training_session_recording_link = ${lecRaw['training_session_recording_link']}');
               debugPrint('      training_session_link           = ${lecRaw['training_session_link']}');
             } else {
-              debugPrint('      learningEventClass is NULL or not a Map');
+              debugPrint('      learningEventClass = $lecRaw  (NULL or not a Map)');
             }
           }
         }
       } else {
-        debugPrint('   response[data] is not a List: ${response['data']}');
+        debugPrint('   payload is not a List: ${response['payload']}');
+        debugPrint('   full response = $response');
       }
-    } else {
-      debugPrint('   raw response = $response');
     }
     debugPrint('══════════════════════════════════════');
 
