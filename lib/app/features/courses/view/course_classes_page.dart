@@ -1,5 +1,4 @@
-import 'dart:developer' as dev;
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show debugPrint, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -523,20 +522,19 @@ class _CourseClassTile extends ConsumerWidget {
             _rawRec.trim().startsWith('http'))
             ? _rawRec.trim()
             : null;
-        dev.log(
-          '[VC Recording] class=${courseClass.classId} name=${info?.name}\n'
-          '  roaster=${roaster?.id}  lecId=${roaster?.learningEventClassId}\n'
-          '  roaster.learningEventClass=${roaster?.learningEventClass}\n'
-          '  rawLec keys=${courseClass.rawLec?.keys.toList()}\n'
-          '  effectiveLec is Map=${effectiveLec is Map}\n'
-          '  effectiveLec keys=${effectiveLec is Map ? (effectiveLec as Map).keys.toList() : "N/A"}\n'
-          '  training_session_recording_link=${effectiveLec is Map ? effectiveLec["training_session_recording_link"] : "N/A"}\n'
-          '  recording_links=${effectiveLec is Map ? effectiveLec["recording_links"] : "N/A"}\n'
-          '  alternativeLearningEvent=${info?.alternativeLearningEvent}\n'
-          '  _rawRec=$_rawRec\n'
-          '  _recUrl=$_recUrl',
-          name: 'VirtualClass',
-        );
+        debugPrint('══════════════════════════════════════════');
+        debugPrint('[VC Recording] class=${courseClass.classId} name=${info?.name}');
+        debugPrint('[VC Recording] typeCode t="$t"  info.type=${info?.type}  customTypeName=${info?.customTypeName}');
+        debugPrint('[VC Recording] roaster id=${roaster?.id}  lecId=${roaster?.learningEventClassId}');
+        debugPrint('[VC Recording] roaster.learningEventClass=${roaster?.learningEventClass}');
+        debugPrint('[VC Recording] rawLec keys=${courseClass.rawLec?.keys.toList()}');
+        debugPrint('[VC Recording] effectiveLec is Map=${effectiveLec is Map}');
+        debugPrint('[VC Recording] effectiveLec keys=${effectiveLec is Map ? (effectiveLec as Map).keys.toList() : "N/A"}');
+        debugPrint('[VC Recording] training_session_recording_link=${effectiveLec is Map ? effectiveLec["training_session_recording_link"] : "N/A"}');
+        debugPrint('[VC Recording] recording_links=${effectiveLec is Map ? effectiveLec["recording_links"] : "N/A"}');
+        debugPrint('[VC Recording] alternativeLearningEvent=${info?.alternativeLearningEvent}');
+        debugPrint('[VC Recording] _rawRec=$_rawRec  _recUrl=$_recUrl');
+        debugPrint('══════════════════════════════════════════');
         if (_recUrl != null) {
           actions.add(DownloadButton(
             icon: Icons.download_rounded,
