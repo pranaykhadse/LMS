@@ -25,24 +25,30 @@ class RoasterRepository with RepoNetworkHelper {
       data: {"course_id": courseId, "user_id": userId},
     );
 
-    // DEBUG — log raw fetch-user-roaster response to verify
-    // training_session_recording_link is now included by the backend.
+    // DEBUG — log complete raw fetch-user-roaster response
     debugPrint('══ [fetch-user-roaster] courseId=$courseId userId=$userId');
     debugPrint('   response keys = ${response is Map ? (response as Map).keys.toList() : response.runtimeType}');
     if (response is Map) {
-      final items = response['payload'];   // DataResponse uses 'payload', not 'data'
+      final items = response['payload'];
       if (items is List) {
         debugPrint('   total roasters=${items.length}');
         for (final item in items) {
           if (item is Map) {
-            final lecRaw = item['learningEventClass'] ?? item['learning_event_class'];
             debugPrint('   ── roaster id=${item['id']} class_id=${item['class_id']} status=${item['status']}');
-            if (lecRaw is Map) {
-              debugPrint('      LEC keys = ${lecRaw.keys.toList()}');
-              debugPrint('      training_session_recording_link = ${lecRaw['training_session_recording_link']}');
-              debugPrint('      training_session_link           = ${lecRaw['training_session_link']}');
-            } else {
-              debugPrint('      learningEventClass = $lecRaw  (NULL or not a Map)');
+            debugPrint('      ALL KEYS = ${item.keys.toList()}');
+            // Log every key-value in the roaster item
+            for (final key in item.keys) {
+              final val = item[key];
+              if (val is Map) {
+                debugPrint('      $key (Map) keys = ${val.keys.toList()}');
+                for (final k2 in val.keys) {
+                  debugPrint('         $k2 = ${val[k2]}');
+                }
+              } else if (val is List) {
+                debugPrint('      $key (List) length=${val.length} = $val');
+              } else {
+                debugPrint('      $key = $val');
+              }
             }
           }
         }
