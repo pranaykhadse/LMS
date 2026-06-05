@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show debugPrint, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -426,7 +426,7 @@ class _CourseClassTile extends ConsumerWidget {
     final info = courseClass.classInfo;
     // Watch the STATE (not just .notifier) so the tile rebuilds when
     // fetch-user-roaster completes and learningEventClass data arrives.
-    final roasterState = ref.watch(RoasterViewModel.provider(courseClass.courseId));
+    ref.watch(RoasterViewModel.provider(courseClass.courseId));
     final roasterVM = ref.watch(RoasterViewModel.provider(courseClass.courseId).notifier);
     final roaster   = roasterVM.getForClass(courseClass);
     final lec       = roaster?.learningEventClass;
@@ -434,18 +434,6 @@ class _CourseClassTile extends ConsumerWidget {
     // when fetch-user-roaster doesn't populate the nested LEC object.
     final effectiveLec = (lec is Map) ? lec : courseClass.rawLec;
 
-    // DEBUG — remove once recording button issue is resolved
-    if (info?.type == '3') {
-      final allRoasters = roasterState.data.data ?? [];
-      debugPrint('══ [VC] class=${courseClass.classId} courseId=${courseClass.courseId} name=${info?.name}');
-      debugPrint('   roasterState=${roasterState.data.runtimeType} count=${allRoasters.length}');
-      debugPrint('   allRoasterClassIds=${allRoasters.map((r) => r.classId).toList()}');
-      debugPrint('   matched roaster=${roaster?.id} lecId=${roaster?.learningEventClassId}');
-      debugPrint('   learningEventClass=$lec');
-      debugPrint('   effectiveLec keys=${effectiveLec is Map ? (effectiveLec as Map).keys.toList() : "null"}');
-      debugPrint('   training_session_recording_link=${effectiveLec is Map ? effectiveLec["training_session_recording_link"] : "N/A"}');
-      debugPrint('══════════════════════════════════════');
-    }
 
     // Derive backend web base URL from the API URL.
     // API:  https://domain/api/web/  →  Web: https://domain/backend/web/
@@ -526,25 +514,34 @@ class _CourseClassTile extends ConsumerWidget {
     // URL priority per type:
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
-      case '3': // Virtual Class — one Download Recording from fetch-user-roaster
-        // effectiveLec prefers roaster.learningEventClass; falls back to rawLec.
-        // This ensures the URL comes from fetch-user-roaster when available.
-        final _rawRec = (effectiveLec is Map)
-            ? effectiveLec['training_session_recording_link']?.toString()
-            : null;
-        final _recUrl = (_rawRec != null &&
-            _rawRec.trim().isNotEmpty &&
-            _rawRec.trim() != '0' &&
-            _rawRec.trim().startsWith('http'))
-            ? _rawRec.trim()
-            : null;
+      case '3': // Virtual Class
+        // effectiveLec prefers roaster.learningEventClass (fetch-user-roaster);
+        // falls back to rawLec from allcourse/events.
+        String? _vcUrl(String key) {
+          if (effectiveLec is! Map) return null;
+          final v = effectiveLec[key]?.toString().trim() ?? '';
+          return (v.isNotEmpty && v != '0' && v.startsWith('http')) ? v : null;
+        }
+        final _recUrl     = _vcUrl('training_session_recording_link');
+        final _sessionUrl = _vcUrl('training_session_link');
+
         if (_recUrl != null) {
+          // Actual recording file — offer offline download.
           actions.add(DownloadButton(
             icon: Icons.download_rounded,
             label: 'Download Recording',
             url: _recUrl,
             courseClass: courseClass,
             builder: (context, file) => VideoContentViewer(file: file),
+          ));
+        } else if (_sessionUrl != null) {
+          // No dedicated recording URL yet — link to the virtual platform
+          // page (matches the web "Watch Recording" button behaviour).
+          actions.add(LinkButton(
+            icon: Icons.play_circle_outline_rounded,
+            label: 'Watch Recording',
+            url: _sessionUrl,
+            courseClass: courseClass,
           ));
         }
 
