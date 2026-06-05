@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/localization/translate.dart';
+import 'package:lms/app/core/logic/app_global_handlers.dart';
+import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 
 import 'app/core/design/app_theme.dart';
 import 'app_module.dart';
@@ -27,10 +29,26 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  @override
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Register the global 401/403 handler once.
+    // Any API call that returns Unauthorized will call logout() and
+    // navigate to the login screen instead of showing an error UI.
+    AppGlobalHandlers.onUnauthorized = () {
+      ref.read(AuthStateNotifier.provider.notifier).logout();
+      Modular.to.navigate(AppModule.auth);
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
