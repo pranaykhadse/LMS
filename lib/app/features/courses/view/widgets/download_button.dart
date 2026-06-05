@@ -245,22 +245,26 @@ class _DownloadedRow extends StatelessWidget {
             onPressed: onOpen,
           )
         else
-          ElevatedButton.icon(
-            onPressed: onOpen,
-            icon: Icon(
-              _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded,
-              size: 18,
-            ),
-            label: Text(_isVideo ? "Play $label" : "Open $label"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: context.appColorScheme.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              textStyle: context.textTheme.bodySmall
-                  ?.copyWith(fontWeight: FontWeight.w600),
-              elevation: 0,
+          SizedBox(
+            height: 30,
+            child: ElevatedButton.icon(
+              onPressed: onOpen,
+              icon: Icon(
+                _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded,
+                size: 13,
+              ),
+              label: Text(_isVideo ? "Play $label" : "Open $label"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.appColorScheme.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                textStyle: context.textTheme.bodySmall
+                    ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              ),
             ),
           ),
         Tooltip(

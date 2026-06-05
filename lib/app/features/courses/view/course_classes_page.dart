@@ -529,7 +529,7 @@ class _CourseClassTile extends ConsumerWidget {
         if (_recLink != null && _recLink.isNotEmpty && _recLink != '0') {
           actions.add(DownloadButton(
             icon: Icons.download_rounded,
-            label: 'Download Recording',
+            label: 'Recording',
             url: _recLink,
             courseClass: courseClass,
             builder: (context, file) => VideoContentViewer(file: file),

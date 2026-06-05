@@ -93,6 +93,9 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ),
 
+            // ── Gap between title section and offline toggle ───────────
+            const SizedBox(width: 8),
+
             // ── Offline toggle (wifi icon + Switch) ────────────────────
             Row(
               mainAxisSize: MainAxisSize.min,
