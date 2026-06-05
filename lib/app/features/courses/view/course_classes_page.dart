@@ -1,3 +1,4 @@
+import 'dart:developer' as dev;
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
@@ -522,6 +523,20 @@ class _CourseClassTile extends ConsumerWidget {
             _rawRec.trim().startsWith('http'))
             ? _rawRec.trim()
             : null;
+        dev.log(
+          '[VC Recording] class=${courseClass.classId} name=${info?.name}\n'
+          '  roaster=${roaster?.id}  lecId=${roaster?.learningEventClassId}\n'
+          '  roaster.learningEventClass=${roaster?.learningEventClass}\n'
+          '  rawLec keys=${courseClass.rawLec?.keys.toList()}\n'
+          '  effectiveLec is Map=${effectiveLec is Map}\n'
+          '  effectiveLec keys=${effectiveLec is Map ? (effectiveLec as Map).keys.toList() : "N/A"}\n'
+          '  training_session_recording_link=${effectiveLec is Map ? effectiveLec["training_session_recording_link"] : "N/A"}\n'
+          '  recording_links=${effectiveLec is Map ? effectiveLec["recording_links"] : "N/A"}\n'
+          '  alternativeLearningEvent=${info?.alternativeLearningEvent}\n'
+          '  _rawRec=$_rawRec\n'
+          '  _recUrl=$_recUrl',
+          name: 'VirtualClass',
+        );
         if (_recUrl != null) {
           actions.add(DownloadButton(
             icon: Icons.download_rounded,
