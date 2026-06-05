@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show debugPrint, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -424,6 +424,9 @@ class _CourseClassTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final info = courseClass.classInfo;
+    // Watch the STATE (not just .notifier) so the tile rebuilds when
+    // fetch-user-roaster completes and learningEventClass data arrives.
+    ref.watch(RoasterViewModel.provider(courseClass.courseId));
     final roasterVM = ref.watch(RoasterViewModel.provider(courseClass.courseId).notifier);
     final roaster   = roasterVM.getForClass(courseClass);
     final lec       = roaster?.learningEventClass;
@@ -522,19 +525,6 @@ class _CourseClassTile extends ConsumerWidget {
             _rawRec.trim().startsWith('http'))
             ? _rawRec.trim()
             : null;
-        debugPrint('══════════════════════════════════════════');
-        debugPrint('[VC Recording] class=${courseClass.classId} name=${info?.name}');
-        debugPrint('[VC Recording] typeCode t="$t"  info.type=${info?.type}  customTypeName=${info?.customTypeName}');
-        debugPrint('[VC Recording] roaster id=${roaster?.id}  lecId=${roaster?.learningEventClassId}');
-        debugPrint('[VC Recording] roaster.learningEventClass=${roaster?.learningEventClass}');
-        debugPrint('[VC Recording] rawLec keys=${courseClass.rawLec?.keys.toList()}');
-        debugPrint('[VC Recording] effectiveLec is Map=${effectiveLec is Map}');
-        debugPrint('[VC Recording] effectiveLec keys=${effectiveLec is Map ? (effectiveLec as Map).keys.toList() : "N/A"}');
-        debugPrint('[VC Recording] training_session_recording_link=${effectiveLec is Map ? effectiveLec["training_session_recording_link"] : "N/A"}');
-        debugPrint('[VC Recording] recording_links=${effectiveLec is Map ? effectiveLec["recording_links"] : "N/A"}');
-        debugPrint('[VC Recording] alternativeLearningEvent=${info?.alternativeLearningEvent}');
-        debugPrint('[VC Recording] _rawRec=$_rawRec  _recUrl=$_recUrl');
-        debugPrint('══════════════════════════════════════════');
         if (_recUrl != null) {
           actions.add(DownloadButton(
             icon: Icons.download_rounded,
