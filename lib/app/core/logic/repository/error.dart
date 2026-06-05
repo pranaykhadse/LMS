@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
-import '../app_global_handlers.dart';
 import 'app_exception.dart';
 
 void handelException(e) {
@@ -33,8 +32,6 @@ void handelException(e) {
               "");
         case 401:
         case 403:
-          // Redirect to login immediately — don't show an "Unauthorized" screen.
-          AppGlobalHandlers.handleUnauthorized();
           throw UnauthorizedException(e.response?.data?["message"] ??
               e.response?.statusMessage.toString() ??
               "No Permission");
