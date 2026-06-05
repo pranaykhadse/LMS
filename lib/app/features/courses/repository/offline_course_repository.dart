@@ -37,6 +37,7 @@ class OfflineCourseRepository {
     final keys = await _getCachedKeys();
     final updatedKeys = {...keys, course.id?.toString()}.toList();
 
+    // Fetch all pages of course classes.
     int totalPages = 1;
     int currentPage = -1;
     List<CourseClass> classes = [];
@@ -50,19 +51,44 @@ class OfflineCourseRepository {
       totalPages = response.pageInfo.pages ?? 1;
     } while (currentPage < totalPages);
 
-    await roasterRepository.getData(
+    // Fetch roaster data and build classId → recording_local_url map so that
+    // Virtual Class recording files are included in the offline download.
+    final roasterResponse = await roasterRepository.getData(
       courseId: course.id.toString(),
       userId: userId,
     );
+    final Map<String, String> recUrlByClassId = {};
+    for (final roaster in roasterResponse.data) {
+      final lec = roaster.learningEventClass;
+      if (lec is! Map) continue;
+      final localRecs = lec['localRecordings'];
+      if (localRecs is! List || localRecs.isEmpty) continue;
+      final firstRec = localRecs[0];
+      if (firstRec is! Map) continue;
+      final url = firstRec['recording_local_url']?.toString().trim();
+      if (url == null || url.isEmpty || url == '0') continue;
+      final classId = roaster.classId?.toString();
+      if (classId != null) recUrlByClassId[classId] = url;
+    }
+
+    // Enrich Virtual Class (type=3) entries with the recording URL so that
+    // CourseClass.recordingUrls returns it and OfflineViewModel queues it.
+    final enrichedClasses = classes.map((c) {
+      if (c.classInfo?.type != '3') return c;
+      final recUrl = recUrlByClassId[c.classId];
+      if (recUrl == null) return c;
+      final newRawLec = Map<dynamic, dynamic>.from(c.rawLec ?? {})
+        ..['training_session_recording_link'] = recUrl;
+      return c.copyWith(rawLec: newRawLec);
+    }).toList();
 
     await storage.setString(course.id?.toString() ?? "", course.toRawJson());
-
     await storage.setString("cached_courses", jsonEncode(updatedKeys));
 
-    // Persist the full class list so it is available offline (Netflix-style).
-    await saveClasses(course.id?.toString() ?? "", classes);
+    // Persist enriched class list (recordings included) for offline access.
+    await saveClasses(course.id?.toString() ?? "", enrichedClasses);
 
-    return classes;
+    return enrichedClasses;
   }
 
   // ── Offline class list ─────────────────────────────────────────────────────
