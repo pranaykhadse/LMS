@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
@@ -23,6 +24,36 @@ class RoasterRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
       data: {"course_id": courseId, "user_id": userId},
     );
+
+    // DEBUG — log raw fetch-user-roaster response to verify
+    // training_session_recording_link is now included by the backend.
+    debugPrint('══ [fetch-user-roaster] courseId=$courseId userId=$userId');
+    if (response is Map) {
+      final items = response['data'];
+      if (items is List) {
+        debugPrint('   total roasters=${items.length}');
+        for (final item in items) {
+          if (item is Map) {
+            final lecRaw = item['learningEventClass'] ?? item['learning_event_class'];
+            debugPrint('   ── roaster id=${item['id']} class_id=${item['class_id']} status=${item['status']}');
+            debugPrint('      learningEventClass = $lecRaw');
+            if (lecRaw is Map) {
+              debugPrint('      LEC keys = ${lecRaw.keys.toList()}');
+              debugPrint('      training_session_recording_link = ${lecRaw['training_session_recording_link']}');
+              debugPrint('      training_session_link           = ${lecRaw['training_session_link']}');
+            } else {
+              debugPrint('      learningEventClass is NULL or not a Map');
+            }
+          }
+        }
+      } else {
+        debugPrint('   response[data] is not a List: ${response['data']}');
+      }
+    } else {
+      debugPrint('   raw response = $response');
+    }
+    debugPrint('══════════════════════════════════════');
+
     return DataResponse.parse(response, Roaster.fromJson);
   }
 
