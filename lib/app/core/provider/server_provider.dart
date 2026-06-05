@@ -5,8 +5,14 @@ import 'package:lms/app/core/provider/request_cache_provider.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 
 class ServerProvider {
+  /// The API origin. Override at build time via --dart-define:
+  ///   flutter run  --dart-define=SERVER_URL=https://app.trainingpipeline.com/api/web/
+  ///   flutter build macos --dart-define=SERVER_URL=https://app.trainingpipeline.com/api/web/
+  static const _envUrl     = String.fromEnvironment('SERVER_URL');
+  static const _defaultUrl = 'https://staging.trainingpipeline.com/api/web/';
+
   static final serverUrl = Provider<String>((ref) {
-    return "https://staging.trainingpipeline.com/api/web/";
+    return _envUrl.isNotEmpty ? _envUrl : _defaultUrl;
   });
 
   static final repoConfigProvider = StateProvider<RepoNetworkConfig>((ref) {

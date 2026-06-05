@@ -65,15 +65,19 @@ class RoasterRepository with RepoNetworkHelper {
     String userId, {
     String? learningEventClassId,
   }) async {
-    // Build the full param map, then drop every falsy entry
-    // (null / 0 / empty string) so the server only receives valid values.
+    // Only include learning_event_class_id when it resolves to a valid non-zero int.
+    // Omitting it entirely (rather than sending null/0) matches the web platform's
+    // behaviour and avoids server-side validation errors when the ID isn't known.
     final raw = <String, dynamic>{
       "course_id": int.tryParse(courseId),
       "class_id": int.tryParse(classId),
       "user_id": int.tryParse(userId),
-      "learning_event_class_id": int.tryParse(learningEventClassId ?? ""),
       "course_status": 3,
     };
+    final lecIdInt = int.tryParse(learningEventClassId ?? "");
+    if (lecIdInt != null && lecIdInt != 0) {
+      raw["learning_event_class_id"] = lecIdInt;
+    }
     raw.removeWhere((_, v) => v == null || v == 0 || v == '');
 
     final response = await post(

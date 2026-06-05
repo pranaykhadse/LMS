@@ -510,13 +510,23 @@ class _CourseClassTile extends ConsumerWidget {
     // URL priority per type:
     //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
     switch (t) {
-      case '3': // Virtual Class — Details + one Download Recording per session
-        final _recUrls = courseClass.recordingUrls;
-        for (int _i = 0; _i < _recUrls.length; _i++) {
+      case '3': // Virtual Class — one Download Recording from fetch-user-roaster
+        // effectiveLec prefers roaster.learningEventClass; falls back to rawLec.
+        // This ensures the URL comes from fetch-user-roaster when available.
+        final _rawRec = (effectiveLec is Map)
+            ? effectiveLec['training_session_recording_link']?.toString()
+            : null;
+        final _recUrl = (_rawRec != null &&
+            _rawRec.trim().isNotEmpty &&
+            _rawRec.trim() != '0' &&
+            _rawRec.trim().startsWith('http'))
+            ? _rawRec.trim()
+            : null;
+        if (_recUrl != null) {
           actions.add(DownloadButton(
             icon: Icons.download_rounded,
-            label: _recUrls.length > 1 ? "Recording ${_i + 1}" : "Recording",
-            url: _recUrls[_i],
+            label: 'Download Recording',
+            url: _recUrl,
             courseClass: courseClass,
             builder: (context, file) => VideoContentViewer(file: file),
           ));
