@@ -14,6 +14,8 @@ class _PdfContentViewerState extends State<PdfContentViewer> {
   Widget build(BuildContext context) {
     var path2 = widget.file.file?.path;
     var pdfViewerParams = PdfViewerParams(
+      minScale: 1.0,
+      maxScale: 1.0,
       errorBannerBuilder: (context, error, stackTrace, documentRef) {
         return Center(child: Text(error.toString()));
       },
