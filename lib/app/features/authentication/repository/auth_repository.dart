@@ -24,14 +24,8 @@ class AuthRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
     );
 
-    // LOG: inspect auth response structure
-    dev.log('[AUTH] login response keys: ${(response as Map?)?.keys?.toList()}', name: 'LMS');
-    if (response is Map && response['user'] is Map) {
-      final u = response['user'] as Map;
-      dev.log('[AUTH] user keys: ${u.keys.toList()}', name: 'LMS');
-      dev.log('[AUTH] auto_login_token: ${u['auto_login_token']}', name: 'LMS');
-      dev.log('[AUTH] email: ${u['email']}', name: 'LMS');
-    }
+    // LOG: full login response to inspect structure and auto_login_token
+    dev.log('[AUTH] login response: $response', name: 'LMS');
 
     return AuthState.fromJson(response);
   }
