@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:developer' as dev;
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
@@ -23,6 +26,9 @@ class RoasterRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
       data: {"course_id": courseId, "user_id": userId},
     );
+
+    // LOG: roaster response for courseId
+    dev.log('[ROASTER] courseId=$courseId userId=$userId response: ${jsonEncode(response)}', name: 'LMS');
 
     return DataResponse.parse(response, Roaster.fromJson);
   }
