@@ -13,11 +13,48 @@ import 'package:lms/app/features/courses/viewmodel/courses_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/gen/assets.gen.dart';
 
-class CoursesPage extends ConsumerWidget {
+class CoursesPage extends ConsumerStatefulWidget {
   const CoursesPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CoursesPage> createState() => _CoursesPageState();
+}
+
+class _CoursesPageState extends ConsumerState<CoursesPage>
+    with SingleTickerProviderStateMixin {
+  final _searchController = TextEditingController();
+  String _query = '';
+  late final TabController _tabController;
+
+  static const _tabs = ['All Courses', 'My Courses'];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  List<Course> _filtered(List<Course> courses) {
+    var list = courses;
+    // Req #9: My Courses tab filters to enrolled courses only.
+    if (_tabController.index == 1) {
+      list = list.where((c) => c.roasters?.isNotEmpty == true).toList();
+    }
+    if (_query.isEmpty) return list;
+    final q = _query.toLowerCase();
+    return list.where((c) => (c.name ?? '').toLowerCase().contains(q)).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: FlatAppBar(title: "Courses", enableBack: false),
       body: Padding(
@@ -43,6 +80,68 @@ class CoursesPage extends ConsumerWidget {
                   ),
                 ),
               ),
+
+              // ── Tabs: All Courses / My Courses (Req #9) ──────────────
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: context.smallSpace),
+                child: TabBar(
+                  controller: _tabController,
+                  tabs: _tabs.map((t) => Tab(text: t)).toList(),
+                  labelColor: context.appColorScheme.primary,
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: context.appColorScheme.primary,
+                  indicatorSize: TabBarIndicatorSize.label,
+                  labelStyle: context.textTheme.labelMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+
+              // ── Search bar ────────────────────────────────────────────
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: context.smallSpace,
+                  vertical: context.minorSpace,
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (v) => setState(() => _query = v),
+                  decoration: InputDecoration(
+                    hintText: 'Search courses…',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _query.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _query = '');
+                            },
+                          )
+                        : null,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: context.appColorScheme.primary,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                  ),
+                ),
+              ),
+
               Expanded(
                 child: ConnectionAwareWidget(
                   offlineChild: Consumer(
@@ -50,8 +149,9 @@ class CoursesPage extends ConsumerWidget {
                       final offlineVM = ref.watch(OfflineViewModel.provider);
                       final isManualOffline =
                           ref.watch(OfflineModeNotifier.provider);
-                      final data = offlineVM.courses.data;
-                      if (data == null || data.isEmpty) {
+                      final raw = offlineVM.courses.data ?? [];
+                      final data = _filtered(raw);
+                      if (raw.isEmpty) {
                         return Center(
                           child: Padding(
                             padding: const EdgeInsets.all(24),
@@ -75,6 +175,11 @@ class CoursesPage extends ConsumerWidget {
                           ),
                         );
                       }
+                      if (data.isEmpty) {
+                        return const Center(
+                          child: Text("No courses match your search."),
+                        );
+                      }
                       return CoursesGrid(data: data);
                     },
                   ),
@@ -87,10 +192,18 @@ class CoursesPage extends ConsumerWidget {
                           Expanded(
                             child: DataStateBuilder(
                               dataState: state.data,
-                              builder: (context, data) {
-                                if (data == null || data.isEmpty) {
+                              builder: (context, raw) {
+                                if (raw == null || raw.isEmpty) {
                                   return const Center(
                                     child: Text("No courses found"),
+                                  );
+                                }
+                                final data = _filtered(raw);
+                                if (data.isEmpty) {
+                                  return const Center(
+                                    child: Text(
+                                      "No courses match your search.",
+                                    ),
                                   );
                                 }
                                 return CoursesGrid(data: data);
@@ -365,6 +478,16 @@ class _OfflineButton extends StatelessWidget {
                 if (isAvailableOffline) {
                   await offlineVM.removeOffline(course);
                 } else {
+                  // Req #1: validate enrollment before download
+                  final isEnrolled = course.roasters?.isNotEmpty == true;
+                  if (!isEnrolled) {
+                    // ignore: use_build_context_synchronously
+                    Toast.error(
+                      context,
+                      "You must be enrolled in this course to download it.",
+                    );
+                    return;
+                  }
                   await offlineVM.download(course);
                 }
               } catch (e) {

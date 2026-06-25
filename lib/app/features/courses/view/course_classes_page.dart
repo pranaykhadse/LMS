@@ -15,6 +15,7 @@ import 'package:lms/app/features/courses/view/widgets/class_status_chip.dart';
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/view/widgets/link_button.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
+import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/viewmodel/course_class_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
@@ -81,6 +82,8 @@ class CourseClassesPage extends ConsumerWidget {
       body: Column(
         children: [
           const OfflineBanner(),
+          // ── Req #5: Course detail header ──────────────────────────────
+          if (course != null) _CourseDetailHeader(course: course),
           if (hasDocs)
             Container(
               width: double.infinity,
@@ -430,9 +433,13 @@ class _CourseClassTile extends ConsumerWidget {
     final roasterVM = ref.watch(RoasterViewModel.provider(courseClass.courseId).notifier);
     final roaster   = roasterVM.getForClass(courseClass);
     final lec       = roaster?.learningEventClass;
-    // Prefer roaster's learningEventClass; fall back to rawLec from allcourse/events
-    // when fetch-user-roaster doesn't populate the nested LEC object.
-    final effectiveLec = (lec is Map) ? lec : courseClass.rawLec;
+    // Req #7: prefer rawLec (allcourse/events — always the current learning event
+    // for this class) over roaster's learningEventClass, which may be from a
+    // previous enrollment session and show stale/wrong event details.
+    // Fall back to roaster LEC only when rawLec is absent.
+    final effectiveLec = (courseClass.rawLec?.isNotEmpty == true)
+        ? courseClass.rawLec
+        : (lec is Map ? lec : null);
 
 
     // Derive backend web base URL from the API URL.
@@ -452,15 +459,29 @@ class _CourseClassTile extends ConsumerWidget {
     final typeName = _typeDisplayName(t.isEmpty ? null : t, info?.customTypeName);
 
     // Next session: prefer LEC dates, then classInfo dates.
+    // Req #8: only show FUTURE sessions — suppress past dates.
     String nextSession = '';
+    bool _isFuture(String? dateStr) {
+      if (dateStr == null || dateStr.isEmpty) return false;
+      try {
+        return DateTime.parse(dateStr).isAfter(DateTime.now());
+      } catch (_) {
+        return false;
+      }
+    }
+
     if (effectiveLec is Map) {
       final s = effectiveLec['start_date']?.toString() ?? '';
       final e = effectiveLec['end_date']?.toString() ?? '';
-      if (s.isNotEmpty) nextSession = e.isNotEmpty ? '$s – $e' : s;
+      if (_isFuture(s) || _isFuture(e)) {
+        nextSession = e.isNotEmpty ? '$s – $e' : s;
+      }
     } else if (info?.startDate != null && info!.startDate.toString().isNotEmpty) {
       final s = info.startDate.toString();
       final e = info.endDate?.toString() ?? '';
-      nextSession = e.isNotEmpty ? '$s – $e' : s;
+      if (_isFuture(s) || _isFuture(e)) {
+        nextSession = e.isNotEmpty ? '$s – $e' : s;
+      }
     }
 
     // Types that show a Details button (matches website behaviour).
@@ -500,8 +521,17 @@ class _CourseClassTile extends ConsumerWidget {
       ),
     ];
 
+    // Req #10: append auto-login token so the user is authenticated seamlessly
+    // when the learning event opens in the browser — no second login required.
+    final authState   = ref.watch(AuthStateNotifier.provider);
+    final autoToken   = authState?.user?.autoLoginToken ?? '';
+    final userEmail   = authState?.user?.email ?? '';
+    final _authSuffix = (autoToken.isNotEmpty && userEmail.isNotEmpty)
+        ? '&auto_login_token=${Uri.encodeComponent(autoToken)}&email=${Uri.encodeComponent(userEmail)}'
+        : '';
+
     // Shorthand: begin-class URL for this lesson (universal fallback, same as website).
-    final bc = '${webBaseUrl}lmsclass/begin-class?classId=${courseClass.classId}';
+    final bc = '${webBaseUrl}lmsclass/begin-class?classId=${courseClass.classId}$_authSuffix';
 
     // Numeric type codes from API:
     //  1=eLearning  2=In Person  3=Virtual Class  4=Watch Video
@@ -802,6 +832,147 @@ class _CourseClassTile extends ConsumerWidget {
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Req #5: Course detail header — description, objectives, enrollment & progress
+// ─────────────────────────────────────────────────────────────────────────────
+class _CourseDetailHeader extends StatefulWidget {
+  const _CourseDetailHeader({required this.course});
+  final Course course;
+
+  @override
+  State<_CourseDetailHeader> createState() => _CourseDetailHeaderState();
+}
+
+class _CourseDetailHeaderState extends State<_CourseDetailHeader> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final course = widget.course;
+    final description = (course.description ?? '').stripHtml.trim();
+    final objective   = (course.objective  ?? '').stripHtml.trim();
+    final pct         = (course.percentage * 100).toInt();
+    final isEnrolled  = course.roasters?.isNotEmpty == true;
+
+    if (description.isEmpty && objective.isEmpty && !isEnrolled) {
+      return const SizedBox.shrink();
+    }
+
+    return AnimatedContainer(
+      duration: Durations.medium1,
+      color: context.appColorScheme.primary.withOpacity(0.04),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Collapsed summary row ─────────────────────────────────────
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  // Enrollment badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isEnrolled
+                          ? Colors.green.shade700
+                          : Colors.orange.shade700,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      isEnrolled ? 'Enrolled' : 'Not Enrolled',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Completion %
+                  if (isEnrolled) ...[
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        value: course.percentage,
+                        strokeWidth: 2.5,
+                        color: context.appColorScheme.primary,
+                        backgroundColor:
+                            context.appColorScheme.primary.withOpacity(0.2),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$pct% complete',
+                      style: context.textTheme.bodySmall?.copyWith(
+                        color: context.appColorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                  const Spacer(),
+                  if (description.isNotEmpty || objective.isNotEmpty)
+                    Icon(
+                      _expanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: Colors.grey,
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Expanded detail section ───────────────────────────────────
+          if (_expanded && (description.isNotEmpty || objective.isNotEmpty))
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (description.isNotEmpty) ...[
+                    _headerLabel('DESCRIPTION'),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: context.textTheme.bodySmall
+                          ?.copyWith(color: const Color(0xFF444444)),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (objective.isNotEmpty) ...[
+                    _headerLabel('LEARNING OBJECTIVES'),
+                    const SizedBox(height: 4),
+                    Text(
+                      objective,
+                      style: context.textTheme.bodySmall
+                          ?.copyWith(color: const Color(0xFF444444)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+          Divider(height: 1, color: Colors.grey.shade200),
+        ],
+      ),
+    );
+  }
+
+  Widget _headerLabel(String text) => Text(
+    text,
+    style: const TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      color: Color(0xFF9E9E9E),
+      letterSpacing: 0.8,
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
