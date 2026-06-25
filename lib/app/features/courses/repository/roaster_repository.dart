@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'dart:developer' as dev;
+
+import 'package:flutter/foundation.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +29,7 @@ class RoasterRepository with RepoNetworkHelper {
     );
 
     // LOG: roaster response for courseId
-    dev.log('[ROASTER] courseId=$courseId userId=$userId response: ${jsonEncode(response)}', name: 'LMS');
+    debugPrint('🔍 [ROASTER] courseId=$courseId userId=$userId response: ${jsonEncode(response)}');
 
     return DataResponse.parse(response, Roaster.fromJson);
   }

@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'dart:developer' as dev;
 
+import 'package:flutter/foundation.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/model/data_response.dart';
 
@@ -21,11 +21,11 @@ mixin ListingRepoHelper<T> on RepoNetworkHelper {
 
     // LOG: raw API response for analysis
     final payload = response is Map ? response['payload'] : null;
-    dev.log('[API:$endPoint] page=$pageNo total=${response is Map ? response['total'] : '?'} items=${payload is List ? payload.length : 0}', name: 'LMS');
+    debugPrint('🔍 [API:$endPoint] page=$pageNo total=${response is Map ? response['total'] : '?'} items=${payload is List ? payload.length : 0}');
     if (payload is List && payload.isNotEmpty) {
-      dev.log('[API:$endPoint] FIRST ITEM: ${jsonEncode(payload.first)}', name: 'LMS');
+      debugPrint('🔍 [API:$endPoint] FIRST ITEM: ${jsonEncode(payload.first)}');
       if (payload.length > 1) {
-        dev.log('[API:$endPoint] SECOND ITEM: ${jsonEncode(payload[1])}', name: 'LMS');
+        debugPrint('🔍 [API:$endPoint] SECOND ITEM: ${jsonEncode(payload[1])}');
       }
     }
 
