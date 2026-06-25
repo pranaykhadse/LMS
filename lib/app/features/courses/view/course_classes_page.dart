@@ -432,14 +432,15 @@ class _CourseClassTile extends ConsumerWidget {
     ref.watch(RoasterViewModel.provider(courseClass.courseId));
     final roasterVM = ref.watch(RoasterViewModel.provider(courseClass.courseId).notifier);
     final roaster   = roasterVM.getForClass(courseClass);
-    final lec       = roaster?.learningEventClass;
-    // Req #7: prefer rawLec (allcourse/events — always the current learning event
-    // for this class) over roaster's learningEventClass, which may be from a
-    // previous enrollment session and show stale/wrong event details.
-    // Fall back to roaster LEC only when rawLec is absent.
-    final effectiveLec = (courseClass.rawLec?.isNotEmpty == true)
-        ? courseClass.rawLec
-        : (lec is Map ? lec : null);
+    final lec = roaster?.learningEventClass;
+    // Merge rawLec (general event fields: IDs, order) with learningEventClass
+    // (session-specific fields: dates, training links, instructor, location).
+    // learningEventClass entries win on key conflicts so session data is always
+    // current; rawLec provides the structural base.
+    final effectiveLec = <dynamic, dynamic>{
+      if (courseClass.rawLec != null) ...courseClass.rawLec!,
+      if (lec is Map) ...Map<dynamic, dynamic>.from(lec as Map),
+    };
 
 
     // Derive backend web base URL from the API URL.

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
@@ -23,9 +22,6 @@ class AuthRepository with RepoNetworkHelper {
       data: {"email": email, "password": password},
       cacheType: RequestCacheType.none,
     );
-
-    // LOG: full login response to inspect structure and auto_login_token
-    debugPrint('🔍 [AUTH] login response: $response');
 
     return AuthState.fromJson(response);
   }

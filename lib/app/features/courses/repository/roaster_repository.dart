@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,9 +24,6 @@ class RoasterRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
       data: {"course_id": courseId, "user_id": userId},
     );
-
-    // LOG: roaster response for courseId
-    debugPrint('🔍 [ROASTER] courseId=$courseId userId=$userId response: ${jsonEncode(response)}');
 
     return DataResponse.parse(response, Roaster.fromJson);
   }
