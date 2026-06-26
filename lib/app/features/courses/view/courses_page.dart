@@ -53,6 +53,27 @@ class _CoursesPageState extends ConsumerState<CoursesPage>
     return list.where((c) => (c.name ?? '').toLowerCase().contains(q)).toList();
   }
 
+  /// Floats offline courses (sorted newest-first by download timestamp) above
+  /// the rest of the list.
+  List<Course> _sortedByOfflineFirst(
+    List<Course> courses,
+    OfflineViewModel offlineVM,
+  ) {
+    final offline = <Course>[];
+    final rest = <Course>[];
+    for (final c in courses) {
+      if (offlineVM.isAvailable(c)) {
+        offline.add(c);
+      } else {
+        rest.add(c);
+      }
+    }
+    offline.sort((a, b) =>
+        (offlineVM.offlineTimestamps[b.id] ?? 0)
+            .compareTo(offlineVM.offlineTimestamps[a.id] ?? 0));
+    return [...offline, ...rest];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -186,6 +207,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage>
                   onlineChild: Consumer(
                     builder: (context, ref, child) {
                       final state = ref.watch(CoursesViewModel.provider);
+                      final offlineVM = ref.watch(OfflineViewModel.provider);
 
                       return Column(
                         children: [
@@ -198,7 +220,10 @@ class _CoursesPageState extends ConsumerState<CoursesPage>
                                     child: Text("No courses found"),
                                   );
                                 }
-                                final data = _filtered(raw);
+                                final data = _sortedByOfflineFirst(
+                                  _filtered(raw),
+                                  offlineVM,
+                                );
                                 if (data.isEmpty) {
                                   return const Center(
                                     child: Text(

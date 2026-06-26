@@ -34,6 +34,9 @@ class OfflineViewModel extends ChangeNotifier {
 
   DataState<List<Course>> courses = DataState.idle();
 
+  /// courseId → Unix-ms timestamp of when that course was last made offline.
+  Map<int, int> offlineTimestamps = {};
+
   // ── Per-course download progress ──────────────────────────────────────────
 
   final Map<int, _CourseDownloadProgress> _progress = {};
@@ -139,6 +142,9 @@ class OfflineViewModel extends ChangeNotifier {
     courses = DataState.loading();
     try {
       courses = DataState.onData(await repository.getCachedCourses());
+      final tsMap = await repository.getOfflineTimestamps();
+      offlineTimestamps =
+          tsMap.map((k, v) => MapEntry(int.tryParse(k) ?? 0, v));
     } catch (e) {
       courses = DataState.onError(e.toString());
     }

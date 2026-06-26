@@ -11,6 +11,8 @@ import 'roaster_repository.dart';
 
 // Hive key prefix for per-course class lists
 const _classesKeyPrefix = "offline_classes_";
+// Hive key prefix for the Unix-ms timestamp when a course was made offline
+const _tsKeyPrefix = "offline_ts_";
 
 class OfflineCourseRepository {
   static final provider = Provider<OfflineCourseRepository>((ref) {
@@ -84,6 +86,10 @@ class OfflineCourseRepository {
 
     await storage.setString(course.id?.toString() ?? "", course.toRawJson());
     await storage.setString("cached_courses", jsonEncode(updatedKeys));
+    await storage.setString(
+      "$_tsKeyPrefix${course.id}",
+      DateTime.now().millisecondsSinceEpoch.toString(),
+    );
 
     // Persist enriched class list (recordings included) for offline access.
     await saveClasses(course.id?.toString() ?? "", enrichedClasses);
@@ -118,17 +124,36 @@ class OfflineCourseRepository {
 
   Future<List<Course>> getCachedCourses() async {
     try {
-      final decodedCC = await _getCachedKeys();
+      final keys = await _getCachedKeys();
+      final timestamps = <String, int>{};
       final courses = <Course>[];
-      for (var key in decodedCC) {
+      for (final key in keys) {
         try {
           final raw = await storage.getString(key);
           courses.add(Course.fromRawJson(raw ?? ""));
-        } catch (e) {}
+          final tsRaw = await storage.getString("$_tsKeyPrefix$key");
+          timestamps[key] = int.tryParse(tsRaw ?? '') ?? 0;
+        } catch (_) {}
       }
+      // Most recently downloaded first.
+      courses.sort((a, b) =>
+          (timestamps[b.id?.toString() ?? ''] ?? 0)
+              .compareTo(timestamps[a.id?.toString() ?? ''] ?? 0));
       return courses;
-    } catch (e) {}
+    } catch (_) {}
     return [];
+  }
+
+  /// Returns a map of courseId → Unix-ms download timestamp for all offline
+  /// courses. Used by the online view to float recently-offline courses to top.
+  Future<Map<String, int>> getOfflineTimestamps() async {
+    final keys = await _getCachedKeys();
+    final result = <String, int>{};
+    for (final key in keys) {
+      final tsRaw = await storage.getString("$_tsKeyPrefix$key");
+      if (tsRaw != null) result[key] = int.tryParse(tsRaw) ?? 0;
+    }
+    return result;
   }
 
   /// Removes a course and its class list from local storage.
@@ -143,9 +168,10 @@ class OfflineCourseRepository {
     keys.remove(courseKey);
     await storage.setString("cached_courses", jsonEncode(keys));
 
-    // Delete course JSON and class-list JSON.
+    // Delete course JSON, class-list JSON, and download timestamp.
     await storage.setString(courseKey, null);
     await storage.setString(classesKey, null);
+    await storage.setString("$_tsKeyPrefix$courseKey", null);
   }
 
   Future<List<String>> _getCachedKeys() async {
