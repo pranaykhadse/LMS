@@ -25,6 +25,7 @@ class CourseCatalogRepository with RepoNetworkHelper {
       'lms-screen/course-catalog',
       queryParameters: {
         'user_id': userId,
+        'per_page': 5,
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
         if (skillId != null && skillId.isNotEmpty) 'skill_id': skillId,
         for (final entry in groupPages.entries)
@@ -51,7 +52,7 @@ class CourseCatalogRepository with RepoNetworkHelper {
       queryParameters: {
         'user_id': userId,
         'page': page,
-        'limit': 12,
+        'limit': 5,
         if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
         if (skillId != null && skillId.isNotEmpty) 'skill_id': skillId,
         if (behaviorId != null && behaviorId.isNotEmpty)
