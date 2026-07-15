@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../logic/data_state/data_state.dart';
+import '../../logic/repository/app_exception.dart';
 
 Widget _defaultLoader(_) {
   return const Center(
@@ -8,18 +9,39 @@ Widget _defaultLoader(_) {
   );
 }
 
-Widget _defaultErrorBuilder(context, dynamic error) {
+Widget _defaultErrorBuilder(BuildContext context, dynamic error) {
+  // Show a friendly message for token expiry / auth errors instead of
+  // the raw "Unauthorized: Your request was made with invalid credentials."
+  final isUnauthorized = error is UnauthorizedException ||
+      error.toString().toLowerCase().startsWith('unauthorized');
+
+  final message = isUnauthorized
+      ? 'Your session has expired.\nPlease log out and sign in again.'
+      : '$error';
+
+  final icon = isUnauthorized
+      ? Icons.lock_outline_rounded
+      : Icons.warning_rounded;
+
   return Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          Icons.warning_rounded,
-          color: Theme.of(context).colorScheme.error.withOpacity(0.75),
-          size: 100,
-        ),
-        Text("$error"),
-      ],
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: Theme.of(context).colorScheme.error.withOpacity(0.75),
+            size: 72,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
     ),
   );
 }

@@ -1,3 +1,5 @@
+
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
@@ -19,9 +21,10 @@ class RoasterRepository with RepoNetworkHelper {
   }) async {
     final response = await post(
       "learning-event/fetch-user-roaster",
-      cacheType: RequestCacheType.fetch,
+      cacheType: RequestCacheType.none,
       data: {"course_id": courseId, "user_id": userId},
     );
+
     return DataResponse.parse(response, Roaster.fromJson);
   }
 
@@ -31,21 +34,68 @@ class RoasterRepository with RepoNetworkHelper {
     String userId,
     String learningEventClassId,
   ) async {
-    var data = {
+    final data = {
       "course_id": int.tryParse(courseId),
       "class_id": int.tryParse(classId),
       "user_id": int.tryParse(userId),
       "learning_event_class_id": int.tryParse(learningEventClassId),
     };
-    print(data);
-    final response = await post(
+    // Use Dio directly to avoid caching/serialization issues.
+    final response = await dio.post(
       "learning-event/save-roaster",
-      cacheType: RequestCacheType.post,
       data: data,
+      options: Options(
+        headers: header,
+        validateStatus: (_) => true,
+      ),
     );
-    if (response == null) return;
-    if (response['success'] == 'true') return;
+    final body = response.data;
+    if (body == null) return;
+    if (body is! Map) return;
+    if (body['success'] == 'true' || body['success'] == true) return;
+    throw body['message'] ?? 'saveRoaster failed';
+  }
 
-    throw response['message'];
+  /// Marks a learning event as completed.
+  ///
+  /// This is the same API the web platform uses. On success the server returns
+  /// the updated [Roaster] record (status = "3") which can be applied directly
+  /// to local state without a separate fetch.
+  Future<Roaster?> markLearningEventCompletion(
+    String courseId,
+    String classId,
+    String userId, {
+    String? learningEventClassId,
+  }) async {
+    // Only include learning_event_class_id when it resolves to a valid non-zero int.
+    // Omitting it entirely (rather than sending null/0) matches the web platform's
+    // behaviour and avoids server-side validation errors when the ID isn't known.
+    final raw = <String, dynamic>{
+      "course_id": int.tryParse(courseId),
+      "class_id": int.tryParse(classId),
+      "user_id": int.tryParse(userId),
+      "course_status": 3,
+    };
+    final lecIdInt = int.tryParse(learningEventClassId ?? "");
+    if (lecIdInt != null && lecIdInt != 0) {
+      raw["learning_event_class_id"] = lecIdInt;
+    }
+    raw.removeWhere((_, v) => v == null || v == 0 || v == '');
+
+    final response = await post(
+      "learning-event/learning-event-completion",
+      cacheType: RequestCacheType.none,
+      data: raw,
+    );
+    if (response == null) throw 'No response from server';
+    final success = response['success'];
+    if (success == 'true' || success == true) {
+      final roasterJson = response['roaster'];
+      if (roasterJson != null && roasterJson is Map) {
+        return Roaster.fromJson(roasterJson);
+      }
+      return null;
+    }
+    throw response['message'] ?? 'markLearningEventCompletion failed';
   }
 }

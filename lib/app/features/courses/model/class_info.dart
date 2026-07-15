@@ -310,10 +310,10 @@ class ClassInfo {
   String toRawJson() => json.encode(toJson());
 
   factory ClassInfo.fromJson(Map<String, dynamic> json) => ClassInfo(
-    id: json["id"],
+    id: json["id"]?.toString(),
     name: json["name"],
-    customTypeName: json["custom_type_name"],
-    type: json["type"],
+    customTypeName: json["custom_type_name"]?.toString(),
+    type: json["type"]?.toString(),
     objective: json["objective"],
     agreementSigned: json["agreement_signed"],
     description: json["description"],
