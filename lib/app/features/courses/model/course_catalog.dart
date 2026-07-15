@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class CourseCatalogResponse {
   const CourseCatalogResponse({
     required this.skills,
@@ -77,14 +79,20 @@ class CatalogCourseGroup {
 
   factory CatalogCourseGroup.fromJson(Map<String, dynamic> json) {
     final rawCourses = json['courses'];
+    // Support both nested {"pagination": {...}} and flat {"page":1,"pages":3,...}
+    final paginationMap = json['pagination'] is Map
+        ? Map<String, dynamic>.from(json['pagination'] as Map)
+        : <String, dynamic>{
+            'total': json['total'],
+            'page': json['page'],
+            'pages': json['pages'] ?? json['total_pages'] ?? json['last_page'],
+            'per_page': json['per_page'],
+          };
+    debugPrint('[CatalogGroup] id=${json['group_id']} pagination=$paginationMap');
     return CatalogCourseGroup(
       id: json['group_id']?.toString() ?? json['id']?.toString() ?? '',
       name: json['group_name']?.toString() ?? json['name']?.toString() ?? '',
-      pagination: CatalogPagination.fromJson(
-        json['pagination'] is Map
-            ? Map<String, dynamic>.from(json['pagination'])
-            : const {},
-      ),
+      pagination: CatalogPagination.fromJson(paginationMap),
       courses:
           (rawCourses as List? ?? const [])
               .whereType<Map>()
