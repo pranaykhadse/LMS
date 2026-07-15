@@ -155,23 +155,6 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               ..._buildOfflineContent(offlineState.courses)
             else
               ..._buildContent(catalogState),
-            if (!effectivelyOffline &&
-                response != null &&
-                response.groups.isEmpty &&
-                response.pages > 1)
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-                sliver: SliverToBoxAdapter(
-                  child: _CatalogPagination(
-                    page: response.page,
-                    pages: response.pages,
-                    onPage:
-                        (page) => ref
-                            .read(CourseCatalogViewModel.provider.notifier)
-                            .fetch(page: page),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
