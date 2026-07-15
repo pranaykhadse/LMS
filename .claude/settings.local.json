@@ -2,37 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(git *)",
+      "PowerShell(git *)",
       "PowerShell(cd *; git *)",
-      "Bash(xargs cat:*)",
-      "Bash(xargs grep:*)",
-      "Bash(git add:*)",
-      "Bash(git commit -m 'Fix UI overflow errors and IAP completePurchase ordering:*)",
-      "Bash(git push:*)",
-      "Bash(git commit -m 'Fix course card height to remove bottom overflow errors:*)",
-      "Bash(git commit -m 'Further reduce childAspectRatio to fix remaining bottom overflow:*)",
-      "Bash(git commit -m 'Fix course card layout: use Container with mainAxisSize.min to eliminate overflow:*)",
-      "Bash(curl -s \"https://staging.trainingpipeline.com/api/web/courses\")",
-      "Bash(python3 -m json.tool)",
-      "Bash(git commit -m 'Add debug log to print course ID for IAP testing:*)",
-      "Bash(git commit -m 'Fix Buy button text visibility on Purchase screen:*)",
-      "Bash(git commit -m ' *)",
-      "Bash(git checkout *)",
-      "Bash(git revert *)",
-      "Read(//Users/dev/Desktop/lms/**)",
-      "Bash(flutter config *)",
-      "Bash(find /Users -name \"pubspec.yaml\" -path \"*/LMS/*\" 2>/dev/null | head -5)",
-      "Bash(findstr /i macos)",
-      "PowerShell(cd \"C:\\\\Users\\\\hp\\\\OneDrive\\\\Desktop\\\\whatsapp-task-handler\\\\WHATSAPP\"; $env_content = Get-Content .env.local | Where-Object { $_ -match '^GROQ_API_KEY' }; $env_content | Select-Object -First 5)",
-      "PowerShell(cd \"C:\\\\Users\\\\hp\\\\OneDrive\\\\Desktop\\\\whatsapp-task-handler\\\\WHATSAPP\"; Get-Content .env.vercel | Where-Object { $_ -match '^GROQ' } | Select-Object -First 5)",
-      "mcp__visualize__read_me",
-      "mcp__visualize__show_widget",
-      "PowerShell($word = New-Object -ComObject Word.Application; $word.Visible = $false; $doc = $word.Documents.Open\\(\"C:\\\\Users\\\\hp\\\\Downloads\\\\Offline LMS Application Requirements & Enhancements.docx\"\\); $text = $doc.Content.Text; $doc.Close\\(\\); $word.Quit\\(\\); $text)",
-      "PowerShell(cd \"C:\\\\Users\\\\hp\\\\OneDrive\\\\Desktop\\\\whatsapp-task-handler\\\\WHATSAPP\"; npx vercel logs whatsapp-hrbot-3jcvbnxkn-matharurahul1-boops-projects.vercel.app 2>&1 | ForEach-Object { $_ } | Where-Object { $_ -match \"Agent|Claude|error|Error\" } | Select-Object -First 20)",
-      "PowerShell(cd \"C:\\\\Users\\\\hp\\\\OneDrive\\\\Desktop\\\\whatsapp-task-handler\\\\WHATSAPP\"; git add src/components/layout/SidebarProvider.tsx src/components/layout/SidebarShell.tsx src/components/layout/Sidebar.tsx src/app/\\(dashboard\\)/layout.tsx; git rm --cached src/components/layout/SidebarToggle.tsx 2>$null; git status)",
       "PowerShell(git add .claude/settings.local.json)",
-      "PowerShell(git commit -m \"Allow all git commands without permission prompts\")",
-      "PowerShell(git push origin lms)",
-      "PowerShell(git commit --amend --no-edit)"
-    ]
+      "PowerShell(git commit -m \"Set dontAsk mode - no permission prompts ever\")",
+      "PowerShell(git push origin lms)"
+    ],
+    "defaultMode": "dontAsk"
   }
 }
