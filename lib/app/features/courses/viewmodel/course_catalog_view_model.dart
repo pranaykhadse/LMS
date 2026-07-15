@@ -74,36 +74,33 @@ class CourseCatalogViewModel extends StateNotifier<CourseCatalogState> {
   final CourseCatalogRepository repository;
   final int? userId;
 
-  Future<void> fetch({int page = 1, String? groupId}) async {
+  Future<void> fetch({Map<String, int>? groupPages}) async {
     if (userId == null) {
       state = state.copyWith(
         result: DataState.onError('The logged-in user ID is unavailable.'),
       );
       return;
     }
-    final groupPages = Map<String, int>.from(state.groupPages);
-    if (groupId != null && groupId.isNotEmpty) {
-      groupPages[groupId] = page;
-    }
+    final pages = groupPages ?? state.groupPages;
     state = state.copyWith(
       result: DataState.loading<CourseCatalogResponse>(),
-      page: page,
-      groupPages: groupPages,
+      groupPages: pages,
     );
     try {
       final result =
           state.isSearchMode
               ? await repository.search(
                 userId: userId!,
-                page: page,
+                page: state.page,
                 name: state.search,
                 skillId: state.skillId,
                 behaviorId: state.behaviorId,
               )
               : await repository.fetch(
                 userId: userId!,
-                page: page,
-                groupId: groupId,
+                groupPages: pages,
+                search: state.search,
+                skillId: state.skillId,
               );
       state = state.copyWith(
         result: DataState.onData(result),
@@ -113,6 +110,11 @@ class CourseCatalogViewModel extends StateNotifier<CourseCatalogState> {
     } catch (error) {
       state = state.copyWith(result: DataState.onError(error.toString()));
     }
+  }
+
+  Future<void> changeGroupPage(String groupId, int page) async {
+    final updated = Map<String, int>.from(state.groupPages)..[groupId] = page;
+    await fetch(groupPages: updated);
   }
 
   Future<void> applyFilters({

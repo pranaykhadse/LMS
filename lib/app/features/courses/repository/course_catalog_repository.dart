@@ -17,8 +17,7 @@ class CourseCatalogRepository with RepoNetworkHelper {
 
   Future<CourseCatalogResponse> fetch({
     required int userId,
-    int page = 1,
-    String? groupId,
+    Map<String, int> groupPages = const {},
     String? search,
     String? skillId,
   }) async {
@@ -26,11 +25,10 @@ class CourseCatalogRepository with RepoNetworkHelper {
       'lms-screen/course-catalog',
       queryParameters: {
         'user_id': userId,
-        'per_page': 12,
-        'page': page,
-        if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
         if (skillId != null && skillId.isNotEmpty) 'skill_id': skillId,
+        for (final entry in groupPages.entries)
+          'group_page[${entry.key}]': entry.value,
       },
       cacheType: RequestCacheType.none,
     );

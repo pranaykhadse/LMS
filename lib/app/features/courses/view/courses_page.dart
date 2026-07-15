@@ -100,7 +100,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     ? Future.value()
                     : ref
                         .read(CourseCatalogViewModel.provider.notifier)
-                        .fetch(page: catalogState.page),
+                        .fetch(),
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -321,7 +321,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
           onPage:
               (page) => ref
                   .read(CourseCatalogViewModel.provider.notifier)
-                  .fetch(page: page, groupId: group.id),
+                  .changeGroupPage(group.id, page),
         ),
       ),
     );
