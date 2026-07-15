@@ -55,51 +55,17 @@ class OfflineViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final classes = await repository.download(course);
-
-      // ── Count total files (videos + PDFs + agreements + recordings + course PDFs)
-      int total = 0;
-      for (final c in classes) {
-        if (_validUrl(c.classInfo?.videoUploadUrl)) total++;
-        if (_validUrl(c.classInfo?.articleFile)) total++;
-        if (_validUrl(c.scannedPdf)) total++;
-        total += c.recordingUrls.length;
-      }
-      final pgUrl = course.participantGuideFile?.toString();
-      final wmUrl = course.wrapMethodologyFile?.toString();
-      if (_validUrl(pgUrl)) total++;
-      if (_validUrl(wmUrl)) total++;
-
       _progress[course.id ?? -1] = _CourseDownloadProgress(
         completed: 0,
-        total: total,
+        total: 1,
       );
       notifyListeners();
 
-      // ── Queue all downloads, incrementing completed counter per file ───────
-      final fileVM = ref.read(FileCacheViewModel.provider);
-      final futures = <Future>[];
-
-      void addDownload(String url) {
-        futures.add(
-          fileVM.downloadFile(url).then((_) {
-            _progress[course.id ?? -1]?.completed++;
-            notifyListeners();
-          }),
-        );
-      }
-
-      for (final c in classes) {
-        if (_validUrl(c.classInfo?.videoUploadUrl)) addDownload(c.classInfo!.videoUploadUrl!);
-        if (_validUrl(c.classInfo?.articleFile)) addDownload(c.classInfo!.articleFile!);
-        if (_validUrl(c.scannedPdf)) addDownload(c.scannedPdf!);
-        for (final url in c.recordingUrls) addDownload(url);
-      }
-      // Participant guide + Wrap Methodology (course-level PDFs)
-      if (_validUrl(pgUrl)) addDownload(pgUrl!);
-      if (_validUrl(wmUrl)) addDownload(wmUrl!);
-
-      await Future.wait(futures);
+      // Saving a course offline stores the course and lesson metadata only.
+      // Videos, PDFs, articles, agreements, and recordings are downloaded
+      // individually from each lesson row via DownloadButton.
+      await repository.download(course);
+      _progress[course.id ?? -1]?.completed = 1;
     } finally {
       _downloading.remove(course);
       // Use the same null-safe key that was used when the entry was created.
@@ -120,17 +86,29 @@ class OfflineViewModel extends ChangeNotifier {
       course.id?.toString() ?? "",
     );
     for (final c in classes) {
-      if (_validUrl(c.classInfo?.videoUploadUrl)) fileVM.delete(c.classInfo!.videoUploadUrl!);
-      if (_validUrl(c.classInfo?.articleFile)) fileVM.delete(c.classInfo!.articleFile!);
-      if (_validUrl(c.scannedPdf)) fileVM.delete(c.scannedPdf!);
-      for (final url in c.recordingUrls) fileVM.delete(url);
+      if (_validUrl(c.classInfo?.videoUploadUrl)) {
+        fileVM.delete(c.classInfo!.videoUploadUrl!);
+      }
+      if (_validUrl(c.classInfo?.articleFile)) {
+        fileVM.delete(c.classInfo!.articleFile!);
+      }
+      if (_validUrl(c.scannedPdf)) {
+        fileVM.delete(c.scannedPdf!);
+      }
+      for (final url in c.recordingUrls) {
+        fileVM.delete(url);
+      }
     }
 
     // Delete course-level PDFs.
     final pgUrl = course.participantGuideFile?.toString();
     final wmUrl = course.wrapMethodologyFile?.toString();
-    if (_validUrl(pgUrl)) fileVM.delete(pgUrl!);
-    if (_validUrl(wmUrl)) fileVM.delete(wmUrl!);
+    if (_validUrl(pgUrl)) {
+      fileVM.delete(pgUrl!);
+    }
+    if (_validUrl(wmUrl)) {
+      fileVM.delete(wmUrl!);
+    }
 
     await repository.removeCourse(course);
     await _fetch();
@@ -143,16 +121,16 @@ class OfflineViewModel extends ChangeNotifier {
     try {
       courses = DataState.onData(await repository.getCachedCourses());
       final tsMap = await repository.getOfflineTimestamps();
-      offlineTimestamps =
-          tsMap.map((k, v) => MapEntry(int.tryParse(k) ?? 0, v));
+      offlineTimestamps = tsMap.map(
+        (k, v) => MapEntry(int.tryParse(k) ?? 0, v),
+      );
     } catch (e) {
       courses = DataState.onError(e.toString());
     }
     notifyListeners();
   }
 
-  static bool _validUrl(String? url) =>
-      url != null && url.trim().isNotEmpty;
+  static bool _validUrl(String? url) => url != null && url.trim().isNotEmpty;
 
   // ── Public helpers ────────────────────────────────────────────────────────
 

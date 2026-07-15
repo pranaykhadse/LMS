@@ -1,126 +1,404 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lms/app/core/core.dart';
-import 'package:lms/app/core/model/page_info.dart';
-import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
-import 'package:lms/app/core/views/elements/offline_banner.dart';
-import 'package:lms/app/features/courses/model/course.dart';
-import 'package:lms/app/features/courses/model/class_info.dart';
-import 'package:lms/app/features/courses/model/course_class.dart';
-import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
-import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
-import 'package:lms/app/features/courses/view/widgets/class_status_chip.dart';
-import 'package:lms/app/features/courses/view/widgets/download_button.dart';
-import 'package:lms/app/features/courses/view/widgets/link_button.dart';
-import 'package:lms/app/core/provider/server_provider.dart';
+import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
-import 'package:lms/app/features/courses/viewmodel/course_class_view_model.dart';
-import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
-import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
+import 'package:lms/app/features/courses/model/course_join_detail.dart';
+import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
+import 'package:lms/app_module.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-// Returns [s] only when it looks like a real http(s) URL (strips HTML first).
-// Rejects empty strings, "0", and fields that contain HTML markup instead of a URL.
-String? _validUrl(String? s) {
-  if (s == null || s.isEmpty || s == '0') return null;
-  final plain = s.stripHtml.trim();
-  return (plain.startsWith('http://') || plain.startsWith('https://')) ? plain : null;
-}
+const _detailPurple = Color(0xFF5756C9);
+const _detailPurple2 = Color(0xFF775FE8);
+const _detailInk = Color(0xFF172033);
+const _detailMuted = Color(0xFF6D7587);
+const _detailBackground = Color(0xFFF5F7FC);
 
-// Maps numeric type code to human-readable label shown as subtitle and dialog badge.
-String _typeDisplayName(String? typeCode, String? customTypeName) {
-  if (customTypeName != null && customTypeName.trim().isNotEmpty) {
-    return customTypeName.trim();
-  }
-  switch (typeCode) {
-    case '1':  return 'eLearning Module';
-    case '2':  return 'In Person';
-    case '3':  return 'Virtual Class';
-    case '4':  return 'Watch Video';
-    case '5':  return 'Read Article';
-    case '6':  return 'Read Webpage';
-    case '7':  return 'Discussion Board';
-    case '8':  return 'Perform Task With Observation';
-    case '9':  return 'Perform Task Without Observation';
-    case '10': return 'Receive Coaching';
-    case '11': return 'Insight Report';
-    case '12': return 'Certificate';
-    case '13': return 'LinkedIn Certification';
-    case '14': return 'Discussion Guru';
-    case '15': return 'Peer Coaching';
-    case '17': return 'OnePage Pro';
-    case '18': return 'Custom Prompt';
-    case '19': return 'Agreement';
-    case '20': return 'Test Out Assessment';
-    case '22': return 'Text Message';
-    case '23': return 'Web Application';
-    default:   return '';
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Page
-// ─────────────────────────────────────────────────────────────────────────────
-class CourseClassesPage extends ConsumerWidget {
+class CourseClassesPage extends ConsumerStatefulWidget {
   const CourseClassesPage({super.key, this.courseId});
   final String? courseId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final course = Modular.args.data is Course ? Modular.args.data as Course : null;
-    final pgUrl   = course?.participantGuideFile?.toString();
-    final wmUrl   = course?.wrapMethodologyFile?.toString();
-    final wmLink  = course?.wrapMethodologyLink?.toString();
-    final hasPg      = pgUrl  != null && pgUrl.trim().isNotEmpty;
-    final hasWmFile  = wmUrl  != null && wmUrl.trim().isNotEmpty;
-    final hasWmLink  = wmLink != null && wmLink.trim().isNotEmpty;
-    final hasDocs    = hasPg || hasWmFile || hasWmLink;
+  ConsumerState<CourseClassesPage> createState() => _CourseClassesPageState();
+}
+
+class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
+  bool _redirectingUnauthorized = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final courseId = int.tryParse(widget.courseId ?? '') ?? 0;
+    final state = ref.watch(CourseJoinDetailViewModel.provider(courseId));
+
+    if (!_redirectingUnauthorized && _isUnauthorizedError(state.error)) {
+      _redirectingUnauthorized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await ref.read(AuthStateNotifier.provider.notifier).logout();
+        if (!mounted) return;
+        Modular.to.navigate(AppModule.auth);
+      });
+    }
 
     return Scaffold(
-      appBar: FlatAppBar(title: course?.name?.isNotEmpty == true ? course!.name! : "Course Details"),
-      body: Column(
-        children: [
-          const OfflineBanner(),
-          // ── Req #5: Course detail header ──────────────────────────────
-          if (course != null) _CourseDetailHeader(course: course),
-          if (hasDocs)
-            Container(
-              width: double.infinity,
-              color: context.appColorScheme.primary.withOpacity(0.07),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: defaultTargetPlatform == TargetPlatform.macOS
-                  ? Wrap(
-                      spacing: 16,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: _docChildren(context, pgUrl, wmUrl, wmLink,
-                          hasPg, hasWmFile, hasWmLink, inline: true),
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: _detailBackground,
+      drawer: const _DetailDrawer(),
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(58),
+        child: _DetailAppBar(),
+      ),
+      body: _DetailBody(courseId: courseId, state: state),
+    );
+  }
+}
+
+class _DetailBody extends ConsumerWidget {
+  const _DetailBody({required this.courseId, required this.state});
+
+  final int courseId;
+  final DataState<CourseJoinDetail> state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    switch (state.state) {
+      case DataProviderState.loading:
+      case DataProviderState.idle:
+        return const Center(
+          child: CircularProgressIndicator(color: _detailPurple),
+        );
+      case DataProviderState.error:
+        if (_isUnauthorizedError(state.error)) {
+          return const Center(
+            child: CircularProgressIndicator(color: _detailPurple),
+          );
+        }
+        return _DetailError(
+          message: state.error ?? 'Unable to load course details.',
+          onRetry:
+              () =>
+                  ref
+                      .read(
+                        CourseJoinDetailViewModel.provider(courseId).notifier,
+                      )
+                      .fetch(),
+        );
+      case DataProviderState.data:
+        final detail = state.data;
+        if (detail == null) {
+          return const _DetailError(message: 'No course detail found.');
+        }
+        return RefreshIndicator(
+          color: _detailPurple,
+          onRefresh:
+              () =>
+                  ref
+                      .read(
+                        CourseJoinDetailViewModel.provider(courseId).notifier,
+                      )
+                      .fetch(),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final maxWidth =
+                  constraints.maxWidth >= 760 ? 720.0 : double.infinity;
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          "Course Documents",
-                          style: context.textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: context.appColorScheme.primary,
+                        _CourseHero(detail: detail),
+                        Transform.translate(
+                          offset: const Offset(0, -18),
+                          child: _LaunchPanel(detail: detail),
+                        ),
+                        if (detail.participantGuide != null)
+                          _InfoCard(
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: OutlinedButton(
+                                onPressed:
+                                    () => _openUrl(detail.participantGuide!),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: _detailPurple,
+                                  side: const BorderSide(
+                                    color: Color(0xFFD9D5FF),
+                                  ),
+                                  backgroundColor: const Color(0xFFFAF9FF),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 13,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Download Participant Guide',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 8,
-                          children: _docChildren(context, pgUrl, wmUrl, wmLink,
-                              hasPg, hasWmFile, hasWmLink, inline: false),
-                        ),
+                        _DescriptionCard(detail: detail),
+                        _CourseImageCard(url: detail.logo),
+                        _SkillsCard(skills: detail.skills),
+                        _StructureCard(items: detail.structures),
+                        const _DetailFooter(),
                       ],
                     ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+    }
+  }
+}
+
+class _DetailAppBar extends ConsumerWidget {
+  const _DetailAppBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final avatarBase = profile?.avatarBaseUrl?.toString() ?? '';
+    final avatarPath = profile?.avatarPath?.toString() ?? '';
+    final photo =
+        avatarPath.startsWith('http') ? avatarPath : '$avatarBase$avatarPath';
+    return AppBar(
+      automaticallyImplyLeading: false,
+      toolbarHeight: 58,
+      backgroundColor: _detailPurple,
+      foregroundColor: Colors.white,
+      elevation: 3,
+      titleSpacing: 16,
+      title: Builder(
+        builder:
+            (context) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _TopIconButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  onTap: () => _goBackToCatalog(context),
+                ),
+                const SizedBox(width: 8),
+                _TopIconButton(
+                  icon: Icons.menu_rounded,
+                  onTap: () => Scaffold.of(context).openDrawer(),
+                ),
+              ],
             ),
-          Expanded(
-            child: ConnectionAwareWidget(
-              offlineChild: _OfflineCourseClassesList(courseId: courseId),
-              onlineChild: _OnlineCourseClassesList(courseId: courseId),
+      ),
+      actions: [
+        const Icon(Icons.notifications_rounded, size: 28),
+        const SizedBox(width: 14),
+        CircleAvatar(
+          radius: 21,
+          backgroundColor: Colors.white,
+          child: CircleAvatar(
+            radius: 19,
+            backgroundColor: const Color(0xFF10121B),
+            backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+            child:
+                photo.isEmpty
+                    ? const Icon(Icons.person, color: Colors.white)
+                    : null,
+          ),
+        ),
+        const SizedBox(width: 8),
+        const Icon(Icons.play_arrow_rounded, size: 27),
+        const SizedBox(width: 14),
+      ],
+    );
+  }
+}
+
+void _goBackToCatalog(BuildContext context) {
+  final navigator = Navigator.of(context);
+  if (navigator.canPop()) {
+    navigator.pop();
+    return;
+  }
+  Modular.to.navigate(CoursesModule.construct(CoursesModule.root));
+}
+
+class _CourseHero extends StatelessWidget {
+  const _CourseHero({required this.detail});
+  final CourseJoinDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(6, 10, 6, 0),
+      padding: const EdgeInsets.fromLTRB(14, 34, 14, 54),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(colors: [_detailPurple, _detailPurple2]),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            detail.title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              height: 1.18,
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (detail.isEnrolled)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .15),
+                border: Border.all(color: Colors.white.withValues(alpha: .36)),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Text(
+                'Add Rating',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LaunchPanel extends StatelessWidget {
+  const _LaunchPanel({required this.detail});
+  final CourseJoinDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    return _InfoCard(
+      margin: const EdgeInsets.fromLTRB(22, 0, 22, 28),
+      child: Column(
+        children: [
+          const Text(
+            'LAUNCHES IN',
+            style: TextStyle(
+              color: _detailMuted,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              letterSpacing: .4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children:
+                const ['DAYS', 'HRS', 'MIN', 'SEC']
+                    .map(
+                      (label) => Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 5),
+                          child: _TimeBox(label: label),
+                        ),
+                      ),
+                    )
+                    .toList(),
+          ),
+          const SizedBox(height: 26),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(17, 8, 10, 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6F3FF),
+                border: Border.all(color: const Color(0xFFE5DFFF)),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    detail.launchStatus.toUpperCase(),
+                    style: const TextStyle(
+                      color: _detailPurple,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: CircularProgressIndicator(
+                      value: .48,
+                      strokeWidth: 2.5,
+                      color: _detailPurple,
+                      backgroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (detail.learningPath != null) ...[
+            const SizedBox(height: 26),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F1FF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Text(
+                    'Learning Path: ',
+                    style: TextStyle(
+                      color: _detailInk,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDDF3FF),
+                      borderRadius: BorderRadius.circular(22),
+                    ),
+                    child: Text(
+                      detail.learningPath!,
+                      style: const TextStyle(color: Color(0xFF0877A8)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 28),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.app_registration_rounded, size: 18),
+              label: Text(detail.primaryAction),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(47),
+                backgroundColor: _detailPurple,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
           ),
         ],
@@ -129,170 +407,324 @@ class CourseClassesPage extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Course-document helpers (unchanged)
-// ─────────────────────────────────────────────────────────────────────────────
-class _DocRow extends StatelessWidget {
-  const _DocRow({required this.icon, required this.label, required this.child});
-  final IconData icon;
-  final String label;
+class _DescriptionCard extends StatelessWidget {
+  const _DescriptionCard({required this.detail});
+  final CourseJoinDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    return _InfoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle('Course Description'),
+          if (detail.description.isNotEmpty) ...[
+            const SizedBox(height: 28),
+            Text(
+              detail.description,
+              maxLines: 5,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: _detailMuted,
+                height: 1.55,
+                fontSize: 16,
+              ),
+            ),
+          ],
+          const SizedBox(height: 28),
+          const Divider(color: Color(0xFFECEFF4)),
+          const SizedBox(height: 16),
+          const _SectionTitle('Learning Objectives'),
+          if (detail.objective.isNotEmpty) ...[
+            const SizedBox(height: 28),
+            Text(
+              detail.objective,
+              style: const TextStyle(
+                color: _detailMuted,
+                height: 1.55,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CourseImageCard extends StatelessWidget {
+  const _CourseImageCard({required this.url});
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    return _InfoCard(
+      padding: EdgeInsets.zero,
+      child: SizedBox(
+        height: 160,
+        child:
+            url == null
+                ? const _ImageFallback()
+                : Image.network(
+                  url!,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const _ImageFallback(),
+                ),
+      ),
+    );
+  }
+}
+
+class _SkillsCard extends StatelessWidget {
+  const _SkillsCard({required this.skills});
+  final List<String> skills;
+
+  @override
+  Widget build(BuildContext context) {
+    return _InfoCard(
+      margin: const EdgeInsets.fromLTRB(12, 34, 12, 78),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle('Skills or Behaviors'),
+          if (skills.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children:
+                  skills
+                      .map(
+                        (skill) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF6F3FF),
+                            border: Border.all(color: const Color(0xFFE5DFFF)),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: Text(
+                            skill,
+                            style: const TextStyle(
+                              color: _detailPurple,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StructureCard extends StatelessWidget {
+  const _StructureCard({required this.items});
+  final List<CourseStructureItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return _InfoCard(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 88),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionTitle('Course Structure'),
+          const SizedBox(height: 28),
+          if (items.isEmpty)
+            const Text(
+              'No course structure is available.',
+              style: TextStyle(color: _detailMuted),
+            )
+          else
+            for (final item in items) ...[
+              _StructureItemCard(item: item),
+              if (item != items.last) const SizedBox(height: 20),
+            ],
+          const SizedBox(height: 20),
+          OutlinedButton(
+            onPressed: () {},
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _detailPurple,
+              side: const BorderSide(color: _detailPurple),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            child: const Text('20 Per Page'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StructureItemCard extends StatelessWidget {
+  const _StructureItemCard({required this.item});
+  final CourseStructureItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(17, 16, 17, 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFEAEDEF)),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            item.title,
+            style: const TextStyle(
+              color: _detailInk,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          if (item.subtitle.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              item.subtitle,
+              style: const TextStyle(color: Color(0xFF9AA4B5), fontSize: 13),
+            ),
+          ],
+          const SizedBox(height: 14),
+          const Divider(color: Color(0xFFECEFF4)),
+          const SizedBox(height: 13),
+          Text(
+            'Next Session:${item.nextSession.isEmpty ? '' : ' ${item.nextSession}'}',
+            style: const TextStyle(
+              color: _detailMuted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Status:${item.status.isEmpty ? '' : ' ${item.status}'}',
+            style: const TextStyle(
+              color: _detailMuted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 13),
+          const Divider(color: Color(0xFFECEFF4)),
+          const SizedBox(height: 18),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.info_rounded, size: 16),
+              label: const Text('Details'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _detailInk,
+                side: const BorderSide(color: Color(0xFFDDE2EA)),
+                minimumSize: const Size.fromHeight(39),
+                textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 15),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {},
+              icon: Icon(_actionIcon(item.icon), size: 17),
+              label: Text(item.actionLabel),
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: _detailPurple,
+                minimumSize: const Size.fromHeight(39),
+                elevation: 0,
+                textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({
+    required this.child,
+    this.margin = const EdgeInsets.fromLTRB(12, 0, 12, 24),
+    this.padding = const EdgeInsets.all(22),
+  });
+
   final Widget child;
+  final EdgeInsetsGeometry margin;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: margin,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x08000000),
+            blurRadius: 20,
+            offset: Offset(0, 10),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(icon, size: 16, color: context.appColorScheme.primary),
-        const SizedBox(width: 6),
-        Text(label, style: context.textTheme.bodySmall),
-        const SizedBox(width: 8),
-        child,
-      ],
-    );
-  }
-}
-
-List<Widget> _docChildren(
-  BuildContext context,
-  String? pgUrl,
-  String? wmUrl,
-  String? wmLink,
-  bool hasPg,
-  bool hasWmFile,
-  bool hasWmLink, {
-  required bool inline,
-}) {
-  return [
-    if (inline)
-      Text(
-        "Course Documents",
-        style: context.textTheme.labelMedium?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: context.appColorScheme.primary,
-        ),
-      ),
-    if (hasPg)
-      _DocRow(
-        icon: Icons.menu_book_rounded,
-        label: "Participant Guide",
-        child: DownloadButton(
-          icon: Icons.picture_as_pdf,
-          label: "Participant Guide",
-          url: pgUrl,
-          courseClass: null,
-          builder: (ctx, file) => PdfContentViewer(file: file),
-        ),
-      ),
-    if (hasWmFile)
-      _DocRow(
-        icon: Icons.wrap_text_rounded,
-        label: "Wrap Methodology",
-        child: DownloadButton(
-          icon: Icons.picture_as_pdf,
-          label: "Wrap Methodology",
-          url: wmUrl,
-          courseClass: null,
-          builder: (ctx, file) => PdfContentViewer(file: file),
-        ),
-      ),
-    if (!hasWmFile && hasWmLink)
-      _DocRow(
-        icon: Icons.wrap_text_rounded,
-        label: "Wrap Methodology",
-        child: LinkButton(
-          icon: Icons.open_in_new_rounded,
-          label: "Wrap Methodology",
-          url: wmLink,
-          courseClass: null,
-        ),
-      ),
-  ];
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Online lesson list
-// ─────────────────────────────────────────────────────────────────────────────
-class _OnlineCourseClassesList extends ConsumerWidget {
-  const _OnlineCourseClassesList({this.courseId});
-  final String? courseId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state     = ref.watch(CourseClassViewModel.provider(courseId));
-    final viewmodel = ref.watch(CourseClassViewModel.provider(courseId).notifier);
-
-    return Column(
-      children: [
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.all(context.smallSpace),
-            child: PrimaryCard(
-              child: DataStateBuilder(
-                dataState: state.data,
-                builder: (context, data) {
-                  if (data == null || data.isEmpty) {
-                    return const Center(child: Text("No lessons available."));
-                  }
-                  return _LessonTableView(lessons: data);
-                },
-              ),
-            ),
+        Container(
+          width: 4,
+          height: 20,
+          decoration: BoxDecoration(
+            color: _detailPurple,
+            borderRadius: BorderRadius.circular(4),
           ),
         ),
-        PaginationWidget(
-          pageInfo: state.pageInfo ?? PageInfo(),
-          onPageChange: (value) => viewmodel.fetch(value),
-        ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Offline lesson list
-// ─────────────────────────────────────────────────────────────────────────────
-class _OfflineCourseClassesList extends ConsumerWidget {
-  const _OfflineCourseClassesList({this.courseId});
-  final String? courseId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final offlineVM = ref.watch(OfflineViewModel.provider);
-
-    return Column(
-      children: [
+        const SizedBox(width: 10),
         Expanded(
-          child: Padding(
-            padding: EdgeInsets.all(context.smallSpace),
-            child: PrimaryCard(
-              child: FutureBuilder<List<CourseClass>>(
-                future: courseId != null
-                    ? offlineVM.getCachedClasses(courseId!)
-                    : Future.value([]),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final data = snapshot.data ?? [];
-                  if (data.isEmpty) {
-                    return const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.cloud_off, size: 48, color: Colors.grey),
-                          SizedBox(height: 12),
-                          Text(
-                            "No offline content found.\nConnect to the internet or download this course first.",
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return _LessonTableView(lessons: data);
-                },
-              ),
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: _detailInk,
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+              height: 1.1,
             ),
           ),
         ),
@@ -301,1136 +733,301 @@ class _OfflineCourseClassesList extends ConsumerWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Lesson table view — "Course Structure" header + column headers + rows
-// ─────────────────────────────────────────────────────────────────────────────
-class _LessonTableView extends StatelessWidget {
-  const _LessonTableView({required this.lessons});
-  final List<CourseClass> lessons;
-
-  // Fixed column widths used only in the wide (tablet/desktop) layout.
-  // COURSE DETAILS fills remaining space via Expanded.
-  static const double _colNum     = 40.0;
-  static const double _colSession = 90.0;
-  static const double _colStatus  = 130.0;
-  static const double _colAction  = 280.0;
-
-  // Switch to card layout when available width < 600 px (phone).
-  static const double _compactBreakpoint = 600.0;
+class _TimeBox extends StatelessWidget {
+  const _TimeBox({required this.label});
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    const headerStyle = TextStyle(
-      fontSize: 11,
-      fontWeight: FontWeight.w700,
-      color: Color(0xFF9E9E9E),
-      letterSpacing: 0.6,
+    return Container(
+      height: 28,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF9FF),
+        border: Border.all(color: const Color(0xFFE5DFFF)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: _detailMuted,
+          fontSize: 8,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
     );
+  }
+}
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < _compactBreakpoint;
+class _ImageFallback extends StatelessWidget {
+  const _ImageFallback();
 
-        return Column(
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFFF0ECFF),
+      alignment: Alignment.center,
+      child: const Icon(Icons.school_outlined, color: _detailPurple, size: 78),
+    );
+  }
+}
+
+class _TopIconButton extends StatelessWidget {
+  const _TopIconButton({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: .12),
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 38,
+          height: 38,
+          child: Icon(icon, color: Colors.white, size: 27),
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailDrawer extends ConsumerWidget {
+  const _DetailDrawer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final group = ref.watch(AuthStateNotifier.provider)?.group;
+    final title = group?.isNotEmpty == true ? group!.first.name : 'Main Menu';
+    return Drawer(
+      width: MediaQuery.sizeOf(context).width.clamp(300, 315).toDouble(),
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── "Course Structure" title ────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              padding: const EdgeInsets.fromLTRB(26, 13, 14, 54),
               child: Row(
                 children: [
-                  Container(
-                    width: 4,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      color: context.appColorScheme.primary,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'Course Structure',
-                    style: context.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Column headers (wide layout only) ──────────────────────
-            if (!isCompact)
-              Container(
-                decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Row(
-                    children: [
-                      SizedBox(width: _colNum,     child: const Text('#',            style: headerStyle)),
-                      const Expanded(              child: Text('COURSE DETAILS',     style: headerStyle)),
-                      SizedBox(width: _colSession, child: const Text('NEXT SESSION', style: headerStyle)),
-                      const SizedBox(width: 24),
-                      SizedBox(width: _colStatus,  child: const Text('STATUS',       style: headerStyle)),
-                      const SizedBox(width: 24),
-                      SizedBox(width: _colAction,  child: const Text('ACTION',       style: headerStyle)),
-                    ],
-                  ),
-                ),
-              ),
-
-            // ── Rows ────────────────────────────────────────────────────
-            Expanded(
-              child: ListView.builder(
-                itemCount: lessons.length,
-                itemBuilder: (context, index) => _CourseClassTile(
-                  index:       index,
-                  courseClass: lessons[index],
-                  isCompact:   isCompact,
-                  colNum:      _colNum,
-                  colSession:  _colSession,
-                  colStatus:   _colStatus,
-                  colAction:   _colAction,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Single lesson row
-// ─────────────────────────────────────────────────────────────────────────────
-class _CourseClassTile extends ConsumerWidget {
-  const _CourseClassTile({
-    required this.index,
-    required this.courseClass,
-    required this.isCompact,
-    required this.colNum,
-    required this.colSession,
-    required this.colStatus,
-    required this.colAction,
-  });
-
-  final int index;
-  final CourseClass courseClass;
-  final bool isCompact;
-  final double colNum;
-  final double colSession;
-  final double colStatus;
-  final double colAction;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final info = courseClass.classInfo;
-    // Watch the STATE (not just .notifier) so the tile rebuilds when
-    // fetch-user-roaster completes and learningEventClass data arrives.
-    ref.watch(RoasterViewModel.provider(courseClass.courseId));
-    final roasterVM = ref.watch(RoasterViewModel.provider(courseClass.courseId).notifier);
-    final roaster   = roasterVM.getForClass(courseClass);
-    final lec = roaster?.learningEventClass;
-    // Merge rawLec (general event fields: IDs, order) with learningEventClass
-    // (session-specific fields: dates, training links, instructor, location).
-    // learningEventClass entries win on key conflicts so session data is always
-    // current; rawLec provides the structural base.
-    final effectiveLec = <dynamic, dynamic>{
-      if (courseClass.rawLec != null) ...courseClass.rawLec!,
-      if (lec is Map) ...Map<dynamic, dynamic>.from(lec as Map),
-    };
-
-
-    // Derive backend web base URL from the API URL.
-    // API:  https://domain/api/web/  →  Web: https://domain/backend/web/
-    final serverUrl  = ref.watch(ServerProvider.serverUrl);
-    final webBaseUrl = serverUrl.replaceFirst('/api/web/', '/backend/web/');
-
-    final name = (info?.name ?? '').stripHtml;
-    final t    = (info?.type?.isNotEmpty == true ? info!.type! : (info?.customTypeName ?? '')).trim();
-
-    // "0" is a falsy sentinel value from the API (not a real URL).  Filter it out.
-    final _rawAlt = info?.alternativeLearningEvent;
-    final alt = (_rawAlt != null && _rawAlt.isNotEmpty && _rawAlt != '0')
-        ? _rawAlt
-        : null;
-
-    final typeName = _typeDisplayName(t.isEmpty ? null : t, info?.customTypeName);
-
-    // Next session: prefer LEC dates, then classInfo dates.
-    // Req #8: only show FUTURE sessions — suppress past dates.
-    String nextSession = '';
-    bool _isFuture(String? dateStr) {
-      if (dateStr == null || dateStr.isEmpty) return false;
-      try {
-        return DateTime.parse(dateStr).isAfter(DateTime.now());
-      } catch (_) {
-        return false;
-      }
-    }
-
-    if (effectiveLec is Map) {
-      final s = effectiveLec['start_date']?.toString() ?? '';
-      final e = effectiveLec['end_date']?.toString() ?? '';
-      if (_isFuture(s) || _isFuture(e)) {
-        nextSession = e.isNotEmpty ? '$s – $e' : s;
-      }
-    } else if (info?.startDate != null && info!.startDate.toString().isNotEmpty) {
-      final s = info.startDate.toString();
-      final e = info.endDate?.toString() ?? '';
-      if (_isFuture(s) || _isFuture(e)) {
-        nextSession = e.isNotEmpty ? '$s – $e' : s;
-      }
-    }
-
-    // Types that show a Details button (matches website behaviour).
-    const detailsTypes = {
-      '1','2','3','4','5','6','7','8','9','10','11','13','15','18','19','20',
-    };
-
-    final actions = <Widget>[
-      if (detailsTypes.contains(t))
-        _DetailsButton(
-          info:       info,
-          lec:        effectiveLec,
-          lessonName: name,
-          typeName:   typeName,
-          typeCode:   t,
-        ),
-      DownloadButton(
-        icon: Icons.videocam,
-        label: "Video",
-        url: info?.videoUploadUrl,
-        courseClass: courseClass,
-        builder: (context, file) => VideoContentViewer(file: file),
-      ),
-      DownloadButton(
-        icon: Icons.picture_as_pdf,
-        label: "PDF",
-        url: info?.articleFile,
-        courseClass: courseClass,
-        builder: (context, file) => PdfContentViewer(file: file),
-      ),
-      DownloadButton(
-        icon: Icons.assignment_outlined,
-        label: "Agreement",
-        url: courseClass.scannedPdf,
-        courseClass: courseClass,
-        builder: (context, file) => PdfContentViewer(file: file),
-      ),
-    ];
-
-    // Req #10: append auto-login token so the user is authenticated seamlessly
-    // when the learning event opens in the browser — no second login required.
-    final authState   = ref.watch(AuthStateNotifier.provider);
-    final autoToken   = authState?.user?.autoLoginToken ?? '';
-    final userEmail   = authState?.user?.email ?? '';
-    final _authSuffix = (autoToken.isNotEmpty && userEmail.isNotEmpty)
-        ? '&auto_login_token=${Uri.encodeComponent(autoToken)}&email=${Uri.encodeComponent(userEmail)}'
-        : '';
-
-    // Shorthand: begin-class URL for this lesson (universal fallback, same as website).
-    final bc = '${webBaseUrl}lmsclass/begin-class?classId=${courseClass.classId}$_authSuffix';
-
-    // Numeric type codes from API:
-    //  1=eLearning  2=In Person  3=Virtual Class  4=Watch Video
-    //  5=Read Article  6=Read Webpage  7=Discussion Board
-    //  8=Task w/ Obs  9=Task w/o Obs  10=Coaching  11=Insight
-    //  12=Certificate  13=LinkedIn Cert  14=Discussion Guru
-    //  15=Peer Coaching  17=OnePage Pro  18=Simulation/Custom Prompt
-    //  19=Agreement  20=Test Out  22=Text Message  23=Web Application
-    //
-    // URL priority per type:
-    //   type-specific field  →  alt (already cleaned of "0")  →  begin-class (bc)
-    switch (t) {
-      case '3': // Virtual Class
-        // Recording comes from learningEventClass.localRecordings[0].recording_local_url
-        // (fetch-user-roaster response). Show Download Recording for the first entry.
-        final _localRecs = roaster?.learningEventClass is Map
-            ? roaster!.learningEventClass['localRecordings']
-            : null;
-        final _firstRec = (_localRecs is List && _localRecs.isNotEmpty)
-            ? _localRecs[0]
-            : null;
-        final _recLink = _firstRec is Map
-            ? _firstRec['recording_local_url']?.toString().trim()
-            : null;
-        if (_recLink != null && _recLink.isNotEmpty && _recLink != '0') {
-          actions.add(DownloadButton(
-            icon: Icons.download_rounded,
-            label: 'Recording',
-            url: _recLink,
-            courseClass: courseClass,
-            builder: (context, file) => VideoContentViewer(file: file),
-          ));
-        }
-
-      case '1': // eLearning Module
-        final _elearningUrl = info?.isLaunch == '1'
-            ? bc   // begin-class handles SCORM tracking (matches website)
-            : (_validUrl(info?.s3ClassLink?.toString()) ?? _validUrl(info?.classLink?.toString()) ?? alt ?? bc);
-        actions.add(LinkButton(icon: Icons.rocket_launch_rounded, label: "Launch", url: _elearningUrl, courseClass: courseClass));
-
-      case '2': // In Person — Register
-        actions.add(LinkButton(icon: Icons.person_add_outlined,    label: "Register",               url: alt ?? bc, courseClass: courseClass));
-
-      case '4': // Watch Video — DownloadButton (videoUploadUrl) already handles
-        break;
-
-      case '5': // Read Article
-        // Website opens the read-article page (DownloadButton still provides offline PDF access).
-        actions.add(LinkButton(
-          icon: Icons.article_outlined,
-          label: "Article",
-          url: '${webBaseUrl}course/read-article?classId=${courseClass.classId}',
-          courseClass: courseClass,
-        ));
-
-      case '6': // Read Webpage — URL must be configured; no begin-class fallback
-        actions.add(LinkButton(icon: Icons.language,               label: "Webpage",                url: _validUrl(info?.readWebpageLink) ?? alt, courseClass: courseClass));
-
-      case '7': // Discussion Board
-        actions.add(LinkButton(icon: Icons.forum_outlined,         label: "Discussion Board",       url: _validUrl(info?.discussionForumLink?.toString()) ?? alt ?? bc, courseClass: courseClass));
-
-      case '8': // Perform a Task with Observation
-      case '9': // Perform a Task without Observation
-        // Website uses forum/index/observe?id=X  (note: id=, not classId=)
-        actions.add(LinkButton(
-          icon: Icons.task_alt,
-          label: "Tasks",
-          url: alt ?? '${webBaseUrl}forum/index/observe?id=${courseClass.classId}',
-          courseClass: courseClass,
-        ));
-
-      case '10': // Receive Coaching — learning-event-class/coaches?id=X
-        actions.add(LinkButton(
-          icon: Icons.people_outline_rounded,
-          label: "Coaches",
-          url: alt ?? '${webBaseUrl}learning-event-class/coaches?id=${courseClass.classId}',
-          courseClass: courseClass,
-        ));
-
-      case '11': // Insight Report — insight/index?id=X
-        actions.add(LinkButton(
-          icon: Icons.bar_chart_rounded,
-          label: "Insights",
-          url: alt ?? '${webBaseUrl}insight/index?id=${courseClass.classId}',
-          courseClass: courseClass,
-        ));
-
-      case '12': // Certificate — no action button
-        break;
-
-      case '13': // LinkedIn Certification — URL must be the LinkedIn add-cert link
-        actions.add(LinkButton(icon: Icons.verified_outlined,      label: "Certification",          url: _validUrl(info?.readWebpageLink) ?? alt, courseClass: courseClass));
-
-      case '14': // Discussion Guru
-        actions.add(LinkButton(icon: Icons.school_outlined,        label: "Discussion Guru",        url: _validUrl(info?.discussionGuruLink) ?? alt ?? bc, courseClass: courseClass));
-
-      case '15': // Peer Coaching — no action button (just Details)
-        break;
-
-      case '16': // OnePage Pro (legacy type code)
-      case '17': // One Page Form / OnePage Pro
-        // onePagerPro may be empty; customPrompt not applicable here
-        actions.add(LinkButton(icon: Icons.description_outlined,   label: "OnePage Pro",            url: _validUrl(info?.onePagerPro) ?? alt ?? bc, courseClass: courseClass));
-
-      case '18': // Simulation / Custom Prompt
-        // customPrompt sometimes stores HTML content, not a URL — validate first
-        actions.add(LinkButton(icon: Icons.link_rounded,           label: "Bridgework Link",        url: _validUrl(info?.customPrompt) ?? alt ?? bc, courseClass: courseClass));
-
-      case '19': // Agreement — course/agreement-preview?id=X&course_id=Y
-        actions.add(LinkButton(
-          icon: Icons.assignment_outlined,
-          label: "Agreement",
-          url: alt ?? '${webBaseUrl}course/agreement-preview?id=${courseClass.classId}&course_id=${courseClass.courseId}',
-          courseClass: courseClass,
-        ));
-
-      case '20': // Test Out Assessment — no action button (just Details)
-        break;
-
-      case '21': // Web Application (legacy type code)
-      case '23': // Web Application
-        actions.add(LinkButton(icon: Icons.open_in_browser_rounded, label: "Launch Web Application", url: alt ?? bc, courseClass: courseClass));
-
-      case '22': // Text Message — no action button
-        break;
-
-      default:
-        // Unknown type: open alt URL if real, otherwise fall back to begin-class
-        actions.add(LinkButton(icon: Icons.open_in_browser_rounded, label: "Launch", url: alt ?? bc, courseClass: courseClass));
-    }
-
-    final divider = BoxDecoration(
-      border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
-    );
-
-    // ── Compact card layout (phones) ──────────────────────────────────────
-    if (isCompact) {
-      return Container(
-        decoration: divider,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Row 1: index  ·  name + type  ·  status chip
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${index + 1}.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: context.appColorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1a1a2e),
-                          ),
-                        ),
-                        if (typeName.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            '($typeName)',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF9E9E9E),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ClassStatusChip(courseClass: courseClass),
-                ],
-              ),
-
-              // Row 2: next session date (when present)
-              if (nextSession.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  nextSession,
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF666666)),
-                ),
-              ],
-
-              // Row 3: action buttons
-              if (actions.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: actions,
-                ),
-              ],
-            ],
-          ),
-        ),
-      );
-    }
-
-    // ── Wide table layout (tablet / desktop) ─────────────────────────────
-    return Container(
-      decoration: divider,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // # column
-            SizedBox(
-              width: colNum,
-              child: Text(
-                '${index + 1}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: context.appColorScheme.primary,
-                ),
-              ),
-            ),
-
-            // COURSE DETAILS column
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1a1a2e),
-                      ),
-                    ),
-                    if (typeName.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        '($typeName)',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF9E9E9E),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-
-            // NEXT SESSION column
-            SizedBox(
-              width: colSession,
-              child: nextSession.isNotEmpty
-                  ? Text(
-                      nextSession,
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF666666)),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-
-            const SizedBox(width: 24),
-
-            // STATUS column
-            SizedBox(
-              width: colStatus,
-              child: ClassStatusChip(courseClass: courseClass),
-            ),
-
-            const SizedBox(width: 24),
-
-            // ACTION column
-            SizedBox(
-              width: colAction,
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: actions,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Req #5: Course detail header — description, objectives, enrollment & progress
-// ─────────────────────────────────────────────────────────────────────────────
-class _CourseDetailHeader extends StatefulWidget {
-  const _CourseDetailHeader({required this.course});
-  final Course course;
-
-  @override
-  State<_CourseDetailHeader> createState() => _CourseDetailHeaderState();
-}
-
-class _CourseDetailHeaderState extends State<_CourseDetailHeader> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final course = widget.course;
-    final description = (course.description ?? '').stripHtml.trim();
-    final objective   = (course.objective  ?? '').stripHtml.trim();
-    final pct         = (course.percentage * 100).toInt();
-    final isEnrolled  = course.roasters?.isNotEmpty == true;
-
-    if (description.isEmpty && objective.isEmpty && !isEnrolled) {
-      return const SizedBox.shrink();
-    }
-
-    return AnimatedContainer(
-      duration: Durations.medium1,
-      color: context.appColorScheme.primary.withOpacity(0.04),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Collapsed summary row ─────────────────────────────────────
-          InkWell(
-            onTap: () => setState(() => _expanded = !_expanded),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                children: [
-                  // Enrollment badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: isEnrolled
-                          ? Colors.green.shade700
-                          : Colors.orange.shade700,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                     child: Text(
-                      isEnrolled ? 'Enrolled' : 'Not Enrolled',
+                      title?.toUpperCase() ?? 'MAIN MENU',
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+                        color: _detailPurple,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  // Completion %
-                  if (isEnrolled) ...[
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        value: course.percentage,
-                        strokeWidth: 2.5,
-                        color: context.appColorScheme.primary,
-                        backgroundColor:
-                            context.appColorScheme.primary.withOpacity(0.2),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$pct% complete',
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: context.appColorScheme.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                  const Spacer(),
-                  if (description.isNotEmpty || objective.isNotEmpty)
-                    Icon(
-                      _expanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.close,
                       size: 18,
-                      color: Colors.grey,
+                      color: _detailMuted,
                     ),
+                  ),
                 ],
               ),
             ),
-          ),
-
-          // ── Expanded detail section ───────────────────────────────────
-          if (_expanded && (description.isNotEmpty || objective.isNotEmpty))
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (description.isNotEmpty) ...[
-                    _headerLabel('DESCRIPTION'),
-                    const SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: context.textTheme.bodySmall
-                          ?.copyWith(color: const Color(0xFF444444)),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  if (objective.isNotEmpty) ...[
-                    _headerLabel('LEARNING OBJECTIVES'),
-                    const SizedBox(height: 4),
-                    Text(
-                      objective,
-                      style: context.textTheme.bodySmall
-                          ?.copyWith(color: const Color(0xFF444444)),
-                    ),
-                  ],
-                ],
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 26),
+              child: Text(
+                'MAIN NAVIGATION',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: _detailMuted,
+                ),
               ),
             ),
-
-          Divider(height: 1, color: Colors.grey.shade200),
-        ],
-      ),
-    );
-  }
-
-  Widget _headerLabel(String text) => Text(
-    text,
-    style: const TextStyle(
-      fontSize: 10,
-      fontWeight: FontWeight.w700,
-      color: Color(0xFF9E9E9E),
-      letterSpacing: 0.8,
-    ),
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Details button — dark filled, opens centered dialog
-// ─────────────────────────────────────────────────────────────────────────────
-class _DetailsButton extends StatelessWidget {
-  const _DetailsButton({
-    required this.info,
-    required this.lec,
-    required this.lessonName,
-    required this.typeName,
-    required this.typeCode,
-  });
-
-  final ClassInfo? info;
-  final dynamic lec;
-  final String lessonName;
-  final String typeName;
-  final String typeCode;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 30,
-      child: ElevatedButton.icon(
-        onPressed: () => _showDetails(context),
-        icon: const Icon(Icons.info_outline_rounded, size: 13),
-        label: const Text("Details"),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF252535),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            const SizedBox(height: 27),
+            const _DrawerItem(
+              icon: Icons.menu_book_outlined,
+              label: 'Course Catalog',
+              selected: true,
+            ),
+            const _DrawerItem(
+              icon: Icons.library_books_outlined,
+              label: 'My Courses',
+              trailing: true,
+            ),
+            const _DrawerItem(
+              icon: Icons.account_tree_outlined,
+              label: 'Learning Paths',
+            ),
+            const _DrawerItem(
+              icon: Icons.workspace_premium_outlined,
+              label: 'Points & Badges',
+              trailing: true,
+            ),
+            const _DrawerItem(
+              icon: Icons.support_agent_outlined,
+              label: 'Contact a Coach',
+              trailing: true,
+            ),
+          ],
         ),
       ),
     );
   }
+}
 
-  void _showDetails(BuildContext context) {
-    // Prefer LEC data for schedule fields; fall back to ClassInfo.
-    String _lecVal(String key, dynamic fallback) {
-      if (lec is Map) {
-        final v = lec[key]?.toString() ?? '';
-        if (v.isNotEmpty) return v;
-      }
-      return fallback?.toString() ?? '';
-    }
+class _DrawerItem extends StatelessWidget {
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    this.selected = false,
+    this.trailing = false,
+  });
 
-    final objective    = (info?.objective   ?? '').stripHtml.trim();
-    final description  = (info?.description ?? '').stripHtml.trim();
-    final startDate    = _lecVal('start_date',    info?.startDate);
-    final endDate      = _lecVal('end_date',      info?.endDate);
-    final startTime    = _lecVal('start_time',    info?.startTime);
-    final endTime      = _lecVal('end_time',      info?.endTime);
-    final instructor   = _lecVal('instructor',    info?.instructor);
-    final instructions = _lecVal('instructions',  info?.instruction);
-    final location     = _lecVal('location',      info?.location);
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final bool trailing;
 
-    final hasSchedule = [startDate, endDate, startTime, endTime, instructor, instructions, location]
-        .any((s) => s.isNotEmpty);
-
-    // Virtual Class-specific session info
-    String sessionLink = '';
-    String platformLabel = '';
-    String vcFilename = '';
-    String recordingLink = '';
-    if (typeCode == '3') {
-      if (lec is Map) {
-        final direct = lec['training_session_link']?.toString() ?? '';
-        if (direct.startsWith('http')) sessionLink = direct;
-        switch (lec['platform']?.toString()) {
-          case '1': platformLabel = 'Virtual Platform'; break;
-          case '2': platformLabel = 'Rapid Fire / Twilio'; break;
-        }
-        final rec = lec['training_session_recording_link']?.toString() ?? '';
-        if (rec.startsWith('http')) recordingLink = rec;
-      }
-      if (sessionLink.isEmpty) {
-        final vc = info?.virtualClassLink ?? '';
-        if (vc.startsWith('http')) sessionLink = vc;
-      }
-      if (recordingLink.isEmpty) {
-        final alt = info?.alternativeLearningEvent ?? '';
-        if (alt.isNotEmpty && alt != '0' && alt.startsWith('http')) recordingLink = alt;
-      }
-      vcFilename = info?.virtualClassFilename?.toString() ?? '';
-    }
-    final hasVirtualClassInfo =
-        sessionLink.isNotEmpty || vcFilename.isNotEmpty || recordingLink.isNotEmpty;
-
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        final primary = Theme.of(ctx).colorScheme.primary;
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          clipBehavior: Clip.antiAlias,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 540, maxHeight: 600),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // ── Header ──────────────────────────────────────────────
-                Container(
-                  color: primary,
-                  padding: const EdgeInsets.fromLTRB(20, 14, 8, 14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Wrap(
-                          spacing: 10,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              lessonName,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            if (typeName.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.22),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  typeName,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        icon: const Icon(Icons.close_rounded, color: Colors.white, size: 20),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ],
-                  ),
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFF0EFFF) : null,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 37,
+              height: 37,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected ? const Color(0xFFE8E7F8) : Colors.transparent,
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: selected ? _detailPurple : _detailMuted,
+              ),
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: selected ? _detailPurple : const Color(0xFF354056),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
+              ),
+            ),
+            if (trailing)
+              const Icon(
+                Icons.keyboard_arrow_down,
+                size: 17,
+                color: _detailMuted,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-                // ── Body ────────────────────────────────────────────────
-                Flexible(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (objective.isNotEmpty) ...[
-                          _sectionLabel('OBJECTIVE'),
-                          const SizedBox(height: 6),
-                          Text(objective, style: const TextStyle(fontSize: 13)),
-                          const Divider(height: 28),
-                        ],
-                        if (description.isNotEmpty) ...[
-                          _sectionLabel('DESCRIPTION'),
-                          const SizedBox(height: 6),
-                          Text(description, style: const TextStyle(fontSize: 13)),
-                          const Divider(height: 28),
-                        ],
-                        if (hasVirtualClassInfo) ...[
-                          _sectionLabel('VIRTUAL CLASS SESSION'),
-                          const SizedBox(height: 10),
-                          _VirtualClassCard(
-                            sessionLink:   sessionLink,
-                            platformLabel: platformLabel,
-                            filename:      vcFilename,
-                            recordingLink: recordingLink,
-                          ),
-                          const Divider(height: 28),
-                        ],
-                        if (hasSchedule) ...[
-                          _sectionLabel('SCHEDULE'),
-                          const SizedBox(height: 10),
-                          _ScheduleCard(
-                            startDate:    startDate,
-                            endDate:      endDate,
-                            startTime:    startTime,
-                            endTime:      endTime,
-                            instructor:   instructor,
-                            instructions: instructions,
-                            location:     location,
-                          ),
-                        ],
-                        if (!hasVirtualClassInfo && !hasSchedule && objective.isEmpty && description.isEmpty)
-                          const Text(
-                            'No additional details available.',
-                            style: TextStyle(fontSize: 13, color: Colors.grey),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+class _DetailFooter extends StatelessWidget {
+  const _DetailFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
+      child: const Row(
+        children: [
+          Text('Terms of Use', style: TextStyle(color: Color(0xFF444A57))),
+          SizedBox(width: 28),
+          Text('Your Profile', style: TextStyle(color: Color(0xFF444A57))),
+          SizedBox(width: 28),
+          Text(
+            'Support',
+            style: TextStyle(
+              color: Color(0xFF444A57),
+              decoration: TextDecoration.underline,
             ),
           ),
-        );
-      },
-    );
-  }
-
-  Widget _sectionLabel(String text) => Text(
-    text,
-    style: const TextStyle(
-      fontSize: 10,
-      fontWeight: FontWeight.w700,
-      color: Color(0xFF9E9E9E),
-      letterSpacing: 0.8,
-    ),
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Virtual Class session card inside Details dialog
-// ─────────────────────────────────────────────────────────────────────────────
-class _VirtualClassCard extends StatelessWidget {
-  const _VirtualClassCard({
-    required this.sessionLink,
-    required this.platformLabel,
-    required this.filename,
-    required this.recordingLink,
-  });
-
-  final String sessionLink;
-  final String platformLabel;
-  final String filename;
-  final String recordingLink;
-
-  static const _labelStyle = TextStyle(
-    fontSize: 10,
-    fontWeight: FontWeight.w700,
-    color: Color(0xFF9E9E9E),
-    letterSpacing: 0.6,
-  );
-  static const _linkStyle = TextStyle(fontSize: 13, color: Color(0xFF1565C0));
-  static const _metaStyle = TextStyle(fontSize: 12, color: Color(0xFF9E9E9E));
-
-  @override
-  Widget build(BuildContext context) {
-    Widget _divider() => Divider(height: 1, color: Colors.grey.shade200);
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // SESSION LINK
-          if (sessionLink.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('SESSION LINK', style: _labelStyle),
-                  const SizedBox(height: 6),
-                  SelectableText(sessionLink, style: _linkStyle),
-                  if (platformLabel.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text('Platform: $platformLabel', style: _metaStyle),
-                  ],
-                ],
-              ),
+          Spacer(),
+          Text(
+            'in',
+            style: TextStyle(
+              color: Color(0xFF777777),
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
             ),
-          ],
-
-          // RECORDING LINK
-          if (recordingLink.isNotEmpty) ...[
-            if (sessionLink.isNotEmpty) _divider(),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('RECORDING LINK', style: _labelStyle),
-                  const SizedBox(height: 6),
-                  SelectableText(recordingLink, style: _linkStyle),
-                ],
-              ),
-            ),
-          ],
-
-          // ATTACHED FILE
-          if (filename.isNotEmpty) ...[
-            if (sessionLink.isNotEmpty || recordingLink.isNotEmpty) _divider(),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('ATTACHED FILE', style: _labelStyle),
-                  const SizedBox(height: 4),
-                  Text(filename, style: const TextStyle(fontSize: 13, color: Color(0xFF1a1a2e))),
-                ],
-              ),
-            ),
-          ],
+          ),
         ],
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Schedule card inside Details dialog
-// ─────────────────────────────────────────────────────────────────────────────
-class _ScheduleCard extends StatelessWidget {
-  const _ScheduleCard({
-    required this.startDate,
-    required this.endDate,
-    required this.startTime,
-    required this.endTime,
-    required this.instructor,
-    required this.instructions,
-    required this.location,
-  });
-
-  final String startDate;
-  final String endDate;
-  final String startTime;
-  final String endTime;
-  final String instructor;
-  final String instructions;
-  final String location;
-
-  static const _labelStyle = TextStyle(
-    fontSize: 10,
-    fontWeight: FontWeight.w700,
-    color: Color(0xFF9E9E9E),
-    letterSpacing: 0.6,
-  );
-  static const _valueStyle = TextStyle(fontSize: 13, color: Color(0xFF1a1a2e));
-  static const _timeStyle  = TextStyle(fontSize: 12, color: Color(0xFF555555));
+class _DetailError extends StatelessWidget {
+  const _DetailError({required this.message, this.onRetry});
+  final String message;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final hasStartEnd    = startDate.isNotEmpty || endDate.isNotEmpty;
-    final hasInstructor  = instructor.isNotEmpty;
-    final hasInstructions= instructions.isNotEmpty;
-    final hasLocation    = location.isNotEmpty;
-
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          // Start / End row
-          if (hasStartEnd)
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('START', style: _labelStyle),
-                        const SizedBox(height: 4),
-                        if (startDate.isNotEmpty) Text(startDate, style: _valueStyle),
-                        if (startTime.isNotEmpty) Text(startTime, style: _timeStyle),
-                      ],
-                    ),
-                  ),
-                  if (endDate.isNotEmpty) ...[
-                    Container(width: 1, height: 40, color: Colors.grey.shade200),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('END', style: _labelStyle),
-                          const SizedBox(height: 4),
-                          Text(endDate, style: _valueStyle),
-                          if (endTime.isNotEmpty) Text(endTime, style: _timeStyle),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_rounded, color: _detailMuted, size: 54),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center),
+            if (onRetry != null) ...[
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: onRetry,
+                child: const Text('Try Again'),
               ),
-            ),
-
-          // Instructor / Instructions row
-          if (hasInstructor || hasInstructions) ...[
-            if (hasStartEnd) Divider(height: 1, color: Colors.grey.shade200),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (hasInstructor)
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('INSTRUCTOR', style: _labelStyle),
-                          const SizedBox(height: 4),
-                          Text(instructor, style: _valueStyle),
-                        ],
-                      ),
-                    ),
-                  if (hasInstructions) ...[
-                    if (hasInstructor) ...[
-                      Container(width: 1, height: 36, color: Colors.grey.shade200),
-                      const SizedBox(width: 14),
-                    ],
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('INSTRUCTIONS', style: _labelStyle),
-                          const SizedBox(height: 4),
-                          Text(instructions, style: _valueStyle),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+            ],
           ],
-
-          // Location row
-          if (hasLocation) ...[
-            if (hasStartEnd || hasInstructor || hasInstructions)
-              Divider(height: 1, color: Colors.grey.shade200),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('LOCATION', style: _labelStyle),
-                  const SizedBox(height: 4),
-                  Text(location, style: _valueStyle),
-                ],
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
+}
+
+IconData _actionIcon(CourseStructureIcon icon) {
+  switch (icon) {
+    case CourseStructureIcon.video:
+      return Icons.videocam_rounded;
+    case CourseStructureIcon.article:
+      return Icons.article_rounded;
+    case CourseStructureIcon.details:
+      return Icons.info_rounded;
+  }
+}
+
+Future<void> _openUrl(String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return;
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+bool _isUnauthorizedError(String? error) {
+  final value = error?.toLowerCase() ?? '';
+  return value.startsWith('unauthorized') ||
+      value.contains('invalid credentials') ||
+      value.contains('status code of 401') ||
+      value.contains(' 401');
 }

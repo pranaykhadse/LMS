@@ -7,7 +7,9 @@ class CourseCatalogRepository with RepoNetworkHelper {
   CourseCatalogRepository(this.config);
 
   static final provider = Provider<CourseCatalogRepository>((ref) {
-    return CourseCatalogRepository(ref.watch(ServerProvider.repoConfigProvider));
+    return CourseCatalogRepository(
+      ref.watch(ServerProvider.repoConfigProvider),
+    );
   });
 
   @override
@@ -16,6 +18,7 @@ class CourseCatalogRepository with RepoNetworkHelper {
   Future<CourseCatalogResponse> fetch({
     required int userId,
     int page = 1,
+    String? groupId,
     String? search,
     String? skillId,
   }) async {
@@ -23,15 +26,46 @@ class CourseCatalogRepository with RepoNetworkHelper {
       'lms-screen/course-catalog',
       queryParameters: {
         'user_id': userId,
+        'per_page': 12,
         'page': page,
+        if (groupId != null && groupId.isNotEmpty) 'group_id': groupId,
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
         if (skillId != null && skillId.isNotEmpty) 'skill_id': skillId,
       },
-      cacheType: RequestCacheType.fetch,
+      cacheType: RequestCacheType.none,
     );
     final data = Map<String, dynamic>.from(response as Map);
     if (data['status']?.toString() != '1') {
       throw Exception(data['message']?.toString() ?? 'Unable to load courses.');
+    }
+    return CourseCatalogResponse.fromJson(data);
+  }
+
+  Future<CourseCatalogResponse> search({
+    required int userId,
+    int page = 1,
+    String? name,
+    String? skillId,
+    String? behaviorId,
+  }) async {
+    final response = await getRequest(
+      'lms-screen/search-result',
+      queryParameters: {
+        'user_id': userId,
+        'page': page,
+        'limit': 12,
+        if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
+        if (skillId != null && skillId.isNotEmpty) 'skill_id': skillId,
+        if (behaviorId != null && behaviorId.isNotEmpty)
+          'behavior_id': behaviorId,
+      },
+      cacheType: RequestCacheType.none,
+    );
+    final data = Map<String, dynamic>.from(response as Map);
+    if (data['status']?.toString() != '1') {
+      throw Exception(
+        data['message']?.toString() ?? 'Unable to search courses.',
+      );
     }
     return CourseCatalogResponse.fromJson(data);
   }
