@@ -12,16 +12,7 @@ class StartupView extends ConsumerWidget {
     final _ = ref.watch(StartupViewModel.provider);
 
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Logo(size: context.screenSize.shortestSide * 0.32),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(),
-          ],
-        ),
-      ),
+      body: Center(child: Logo(size: context.screenSize.shortestSide * 0.5)),
     );
   }
 }
