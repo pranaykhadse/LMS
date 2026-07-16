@@ -152,10 +152,6 @@ class AppDrawer extends ConsumerWidget {
                       label: 'Points & Badges',
                       children: [
                         _SubItem(
-                          label: 'Redeem your Points',
-                          icon: Icons.card_giftcard_outlined,
-                        ),
-                        _SubItem(
                           label: 'Badges',
                           icon: Icons.military_tech_outlined,
                           onTap: () {
@@ -164,20 +160,6 @@ class AppDrawer extends ConsumerWidget {
                               CoursesModule.construct(CoursesModule.badges),
                             );
                           },
-                        ),
-                      ],
-                    ),
-                    const _DrawerItem(
-                      icon: Icons.support_agent_outlined,
-                      label: 'Contact a Coach',
-                      children: [
-                        _SubItem(
-                          label: 'Contact a Development Pro',
-                          icon: Icons.person_outline,
-                        ),
-                        _SubItem(
-                          label: 'Virtual Development Pro',
-                          icon: Icons.video_call_outlined,
                         ),
                       ],
                     ),
