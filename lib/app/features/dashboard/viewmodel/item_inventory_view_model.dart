@@ -69,12 +69,12 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
     }
   }
 
-  Future<bool> redeem(int itemId) async {
+  Future<bool> redeem(int itemId, {required String address, String? note}) async {
     final userId = _userId;
     if (userId == null) return false;
     state = state.copyWith(redeemingId: itemId);
     try {
-      await _repo.redeem(userId: userId, itemId: itemId);
+      await _repo.redeem(userId: userId, itemId: itemId, address: address, note: note);
       await fetch();
       state = state.copyWith(clearRedeeming: true);
       return true;

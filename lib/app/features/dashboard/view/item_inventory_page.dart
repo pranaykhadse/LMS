@@ -128,14 +128,7 @@ class _Body extends StatelessWidget {
                 (context, index) => _ItemCard(
                   item: result.items[index],
                   isRedeeming: state.redeemingId == result.items[index].id,
-                  onRedeem: () async {
-                    final ok = await notifier.redeem(result.items[index].id);
-                    if (!ok && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Failed to redeem. Please try again.')),
-                      );
-                    }
-                  },
+                  onRedeem: () => _showRedeemDialog(context, result.items[index], notifier),
                   onView: () => _showDetail(context, result.items[index]),
                 ),
                 childCount: result.items.length,
@@ -153,12 +146,35 @@ class _Body extends StatelessWidget {
   }
 
   void _showDetail(BuildContext context, InventoryItem item) {
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      builder: (_) => _ItemDetailDialog(item: item),
+    );
+  }
+
+  void _showRedeemDialog(
+    BuildContext context,
+    InventoryItem item,
+    ItemInventoryViewModel notifier,
+  ) {
+    showDialog(
+      context: context,
+      builder: (_) => _RedeemDialog(
+        item: item,
+        onConfirm: (address, note) async {
+          Navigator.pop(context);
+          final ok = await notifier.redeem(
+            item.id,
+            address: address,
+            note: note.isNotEmpty ? note : null,
+          );
+          if (!ok && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to redeem. Please try again.')),
+            );
+          }
+        },
       ),
-      builder: (_) => _DetailSheet(item: item),
     );
   }
 }
@@ -381,78 +397,266 @@ class _ItemImage extends StatelessWidget {
   }
 }
 
-// ─── Detail bottom sheet ──────────────────────────────────────────────────────
+// ─── Item detail dialog ───────────────────────────────────────────────────────
 
-class _DetailSheet extends StatelessWidget {
-  const _DetailSheet({required this.item});
+class _ItemDetailDialog extends StatelessWidget {
+  const _ItemDetailDialog({required this.item});
   final InventoryItem item;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Expanded(
+                const Expanded(
                   child: Text(
-                    item.name,
-                    style: const TextStyle(
+                    'Item Details',
+                    style: TextStyle(
                       color: _ink,
-                      fontSize: 18,
+                      fontSize: 17,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEEDFF),
-                    borderRadius: BorderRadius.circular(20),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+            const Divider(height: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: item.image != null
+                        ? Image.network(
+                            item.image!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const _DialogImageFallback(),
+                          )
+                        : const _DialogImageFallback(),
                   ),
-                  child: Text(
-                    '${item.points} pts',
-                    style: const TextStyle(
-                      color: _purple,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _DetailRow(label: 'Name:', value: item.name),
+                      if (item.groupName != null)
+                        _DetailRow(label: 'Group:', value: item.groupName!),
+                      if (item.managedBy != null)
+                        _DetailRow(label: 'Managed by:', value: item.managedBy!),
+                      _DetailRow(label: 'Points required:', value: '${item.points}'),
+                      if (item.description.isNotEmpty)
+                        _DetailRow(label: 'Description:', value: item.description),
+                    ],
                   ),
                 ),
               ],
             ),
-            if (item.description.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                item.description,
-                style: const TextStyle(color: _muted, fontSize: 14, height: 1.5),
-              ),
-            ],
             const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
+            Align(
+              alignment: Alignment.center,
+              child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _purple,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFD0CFE8)),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  minimumSize: const Size(0, 46),
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
                 ),
                 child: const Text(
                   'Close',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(color: _muted, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DialogImageFallback extends StatelessWidget {
+  const _DialogImageFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFFF0ECFF),
+      alignment: Alignment.center,
+      child: const Icon(Icons.redeem_outlined, color: _purple, size: 40),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '$label ',
+              style: const TextStyle(
+                color: _ink,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            TextSpan(
+              text: value,
+              style: const TextStyle(color: _muted, fontSize: 13, height: 1.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Redeem dialog ────────────────────────────────────────────────────────────
+
+class _RedeemDialog extends StatefulWidget {
+  const _RedeemDialog({required this.item, required this.onConfirm});
+  final InventoryItem item;
+  final void Function(String address, String note) onConfirm;
+
+  @override
+  State<_RedeemDialog> createState() => _RedeemDialogState();
+}
+
+class _RedeemDialogState extends State<_RedeemDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _addressCtrl = TextEditingController();
+  final _noteCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _addressCtrl.dispose();
+    _noteCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Enter details and confirm to redeem',
+                style: TextStyle(
+                  color: _ink,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Address *',
+                style: TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _addressCtrl,
+                maxLines: 3,
+                validator: (v) =>
+                    v == null || v.trim().isEmpty ? 'Address is required' : null,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: _bg,
+                  contentPadding: const EdgeInsets.all(12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Note',
+                style: TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _noteCtrl,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: _bg,
+                  contentPadding: const EdgeInsets.all(12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      widget.onConfirm(
+                        _addressCtrl.text.trim(),
+                        _noteCtrl.text.trim(),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _purple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    minimumSize: const Size(0, 44),
+                  ),
+                  child: const Text(
+                    'Confirm',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

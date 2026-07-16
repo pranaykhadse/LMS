@@ -29,6 +29,8 @@ class InventoryItem {
     required this.isRedeemed,
     required this.canRedeem,
     this.image,
+    this.groupName,
+    this.managedBy,
   });
 
   final int id;
@@ -38,8 +40,11 @@ class InventoryItem {
   final bool isRedeemed;
   final bool canRedeem;
   final String? image;
+  final String? groupName;
+  final String? managedBy;
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) {
+    final img = json['image']?.toString().trim() ?? '';
     return InventoryItem(
       id: _asInt(json['id']),
       name: json['name']?.toString() ?? '',
@@ -47,7 +52,13 @@ class InventoryItem {
       description: json['description']?.toString() ?? '',
       isRedeemed: json['is_redeemed'] == true || json['is_redeemed'].toString() == '1',
       canRedeem: json['can_redeem'] == true || json['can_redeem'].toString() == '1',
-      image: json['image']?.toString().isNotEmpty == true ? json['image'].toString() : null,
+      image: img.isNotEmpty ? img : null,
+      groupName: json['group_name']?.toString().isNotEmpty == true
+          ? json['group_name'].toString()
+          : null,
+      managedBy: json['managed_by']?.toString().isNotEmpty == true
+          ? json['managed_by'].toString()
+          : null,
     );
   }
 }

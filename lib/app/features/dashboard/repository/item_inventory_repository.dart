@@ -26,14 +26,25 @@ class ItemInventoryRepository with RepoNetworkHelper {
     return InventoryResult.fromJson(data);
   }
 
-  Future<void> redeem({required int userId, required int itemId}) async {
+  Future<void> redeem({
+    required int userId,
+    required int itemId,
+    required String address,
+    String? note,
+  }) async {
+    final body = <String, dynamic>{
+      'user_id': userId,
+      'item_id': itemId,
+      'address': address,
+    };
+    if (note != null && note.isNotEmpty) body['note'] = note;
     final response = await post(
       'lms-screen/item-inventory/redeem',
-      data: {'user_id': userId, 'item_id': itemId},
+      data: body,
       cacheType: RequestCacheType.none,
     );
     final data = response is Map
-        ? Map<String, dynamic>.from(response as Map)
+        ? Map<String, dynamic>.from(response)
         : <String, dynamic>{};
     if (data['status']?.toString() != '1') {
       throw Exception(data['message']?.toString() ?? 'Failed to redeem item.');
