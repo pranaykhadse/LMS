@@ -10,6 +10,8 @@ class CourseJoinDetail {
     required this.participantGuide,
     required this.learningPath,
     required this.launchStatus,
+    required this.launchDate,
+    required this.progressPercentage,
     required this.primaryAction,
     required this.isEnrolled,
     required this.allowRating,
@@ -25,6 +27,8 @@ class CourseJoinDetail {
   final String? participantGuide;
   final String? learningPath;
   final String launchStatus;
+  final DateTime? launchDate;
+  final double progressPercentage; // 0.0 to 1.0
   final String primaryAction;
   final bool isEnrolled;
   final bool allowRating;
@@ -119,6 +123,8 @@ class CourseJoinDetail {
                   _isBookingClosed(root)
               ? 'Closed'
               : 'Open'),
+      launchDate: _launchDate(root, course),
+      progressPercentage: _progressPercent(root, course),
       primaryAction:
           actionLabel ?? (isEnrolled ? 'Cancel Registration' : 'Enroll Now'),
       isEnrolled: isEnrolled,
@@ -305,6 +311,64 @@ class LearningEvent {
       sessionLink: _clean(json['training_session_link']?.toString()),
     );
   }
+}
+
+DateTime? _launchDate(
+  Map<String, dynamic> root,
+  Map<String, dynamic> course,
+) {
+  final raw = _firstValue(root, course, const [
+    'start_date',
+    'startDate',
+    'course_date',
+    'courseDate',
+    'next_session',
+    'nextSession',
+    'next_session_date',
+    'nextSessionDate',
+    'event_date',
+    'eventDate',
+    'launch_date',
+    'launchDate',
+    'course_start_date',
+    'courseStartDate',
+    'event_start',
+    'eventStart',
+    'available_at',
+    'availableAt',
+  ]);
+  if (raw == null) return null;
+  return DateTime.tryParse(raw.toString());
+}
+
+double _progressPercent(
+  Map<String, dynamic> root,
+  Map<String, dynamic> course,
+) {
+  final direct = _firstValue(root, course, const [
+    'course_progress_percentage',
+    'courseProgressPercentage',
+    'progress_percentage',
+    'progressPercentage',
+  ]);
+  if (direct != null) return _asPercent(direct);
+  for (final map in [root, course]) {
+    final ab = map['action_buttons'];
+    if (ab is Map) {
+      final val =
+          ab['course_progress_percentage'] ??
+          ab['progress_percentage'] ??
+          ab['progress'];
+      if (val != null) return _asPercent(val);
+    }
+  }
+  return 0.0;
+}
+
+double _asPercent(dynamic value) {
+  final str = value?.toString().replaceAll('%', '').trim() ?? '';
+  final parsed = double.tryParse(str) ?? 0.0;
+  return parsed > 1.0 ? parsed / 100.0 : parsed;
 }
 
 Map<String, dynamic> _payloadMap(Map<String, dynamic> json) {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -278,40 +280,68 @@ class _CourseHero extends StatelessWidget {
   }
 }
 
-class _LaunchPanel extends StatelessWidget {
+class _LaunchPanel extends StatefulWidget {
   const _LaunchPanel({required this.detail});
   final CourseJoinDetail detail;
 
   @override
+  State<_LaunchPanel> createState() => _LaunchPanelState();
+}
+
+class _LaunchPanelState extends State<_LaunchPanel> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.detail.launchDate != null) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final detail = widget.detail;
+    final launchDate = detail.launchDate;
+    Duration? remaining;
+    if (launchDate != null) {
+      final diff = launchDate.difference(DateTime.now());
+      remaining = diff.isNegative ? Duration.zero : diff;
+    }
+
     return _InfoCard(
       margin: const EdgeInsets.fromLTRB(22, 0, 22, 28),
       child: Column(
         children: [
-          const Text(
-            'LAUNCHES IN',
-            style: TextStyle(
-              color: _detailMuted,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              letterSpacing: .4,
+          if (launchDate != null) ...[
+            const Text(
+              'LAUNCHES IN',
+              style: TextStyle(
+                color: _detailMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: .4,
+              ),
             ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children:
-                const ['DAYS', 'HRS', 'MIN', 'SEC']
-                    .map(
-                      (label) => Expanded(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 5),
-                          child: _TimeBox(label: label),
-                        ),
-                      ),
-                    )
-                    .toList(),
-          ),
-          const SizedBox(height: 26),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                _timeEntry(remaining?.inDays ?? 0, 'DAYS'),
+                _timeEntry((remaining?.inHours ?? 0) % 24, 'HRS'),
+                _timeEntry((remaining?.inMinutes ?? 0) % 60, 'MIN'),
+                _timeEntry((remaining?.inSeconds ?? 0) % 60, 'SEC'),
+              ],
+            ),
+            const SizedBox(height: 26),
+          ],
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
@@ -332,11 +362,11 @@ class _LaunchPanel extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const SizedBox(
+                  SizedBox(
                     width: 36,
                     height: 36,
                     child: CircularProgressIndicator(
-                      value: .48,
+                      value: detail.progressPercentage,
                       strokeWidth: 2.5,
                       color: _detailPurple,
                       backgroundColor: Colors.white,
@@ -411,6 +441,15 @@ class _LaunchPanel extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _timeEntry(int value, String label) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5),
+        child: _TimeBox(value: value, label: label),
       ),
     );
   }
@@ -768,26 +807,41 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _TimeBox extends StatelessWidget {
-  const _TimeBox({required this.label});
+  const _TimeBox({required this.value, required this.label});
+  final int value;
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 28,
+      padding: const EdgeInsets.symmetric(vertical: 10),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: const Color(0xFFFAF9FF),
         border: Border.all(color: const Color(0xFFE5DFFF)),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: _detailMuted,
-          fontSize: 8,
-          fontWeight: FontWeight.w800,
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value.toString().padLeft(2, '0'),
+            style: const TextStyle(
+              color: _detailPurple,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              color: _detailMuted,
+              fontSize: 8,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }
