@@ -196,6 +196,23 @@ class CourseStructureItem {
           ]),
         ) ??
         _typeActionLabel(typeCode);
+    final enrollmentMap = json['enrollment'] is Map
+        ? Map<String, dynamic>.from(json['enrollment'] as Map)
+        : null;
+    final enrollmentStatus = enrollmentMap != null ? _asInt(enrollmentMap['status']) : 0;
+    final isEnrolledInClass = enrollmentStatus > 0;
+    final classStatus = enrollmentStatus == 3
+        ? 'Completed'
+        : enrollmentStatus == 1
+        ? 'Registered'
+        : _clean(_firstValue(json, classMap, const [
+            'status', 'status_label', 'statusLabel', 'completion_status', 'completionStatus',
+          ])) ?? '';
+    final effectiveActionLabel = isEnrolledInClass && typeCode == '1'
+        ? 'Launch'
+        : isEnrolledInClass && typeCode == '20'
+        ? 'Launch Assessment'
+        : actionLabel;
     return CourseStructureItem(
       title:
           _clean(
@@ -220,21 +237,11 @@ class CourseStructureItem {
             ]),
           ) ??
           '',
-      status:
-          _clean(
-            _firstValue(json, classMap, const [
-              'status',
-              'status_label',
-              'statusLabel',
-              'completion_status',
-              'completionStatus',
-            ]),
-          ) ??
-          '',
-      actionLabel: actionLabel,
+      status: classStatus,
+      actionLabel: effectiveActionLabel,
       icon: _structureIcon(typeCode),
       showDetails: _typeShowDetails(typeCode),
-      showAction: actionLabel.isNotEmpty,
+      showAction: effectiveActionLabel.isNotEmpty,
       description: _clean(_firstValue(json, classMap, const ['description', 'class_description', 'classDescription'])) ?? '',
       learningEvents: ((json['learning_events'] ?? json['learningEvents'] ?? const []) as List? ?? const [])
           .whereType<Map>()

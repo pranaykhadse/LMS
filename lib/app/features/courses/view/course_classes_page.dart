@@ -633,22 +633,21 @@ class _StructureItemCard extends StatelessWidget {
           const SizedBox(height: 14),
           const Divider(color: Color(0xFFECEFF4)),
           const SizedBox(height: 13),
-          Text(
-            'Next Session:${item.nextSession.isEmpty ? '' : ' ${item.nextSession}'}',
-            style: const TextStyle(
-              color: _detailMuted,
-              fontWeight: FontWeight.w700,
+          if (item.nextSession.isNotEmpty) ...[
+            Text(
+              'Next Session: ${item.nextSession}',
+              style: const TextStyle(
+                color: _detailMuted,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'Status:${item.status.isEmpty ? '' : ' ${item.status}'}',
-            style: const TextStyle(
-              color: _detailMuted,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 13),
+            const SizedBox(height: 12),
+          ],
+          if (item.status.isNotEmpty) ...[
+            _StatusChip(status: item.status),
+            const SizedBox(height: 12),
+          ],
+          const SizedBox(height: 1),
           const Divider(color: Color(0xFFECEFF4)),
           if (item.showDetails || item.showAction) ...[
             const SizedBox(height: 18),
@@ -1350,6 +1349,31 @@ class _ScheduleField extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({required this.status});
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final isCompleted = status.toLowerCase() == 'completed';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: isCompleted ? const Color(0xFFE8F5E9) : const Color(0xFFEEECFF),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          color: isCompleted ? const Color(0xFF2E7D32) : _detailPurple,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
