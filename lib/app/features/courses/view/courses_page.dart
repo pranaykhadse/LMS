@@ -1341,99 +1341,106 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
-          SizedBox(
-            height: isWide ? 112 : 188,
-            width: double.infinity,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _CourseImage(url: widget.course.logo),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: _OfflineCourseAction(
-                    isOnline: isOnline,
-                    isSavedOffline: isSavedOffline,
-                    isDownloading: isDownloading,
-                    progress: progress,
-                    onSave: () => offlineVM.download(widget.course.offlineCourse),
-                    onRemove: () => offlineVM.removeOffline(widget.course.offlineCourse),
-                  ),
-                ),
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: _DevPlanButton(
-                    isInPlan: _isInPlan,
-                    onTap: () => setState(() => _showOverlay = true),
-                  ),
-                ),
-                if (_showOverlay)
-                  _DevPlanOverlay(
-                    isInPlan: _isInPlan,
-                    isBusy: _isBusy,
-                    onYes: () => _handleDevPlanAction(context),
-                    onNo: () => setState(() => _showOverlay = false),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(15, isWide ? 8 : 10, 15, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (widget.course.nextSessionLabel != null) ...[
-                    _NextSession(
-                      date: widget.course.nextSession,
-                      label: widget.course.nextSessionLabel!,
+          // Card content
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: isWide ? 112 : 188,
+                width: double.infinity,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _CourseImage(url: widget.course.logo),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: _OfflineCourseAction(
+                        isOnline: isOnline,
+                        isSavedOffline: isSavedOffline,
+                        isDownloading: isDownloading,
+                        progress: progress,
+                        onSave: () => offlineVM.download(widget.course.offlineCourse),
+                        onRemove: () => offlineVM.removeOffline(widget.course.offlineCourse),
+                      ),
                     ),
-                    const SizedBox(height: 8),
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: _DevPlanButton(
+                        isInPlan: _isInPlan,
+                        onTap: () => setState(() => _showOverlay = true),
+                      ),
+                    ),
                   ],
-                  Text(
-                    widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _catalogInk,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      height: 1.18,
-                    ),
-                  ),
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Modular.to.pushNamed(
-                        CoursesModule.construct(
-                          '${CoursesModule.detail}/${widget.course.id}',
-                        ),
-                        arguments: widget.course.offlineCourse,
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size.fromHeight(isWide ? 38 : 42),
-                        backgroundColor: _catalogPurple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(isWide ? 7 : 10),
-                        ),
-                      ),
-                      child: const Text(
-                        'View Course',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(15, isWide ? 8 : 10, 15, 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.course.nextSessionLabel != null) ...[
+                        _NextSession(
+                          date: widget.course.nextSession,
+                          label: widget.course.nextSessionLabel!,
+                        ),
+                        const SizedBox(height: 8),
+                      ],
+                      Text(
+                        widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: _catalogInk,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          height: 1.18,
+                        ),
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => Modular.to.pushNamed(
+                            CoursesModule.construct(
+                              '${CoursesModule.detail}/${widget.course.id}',
+                            ),
+                            arguments: widget.course.offlineCourse,
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: Size.fromHeight(isWide ? 38 : 42),
+                            backgroundColor: _catalogPurple,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(isWide ? 7 : 10),
+                            ),
+                          ),
+                          child: const Text(
+                            'View Course',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
+          // Overlay covers the full card (image + text area)
+          if (_showOverlay)
+            _DevPlanOverlay(
+              isInPlan: _isInPlan,
+              isBusy: _isBusy,
+              onYes: () => _handleDevPlanAction(context),
+              onNo: () => setState(() => _showOverlay = false),
+            ),
         ],
       ),
     );
