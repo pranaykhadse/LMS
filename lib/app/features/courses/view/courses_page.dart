@@ -373,6 +373,7 @@ class _CatalogAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final canPop = Navigator.canPop(context);
     return AppBar(
       automaticallyImplyLeading: false,
       toolbarHeight: isWide ? 42 : 60,
@@ -385,15 +386,26 @@ class _CatalogAppBar extends ConsumerWidget {
       leading:
           isWide
               ? null
+              : canPop
+              ? Padding(
+                padding: const EdgeInsets.only(left: 14),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _TopIconButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ),
+              )
               : Builder(
                 builder:
-                    (context) => Padding(
+                    (ctx) => Padding(
                       padding: const EdgeInsets.only(left: 14),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: _TopIconButton(
                           icon: Icons.menu_rounded,
-                          onTap: () => Scaffold.of(context).openDrawer(),
+                          onTap: () => Scaffold.of(ctx).openDrawer(),
                         ),
                       ),
                     ),
@@ -1695,32 +1707,46 @@ class _CatalogDrawer extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 27),
-            ...<_DrawerItem>[
-              const _DrawerItem(
-                icon: Icons.menu_book_outlined,
-                label: 'Course Catalog',
-                selected: true,
-              ),
-              const _DrawerItem(
-                icon: Icons.library_books_outlined,
-                label: 'My Courses',
-                trailing: true,
-              ),
-              const _DrawerItem(
-                icon: Icons.account_tree_outlined,
-                label: 'Learning Paths',
-              ),
-              const _DrawerItem(
-                icon: Icons.workspace_premium_outlined,
-                label: 'Points & Badges',
-                trailing: true,
-              ),
-              const _DrawerItem(
-                icon: Icons.support_agent_outlined,
-                label: 'Contact a Coach',
-                trailing: true,
-              ),
-            ],
+            _DrawerItem(
+              icon: Icons.dashboard_outlined,
+              label: 'Dashboard',
+              onTap: () {
+                Navigator.pop(context);
+                Modular.to.navigate(
+                  CoursesModule.construct(CoursesModule.dashboard),
+                );
+              },
+            ),
+            const _DrawerItem(
+              icon: Icons.menu_book_outlined,
+              label: 'Course Catalog',
+              selected: true,
+            ),
+            _DrawerItem(
+              icon: Icons.library_books_outlined,
+              label: 'My Courses',
+              trailing: true,
+              onTap: () {
+                Navigator.pop(context);
+                Modular.to.pushNamed(
+                  CoursesModule.construct(CoursesModule.myCourses),
+                );
+              },
+            ),
+            const _DrawerItem(
+              icon: Icons.account_tree_outlined,
+              label: 'Learning Paths',
+            ),
+            const _DrawerItem(
+              icon: Icons.workspace_premium_outlined,
+              label: 'Points & Badges',
+              trailing: true,
+            ),
+            const _DrawerItem(
+              icon: Icons.support_agent_outlined,
+              label: 'Contact a Coach',
+              trailing: true,
+            ),
           ],
         ),
       ),
@@ -1734,23 +1760,28 @@ class _DrawerItem extends StatelessWidget {
     required this.label,
     this.selected = false,
     this.trailing = false,
+    this.onTap,
   });
   final IconData icon;
   final String label;
   final bool selected;
   final bool trailing;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF0EFFF) : null,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFF0EFFF) : null,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
           children: [
             Container(
               width: 37,
@@ -1784,6 +1815,7 @@ class _DrawerItem extends StatelessWidget {
                 color: _catalogMuted,
               ),
           ],
+        ),
         ),
       ),
     );

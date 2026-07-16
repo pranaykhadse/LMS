@@ -745,7 +745,7 @@ class _DashboardDrawer extends ConsumerWidget {
               label: 'Course Catalog',
               onTap: () {
                 Navigator.pop(context);
-                Modular.to.navigate(
+                Modular.to.pushNamed(
                   CoursesModule.construct(CoursesModule.root),
                 );
               },
