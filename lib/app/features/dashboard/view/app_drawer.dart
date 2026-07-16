@@ -158,6 +158,12 @@ class AppDrawer extends ConsumerWidget {
                         _SubItem(
                           label: 'Badges',
                           icon: Icons.military_tech_outlined,
+                          onTap: () {
+                            Navigator.pop(context);
+                            Modular.to.pushNamed(
+                              CoursesModule.construct(CoursesModule.badges),
+                            );
+                          },
                         ),
                       ],
                     ),
