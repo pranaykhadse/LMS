@@ -5,6 +5,7 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -142,8 +143,8 @@ class _DashboardBody extends StatelessWidget {
                   title: 'My Courses',
                   actionLabel: 'View All My Courses',
                   onAction:
-                      () => Modular.to.navigate(
-                        CoursesModule.construct(CoursesModule.root),
+                      () => Modular.to.pushNamed(
+                        CoursesModule.construct(CoursesModule.myCourses),
                       ),
                 ),
                 const SizedBox(height: 16),
@@ -296,13 +297,18 @@ class _CourseCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 295,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 14,
+          mainAxisSpacing: 14,
+          childAspectRatio: 0.62,
+        ),
         itemCount: courses.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
         itemBuilder: (context, index) => _CourseCard(course: courses[index]),
       ),
     );
@@ -315,95 +321,92 @@ class _CourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 210,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0A000000),
-              blurRadius: 16,
-              offset: Offset(0, 6),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image
-            SizedBox(
-              height: 130,
-              width: double.infinity,
-              child:
-                  course.logo != null
-                      ? Image.network(
-                        course.logo!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImgFallback(),
-                      )
-                      : const _ImgFallback(),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _ink,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                        height: 1.3,
-                      ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image
+          SizedBox(
+            height: 110,
+            width: double.infinity,
+            child:
+                course.logo != null
+                    ? Image.network(
+                      course.logo!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const _ImgFallback(),
+                    )
+                    : const _ImgFallback(),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    course.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: _ink,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (course.displayRating) ...[
+                    _StarRow(
+                      rating: course.averageRating,
+                      count: course.ratingCount,
                     ),
                     const SizedBox(height: 6),
-                    if (course.displayRating) ...[
-                      _StarRow(
-                        rating: course.averageRating,
-                        count: course.ratingCount,
-                      ),
-                      const SizedBox(height: 8),
-                    ] else
-                      const SizedBox(height: 4),
-                    const Spacer(),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed:
-                            () => Modular.to.navigate(
-                              CoursesModule.construct(
-                                '${CoursesModule.detail}/${course.id}',
-                              ),
+                  ] else
+                    const SizedBox(height: 2),
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed:
+                          () => Modular.to.pushNamed(
+                            CoursesModule.construct(
+                              '${CoursesModule.detail}/${course.id}',
                             ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _purple,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          minimumSize: const Size.fromHeight(36),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
                           ),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                          ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _purple,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        minimumSize: const Size.fromHeight(32),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Text('View Course'),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
                       ),
+                      child: const Text('View Course'),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -417,13 +420,18 @@ class _ResourceCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 285,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 14,
+          mainAxisSpacing: 14,
+          childAspectRatio: 0.68,
+        ),
         itemCount: resources.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 16),
         itemBuilder:
             (context, index) => _ResourceCard(resource: resources[index]),
       ),
@@ -451,26 +459,24 @@ class _ResourceCard extends StatelessWidget {
             ? 'View Resource'
             : 'No Content';
 
-    return SizedBox(
-      width: 210,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0A000000),
-              blurRadius: 16,
-              offset: Offset(0, 6),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image with RESOURCE badge
-            Stack(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image with RESOURCE badge
+          Stack(
               children: [
                 SizedBox(
                   height: 130,
@@ -757,10 +763,16 @@ class _DashboardDrawer extends ConsumerWidget {
                 );
               },
             ),
-            const _DrawerItem(
+            _DrawerItem(
               icon: Icons.library_books_outlined,
               label: 'My Courses',
               trailing: true,
+              onTap: () {
+                Navigator.pop(context);
+                Modular.to.pushNamed(
+                  CoursesModule.construct(CoursesModule.myCourses),
+                );
+              },
             ),
             const _DrawerItem(
               icon: Icons.account_tree_outlined,
