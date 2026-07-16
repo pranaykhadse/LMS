@@ -80,15 +80,14 @@ class PaginationWidget extends StatelessWidget {
 
   static List<int> _pageNumbers(int current, int total) {
     if (total <= 7) return List.generate(total, (i) => i + 1);
+    // 5-page sliding window: always show first + window[current-2..current+2] + last
+    final left = (current - 2).clamp(2, (total - 5).clamp(2, total));
+    final right = (left + 4).clamp(left, total - 1);
     final result = <int>[1];
-    if (current > 3) result.add(-1);
-    for (int p = (current - 1).clamp(2, total - 1);
-        p <= (current + 1).clamp(2, total - 1);
-        p++) {
-      result.add(p);
-    }
-    if (current < total - 2) result.add(-1);
-    result.add(total);
+    if (left > 2) result.add(-1);
+    for (int p = left; p <= right; p++) result.add(p);
+    if (right < total - 1) result.add(-1);
+    if (result.last != total) result.add(total);
     return result;
   }
 }
