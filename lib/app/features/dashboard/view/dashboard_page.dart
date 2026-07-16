@@ -717,6 +717,23 @@ class _ErrorView extends StatelessWidget {
 class _DashboardDrawer extends ConsumerWidget {
   const _DashboardDrawer();
 
+  Future<void> _launchContactUrl(WidgetRef ref) async {
+    final user = ref.read(AuthStateNotifier.provider)?.user;
+    final email = Uri.encodeComponent(user?.email ?? '');
+    final authKey = Uri.encodeComponent(user?.authKey ?? '');
+    final uri = Uri.parse(
+      'https://login.leadershipedge.coach/backend/web/sign-in/oauth-login?email=$email&authkey=$authKey',
+    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _launchVirtualDev() async {
+    final uri = Uri.parse(
+      'https://staging.trainingpipeline.com/backend/web/chatgpt/virtual-development-pro/index',
+    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(AuthStateNotifier.provider);
@@ -868,6 +885,28 @@ class _DashboardDrawer extends ConsumerWidget {
                             Modular.to.pushNamed(
                               CoursesModule.construct(CoursesModule.badges),
                             );
+                          },
+                        ),
+                      ],
+                    ),
+                    _DrawerItem(
+                      icon: Icons.support_agent_outlined,
+                      label: 'Contact a Coach',
+                      children: [
+                        _SubItem(
+                          label: 'Contact a Development Pro',
+                          icon: Icons.person_outline_rounded,
+                          onTap: () {
+                            Navigator.pop(context);
+                            _launchContactUrl(ref);
+                          },
+                        ),
+                        _SubItem(
+                          label: 'Virtual Development Pro',
+                          icon: Icons.smart_toy_outlined,
+                          onTap: () {
+                            Navigator.pop(context);
+                            _launchVirtualDev();
                           },
                         ),
                       ],

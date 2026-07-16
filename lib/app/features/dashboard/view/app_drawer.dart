@@ -3,12 +3,30 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const _purple = Color(0xFF5756C9);
 const _muted = Color(0xFF7C879D);
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
+
+  Future<void> _launchContactUrl(BuildContext context, WidgetRef ref) async {
+    final user = ref.read(AuthStateNotifier.provider)?.user;
+    final email = Uri.encodeComponent(user?.email ?? '');
+    final authKey = Uri.encodeComponent(user?.authKey ?? '');
+    final uri = Uri.parse(
+      'https://login.leadershipedge.coach/backend/web/sign-in/oauth-login?email=$email&authkey=$authKey',
+    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  Future<void> _launchVirtualDev() async {
+    final uri = Uri.parse(
+      'https://staging.trainingpipeline.com/backend/web/chatgpt/virtual-development-pro/index',
+    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -169,6 +187,28 @@ class AppDrawer extends ConsumerWidget {
                             Modular.to.pushNamed(
                               CoursesModule.construct(CoursesModule.badges),
                             );
+                          },
+                        ),
+                      ],
+                    ),
+                    _DrawerItem(
+                      icon: Icons.support_agent_outlined,
+                      label: 'Contact a Coach',
+                      children: [
+                        _SubItem(
+                          label: 'Contact a Development Pro',
+                          icon: Icons.person_outline_rounded,
+                          onTap: () {
+                            Navigator.pop(context);
+                            _launchContactUrl(context, ref);
+                          },
+                        ),
+                        _SubItem(
+                          label: 'Virtual Development Pro',
+                          icon: Icons.smart_toy_outlined,
+                          onTap: () {
+                            Navigator.pop(context);
+                            _launchVirtualDev();
                           },
                         ),
                       ],
