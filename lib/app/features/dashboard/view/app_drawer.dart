@@ -111,9 +111,17 @@ class AppDrawer extends ConsumerWidget {
                             );
                           },
                         ),
-                        const _SubItem(
+                        _SubItem(
                           label: 'My Development Plan',
                           icon: Icons.timeline_outlined,
+                          onTap: () {
+                            Navigator.pop(context);
+                            Modular.to.pushNamed(
+                              CoursesModule.construct(
+                                CoursesModule.developmentPlan,
+                              ),
+                            );
+                          },
                         ),
                         const _SubItem(
                           label: 'My Required Courses',
