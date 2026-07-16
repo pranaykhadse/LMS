@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class CourseCatalogResponse {
   const CourseCatalogResponse({
     required this.skills,
@@ -88,7 +86,6 @@ class CatalogCourseGroup {
             'pages': json['pages'] ?? json['total_pages'] ?? json['last_page'],
             'per_page': json['per_page'],
           };
-    debugPrint('[CatalogGroup] id=${json['group_id']} pagination=$paginationMap');
     return CatalogCourseGroup(
       id: json['group_id']?.toString() ?? json['id']?.toString() ?? '',
       name: json['group_name']?.toString() ?? json['name']?.toString() ?? '',
