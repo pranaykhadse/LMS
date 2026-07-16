@@ -132,35 +132,51 @@ class _SearchBarState extends State<_SearchBar> {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: TextField(
-        controller: widget.controller,
-        textInputAction: TextInputAction.search,
-        onSubmitted: (_) => widget.onSearch(),
-        decoration: InputDecoration(
-          hintText: 'Search learning paths...',
-          hintStyle: const TextStyle(color: _muted, fontSize: 14),
-          prefixIcon: IconButton(
-            icon: const Icon(Icons.search_rounded, color: _muted, size: 22),
-            onPressed: widget.onSearch,
-            tooltip: 'Search',
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: widget.controller,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => widget.onSearch(),
+              decoration: InputDecoration(
+                hintText: 'Search learning paths...',
+                hintStyle: const TextStyle(color: _muted, fontSize: 14),
+                prefixIcon: const Icon(Icons.search_rounded, color: _muted, size: 22),
+                suffixIcon: _hasText
+                    ? IconButton(
+                        icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
+                        onPressed: () {
+                          widget.controller.clear();
+                          widget.onSearch();
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: _bg,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
           ),
-          suffixIcon: _hasText
-              ? IconButton(
-                  icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
-                  onPressed: () {
-                    widget.controller.clear();
-                    widget.onSearch();
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: _bg,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0),
-          border: OutlineInputBorder(
+          const SizedBox(width: 8),
+          Material(
+            color: _purple,
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide.none,
+            child: InkWell(
+              onTap: widget.onSearch,
+              borderRadius: BorderRadius.circular(10),
+              child: const SizedBox(
+                width: 44,
+                height: 44,
+                child: Icon(Icons.search_rounded, color: Colors.white, size: 22),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
