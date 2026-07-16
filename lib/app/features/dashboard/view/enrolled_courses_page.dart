@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/enrolled_courses_view_model.dart';
@@ -81,7 +82,11 @@ class _Body extends StatelessWidget {
                 ),
               ),
             ),
-            _PaginationBar(state: state, notifier: notifier),
+            PaginationWidget(
+              page: state.page,
+              pages: state.totalPages,
+              onPage: notifier.goToPage,
+            ),
           ],
         );
     }
@@ -271,123 +276,6 @@ class _ImgFallback extends StatelessWidget {
       color: const Color(0xFFF0ECFF),
       alignment: Alignment.center,
       child: const Icon(Icons.school_outlined, color: _purple, size: 54),
-    );
-  }
-}
-
-// ─── Pagination bar ───────────────────────────────────────────────────────────
-
-class _PaginationBar extends StatelessWidget {
-  const _PaginationBar({required this.state, required this.notifier});
-  final EnrolledState state;
-  final EnrolledCoursesViewModel notifier;
-
-  @override
-  Widget build(BuildContext context) {
-    final page = state.page;
-    final total = state.totalPages;
-
-    final pages = _pageNumbers(page, total);
-
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _PagBtn(
-            icon: Icons.chevron_left,
-            enabled: state.hasPrev,
-            onTap: notifier.prevPage,
-          ),
-          const SizedBox(width: 4),
-          ...pages.map((p) {
-            if (p == -1) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Text('...', style: TextStyle(color: _muted)),
-              );
-            }
-            final isCurrent = p == page;
-            return GestureDetector(
-              onTap: isCurrent ? null : () => notifier.goToPage(p),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isCurrent ? _purple : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  border: isCurrent
-                      ? null
-                      : Border.all(color: const Color(0xFFDDE2EA)),
-                ),
-                child: Text(
-                  '$p',
-                  style: TextStyle(
-                    color: isCurrent ? Colors.white : _ink,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            );
-          }),
-          const SizedBox(width: 4),
-          _PagBtn(
-            icon: Icons.chevron_right,
-            enabled: state.hasNext,
-            onTap: notifier.nextPage,
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<int> _pageNumbers(int current, int total) {
-    if (total <= 7) return List.generate(total, (i) => i + 1);
-    final pages = <int>[];
-    pages.add(1);
-    if (current > 3) pages.add(-1);
-    for (int p = (current - 1).clamp(2, total - 1);
-        p <= (current + 1).clamp(2, total - 1);
-        p++) {
-      pages.add(p);
-    }
-    if (current < total - 2) pages.add(-1);
-    pages.add(total);
-    return pages;
-  }
-}
-
-class _PagBtn extends StatelessWidget {
-  const _PagBtn({required this.icon, required this.enabled, required this.onTap});
-  final IconData icon;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: Container(
-        width: 34,
-        height: 34,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: enabled ? const Color(0xFFDDE2EA) : const Color(0xFFEEF1F6),
-          ),
-        ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: enabled ? _ink : _muted,
-        ),
-      ),
     );
   }
 }

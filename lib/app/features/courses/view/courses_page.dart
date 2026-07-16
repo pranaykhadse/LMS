@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/model/course_catalog.dart';
@@ -298,13 +299,12 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 42),
       sliver: SliverToBoxAdapter(
-        child: _CatalogPagination(
+        child: PaginationWidget(
           page: selectedPage,
           pages: group.pagination.pages,
-          onPage:
-              (page) => ref
-                  .read(CourseCatalogViewModel.provider.notifier)
-                  .changeGroupPage(group.id, page),
+          onPage: (page) => ref
+              .read(CourseCatalogViewModel.provider.notifier)
+              .changeGroupPage(group.id, page),
         ),
       ),
     );
@@ -1518,137 +1518,6 @@ class _NextSession extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CatalogPagination extends StatelessWidget {
-  const _CatalogPagination({
-    required this.page,
-    required this.pages,
-    required this.onPage,
-  });
-  final int page;
-  final int pages;
-  final ValueChanged<int> onPage;
-
-  @override
-  Widget build(BuildContext context) {
-    final visible =
-        <int>{
-            1,
-            page - 1,
-            page,
-            page + 1,
-            pages,
-          }.where((value) => value >= 1 && value <= pages).toList()
-          ..sort();
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        children: [
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _PageButton(
-                icon: Icons.chevron_left,
-                enabled: page > 1,
-                onTap: () => onPage(page - 1),
-              ),
-              for (var index = 0; index < visible.length; index++) ...[
-                if (index > 0 && visible[index] - visible[index - 1] > 1)
-                  const SizedBox(
-                    width: 34,
-                    height: 34,
-                    child: Center(child: Text('…')),
-                  ),
-                _PageButton(
-                  label: '${visible[index]}',
-                  selected: visible[index] == page,
-                  onTap: () => onPage(visible[index]),
-                ),
-              ],
-              _PageButton(
-                icon: Icons.chevron_right,
-                enabled: page < pages,
-                onTap: () => onPage(page + 1),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: 12,
-            height: 3,
-            decoration: BoxDecoration(
-              color: _catalogPurple,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'PAGE $page OF $pages',
-            style: const TextStyle(
-              color: Color(0xFFA0A9BC),
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              letterSpacing: .6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PageButton extends StatelessWidget {
-  const _PageButton({
-    this.label,
-    this.icon,
-    this.selected = false,
-    this.enabled = true,
-    required this.onTap,
-  });
-  final String? label;
-  final IconData? icon;
-  final bool selected;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(9),
-      child: Container(
-        width: 36,
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected ? _catalogPurple : const Color(0xFFF9FAFC),
-          border: selected ? null : Border.all(color: const Color(0xFFEDF0F5)),
-          borderRadius: BorderRadius.circular(9),
-        ),
-        child:
-            icon != null
-                ? Icon(
-                  icon,
-                  size: 19,
-                  color: enabled ? _catalogPurple : const Color(0xFFCBD1DC),
-                )
-                : Text(
-                  label!,
-                  style: TextStyle(
-                    color: selected ? Colors.white : _catalogInk,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
       ),
     );
   }
