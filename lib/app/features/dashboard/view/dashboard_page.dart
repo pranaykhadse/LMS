@@ -86,7 +86,7 @@ class _DashboardAppBar extends ConsumerWidget {
         ),
       ),
       actions: [
-        _IconBtn(icon: Icons.notifications_rounded, onTap: () {}, boxed: false),
+        _IconBtn(icon: Icons.notifications_rounded, onTap: () => _showNotifications(context), boxed: false),
         const SizedBox(width: 10),
         PopupMenuButton<String>(
           offset: const Offset(0, 54),
@@ -1084,4 +1084,86 @@ class _IconBtn extends StatelessWidget {
       ),
     );
   }
+}
+
+// ─── Notifications dialog ─────────────────────────────────────────────────────
+
+void _showNotifications(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    barrierColor: Colors.black26,
+    builder: (context) => Dialog(
+      alignment: Alignment.topCenter,
+      insetPadding: const EdgeInsets.fromLTRB(16, 76, 16, 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 430),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(18),
+              child: Row(
+                children: [
+                  Text(
+                    'Notifications',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: _ink,
+                    ),
+                  ),
+                  Spacer(),
+                  Text(
+                    'Mark all as read',
+                    style: TextStyle(
+                      color: _purple,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            const SizedBox(height: 42),
+            const CircleAvatar(
+              backgroundColor: Color(0xFF24C56B),
+              child: Icon(Icons.check, color: Colors.white, size: 27),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              "You're all caught up",
+              style: TextStyle(
+                color: Color(0xFF9AA8C0),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 40),
+            InkWell(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFAFBFD),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(18),
+                  ),
+                ),
+                child: const Center(
+                  child: Text(
+                    'View All Notifications',
+                    style: TextStyle(
+                      color: _purple,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
