@@ -12,6 +12,7 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
+import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
 import 'package:lms/app_module.dart';
 
 const _catalogPurple = Color(0xFF5756C9);
@@ -1197,6 +1198,8 @@ class _CourseCardData {
     required this.nextSession,
     required this.nextSessionLabel,
     required this.offlineCourse,
+    this.inDevelopmentPlan = false,
+    this.planId,
   });
 
   final int id;
@@ -1206,6 +1209,8 @@ class _CourseCardData {
   final DateTime? nextSession;
   final String? nextSessionLabel;
   final Course offlineCourse;
+  final bool inDevelopmentPlan;
+  final int? planId;
 
   factory _CourseCardData.fromCatalog(CatalogCourse course) {
     return _CourseCardData(
@@ -1215,6 +1220,8 @@ class _CourseCardData {
       progress: course.progress,
       nextSession: course.nextSession,
       nextSessionLabel: course.nextSessionLabel,
+      inDevelopmentPlan: course.inDevelopmentPlan,
+      planId: course.planId,
       offlineCourse: Course(
         id: course.id,
         name: course.name,
@@ -1239,21 +1246,85 @@ class _CourseCardData {
   }
 }
 
-class _CatalogCourseCard extends ConsumerWidget {
+class _CatalogCourseCard extends ConsumerStatefulWidget {
   const _CatalogCourseCard({required this.course});
   final _CourseCardData course;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_CatalogCourseCard> createState() => _CatalogCourseCardState();
+}
+
+class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
+  bool _showOverlay = false;
+  late bool _isInPlan;
+  late int? _planId;
+  bool _isBusy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isInPlan = widget.course.inDevelopmentPlan;
+    _planId = widget.course.planId;
+  }
+
+  Future<void> _handleDevPlanAction(BuildContext context) async {
+    final auth = ref.read(AuthStateNotifier.provider);
+    final userId = auth?.user?.id;
+    if (userId == null) return;
+
+    setState(() => _isBusy = true);
+    final repo = ref.read(DevelopmentPlanActionRepository.provider);
+
+    DevPlanActionResult result;
+    if (_isInPlan) {
+      result = await repo.removeFromDevPlan(
+        userId: userId,
+        courseId: widget.course.id,
+        planId: _planId,
+      );
+    } else {
+      result = await repo.addToDevPlan(
+        userId: userId,
+        courseId: widget.course.id,
+      );
+    }
+
+    if (!mounted) return;
+    if (result.success) {
+      setState(() {
+        _isInPlan = !_isInPlan;
+        if (!_isInPlan) {
+          _planId = null;
+        } else {
+          _planId = result.planId ?? _planId;
+        }
+        _showOverlay = false;
+        _isBusy = false;
+      });
+    } else {
+      setState(() {
+        _isBusy = false;
+        _showOverlay = false;
+      });
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message ?? 'Action failed. Please try again.')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final offlineVM = ref.watch(OfflineViewModel.provider);
     final isManualOffline = ref.watch(OfflineModeNotifier.provider);
     final connectionVM = ref.watch(InternetConnectionProvider.provider);
     ref.watch(SyncViewModel.provider);
 
     final isOnline = !isManualOffline && connectionVM.isConnected;
-    final isSavedOffline = offlineVM.isAvailable(course.offlineCourse);
-    final isDownloading = offlineVM.isDownloading(course.offlineCourse);
-    final progress = offlineVM.downloadProgress(course.offlineCourse);
+    final isSavedOffline = offlineVM.isAvailable(widget.course.offlineCourse);
+    final isDownloading = offlineVM.isDownloading(widget.course.offlineCourse);
+    final progress = offlineVM.downloadProgress(widget.course.offlineCourse);
     final isWide = MediaQuery.sizeOf(context).width >= 760;
 
     return Container(
@@ -1278,7 +1349,7 @@ class _CatalogCourseCard extends ConsumerWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                _CourseImage(url: course.logo),
+                _CourseImage(url: widget.course.logo),
                 Positioned(
                   top: 12,
                   right: 12,
@@ -1287,11 +1358,25 @@ class _CatalogCourseCard extends ConsumerWidget {
                     isSavedOffline: isSavedOffline,
                     isDownloading: isDownloading,
                     progress: progress,
-                    onSave: () => offlineVM.download(course.offlineCourse),
-                    onRemove:
-                        () => offlineVM.removeOffline(course.offlineCourse),
+                    onSave: () => offlineVM.download(widget.course.offlineCourse),
+                    onRemove: () => offlineVM.removeOffline(widget.course.offlineCourse),
                   ),
                 ),
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: _DevPlanButton(
+                    isInPlan: _isInPlan,
+                    onTap: () => setState(() => _showOverlay = true),
+                  ),
+                ),
+                if (_showOverlay)
+                  _DevPlanOverlay(
+                    isInPlan: _isInPlan,
+                    isBusy: _isBusy,
+                    onYes: () => _handleDevPlanAction(context),
+                    onNo: () => setState(() => _showOverlay = false),
+                  ),
               ],
             ),
           ),
@@ -1301,18 +1386,18 @@ class _CatalogCourseCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (course.nextSessionLabel != null) ...[
+                  if (widget.course.nextSessionLabel != null) ...[
                     _NextSession(
-                      date: course.nextSession,
-                      label: course.nextSessionLabel!,
+                      date: widget.course.nextSession,
+                      label: widget.course.nextSessionLabel!,
                     ),
                     const SizedBox(height: 8),
                   ],
                   Text(
-                    course.name.isEmpty ? 'Untitled Course' : course.name,
+                    widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: _catalogInk,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -1323,13 +1408,12 @@ class _CatalogCourseCard extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed:
-                          () => Modular.to.pushNamed(
-                            CoursesModule.construct(
-                              '${CoursesModule.detail}/${course.id}',
-                            ),
-                            arguments: course.offlineCourse,
-                          ),
+                      onPressed: () => Modular.to.pushNamed(
+                        CoursesModule.construct(
+                          '${CoursesModule.detail}/${widget.course.id}',
+                        ),
+                        arguments: widget.course.offlineCourse,
+                      ),
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size.fromHeight(isWide ? 38 : 42),
                         backgroundColor: _catalogPurple,
@@ -1339,7 +1423,7 @@ class _CatalogCourseCard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(isWide ? 7 : 10),
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'View Course',
                         style: TextStyle(fontWeight: FontWeight.w700),
                       ),
@@ -1350,6 +1434,131 @@ class _CatalogCourseCard extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DevPlanButton extends StatelessWidget {
+  const _DevPlanButton({required this.isInPlan, required this.onTap});
+  final bool isInPlan;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: isInPlan ? 'Remove from Development Plan' : 'Add to Development Plan',
+      child: Material(
+        color: Colors.white,
+        elevation: 5,
+        shape: const CircleBorder(),
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: Padding(
+            padding: const EdgeInsets.all(7),
+            child: Icon(
+              isInPlan ? Icons.remove_rounded : Icons.add_rounded,
+              size: 21,
+              color: isInPlan ? const Color(0xFFB0006D) : _catalogPurple,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DevPlanOverlay extends StatelessWidget {
+  const _DevPlanOverlay({
+    required this.isInPlan,
+    required this.isBusy,
+    required this.onYes,
+    required this.onNo,
+  });
+  final bool isInPlan;
+  final bool isBusy;
+  final VoidCallback onYes;
+  final VoidCallback onNo;
+
+  @override
+  Widget build(BuildContext context) {
+    final action = isInPlan ? 'Remove' : 'Add';
+    final prep = isInPlan ? 'from' : 'to';
+    return Container(
+      color: const Color(0xCC172033),
+      alignment: Alignment.center,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              '$action this course $prep your development plan?',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (isBusy)
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.4,
+                  color: Colors.white,
+                ),
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _OverlayBtn(label: 'YES', onTap: onYes, filled: true),
+                  const SizedBox(width: 10),
+                  _OverlayBtn(label: 'NO', onTap: onNo, filled: false),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OverlayBtn extends StatelessWidget {
+  const _OverlayBtn({
+    required this.label,
+    required this.onTap,
+    required this.filled,
+  });
+  final String label;
+  final VoidCallback onTap;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 7),
+        decoration: BoxDecoration(
+          color: filled ? _catalogPurple : Colors.transparent,
+          border: Border.all(color: Colors.white, width: 1.4),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+          ),
+        ),
       ),
     );
   }

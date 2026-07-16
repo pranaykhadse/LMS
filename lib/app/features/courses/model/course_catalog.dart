@@ -156,6 +156,8 @@ class CatalogCourse {
     required this.displayRating,
     required this.averageRating,
     required this.ratingCount,
+    this.inDevelopmentPlan = false,
+    this.planId,
   });
 
   final int id;
@@ -167,6 +169,8 @@ class CatalogCourse {
   final bool displayRating;
   final double averageRating;
   final int ratingCount;
+  final bool inDevelopmentPlan;
+  final int? planId;
 
   factory CatalogCourse.fromJson(Map<String, dynamic> json) {
     final course = _courseMap(json);
@@ -240,6 +244,26 @@ class CatalogCourse {
       ),
       ratingCount: _asInt(
         _firstValue(json, course, const ['rating_count', 'ratingCount']),
+      ),
+      inDevelopmentPlan:
+          _firstValue(json, course, const [
+                'in_development_plan',
+                'inDevelopmentPlan',
+                'in_dev_plan',
+              ]) ==
+              true ||
+          _firstValue(json, course, const [
+                'in_development_plan',
+                'inDevelopmentPlan',
+                'in_dev_plan',
+              ])?.toString() ==
+              '1',
+      planId: _asIntOrNull(
+        _firstValue(json, course, const [
+          'plan_id',
+          'planId',
+          'development_plan_id',
+        ]),
       ),
     );
   }
@@ -315,6 +339,13 @@ int _asInt(dynamic value, {int fallback = 0}) {
   if (value is int) return value;
   if (value is num) return value.toInt();
   return int.tryParse(value?.toString() ?? '') ?? fallback;
+}
+
+int? _asIntOrNull(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value.toString());
 }
 
 double _asDouble(dynamic value) {
