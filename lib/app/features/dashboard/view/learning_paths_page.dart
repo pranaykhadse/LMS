@@ -115,7 +115,11 @@ class _SearchBar extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Search learning paths...',
           hintStyle: const TextStyle(color: _muted, fontSize: 14),
-          prefixIcon: const Icon(Icons.search_rounded, color: _muted, size: 22),
+          prefixIcon: IconButton(
+            icon: const Icon(Icons.search_rounded, color: _muted, size: 22),
+            onPressed: onSearch,
+            tooltip: 'Search',
+          ),
           suffixIcon: IconButton(
             icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
             onPressed: () {
