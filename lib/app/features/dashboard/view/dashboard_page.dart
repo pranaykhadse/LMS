@@ -846,7 +846,7 @@ class _DashboardDrawer extends ConsumerWidget {
                         );
                       },
                     ),
-                    const _DrawerItem(
+                    _DrawerItem(
                       icon: Icons.workspace_premium_outlined,
                       label: 'Points & Badges',
                       children: [

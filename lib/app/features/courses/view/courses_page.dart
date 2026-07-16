@@ -487,9 +487,9 @@ class _HeaderNavBar extends StatelessWidget implements PreferredSizeWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: const [
-            _NavItem(icon: Icons.menu_book_outlined, label: 'Course Catalog'),
-            _NavItem(
+          children: [
+            const _NavItem(icon: Icons.menu_book_outlined, label: 'Course Catalog'),
+            const _NavItem(
               icon: Icons.library_books_outlined,
               label: 'My Courses',
               menu: true,
@@ -501,12 +501,12 @@ class _HeaderNavBar extends StatelessWidget implements PreferredSizeWidget {
                 CoursesModule.construct(CoursesModule.learningPaths),
               ),
             ),
-            _NavItem(
+            const _NavItem(
               icon: Icons.workspace_premium_outlined,
               label: 'Points & Badges',
               menu: true,
             ),
-            _NavItem(
+            const _NavItem(
               icon: Icons.support_agent_outlined,
               label: 'Contact a Coach',
               menu: true,
@@ -1660,7 +1660,7 @@ class _CatalogDrawer extends ConsumerWidget {
                         );
                       },
                     ),
-                    const _DrawerItem(
+                    _DrawerItem(
                       icon: Icons.workspace_premium_outlined,
                       label: 'Points & Badges',
                       children: [
