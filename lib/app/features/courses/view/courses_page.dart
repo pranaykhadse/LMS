@@ -382,30 +382,31 @@ class _CatalogAppBar extends ConsumerWidget {
       elevation: 2,
       centerTitle: false,
       titleSpacing: 0,
-      leadingWidth: isWide ? 0 : 68,
+      leadingWidth: isWide ? 0 : (canPop ? 106 : 68),
       leading:
           isWide
               ? null
-              : canPop
-              ? Padding(
-                padding: const EdgeInsets.only(left: 14),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: _TopIconButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: () => Navigator.pop(context),
-                  ),
-                ),
-              )
               : Builder(
                 builder:
                     (ctx) => Padding(
                       padding: const EdgeInsets.only(left: 14),
                       child: Align(
                         alignment: Alignment.centerLeft,
-                        child: _TopIconButton(
-                          icon: Icons.menu_rounded,
-                          onTap: () => Scaffold.of(ctx).openDrawer(),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (canPop) ...[
+                              _TopIconButton(
+                                icon: Icons.arrow_back_ios_new_rounded,
+                                onTap: () => Navigator.pop(context),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            _TopIconButton(
+                              icon: Icons.menu_rounded,
+                              onTap: () => Scaffold.of(ctx).openDrawer(),
+                            ),
+                          ],
                         ),
                       ),
                     ),

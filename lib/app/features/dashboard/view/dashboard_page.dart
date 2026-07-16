@@ -51,21 +51,34 @@ class _DashboardAppBar extends StatelessWidget {
         photoBase.isNotEmpty && photoPath.isNotEmpty
             ? '$photoBase$photoPath'
             : '';
+    final canPop = Navigator.canPop(context);
     return AppBar(
       backgroundColor: _purple,
       foregroundColor: Colors.white,
       elevation: 2,
       centerTitle: true,
-      leadingWidth: 68,
+      leadingWidth: canPop ? 106 : 68,
       leading: Builder(
         builder:
-            (context) => Padding(
+            (ctx) => Padding(
               padding: const EdgeInsets.only(left: 14),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: _IconBtn(
-                  icon: Icons.menu_rounded,
-                  onTap: () => Scaffold.of(context).openDrawer(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (canPop) ...[
+                      _IconBtn(
+                        icon: Icons.arrow_back_ios_new_rounded,
+                        onTap: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    _IconBtn(
+                      icon: Icons.menu_rounded,
+                      onTap: () => Scaffold.of(ctx).openDrawer(),
+                    ),
+                  ],
                 ),
               ),
             ),
