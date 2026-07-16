@@ -217,6 +217,15 @@ class _PathCard extends StatelessWidget {
   const _PathCard({required this.path});
   final LearningPath path;
 
+  void _showDetail(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _LearningPathDetailSheet(path: path),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -233,71 +242,367 @@ class _PathCard extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Row(
-        children: [
-          _Thumbnail(logoUrl: path.thumbnail),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showDetail(context),
+          child: Row(
+            children: [
+              _Thumbnail(logoUrl: path.thumbnail),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        path.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: _ink,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEEEDFF),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.menu_book_outlined,
+                                  color: _purple,
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${path.totalCourses} ${path.totalCourses == 1 ? 'course' : 'courses'}',
+                                  style: const TextStyle(
+                                    color: _purple,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(right: 16),
+                child: Icon(Icons.chevron_right_rounded, color: _muted, size: 22),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Learning path detail sheet ───────────────────────────────────────────────
+
+class _LearningPathDetailSheet extends StatelessWidget {
+  const _LearningPathDetailSheet({required this.path});
+  final LearningPath path;
+
+  @override
+  Widget build(BuildContext context) {
+    final competencies = path.competencies;
+    return DraggableScrollableSheet(
+      initialChildSize: 0.65,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      builder: (ctx, scrollCtrl) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 10, bottom: 6),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDDE1EA),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     path.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: _ink,
+                      fontSize: 17,
                       fontWeight: FontWeight.w800,
-                      fontSize: 14,
                       height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
+                  if (path.groupName.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.group_outlined, color: _muted, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          path.groupName,
+                          style: const TextStyle(
+                            color: _muted,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEEEDFF),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.menu_book_outlined,
-                              color: _purple,
-                              size: 12,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${path.totalCourses} ${path.totalCourses == 1 ? 'course' : 'courses'}',
-                              style: const TextStyle(
-                                color: _purple,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                ],
+              ),
+            ),
+            // Table header
+            Container(
+              color: const Color(0xFFF5F7FC),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+              child: const Row(
+                children: [
+                  Expanded(
+                    flex: 4,
+                    child: Text(
+                      'Competency',
+                      style: TextStyle(
+                        color: _muted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
                       ),
-                    ],
+                    ),
+                  ),
+                  Expanded(
+                    flex: 5,
+                    child: Text(
+                      'Courses',
+                      style: TextStyle(
+                        color: _muted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 48,
+                    child: Text(
+                      'Type',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _muted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
+            const Divider(height: 1),
+            // Rows
+            Expanded(
+              child: competencies.isEmpty
+                  ? _NoCompetencies(courses: path.courses.map((c) => c.name).toList())
+                  : ListView.separated(
+                      controller: scrollCtrl,
+                      padding: const EdgeInsets.only(bottom: 32),
+                      itemCount: competencies.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (_, i) => _CompetencyRow(competency: competencies[i]),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CompetencyRow extends StatelessWidget {
+  const _CompetencyRow({required this.competency});
+  final LearningPathCompetency competency;
+
+  @override
+  Widget build(BuildContext context) {
+    final courses = competency.courseNames;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(
+              competency.name,
+              style: const TextStyle(
+                color: _ink,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
+            ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.chevron_right_rounded, color: _muted, size: 22),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: courses.isEmpty
+                  ? [const Text('—', style: TextStyle(color: _muted, fontSize: 13))]
+                  : courses
+                      .map((name) => Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 5),
+                                  child: CircleAvatar(
+                                    radius: 2.5,
+                                    backgroundColor: _muted,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: const TextStyle(
+                                      color: _ink,
+                                      fontSize: 12,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ))
+                      .toList(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 40,
+            child: competency.competencyType.isEmpty
+                ? const SizedBox()
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: competency.competencyType.toUpperCase() == 'OR'
+                          ? const Color(0xFFE8F5E9)
+                          : const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      competency.competencyType.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: competency.competencyType.toUpperCase() == 'OR'
+                            ? const Color(0xFF2E7D32)
+                            : const Color(0xFF1565C0),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NoCompetencies extends StatelessWidget {
+  const _NoCompetencies({required this.courses});
+  final List<String> courses;
+
+  @override
+  Widget build(BuildContext context) {
+    if (courses.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Text(
+            'No competency details available.',
+            style: TextStyle(color: _muted, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      children: [
+        const Text(
+          'Courses in this path:',
+          style: TextStyle(
+            color: _muted,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: 10),
+        ...courses.map(
+          (name) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 5),
+                  child: CircleAvatar(radius: 3, backgroundColor: _purple),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    name,
+                    style: const TextStyle(
+                      color: _ink,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
