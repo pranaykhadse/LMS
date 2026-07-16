@@ -1600,9 +1600,17 @@ class _CatalogDrawer extends ConsumerWidget {
                             );
                           },
                         ),
-                        const _SubItem(
+                        _SubItem(
                           label: 'My Completed Courses',
                           icon: Icons.task_alt,
+                          onTap: () {
+                            Navigator.pop(context);
+                            Modular.to.pushNamed(
+                              CoursesModule.construct(
+                                CoursesModule.completedCourses,
+                              ),
+                            );
+                          },
                         ),
                         const _SubItem(
                           label: 'My Development Plan',
