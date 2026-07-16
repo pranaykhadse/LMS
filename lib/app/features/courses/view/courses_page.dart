@@ -1317,15 +1317,11 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
 
   @override
   Widget build(BuildContext context) {
-    final offlineVM = ref.watch(OfflineViewModel.provider);
-    final isManualOffline = ref.watch(OfflineModeNotifier.provider);
-    final connectionVM = ref.watch(InternetConnectionProvider.provider);
+    ref.watch(OfflineViewModel.provider);
+    ref.watch(OfflineModeNotifier.provider);
+    ref.watch(InternetConnectionProvider.provider);
     ref.watch(SyncViewModel.provider);
 
-    final isOnline = !isManualOffline && connectionVM.isConnected;
-    final isSavedOffline = offlineVM.isAvailable(widget.course.offlineCourse);
-    final isDownloading = offlineVM.isDownloading(widget.course.offlineCourse);
-    final progress = offlineVM.downloadProgress(widget.course.offlineCourse);
     final isWide = MediaQuery.sizeOf(context).width >= 760;
 
     return Container(
@@ -1358,18 +1354,6 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                     Positioned(
                       top: 12,
                       right: 12,
-                      child: _OfflineCourseAction(
-                        isOnline: isOnline,
-                        isSavedOffline: isSavedOffline,
-                        isDownloading: isDownloading,
-                        progress: progress,
-                        onSave: () => offlineVM.download(widget.course.offlineCourse),
-                        onRemove: () => offlineVM.removeOffline(widget.course.offlineCourse),
-                      ),
-                    ),
-                    Positioned(
-                      top: 12,
-                      left: 12,
                       child: _DevPlanButton(
                         isInPlan: _isInPlan,
                         onTap: () => setState(() => _showOverlay = true),
