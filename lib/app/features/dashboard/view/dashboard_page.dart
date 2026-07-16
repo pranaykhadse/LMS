@@ -824,9 +824,15 @@ class _DashboardDrawer extends ConsumerWidget {
                             );
                           },
                         ),
-                        const _SubItem(
+                        _SubItem(
                           label: 'My Required Courses',
                           icon: Icons.assignment_outlined,
+                          onTap: () {
+                            Navigator.pop(context);
+                            Modular.to.pushNamed(
+                              CoursesModule.construct(CoursesModule.requiredCourses),
+                            );
+                          },
                         ),
                       ],
                     ),
