@@ -15,12 +15,10 @@ class ServerProvider {
     return _envUrl.isNotEmpty ? _envUrl : _defaultUrl;
   });
 
-  static final repoConfigProvider = StateProvider<RepoNetworkConfig>((ref) {
+  static final repoConfigProvider = Provider<RepoNetworkConfig>((ref) {
     return RepoNetworkConfig(
       url: ref.watch(serverUrl),
       authToken: ref.watch(AuthStateNotifier.provider)?.token,
-      // timezone:
-      //     ref.watch(AuthStateNotifier.provider)?.sessionData?.timezoneHeader,
       connectionProvider: ref.watch(InternetConnectionProvider.provider),
       requestCacheProvider: ref.watch(RequestCacheProvider.provider),
     );
