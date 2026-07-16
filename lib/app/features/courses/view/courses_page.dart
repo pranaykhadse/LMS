@@ -701,11 +701,6 @@ class _FilterPanel extends StatelessWidget {
                       hint: 'Search',
                       showClear: true,
                     ),
-                    const _CatalogField(
-                      hint: 'Strategic Initiative',
-                      enabled: false,
-                    ),
-                    const _CatalogField(hint: 'Competencies', enabled: false),
                     _SkillDropdown(
                       skills: skills,
                       value: selectedSkillId,
@@ -726,11 +721,7 @@ class _FilterPanel extends StatelessWidget {
                             children: [
                               SizedBox(width: 230, child: fields[0]),
                               const SizedBox(width: 12),
-                              SizedBox(width: 230, child: fields[1]),
-                              const SizedBox(width: 12),
-                              SizedBox(width: 230, child: fields[2]),
-                              const SizedBox(width: 12),
-                              SizedBox(width: 240, child: fields[3]),
+                              SizedBox(width: 240, child: fields[1]),
                               const SizedBox(width: 12),
                               SizedBox(
                                 width: 56,
