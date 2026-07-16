@@ -851,6 +851,16 @@ class _DashboardDrawer extends ConsumerWidget {
                       label: 'Points & Badges',
                       children: [
                         _SubItem(
+                          label: 'Redeem your Points',
+                          icon: Icons.redeem_outlined,
+                          onTap: () {
+                            Navigator.pop(context);
+                            Modular.to.pushNamed(
+                              CoursesModule.construct(CoursesModule.redeemPoints),
+                            );
+                          },
+                        ),
+                        _SubItem(
                           label: 'Badges',
                           icon: Icons.military_tech_outlined,
                           onTap: () {

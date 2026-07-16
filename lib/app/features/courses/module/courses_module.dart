@@ -5,6 +5,7 @@ import 'package:lms/app/features/dashboard/view/completed_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/development_plan_page.dart';
 import 'package:lms/app/features/dashboard/view/enrolled_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/badges_page.dart';
+import 'package:lms/app/features/dashboard/view/item_inventory_page.dart';
 import 'package:lms/app/features/dashboard/view/learning_paths_page.dart';
 import 'package:lms/app/features/dashboard/view/required_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
@@ -24,6 +25,7 @@ class CoursesModule extends Module {
   static const requiredCourses = "/required-courses";
   static const learningPaths = "/learning-paths";
   static const badges = "/badges";
+  static const redeemPoints = "/redeem-points";
 
   static String construct(String path) {
     return AppModule.home + path;
@@ -42,6 +44,7 @@ class CoursesModule extends Module {
     r.child(requiredCourses, child: (context) => const AuthGate(child: RequiredCoursesPage()));
     r.child(learningPaths, child: (context) => const AuthGate(child: LearningPathsPage()));
     r.child(badges, child: (context) => const AuthGate(child: BadgesPage()));
+    r.child(redeemPoints, child: (context) => const AuthGate(child: ItemInventoryPage()));
     r.child("/", child: (context) => const AuthGate(child: CoursesPage()));
     r.child(
       "$detail/:id",
