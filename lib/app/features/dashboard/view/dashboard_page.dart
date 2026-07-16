@@ -464,133 +464,120 @@ class _ResourceCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
+          BoxShadow(color: Color(0x0A000000), blurRadius: 16, offset: Offset(0, 6)),
         ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image with RESOURCE badge
           Stack(
-              children: [
-                SizedBox(
-                  height: 130,
-                  width: double.infinity,
-                  child:
-                      resource.logo != null
-                          ? Image.network(
-                            resource.logo!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const _ImgFallback(),
-                          )
-                          : const _ImgFallback(),
-                ),
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black54,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'RESOURCE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: .8,
-                      ),
+            children: [
+              SizedBox(
+                height: 110,
+                width: double.infinity,
+                child: resource.logo != null
+                    ? Image.network(
+                        resource.logo!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const _ImgFallback(),
+                      )
+                    : const _ImgFallback(),
+              ),
+              Positioned(
+                top: 8,
+                left: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'RESOURCE',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: .8,
                     ),
                   ),
                 ),
-              ],
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              ),
+            ],
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    resource.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: _ink,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (resource.subtitle?.isNotEmpty == true) ...[
+                    const SizedBox(height: 3),
                     Text(
-                      resource.name,
+                      resource.subtitle!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _ink,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
-                    if (resource.subtitle?.isNotEmpty == true) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        resource.subtitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: _muted, fontSize: 12),
-                      ),
-                    ],
-                    const Spacer(),
-                    SizedBox(
-                      width: double.infinity,
-                      child:
-                          hasAction
-                              ? OutlinedButton(
-                                onPressed: () {
-                                  if (resource.actionType == 'link' &&
-                                      resource.actionUrl != null) {
-                                    _openLink(resource.actionUrl!);
-                                  }
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: _purple,
-                                  side: const BorderSide(color: _purple),
-                                  minimumSize: const Size.fromHeight(36),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                child: Text(label),
-                              )
-                              : OutlinedButton(
-                                onPressed: null,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: _muted,
-                                  side: const BorderSide(
-                                    color: Color(0xFFDDE2EA),
-                                  ),
-                                  minimumSize: const Size.fromHeight(36),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                                child: Text(label),
-                              ),
+                      style: const TextStyle(color: _muted, fontSize: 11),
                     ),
                   ],
-                ),
+                  const Spacer(),
+                  SizedBox(
+                    width: double.infinity,
+                    child: hasAction
+                        ? OutlinedButton(
+                            onPressed: () {
+                              if (resource.actionType == 'link' &&
+                                  resource.actionUrl != null) {
+                                _openLink(resource.actionUrl!);
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _purple,
+                              side: const BorderSide(color: _purple),
+                              minimumSize: const Size.fromHeight(32),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                            child: Text(label),
+                          )
+                        : OutlinedButton(
+                            onPressed: null,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: _muted,
+                              side: const BorderSide(color: Color(0xFFDDE2EA)),
+                              minimumSize: const Size.fromHeight(32),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              textStyle: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                            child: Text(label),
+                          ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
