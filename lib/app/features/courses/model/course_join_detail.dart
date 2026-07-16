@@ -142,6 +142,8 @@ class CourseStructureItem {
     required this.status,
     required this.actionLabel,
     required this.icon,
+    required this.showDetails,
+    required this.showAction,
   });
 
   final String title;
@@ -150,6 +152,8 @@ class CourseStructureItem {
   final String status;
   final String actionLabel;
   final CourseStructureIcon icon;
+  final bool showDetails;
+  final bool showAction;
 
   factory CourseStructureItem.fromJson(Map<String, dynamic> json) {
     final classMap =
@@ -158,6 +162,12 @@ class CourseStructureItem {
             : json['class_info'] is Map
             ? Map<String, dynamic>.from(json['class_info'])
             : json;
+    final typeCode =
+        _firstValue(json, classMap, const [
+          'type',
+          'class_type',
+          'classType',
+        ])?.toString();
     final type =
         _clean(
           _firstValue(json, classMap, const [
@@ -169,13 +179,19 @@ class CourseStructureItem {
             'typeLabel',
           ]),
         ) ??
-        _typeDisplayName(
+        _typeDisplayName(typeCode);
+    final actionLabel =
+        _clean(
           _firstValue(json, classMap, const [
-            'type',
-            'class_type',
-            'classType',
-          ])?.toString(),
-        );
+            'button_text',
+            'buttonText',
+            'action_label',
+            'actionLabel',
+            'launch_button',
+            'launchButton',
+          ]),
+        ) ??
+        _typeActionLabel(typeCode);
     return CourseStructureItem(
       title:
           _clean(
@@ -211,24 +227,29 @@ class CourseStructureItem {
             ]),
           ) ??
           '',
-      actionLabel:
-          _clean(
-            _firstValue(json, classMap, const [
-              'button_text',
-              'buttonText',
-              'action_label',
-              'actionLabel',
-              'launch_button',
-              'launchButton',
-            ]),
-          ) ??
-          _defaultAction(type),
-      icon: _structureIcon(type),
+      actionLabel: actionLabel,
+      icon: _structureIcon(typeCode),
+      showDetails: _typeShowDetails(typeCode),
+      showAction: actionLabel.isNotEmpty,
     );
   }
 }
 
-enum CourseStructureIcon { video, article, details }
+enum CourseStructureIcon {
+  register,
+  video,
+  article,
+  webpage,
+  discussionBoard,
+  tasks,
+  coaches,
+  insights,
+  certification,
+  discussionGuru,
+  link,
+  agreement,
+  details,
+}
 
 Map<String, dynamic> _payloadMap(Map<String, dynamic> json) {
   final payload = json['payload'] ?? json['data'] ?? json['course'];
@@ -531,29 +552,85 @@ bool _asBool(dynamic value) {
 
 String _typeDisplayName(String? typeCode) {
   switch (typeCode) {
-    case '4':
-      return 'Watch Video';
-    case '5':
-      return 'Read Article';
-    case '6':
-      return 'Read Webpage';
+    case '1':  return 'eLearning Module';
+    case '2':  return 'In Person';
+    case '3':  return 'Virtual Class';
+    case '4':  return 'Watch Video';
+    case '5':  return 'Read Article';
+    case '6':  return 'Read Webpage';
+    case '7':  return 'Discussion Board';
+    case '8':  return 'Perform Task With Observation';
+    case '9':  return 'Perform Task Without Observation';
+    case '10': return 'Receive Coaching';
+    case '11': return 'Insight Report';
+    case '12': return 'Certificate';
+    case '13': return 'LinkedIn Certification';
+    case '14': return 'Discussion Guru';
+    case '15': return 'Peer Coaching';
+    case '17': return 'OnePage Pro';
+    case '18': return 'Custom Prompt';
+    case '19': return 'Agreement';
+    case '20': return 'Test Out Assessment';
+    case '22': return 'Text Message';
+    case '23': return 'Web Application';
+    default:   return '';
+  }
+}
+
+String _typeActionLabel(String? typeCode) {
+  switch (typeCode) {
+    case '1':
+    case '2':
+    case '3':  return 'Register';
+    case '4':  return 'Video';
+    case '5':  return 'Article';
+    case '6':  return 'Webpage';
+    case '7':  return 'Discussion Board';
+    case '8':
+    case '9':  return 'Tasks';
+    case '10': return 'Coaches';
+    case '11': return 'Insights';
+    case '13': return 'Certification';
+    case '14': return 'Discussion Guru';
+    case '17': return 'OnePage Pro';
+    case '18': return 'Bridgework Link';
+    case '19': return 'Agreement';
+    case '23': return 'Launch Web Application';
+    default:   return '';
+  }
+}
+
+bool _typeShowDetails(String? typeCode) {
+  switch (typeCode) {
+    case '12': // Certificate - no buttons
+    case '14': // Discussion Guru - action only
+    case '17': // OnePage Pro - action only
+    case '23': // Web Application - action only
+      return false;
     default:
-      return '';
+      return true;
   }
 }
 
-String _defaultAction(String type) {
-  final value = type.toLowerCase();
-  if (value.contains('video')) return 'Video';
-  if (value.contains('article')) return 'Online Article';
-  return 'Details';
-}
-
-CourseStructureIcon _structureIcon(String type) {
-  final value = type.toLowerCase();
-  if (value.contains('video')) return CourseStructureIcon.video;
-  if (value.contains('article') || value.contains('webpage')) {
-    return CourseStructureIcon.article;
+CourseStructureIcon _structureIcon(String? typeCode) {
+  switch (typeCode) {
+    case '1':
+    case '2':
+    case '3':  return CourseStructureIcon.register;
+    case '4':  return CourseStructureIcon.video;
+    case '5':  return CourseStructureIcon.article;
+    case '6':  return CourseStructureIcon.webpage;
+    case '7':  return CourseStructureIcon.discussionBoard;
+    case '8':
+    case '9':  return CourseStructureIcon.tasks;
+    case '10': return CourseStructureIcon.coaches;
+    case '11': return CourseStructureIcon.insights;
+    case '13': return CourseStructureIcon.certification;
+    case '14': return CourseStructureIcon.discussionGuru;
+    case '17':
+    case '18':
+    case '23': return CourseStructureIcon.link;
+    case '19': return CourseStructureIcon.agreement;
+    default:   return CourseStructureIcon.details;
   }
-  return CourseStructureIcon.details;
 }

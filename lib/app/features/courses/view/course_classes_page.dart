@@ -624,43 +624,48 @@ class _StructureItemCard extends StatelessWidget {
           ),
           const SizedBox(height: 13),
           const Divider(color: Color(0xFFECEFF4)),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.info_rounded, size: 16),
-              label: const Text('Details'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _detailInk,
-                side: const BorderSide(color: Color(0xFFDDE2EA)),
-                minimumSize: const Size.fromHeight(39),
-                textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+          if (item.showDetails || item.showAction) ...[
+            const SizedBox(height: 18),
+            if (item.showDetails)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.info_rounded, size: 16),
+                  label: const Text('Details'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: _detailInk,
+                    side: const BorderSide(color: Color(0xFFDDE2EA)),
+                    minimumSize: const Size.fromHeight(39),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {},
-              icon: Icon(_actionIcon(item.icon), size: 17),
-              label: Text(item.actionLabel),
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: _detailPurple,
-                minimumSize: const Size.fromHeight(39),
-                elevation: 0,
-                textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            if (item.showDetails && item.showAction)
+              const SizedBox(height: 15),
+            if (item.showAction)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {},
+                  icon: Icon(_actionIcon(item.icon), size: 17),
+                  label: Text(item.actionLabel),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: _detailPurple,
+                    minimumSize: const Size.fromHeight(39),
+                    elevation: 0,
+                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -1009,12 +1014,19 @@ class _DetailError extends StatelessWidget {
 
 IconData _actionIcon(CourseStructureIcon icon) {
   switch (icon) {
-    case CourseStructureIcon.video:
-      return Icons.videocam_rounded;
-    case CourseStructureIcon.article:
-      return Icons.article_rounded;
-    case CourseStructureIcon.details:
-      return Icons.info_rounded;
+    case CourseStructureIcon.register:       return Icons.how_to_reg_rounded;
+    case CourseStructureIcon.video:          return Icons.videocam_rounded;
+    case CourseStructureIcon.article:        return Icons.article_rounded;
+    case CourseStructureIcon.webpage:        return Icons.language_rounded;
+    case CourseStructureIcon.discussionBoard: return Icons.forum_rounded;
+    case CourseStructureIcon.tasks:          return Icons.task_alt_rounded;
+    case CourseStructureIcon.coaches:        return Icons.people_rounded;
+    case CourseStructureIcon.insights:       return Icons.bar_chart_rounded;
+    case CourseStructureIcon.certification:  return Icons.workspace_premium_rounded;
+    case CourseStructureIcon.discussionGuru: return Icons.chat_rounded;
+    case CourseStructureIcon.link:           return Icons.link_rounded;
+    case CourseStructureIcon.agreement:      return Icons.edit_rounded;
+    case CourseStructureIcon.details:        return Icons.info_rounded;
   }
 }
 
