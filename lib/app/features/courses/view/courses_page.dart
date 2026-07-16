@@ -1737,7 +1737,7 @@ class _CatalogDrawer extends ConsumerWidget {
                           onTap: () {
                             Navigator.pop(context);
                             Modular.to.pushNamed(
-                              CoursesModule.construct(CoursesModule.myCourses),
+                              CoursesModule.construct(CoursesModule.enrolledCourses),
                             );
                           },
                         ),
