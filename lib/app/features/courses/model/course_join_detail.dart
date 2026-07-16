@@ -144,6 +144,8 @@ class CourseStructureItem {
     required this.icon,
     required this.showDetails,
     required this.showAction,
+    required this.description,
+    required this.learningEvents,
   });
 
   final String title;
@@ -154,6 +156,8 @@ class CourseStructureItem {
   final CourseStructureIcon icon;
   final bool showDetails;
   final bool showAction;
+  final String description;
+  final List<LearningEvent> learningEvents;
 
   factory CourseStructureItem.fromJson(Map<String, dynamic> json) {
     final classMap =
@@ -231,6 +235,11 @@ class CourseStructureItem {
       icon: _structureIcon(typeCode),
       showDetails: _typeShowDetails(typeCode),
       showAction: actionLabel.isNotEmpty,
+      description: _clean(_firstValue(json, classMap, const ['description', 'class_description', 'classDescription'])) ?? '',
+      learningEvents: ((json['learning_events'] ?? json['learningEvents'] ?? const []) as List? ?? const [])
+          .whereType<Map>()
+          .map((e) => LearningEvent.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
     );
   }
 }
@@ -249,6 +258,41 @@ enum CourseStructureIcon {
   link,
   agreement,
   details,
+}
+
+class LearningEvent {
+  const LearningEvent({
+    required this.startDate,
+    required this.endDate,
+    required this.startTime,
+    required this.endTime,
+    required this.instructor,
+    required this.location,
+    required this.instructions,
+    this.sessionLink,
+  });
+
+  final String startDate;
+  final String endDate;
+  final String startTime;
+  final String endTime;
+  final String instructor;
+  final String location;
+  final String instructions;
+  final String? sessionLink;
+
+  factory LearningEvent.fromJson(Map<String, dynamic> json) {
+    return LearningEvent(
+      startDate: json['start_date']?.toString() ?? '',
+      endDate: json['end_date']?.toString() ?? '',
+      startTime: json['start_time']?.toString() ?? '',
+      endTime: json['end_time']?.toString() ?? '',
+      instructor: json['instructor']?.toString() ?? '',
+      location: json['location']?.toString() ?? '',
+      instructions: json['instructions']?.toString() ?? '',
+      sessionLink: _clean(json['training_session_link']?.toString()),
+    );
+  }
 }
 
 Map<String, dynamic> _payloadMap(Map<String, dynamic> json) {

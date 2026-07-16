@@ -145,7 +145,12 @@ class _DetailBody extends ConsumerWidget {
                         _DescriptionCard(detail: detail),
                         _CourseImageCard(url: detail.logo),
                         _SkillsCard(skills: detail.skills),
-                        _StructureCard(items: detail.structures),
+                        _StructureCard(
+                          items: detail.structures,
+                          isEnrolled: detail.isEnrolled,
+                          courseObjective: detail.objective,
+                          courseTitle: detail.title,
+                        ),
                         const _DetailFooter(),
                       ],
                     ),
@@ -525,8 +530,16 @@ class _SkillsCard extends StatelessWidget {
 }
 
 class _StructureCard extends StatelessWidget {
-  const _StructureCard({required this.items});
+  const _StructureCard({
+    required this.items,
+    required this.isEnrolled,
+    required this.courseObjective,
+    required this.courseTitle,
+  });
   final List<CourseStructureItem> items;
+  final bool isEnrolled;
+  final String courseObjective;
+  final String courseTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -544,7 +557,12 @@ class _StructureCard extends StatelessWidget {
             )
           else
             for (final item in items) ...[
-              _StructureItemCard(item: item),
+              _StructureItemCard(
+                item: item,
+                isEnrolled: isEnrolled,
+                courseObjective: courseObjective,
+                courseTitle: courseTitle,
+              ),
               if (item != items.last) const SizedBox(height: 20),
             ],
           const SizedBox(height: 20),
@@ -558,7 +576,7 @@ class _StructureCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
-            child: const Text('20 Per Page'),
+            child: Text('${items.length} Per Page'),
           ),
         ],
       ),
@@ -567,8 +585,16 @@ class _StructureCard extends StatelessWidget {
 }
 
 class _StructureItemCard extends StatelessWidget {
-  const _StructureItemCard({required this.item});
+  const _StructureItemCard({
+    required this.item,
+    required this.isEnrolled,
+    required this.courseObjective,
+    required this.courseTitle,
+  });
   final CourseStructureItem item;
+  final bool isEnrolled;
+  final String courseObjective;
+  final String courseTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -630,7 +656,7 @@ class _StructureItemCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => _showClassDetails(context, courseTitle, courseObjective, item),
                   icon: const Icon(Icons.info_rounded, size: 16),
                   label: const Text('Details'),
                   style: OutlinedButton.styleFrom(
@@ -650,7 +676,7 @@ class _StructureItemCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: isEnrolled ? () {} : () => _showNotEnrolledDialog(context),
                   icon: Icon(_actionIcon(item.icon), size: 17),
                   label: Text(item.actionLabel),
                   style: ElevatedButton.styleFrom(
@@ -1042,4 +1068,315 @@ bool _isUnauthorizedError(String? error) {
       value.contains('invalid credentials') ||
       value.contains('status code of 401') ||
       value.contains(' 401');
+}
+
+void _showNotEnrolledDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      content: const Text(
+        'You are not enrolled for this course. Click the Enroll Now button at the top of this page to continue.',
+        style: TextStyle(color: _detailMuted, height: 1.5),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          style: TextButton.styleFrom(foregroundColor: _detailPurple),
+          child: const Text('OK', style: TextStyle(fontWeight: FontWeight.w700)),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showClassDetails(
+  BuildContext context,
+  String courseTitle,
+  String courseObjective,
+  CourseStructureItem item,
+) {
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      insetPadding: const EdgeInsets.all(20),
+      child: _ClassDetailsDialog(
+        courseTitle: courseTitle,
+        courseObjective: courseObjective,
+        item: item,
+      ),
+    ),
+  );
+}
+
+class _ClassDetailsDialog extends StatelessWidget {
+  const _ClassDetailsDialog({
+    required this.courseTitle,
+    required this.courseObjective,
+    required this.item,
+  });
+
+  final String courseTitle;
+  final String courseObjective;
+  final CourseStructureItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final typeName = item.subtitle.length > 2
+        ? item.subtitle.substring(1, item.subtitle.length - 1)
+        : '';
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 540),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
+            decoration: const BoxDecoration(
+              color: _detailPurple,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    courseTitle,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                if (typeName.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .18),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: .35),
+                      ),
+                    ),
+                    child: Text(
+                      typeName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+                ),
+              ],
+            ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (courseObjective.isNotEmpty) ...[
+                    const _DialogLabel('OBJECTIVE'),
+                    const SizedBox(height: 8),
+                    Text(
+                      courseObjective,
+                      style: const TextStyle(color: _detailMuted, height: 1.5),
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(color: Color(0xFFECEFF4)),
+                    const SizedBox(height: 16),
+                  ],
+                  if (item.description.isNotEmpty) ...[
+                    const _DialogLabel('DESCRIPTION'),
+                    const SizedBox(height: 8),
+                    Text(
+                      item.description,
+                      style: const TextStyle(color: _detailMuted, height: 1.5),
+                    ),
+                  ],
+                  if (item.learningEvents.isNotEmpty) ...[
+                    if (item.description.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      const Divider(color: Color(0xFFECEFF4)),
+                      const SizedBox(height: 16),
+                    ],
+                    const _DialogLabel('SCHEDULE'),
+                    const SizedBox(height: 12),
+                    for (final event in item.learningEvents)
+                      _LearningEventCard(event: event),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DialogLabel extends StatelessWidget {
+  const _DialogLabel(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: _detailMuted,
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0.8,
+      ),
+    );
+  }
+}
+
+class _LearningEventCard extends StatelessWidget {
+  const _LearningEventCard({required this.event});
+  final LearningEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFECEFF4)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _ScheduleField(
+                  label: 'START',
+                  value: _formatDateTime(event.startDate, event.startTime),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _ScheduleField(
+                  label: 'END',
+                  value: _formatDateTime(event.endDate, event.endTime),
+                ),
+              ),
+            ],
+          ),
+          if (event.instructor.isNotEmpty || event.location.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: Color(0xFFECEFF4)),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (event.instructor.isNotEmpty)
+                  Expanded(
+                    child: _ScheduleField(
+                      label: 'INSTRUCTOR',
+                      value: event.instructor,
+                    ),
+                  ),
+                if (event.instructor.isNotEmpty && event.location.isNotEmpty)
+                  const SizedBox(width: 16),
+                if (event.location.isNotEmpty)
+                  Expanded(
+                    child: _ScheduleField(
+                      label: 'LOCATION',
+                      value: event.location,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+          if (event.instructions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: Color(0xFFECEFF4)),
+            const SizedBox(height: 12),
+            _ScheduleField(label: 'INSTRUCTIONS', value: event.instructions),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ScheduleField extends StatelessWidget {
+  const _ScheduleField({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: _detailMuted,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value.isEmpty ? '—' : value,
+          style: const TextStyle(
+            color: _detailInk,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String _formatDateTime(String date, String time) {
+  if (date == '0000-00-00' || date.isEmpty) return _formatTime(time);
+  final dateTime = DateTime.tryParse('${date}T$time');
+  if (dateTime == null) return '$date $time'.trim();
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  final month = months[dateTime.month - 1];
+  final hour = dateTime.hour;
+  final minute = dateTime.minute.toString().padLeft(2, '0');
+  final amPm = hour >= 12 ? 'PM' : 'AM';
+  final hour12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+  return '$month ${dateTime.day}\n$hour12:$minute $amPm';
+}
+
+String _formatTime(String time) {
+  if (time.isEmpty) return '';
+  final parts = time.split(':');
+  if (parts.length < 2) return time;
+  final hour = int.tryParse(parts[0]) ?? 0;
+  final minute = parts[1].padLeft(2, '0');
+  final amPm = hour >= 12 ? 'PM' : 'AM';
+  final hour12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
+  return '$hour12:$minute $amPm';
 }
