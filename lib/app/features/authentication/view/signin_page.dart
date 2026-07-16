@@ -107,7 +107,7 @@ class SignInPage extends ConsumerWidget {
                                       if (value == true) {
                                         Modular.to.navigate(
                                           CoursesModule.construct(
-                                            CoursesModule.root,
+                                            CoursesModule.dashboard,
                                           ),
                                         );
                                       }
