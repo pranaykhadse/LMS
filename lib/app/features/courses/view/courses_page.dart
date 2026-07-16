@@ -497,6 +497,9 @@ class _HeaderNavBar extends StatelessWidget implements PreferredSizeWidget {
             _NavItem(
               icon: Icons.account_tree_outlined,
               label: 'Learning Paths',
+              onTap: () => Modular.to.pushNamed(
+                CoursesModule.construct(CoursesModule.learningPaths),
+              ),
             ),
             _NavItem(
               icon: Icons.workspace_premium_outlined,
@@ -516,38 +519,47 @@ class _HeaderNavBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  const _NavItem({required this.icon, required this.label, this.menu = false});
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    this.menu = false,
+    this.onTap,
+  });
 
   final IconData icon;
   final String label;
   final bool menu;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 18),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: _catalogMuted),
-          const SizedBox(width: 7),
-          Text(
-            label,
-            style: const TextStyle(
-              color: _catalogInk,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 18),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: _catalogMuted),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: const TextStyle(
+                color: _catalogInk,
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          if (menu) ...[
-            const SizedBox(width: 4),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 14,
-              color: _catalogMuted,
-            ),
+            if (menu) ...[
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 14,
+                color: _catalogMuted,
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1638,9 +1650,15 @@ class _CatalogDrawer extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const _DrawerItem(
+                    _DrawerItem(
                       icon: Icons.account_tree_outlined,
                       label: 'Learning Paths',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Modular.to.pushNamed(
+                          CoursesModule.construct(CoursesModule.learningPaths),
+                        );
+                      },
                     ),
                     const _DrawerItem(
                       icon: Icons.workspace_premium_outlined,

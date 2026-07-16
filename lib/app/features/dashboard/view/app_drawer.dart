@@ -137,9 +137,15 @@ class AppDrawer extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const _DrawerItem(
+                    _DrawerItem(
                       icon: Icons.account_tree_outlined,
                       label: 'Learning Paths',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Modular.to.pushNamed(
+                          CoursesModule.construct(CoursesModule.learningPaths),
+                        );
+                      },
                     ),
                     const _DrawerItem(
                       icon: Icons.workspace_premium_outlined,
