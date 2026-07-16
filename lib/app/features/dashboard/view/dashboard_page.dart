@@ -38,19 +38,13 @@ class DashboardPage extends ConsumerWidget {
 
 // ─── AppBar ──────────────────────────────────────────────────────────────────
 
-class _DashboardAppBar extends StatelessWidget {
+class _DashboardAppBar extends ConsumerWidget {
   const _DashboardAppBar({required this.auth});
   final AuthState? auth;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final profile = auth?.userProfile;
-    final photoPath = profile?.avatarPath?.toString() ?? '';
-    final photoBase = profile?.avatarBaseUrl?.toString() ?? '';
-    final photo =
-        photoBase.isNotEmpty && photoPath.isNotEmpty
-            ? '$photoBase$photoPath'
-            : '';
     final canPop = Navigator.canPop(context);
     return AppBar(
       backgroundColor: _purple,
@@ -94,19 +88,48 @@ class _DashboardAppBar extends StatelessWidget {
       actions: [
         _IconBtn(icon: Icons.notifications_rounded, onTap: () {}, boxed: false),
         const SizedBox(width: 10),
-        CircleAvatar(
-          radius: 18,
-          backgroundColor: Colors.white,
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: const Color(0xFF10121B),
-            backgroundImage:
-                photo.isNotEmpty ? NetworkImage(photo) : null,
-            child:
-                photo.isEmpty
-                    ? const Icon(Icons.person, color: Colors.white, size: 18)
-                    : null,
+        PopupMenuButton<String>(
+          offset: const Offset(0, 54),
+          constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
           ),
+          onSelected: (value) {
+            if (value == 'logout') {
+              ref.read(AuthStateNotifier.provider.notifier).logout();
+              Modular.to.navigate('/');
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem<String>(
+              enabled: false,
+              padding: EdgeInsets.zero,
+              child: _ProfileHeader(profile: profile),
+            ),
+            const PopupMenuItem<String>(
+              value: 'settings',
+              child: _ProfileMenuRow(
+                icon: Icons.settings,
+                label: 'Account Settings',
+              ),
+            ),
+            PopupMenuItem<String>(
+              enabled: false,
+              child: _ProfileMenuRow(
+                icon: Icons.workspace_premium_outlined,
+                label: 'My Points: ${profile?.points ?? 0}',
+              ),
+            ),
+            const PopupMenuDivider(),
+            const PopupMenuItem<String>(
+              value: 'logout',
+              child: _ProfileMenuRow(
+                icon: Icons.logout,
+                label: 'Logout Account',
+              ),
+            ),
+          ],
+          child: _AvatarCircle(profile: profile),
         ),
         const SizedBox(width: 14),
       ],
@@ -948,6 +971,92 @@ class _DrawerItem extends StatelessWidget {
       ),
     );
   }
+}
+
+// ─── Profile popup widgets ────────────────────────────────────────────────────
+
+class _AvatarCircle extends StatelessWidget {
+  const _AvatarCircle({required this.profile});
+  final dynamic profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final base = profile?.avatarBaseUrl?.toString() ?? '';
+    final path = profile?.avatarPath?.toString() ?? '';
+    final url = path.startsWith('http') ? path : (base.isNotEmpty && path.isNotEmpty ? '$base$path' : '');
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: Colors.white,
+      child: CircleAvatar(
+        radius: 16,
+        backgroundColor: const Color(0xFF10121B),
+        backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
+        child: url.isEmpty ? const Icon(Icons.person, color: Colors.white, size: 18) : null,
+      ),
+    );
+  }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader({required this.profile});
+  final dynamic profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = '${profile?.firstname ?? ''} ${profile?.lastname ?? ''}'.trim();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF7A42C4), Color(0xFFB0006D)],
+        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      child: Row(
+        children: [
+          _AvatarCircle(profile: profile),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name.isEmpty ? 'User' : name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Text(
+                'USER',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileMenuRow extends StatelessWidget {
+  const _ProfileMenuRow({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, size: 21, color: _muted),
+      const SizedBox(width: 13),
+      Text(label, style: const TextStyle(color: Color(0xFF4C586C), fontSize: 15)),
+    ],
+  );
 }
 
 // ─── Icon button ──────────────────────────────────────────────────────────────
