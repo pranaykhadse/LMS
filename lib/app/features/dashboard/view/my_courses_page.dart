@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 
 const _purple = Color(0xFF5756C9);
 const _ink = Color(0xFF172033);
@@ -25,14 +26,35 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
+      drawer: const AppDrawer(),
       appBar: AppBar(
         backgroundColor: _purple,
         foregroundColor: Colors.white,
         elevation: 2,
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.pop(context),
+        automaticallyImplyLeading: false,
+        leadingWidth: 106,
+        leading: Builder(
+          builder: (ctx) => Padding(
+            padding: const EdgeInsets.only(left: 14),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _AppBarBtn(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 6),
+                  _AppBarBtn(
+                    icon: Icons.menu_rounded,
+                    onTap: () => Scaffold.of(ctx).openDrawer(),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
         title: const Text(
           'My Courses',
@@ -48,6 +70,29 @@ class _MyCoursesPageState extends State<MyCoursesPage> {
           _SearchBar(controller: _searchController),
           const Expanded(child: _EmptyState()),
         ],
+      ),
+    );
+  }
+}
+
+class _AppBarBtn extends StatelessWidget {
+  const _AppBarBtn({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: .12),
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 38,
+          height: 38,
+          child: Icon(icon, color: Colors.white, size: 24),
+        ),
       ),
     );
   }
