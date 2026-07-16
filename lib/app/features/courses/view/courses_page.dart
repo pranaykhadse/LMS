@@ -1454,23 +1454,28 @@ class _DevPlanButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: isInPlan ? 'Remove from Development Plan' : 'Add to Development Plan',
-      child: Material(
-        color: Colors.white,
-        elevation: 5,
-        shape: const CircleBorder(),
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const CircleBorder(),
-          child: Padding(
-            padding: const EdgeInsets.all(7),
-            child: Icon(
-              isInPlan ? Icons.remove_rounded : Icons.add_rounded,
-              size: 21,
-              color: isInPlan ? const Color(0xFFB0006D) : _catalogPurple,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 35,
+        height: 35,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-          ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Icon(
+          isInPlan ? Icons.remove_rounded : Icons.add_rounded,
+          size: 20,
+          color: isInPlan ? _catalogPink : _catalogPurple,
         ),
       ),
     );
@@ -1608,16 +1613,16 @@ class _OfflineCourseAction extends StatelessWidget {
 
     if (isSavedOffline) {
       return _roundActionButton(
-        tooltip: 'Remove offline course',
-        icon: Icons.remove_rounded,
+        tooltip: 'Remove offline copy',
+        icon: Icons.bookmark_remove_outlined,
         color: const Color(0xFF24A35A),
         onTap: onRemove,
       );
     }
 
     return _roundActionButton(
-      tooltip: isOnline ? 'Save course offline' : 'Connect to save offline',
-      icon: isOnline ? Icons.add_rounded : Icons.cloud_off_rounded,
+      tooltip: isOnline ? 'Save for offline' : 'Connect to save offline',
+      icon: isOnline ? Icons.bookmark_add_outlined : Icons.wifi_off_rounded,
       color: isOnline ? _catalogPurple : _catalogMuted,
       onTap: isOnline ? onSave : null,
     );
