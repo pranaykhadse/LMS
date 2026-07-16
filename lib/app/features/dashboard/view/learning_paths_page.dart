@@ -98,10 +98,34 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
 
 // ─── Search bar ───────────────────────────────────────────────────────────────
 
-class _SearchBar extends StatelessWidget {
+class _SearchBar extends StatefulWidget {
   const _SearchBar({required this.controller, required this.onSearch});
   final TextEditingController controller;
   final VoidCallback onSearch;
+
+  @override
+  State<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<_SearchBar> {
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    final hasText = widget.controller.text.isNotEmpty;
+    if (hasText != _hasText) setState(() => _hasText = hasText);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,24 +133,26 @@ class _SearchBar extends StatelessWidget {
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: TextField(
-        controller: controller,
+        controller: widget.controller,
         textInputAction: TextInputAction.search,
-        onSubmitted: (_) => onSearch(),
+        onSubmitted: (_) => widget.onSearch(),
         decoration: InputDecoration(
           hintText: 'Search learning paths...',
           hintStyle: const TextStyle(color: _muted, fontSize: 14),
           prefixIcon: IconButton(
             icon: const Icon(Icons.search_rounded, color: _muted, size: 22),
-            onPressed: onSearch,
+            onPressed: widget.onSearch,
             tooltip: 'Search',
           ),
-          suffixIcon: IconButton(
-            icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
-            onPressed: () {
-              controller.clear();
-              onSearch();
-            },
-          ),
+          suffixIcon: _hasText
+              ? IconButton(
+                  icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
+                  onPressed: () {
+                    widget.controller.clear();
+                    widget.onSearch();
+                  },
+                )
+              : null,
           filled: true,
           fillColor: _bg,
           contentPadding: const EdgeInsets.symmetric(vertical: 0),
