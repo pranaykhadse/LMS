@@ -53,14 +53,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
         .read(CourseCatalogViewModel.provider.notifier)
         .applyFilters(
           search: _searchController.text,
-          skillId:
-              selected != null && !_isBehaviorFilter(selected)
-                  ? selected.id
-                  : null,
-          behaviorId:
-              selected != null && _isBehaviorFilter(selected)
-                  ? selected.id
-                  : null,
+          skillId: selected?.id,
         );
   }
 
@@ -1176,11 +1169,6 @@ CatalogSkill? _selectedSkill(List<CatalogSkill> skills, String? id) {
   return null;
 }
 
-bool _isBehaviorFilter(CatalogSkill skill) {
-  final groupId = skill.groupId.toLowerCase();
-  final name = skill.name.toLowerCase();
-  return groupId == '2' || groupId.contains('behav') || name.contains('behav');
-}
 
 class _CourseCardData {
   const _CourseCardData({

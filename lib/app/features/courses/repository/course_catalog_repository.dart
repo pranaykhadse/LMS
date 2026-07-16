@@ -55,8 +55,6 @@ class CourseCatalogRepository with RepoNetworkHelper {
         'limit': 5,
         if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
         if (skillId != null && skillId.isNotEmpty) 'skill_id': skillId,
-        if (behaviorId != null && behaviorId.isNotEmpty)
-          'behaviour_id': behaviorId,
       },
       cacheType: RequestCacheType.none,
     );
