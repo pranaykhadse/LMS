@@ -256,7 +256,7 @@ class _CourseHero extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          if (detail.isEnrolled)
+          if (detail.isEnrolled && detail.allowRating)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
               decoration: BoxDecoration(

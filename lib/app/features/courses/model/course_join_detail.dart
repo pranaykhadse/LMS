@@ -12,6 +12,7 @@ class CourseJoinDetail {
     required this.launchStatus,
     required this.primaryAction,
     required this.isEnrolled,
+    required this.allowRating,
     required this.skills,
     required this.structures,
   });
@@ -26,6 +27,7 @@ class CourseJoinDetail {
   final String launchStatus;
   final String primaryAction;
   final bool isEnrolled;
+  final bool allowRating;
   final List<String> skills;
   final List<CourseStructureItem> structures;
 
@@ -120,6 +122,9 @@ class CourseJoinDetail {
       primaryAction:
           actionLabel ?? (isEnrolled ? 'Cancel Registration' : 'Enroll Now'),
       isEnrolled: isEnrolled,
+      allowRating: _asBool(
+        _firstValue(root, course, const ['allow_rating', 'allowRating']),
+      ),
       skills: _skillNames(root, course),
       structures:
           classes
@@ -428,6 +433,7 @@ bool _isBookingClosed(Map<String, dynamic> root) {
 String? _findActionLabel(dynamic value) {
   if (value is Map) {
     for (final entry in value.entries) {
+      if (entry.value is Map || entry.value is List) continue;
       final key = entry.key.toString().toLowerCase();
       final text = _clean(entry.value);
       if (text != null &&
