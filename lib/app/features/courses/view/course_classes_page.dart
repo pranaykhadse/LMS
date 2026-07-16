@@ -388,7 +388,11 @@ class _LaunchPanel extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () {
+                if (detail.isEnrolled) {
+                  _showCancelConfirmationDialog(context);
+                }
+              },
               icon: const Icon(Icons.app_registration_rounded, size: 18),
               label: Text(detail.primaryAction),
               style: ElevatedButton.styleFrom(
@@ -1084,6 +1088,60 @@ void _showNotEnrolledDialog(BuildContext context) {
           onPressed: () => Navigator.pop(context),
           style: TextButton.styleFrom(foregroundColor: _detailPurple),
           child: const Text('OK', style: TextStyle(fontWeight: FontWeight.w700)),
+        ),
+      ],
+    ),
+  );
+}
+
+void _showCancelConfirmationDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      title: const Text(
+        'Confirm Cancellation',
+        style: TextStyle(
+          color: _detailInk,
+          fontWeight: FontWeight.w700,
+          fontSize: 17,
+        ),
+      ),
+      content: const Text(
+        'Would you like to cancel your registration for this course?',
+        style: TextStyle(color: _detailMuted, height: 1.5),
+      ),
+      actions: [
+        OutlinedButton(
+          onPressed: () => Navigator.pop(context),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _detailInk,
+            side: const BorderSide(color: Color(0xFFCBCBCB)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          ),
+          child: const Text(
+            'No, Keep It',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _detailPurple,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          ),
+          child: const Text(
+            'Yes, Cancel',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     ),
