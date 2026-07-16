@@ -321,27 +321,25 @@ class _LaunchPanelState extends State<_LaunchPanel> {
       margin: const EdgeInsets.fromLTRB(22, 0, 22, 28),
       child: Column(
         children: [
-          if (launchDate != null) ...[
-            const Text(
-              'LAUNCHES IN',
-              style: TextStyle(
-                color: _detailMuted,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                letterSpacing: .4,
-              ),
+          const Text(
+            'LAUNCHES IN',
+            style: TextStyle(
+              color: _detailMuted,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              letterSpacing: .4,
             ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                _timeEntry(remaining?.inDays ?? 0, 'DAYS'),
-                _timeEntry((remaining?.inHours ?? 0) % 24, 'HRS'),
-                _timeEntry((remaining?.inMinutes ?? 0) % 60, 'MIN'),
-                _timeEntry((remaining?.inSeconds ?? 0) % 60, 'SEC'),
-              ],
-            ),
-            const SizedBox(height: 26),
-          ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _timeEntry(remaining?.inDays ?? 0, 'DAYS'),
+              _timeEntry((remaining?.inHours ?? 0) % 24, 'HRS'),
+              _timeEntry((remaining?.inMinutes ?? 0) % 60, 'MIN'),
+              _timeEntry((remaining?.inSeconds ?? 0) % 60, 'SEC'),
+            ],
+          ),
+          const SizedBox(height: 26),
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
@@ -361,17 +359,19 @@ class _LaunchPanelState extends State<_LaunchPanel> {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: 36,
-                    height: 36,
-                    child: CircularProgressIndicator(
-                      value: detail.progressPercentage,
-                      strokeWidth: 2.5,
-                      color: _detailPurple,
-                      backgroundColor: Colors.white,
+                  if (detail.progressPercentage > 0) ...[
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: CircularProgressIndicator(
+                        value: detail.progressPercentage,
+                        strokeWidth: 2.5,
+                        color: _detailPurple,
+                        backgroundColor: Colors.white,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
