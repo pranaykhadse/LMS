@@ -44,7 +44,7 @@ class AppDrawer extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(26, 13, 14, 54),
+              padding: const EdgeInsets.fromLTRB(22, 16, 10, 14),
               child: Row(
                 children: [
                   Expanded(
@@ -52,20 +52,20 @@ class AppDrawer extends ConsumerWidget {
                       title?.toUpperCase() ?? 'MAIN MENU',
                       style: const TextStyle(
                         color: _purple,
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, size: 18, color: _muted),
+                    icon: const Icon(Icons.close, size: 16, color: _muted),
                   ),
                 ],
               ),
             ),
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 26),
+              padding: EdgeInsets.symmetric(horizontal: 22),
               child: Text(
                 'MAIN NAVIGATION',
                 style: TextStyle(
@@ -76,7 +76,7 @@ class AppDrawer extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 27),
+            const SizedBox(height: 8),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -248,26 +248,26 @@ class _DrawerItem extends StatelessWidget {
   final List<_SubItem> children;
 
   Widget _iconBox(bool isSelected) => Container(
-    width: 37,
-    height: 37,
+    width: 30,
+    height: 30,
     alignment: Alignment.center,
     decoration: BoxDecoration(
       color: isSelected ? const Color(0xFFE8E7F8) : Colors.transparent,
-      borderRadius: BorderRadius.circular(9),
+      borderRadius: BorderRadius.circular(7),
     ),
-    child: Icon(icon, size: 20, color: isSelected ? _purple : _muted),
+    child: Icon(icon, size: 17, color: isSelected ? _purple : _muted),
   );
 
   @override
   Widget build(BuildContext context) {
     if (children.isNotEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 1),
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-            childrenPadding: const EdgeInsets.only(left: 16, bottom: 6),
+            tilePadding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            childrenPadding: const EdgeInsets.only(left: 12, bottom: 4),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             collapsedShape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -277,8 +277,8 @@ class _DrawerItem extends StatelessWidget {
               label,
               style: const TextStyle(
                 color: Color(0xFF354056),
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
               ),
             ),
             iconColor: _muted,
@@ -287,15 +287,15 @@ class _DrawerItem extends StatelessWidget {
                 .map(
                   (sub) => ListTile(
                     dense: true,
-                    contentPadding: const EdgeInsets.fromLTRB(12, 0, 8, 0),
+                    contentPadding: const EdgeInsets.fromLTRB(10, 0, 8, 0),
                     leading: sub.icon != null
-                        ? Icon(sub.icon, size: 18, color: _muted)
-                        : const SizedBox(width: 18),
+                        ? Icon(sub.icon, size: 16, color: _muted)
+                        : const SizedBox(width: 16),
                     title: Text(
                       sub.label,
                       style: const TextStyle(
                         color: Color(0xFF354056),
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -308,12 +308,12 @@ class _DrawerItem extends StatelessWidget {
       );
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: selected ? const Color(0xFFF0EFFF) : null,
             borderRadius: BorderRadius.circular(10),
@@ -321,19 +321,19 @@ class _DrawerItem extends StatelessWidget {
           child: Row(
             children: [
               _iconBox(selected),
-              const SizedBox(width: 13),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   label,
                   style: TextStyle(
                     color: selected ? _purple : const Color(0xFF354056),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
               if (trailing)
-                const Icon(Icons.arrow_forward_ios, size: 14, color: _muted),
+                const Icon(Icons.arrow_forward_ios, size: 13, color: _muted),
             ],
           ),
         ),
