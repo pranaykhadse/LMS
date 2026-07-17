@@ -157,6 +157,9 @@ class CourseStructureItem {
     required this.showAction,
     required this.description,
     required this.learningEvents,
+    required this.typeCode,
+    this.contentUrl,
+    this.downloadUrl,
   });
 
   final String title;
@@ -169,6 +172,9 @@ class CourseStructureItem {
   final bool showAction;
   final String description;
   final List<LearningEvent> learningEvents;
+  final String typeCode;
+  final String? contentUrl;
+  final String? downloadUrl;
 
   factory CourseStructureItem.fromJson(Map<String, dynamic> json) {
     final classMap =
@@ -224,6 +230,59 @@ class CourseStructureItem {
         : isEnrolledInClass && typeCode == '20'
         ? 'Launch Assessment'
         : actionLabel;
+    // Parse content URLs from the `content` field
+    final contentObj = json['content'];
+    final contentMap = contentObj is Map
+        ? Map<String, dynamic>.from(contentObj)
+        : <String, dynamic>{};
+    String? contentUrl;
+    String? downloadUrl;
+    switch (typeCode) {
+      case '4': // Watch Video
+        contentUrl = _url(contentMap['video_upload_url']);
+        downloadUrl = contentUrl;
+        break;
+      case '5': // Read Article
+        contentUrl = _url(contentMap['article_file']);
+        downloadUrl = contentUrl;
+        break;
+      case '6': // Read Webpage
+        contentUrl = _url(contentMap['read_webpage_link']);
+        break;
+      case '7': // Discussion Board
+        contentUrl = _url(contentMap['discussion_forum_link']);
+        break;
+      case '13': // LinkedIn Certification
+        contentUrl = _url(contentMap['read_webpage_link']);
+        break;
+      case '14': // Discussion Guru
+        contentUrl = _url(contentMap['discussion_guru_link']);
+        break;
+      case '15': // Peer Coaching (PDF)
+        contentUrl = _url(contentMap['peer_coaching_file']);
+        downloadUrl = contentUrl;
+        break;
+      case '17': // OnePage Pro
+        contentUrl = _url(contentMap['read_webpage_link']);
+        break;
+      case '18': // Simulation / Custom Prompt
+        contentUrl = _url(contentMap['bridgework_link']);
+        break;
+      case '19': // Agreement (PDF)
+        contentUrl = _url(contentMap['article_file']);
+        downloadUrl = contentUrl;
+        break;
+      case '3': // Virtual Class — session link from first learning event
+        final rawEvents = (json['learning_events'] as List? ?? []);
+        for (final e in rawEvents) {
+          if (e is Map) {
+            final link = _url(e['training_session_link']?.toString());
+            if (link != null) { contentUrl = link; break; }
+          }
+        }
+        break;
+    }
+
     return CourseStructureItem(
       title:
           _clean(
@@ -258,6 +317,9 @@ class CourseStructureItem {
           .whereType<Map>()
           .map((e) => LearningEvent.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
+      typeCode: typeCode ?? '',
+      contentUrl: contentUrl,
+      downloadUrl: downloadUrl,
     );
   }
 }

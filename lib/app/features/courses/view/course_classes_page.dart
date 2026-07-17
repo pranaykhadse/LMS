@@ -7,7 +7,12 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/content_view_page.dart';
+import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
+import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
+import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -718,7 +723,9 @@ class _StructureItemCard extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: isEnrolled ? () {} : () => _showNotEnrolledDialog(context),
+                  onPressed: isEnrolled
+                      ? () => _handleClassAction(context, item)
+                      : () => _showNotEnrolledDialog(context),
                   icon: Icon(_actionIcon(item.icon), size: 17),
                   label: Text(item.actionLabel),
                   style: ElevatedButton.styleFrom(
@@ -733,6 +740,23 @@ class _StructureItemCard extends StatelessWidget {
                   ),
                 ),
               ),
+            if (item.downloadUrl != null) ...[
+              const SizedBox(height: 10),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: DownloadButton(
+                  url: item.downloadUrl,
+                  label: _downloadLabel(item.typeCode),
+                  icon: item.typeCode == '4'
+                      ? Icons.videocam_rounded
+                      : Icons.picture_as_pdf_rounded,
+                  courseClass: null,
+                  builder: (ctx, file) => item.typeCode == '4'
+                      ? VideoContentViewer(file: file)
+                      : PdfContentViewer(file: file),
+                ),
+              ),
+            ],
           ],
         ],
       ),
@@ -1110,6 +1134,42 @@ IconData _actionIcon(CourseStructureIcon icon) {
     case CourseStructureIcon.link:           return Icons.link_rounded;
     case CourseStructureIcon.agreement:      return Icons.edit_rounded;
     case CourseStructureIcon.details:        return Icons.info_rounded;
+  }
+}
+
+void _handleClassAction(BuildContext context, CourseStructureItem item) {
+  final url = item.contentUrl;
+  switch (item.typeCode) {
+    case '4': // Watch Video — open in-app video player
+      if (url == null) return;
+      ContentViewPage.show(
+        context: context,
+        courseClass: null,
+        child: VideoContentViewer(file: FileCacheState(url: url)),
+      );
+      break;
+    case '5': // Read Article
+    case '15': // Peer Coaching (PDF)
+    case '19': // Agreement (PDF)
+      if (url == null) return;
+      ContentViewPage.show(
+        context: context,
+        courseClass: null,
+        child: PdfContentViewer(file: FileCacheState(url: url)),
+      );
+      break;
+    default:
+      if (url != null) _openUrl(url);
+  }
+}
+
+String _downloadLabel(String typeCode) {
+  switch (typeCode) {
+    case '4': return 'Video';
+    case '5': return 'Article';
+    case '15': return 'Guide';
+    case '19': return 'Agreement';
+    default: return 'File';
   }
 }
 
