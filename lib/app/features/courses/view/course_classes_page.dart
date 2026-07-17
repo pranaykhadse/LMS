@@ -762,9 +762,13 @@ class _StructureItemCard extends StatelessWidget {
                   ),
                 ),
               ),
-            if (item.showDetails && item.showAction)
+            // For Watch Video (type '4'), DownloadButton is the primary action —
+            // direct streaming fails on iOS (OSStatus -12847 / unsupported format).
+            // Hide the ElevatedButton for that type so only DownloadButton shows.
+            if (item.showDetails &&
+                (item.showAction && item.typeCode != '4'))
               const SizedBox(height: 15),
-            if (item.showAction)
+            if (item.showAction && item.typeCode != '4')
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -787,20 +791,29 @@ class _StructureItemCard extends StatelessWidget {
               ),
             if (item.downloadUrl != null) ...[
               const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: DownloadButton(
-                  url: item.downloadUrl,
-                  label: _downloadLabel(item.typeCode),
-                  icon: item.typeCode == '4'
-                      ? Icons.videocam_rounded
-                      : Icons.picture_as_pdf_rounded,
-                  courseClass: null,
-                  builder: (ctx, file) => item.typeCode == '4'
-                      ? VideoContentViewer(file: file)
-                      : PdfContentViewer(file: file),
+              if (item.typeCode == '4')
+                // Full-width primary button for Watch Video
+                SizedBox(
+                  width: double.infinity,
+                  child: DownloadButton(
+                    url: item.downloadUrl,
+                    label: _downloadLabel(item.typeCode),
+                    icon: Icons.videocam_rounded,
+                    courseClass: null,
+                    builder: (ctx, file) => VideoContentViewer(file: file),
+                  ),
+                )
+              else
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: DownloadButton(
+                    url: item.downloadUrl,
+                    label: _downloadLabel(item.typeCode),
+                    icon: Icons.picture_as_pdf_rounded,
+                    courseClass: null,
+                    builder: (ctx, file) => PdfContentViewer(file: file),
+                  ),
                 ),
-              ),
             ],
           ],
         ],
@@ -1185,13 +1198,8 @@ IconData _actionIcon(CourseStructureIcon icon) {
 void _handleClassAction(BuildContext context, CourseStructureItem item) {
   final url = item.contentUrl;
   switch (item.typeCode) {
-    case '4': // Watch Video — open in-app video player
-      if (url == null) return;
-      ContentViewPage.show(
-        context: context,
-        courseClass: null,
-        child: VideoContentViewer(file: FileCacheState(url: url)),
-      );
+    case '4':
+      // Watch Video — DownloadButton handles this; action button is hidden for type '4'.
       break;
     case '5': // Read Article
     case '15': // Peer Coaching (PDF)
