@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
@@ -15,6 +15,7 @@ import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
+import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -52,7 +53,7 @@ class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
 
     return Scaffold(
       backgroundColor: _detailBackground,
-      drawer: const _DetailDrawer(),
+      drawer: const AppDrawer(selectedLabel: 'Course Catalog'),
       appBar: const PreferredSize(
         preferredSize: Size.fromHeight(58),
         child: _DetailAppBar(),
@@ -762,7 +763,7 @@ class _StructureItemCard extends StatelessWidget {
                   ),
                 ),
               ),
-            // For Watch Video (type '4'), DownloadButton is the primary action —
+            // For Watch Video (type '4'), DownloadButton is the primary action â€”
             // direct streaming fails on iOS (OSStatus -12847 / unsupported format).
             // Hide the ElevatedButton for that type so only DownloadButton shows.
             if (item.showDetails &&
@@ -965,151 +966,6 @@ class _TopIconButton extends StatelessWidget {
   }
 }
 
-class _DetailDrawer extends ConsumerWidget {
-  const _DetailDrawer();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final group = ref.watch(AuthStateNotifier.provider)?.group;
-    final title = group?.isNotEmpty == true ? group!.first.name : 'Main Menu';
-    return Drawer(
-      width: MediaQuery.sizeOf(context).width.clamp(300, 315).toDouble(),
-      backgroundColor: Colors.white,
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(26, 13, 14, 54),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title?.toUpperCase() ?? 'MAIN MENU',
-                      style: const TextStyle(
-                        color: _detailPurple,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.close,
-                      size: 18,
-                      color: _detailMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 26),
-              child: Text(
-                'MAIN NAVIGATION',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: _detailMuted,
-                ),
-              ),
-            ),
-            const SizedBox(height: 27),
-            const _DrawerItem(
-              icon: Icons.menu_book_outlined,
-              label: 'Course Catalog',
-              selected: true,
-            ),
-            const _DrawerItem(
-              icon: Icons.library_books_outlined,
-              label: 'My Courses',
-              trailing: true,
-            ),
-            const _DrawerItem(
-              icon: Icons.account_tree_outlined,
-              label: 'Learning Paths',
-            ),
-            const _DrawerItem(
-              icon: Icons.workspace_premium_outlined,
-              label: 'Points & Badges',
-              trailing: true,
-            ),
-            const _DrawerItem(
-              icon: Icons.support_agent_outlined,
-              label: 'Contact a Coach',
-              trailing: true,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DrawerItem extends StatelessWidget {
-  const _DrawerItem({
-    required this.icon,
-    required this.label,
-    this.selected = false,
-    this.trailing = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final bool trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 7),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF0EFFF) : null,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 37,
-              height: 37,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected ? const Color(0xFFE8E7F8) : Colors.transparent,
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: Icon(
-                icon,
-                size: 20,
-                color: selected ? _detailPurple : _detailMuted,
-              ),
-            ),
-            const SizedBox(width: 13),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: selected ? _detailPurple : const Color(0xFF354056),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            if (trailing)
-              const Icon(
-                Icons.keyboard_arrow_down,
-                size: 17,
-                color: _detailMuted,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _DetailFooter extends StatelessWidget {
   const _DetailFooter();
@@ -1199,7 +1055,7 @@ void _handleClassAction(BuildContext context, CourseStructureItem item) {
   final url = item.contentUrl;
   switch (item.typeCode) {
     case '4':
-      // Watch Video — DownloadButton handles this; action button is hidden for type '4'.
+      // Watch Video â€” DownloadButton handles this; action button is hidden for type '4'.
       break;
     case '5': // Read Article
     case '15': // Peer Coaching (PDF)
@@ -1566,7 +1422,7 @@ class _ScheduleField extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          value.isEmpty ? '—' : value,
+          value.isEmpty ? 'â€”' : value,
           style: const TextStyle(
             color: _detailInk,
             fontSize: 13,

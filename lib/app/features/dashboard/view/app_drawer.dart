@@ -9,7 +9,10 @@ const _purple = Color(0xFF5756C9);
 const _muted = Color(0xFF7C879D);
 
 class AppDrawer extends ConsumerWidget {
-  const AppDrawer({super.key});
+  const AppDrawer({super.key, this.selectedLabel});
+
+  /// The nav item label that should appear highlighted (e.g. 'Dashboard', 'Course Catalog').
+  final String? selectedLabel;
 
   Future<void> _launchContactUrl(BuildContext context, WidgetRef ref) async {
     final user = ref.read(AuthStateNotifier.provider)?.user;
@@ -36,6 +39,7 @@ class AppDrawer extends ConsumerWidget {
             ? auth!.group!.first.name
             : 'Main Menu';
     final width = MediaQuery.sizeOf(context).width;
+    final sel = selectedLabel;
     return Drawer(
       width: (width * .8).clamp(300, 315).toDouble(),
       backgroundColor: Colors.white,
@@ -84,21 +88,27 @@ class AppDrawer extends ConsumerWidget {
                     _DrawerItem(
                       icon: Icons.dashboard_outlined,
                       label: 'Dashboard',
+                      selected: sel == 'Dashboard',
                       onTap: () {
                         Navigator.pop(context);
-                        Modular.to.navigate(
-                          CoursesModule.construct(CoursesModule.dashboard),
-                        );
+                        if (sel != 'Dashboard') {
+                          Modular.to.navigate(
+                            CoursesModule.construct(CoursesModule.dashboard),
+                          );
+                        }
                       },
                     ),
                     _DrawerItem(
                       icon: Icons.menu_book_outlined,
                       label: 'Course Catalog',
+                      selected: sel == 'Course Catalog',
                       onTap: () {
                         Navigator.pop(context);
-                        Modular.to.navigate(
-                          CoursesModule.construct(CoursesModule.root),
-                        );
+                        if (sel != 'Course Catalog') {
+                          Modular.to.navigate(
+                            CoursesModule.construct(CoursesModule.root),
+                          );
+                        }
                       },
                     ),
                     _DrawerItem(
