@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
@@ -83,6 +85,7 @@ class _DashboardAppBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = auth?.userProfile;
     final canPop = Navigator.canPop(context);
+    final isOffline = ref.watch(OfflineModeNotifier.provider);
     return AppBar(
       backgroundColor: _purple,
       foregroundColor: Colors.white,
@@ -123,6 +126,13 @@ class _DashboardAppBar extends ConsumerWidget {
         ),
       ),
       actions: [
+        _OfflineToggle(
+          isOffline: isOffline,
+          onChanged: (val) {
+            ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
+            if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+          },
+        ),
         _IconBtn(icon: Icons.notifications_rounded, onTap: () => _showNotifications(context), boxed: false),
         const SizedBox(width: 10),
         PopupMenuButton<String>(
@@ -1155,6 +1165,40 @@ class _ProfileMenuRow extends StatelessWidget {
       Text(label, style: const TextStyle(color: Color(0xFF4C586C), fontSize: 15)),
     ],
   );
+}
+
+// ─── Offline toggle ───────────────────────────────────────────────────────────
+
+class _OfflineToggle extends StatelessWidget {
+  const _OfflineToggle({required this.isOffline, required this.onChanged});
+  final bool isOffline;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
+          size: 17,
+          color: isOffline ? Colors.amber.shade600 : Colors.white70,
+        ),
+        Transform.scale(
+          scale: 0.72,
+          child: Switch(
+            value: isOffline,
+            onChanged: onChanged,
+            activeColor: Colors.amber.shade600,
+            activeTrackColor: Colors.amber.shade200,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: Colors.white30,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 // ─── Icon button ──────────────────────────────────────────────────────────────

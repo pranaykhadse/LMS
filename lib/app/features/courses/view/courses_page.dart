@@ -374,6 +374,7 @@ class _CatalogAppBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final canPop = Navigator.canPop(context);
+    final isOffline = ref.watch(OfflineModeNotifier.provider);
     return AppBar(
       automaticallyImplyLeading: false,
       toolbarHeight: isWide ? 42 : 60,
@@ -414,6 +415,13 @@ class _CatalogAppBar extends ConsumerWidget {
       title: const SizedBox.shrink(),
       actions: [
         if (isWide) ...[const _DatePill(), const SizedBox(width: 8)],
+        _CatalogOfflineToggle(
+          isOffline: isOffline,
+          onChanged: (val) {
+            ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
+            if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+          },
+        ),
         _TopIconButton(
           icon: Icons.notifications_rounded,
           onTap: () => _showNotifications(context),
@@ -610,6 +618,41 @@ class _TopIconButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CatalogOfflineToggle extends StatelessWidget {
+  const _CatalogOfflineToggle({
+    required this.isOffline,
+    required this.onChanged,
+  });
+  final bool isOffline;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
+          size: 17,
+          color: isOffline ? Colors.amber.shade600 : Colors.white70,
+        ),
+        Transform.scale(
+          scale: 0.72,
+          child: Switch(
+            value: isOffline,
+            onChanged: onChanged,
+            activeColor: Colors.amber.shade600,
+            activeTrackColor: Colors.amber.shade200,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: Colors.white30,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+      ],
     );
   }
 }

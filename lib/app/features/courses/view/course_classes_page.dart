@@ -13,6 +13,8 @@ import 'package:lms/app/features/courses/view/content_viewer/video_content_viewe
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -177,6 +179,7 @@ class _DetailAppBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final isOffline = ref.watch(OfflineModeNotifier.provider);
     final avatarBase = profile?.avatarBaseUrl?.toString() ?? '';
     final avatarPath = profile?.avatarPath?.toString() ?? '';
     final photo =
@@ -206,6 +209,13 @@ class _DetailAppBar extends ConsumerWidget {
             ),
       ),
       actions: [
+        _DetailOfflineToggle(
+          isOffline: isOffline,
+          onChanged: (val) {
+            ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
+            if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+          },
+        ),
         const Icon(Icons.notifications_rounded, size: 28),
         const SizedBox(width: 14),
         CircleAvatar(
@@ -236,6 +246,41 @@ void _goBackToCatalog(BuildContext context) {
     return;
   }
   Modular.to.navigate(CoursesModule.construct(CoursesModule.root));
+}
+
+class _DetailOfflineToggle extends StatelessWidget {
+  const _DetailOfflineToggle({
+    required this.isOffline,
+    required this.onChanged,
+  });
+  final bool isOffline;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
+          size: 17,
+          color: isOffline ? Colors.amber.shade600 : Colors.white70,
+        ),
+        Transform.scale(
+          scale: 0.72,
+          child: Switch(
+            value: isOffline,
+            onChanged: onChanged,
+            activeColor: Colors.amber.shade600,
+            activeTrackColor: Colors.amber.shade200,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: Colors.white30,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _CourseHero extends StatelessWidget {
