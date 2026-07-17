@@ -159,6 +159,7 @@ class CourseStructureItem {
     required this.learningEvents,
     required this.typeCode,
     required this.isEnrolledInClass,
+    required this.recordingUrls,
     this.contentUrl,
     this.downloadUrl,
   });
@@ -175,6 +176,7 @@ class CourseStructureItem {
   final List<LearningEvent> learningEvents;
   final String typeCode;
   final bool isEnrolledInClass;
+  final List<String> recordingUrls;
   final String? contentUrl;
   final String? downloadUrl;
 
@@ -234,6 +236,18 @@ class CourseStructureItem {
         : isEnrolledInClass && typeCode == '3'
         ? 'Attend Class'
         : actionLabel;
+    // Parse recording URLs from all learning events (e.g. Virtual Class recordings)
+    final rawEventsAll = (json['learning_events'] ?? json['learningEvents'] ?? const []) as List? ?? const [];
+    final recordingUrls = rawEventsAll
+        .whereType<Map>()
+        .expand<String>((event) {
+          final recs = (event['recordings'] as List? ?? []);
+          return recs.whereType<Map>()
+              .map((r) => _url(r['recording_local_url']?.toString()))
+              .whereType<String>();
+        })
+        .toList();
+
     // Parse content URLs from the `content` field
     final contentObj = json['content'];
     final contentMap = contentObj is Map
@@ -325,6 +339,7 @@ class CourseStructureItem {
           .toList(),
       typeCode: typeCode ?? '',
       isEnrolledInClass: isEnrolledInClass,
+      recordingUrls: recordingUrls,
       contentUrl: contentUrl,
       downloadUrl: downloadUrl,
     );

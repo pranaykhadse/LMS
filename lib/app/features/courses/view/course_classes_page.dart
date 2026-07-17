@@ -763,7 +763,7 @@ class _StructureItemCard extends StatelessWidget {
                   ),
                 ),
               ),
-            // Registered Virtual Class: show Attend Class + Cancel Registration
+            // Registered Virtual Class: Attend Class + optional recordings + Cancel
             if (item.typeCode == '3' && item.isEnrolledInClass) ...[
               const SizedBox(height: 15),
               if (item.contentUrl != null) ...[
@@ -779,11 +779,38 @@ class _StructureItemCard extends StatelessWidget {
                       minimumSize: const Size.fromHeight(39),
                       elevation: 0,
                       textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              // Recordings — Watch (browser) + Download (offline)
+              for (final recordingUrl in item.recordingUrls) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openUrl(recordingUrl),
+                    icon: const Icon(Icons.play_circle_outline_rounded, size: 17),
+                    label: const Text('Watch Recording'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: _detailPurple,
+                      minimumSize: const Size.fromHeight(39),
+                      elevation: 0,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DownloadButton(
+                  url: recordingUrl,
+                  label: 'Recording',
+                  icon: Icons.videocam_rounded,
+                  courseClass: null,
+                  fullWidth: true,
+                  builder: (ctx, file) => VideoContentViewer(file: file),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -799,19 +826,34 @@ class _StructureItemCard extends StatelessWidget {
                     minimumSize: const Size.fromHeight(39),
                     elevation: 0,
                     textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ),
+            ] else if (item.typeCode == '4') ...[
+              // Watch Video — "Watch" opens browser (handles HLS/VP9 on iOS);
+              // "Download" is handled by DownloadButton below for offline MP4.
+              const SizedBox(height: 15),
+              if (item.contentUrl != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openUrl(item.contentUrl!),
+                    icon: const Icon(Icons.play_circle_outline_rounded, size: 17),
+                    label: const Text('Watch Video'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: _detailPurple,
+                      minimumSize: const Size.fromHeight(39),
+                      elevation: 0,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
             ] else ...[
-              // For Watch Video (type '4'), DownloadButton is the primary action —
-              // direct streaming fails on iOS (OSStatus -12847 / unsupported format).
-              // Hide the ElevatedButton for that type so only DownloadButton shows.
-              if (item.showDetails && item.showAction && item.typeCode != '4')
-                const SizedBox(height: 15),
-              if (item.showAction && item.typeCode != '4')
+              if (item.showDetails && item.showAction) const SizedBox(height: 15),
+              if (item.showAction)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -826,9 +868,7 @@ class _StructureItemCard extends StatelessWidget {
                       minimumSize: const Size.fromHeight(39),
                       elevation: 0,
                       textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                 ),
