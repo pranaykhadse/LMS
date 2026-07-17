@@ -8,6 +8,7 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
+import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const _purple = Color(0xFF5756C9);
@@ -16,13 +17,47 @@ const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
 
-class DashboardPage extends ConsumerWidget {
+class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends ConsumerState<DashboardPage> {
+  bool _redirectingUnauthorized = false;
+
+  static bool _isUnauthorizedError(String? error) {
+    final v = error?.toLowerCase() ?? '';
+    return v.startsWith('unauthorized') ||
+        v.contains('invalid credentials') ||
+        v.contains('status code of 401') ||
+        v.contains(' 401');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final auth = ref.watch(AuthStateNotifier.provider);
     final state = ref.watch(DashboardViewModel.provider);
+
+    if (!_redirectingUnauthorized &&
+        state.state == DataProviderState.error &&
+        _isUnauthorizedError(state.error)) {
+      _redirectingUnauthorized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Your session has expired. Please log in again.'),
+            backgroundColor: Colors.redAccent,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        await ref.read(AuthStateNotifier.provider.notifier).logout();
+        if (!mounted) return;
+        Modular.to.navigate(AppModule.auth);
+      });
+    }
 
     return Scaffold(
       backgroundColor: _bg,
@@ -31,7 +66,9 @@ class DashboardPage extends ConsumerWidget {
         preferredSize: const Size.fromHeight(58),
         child: _DashboardAppBar(auth: auth),
       ),
-      body: _DashboardBody(auth: auth, state: state, ref: ref),
+      body: _redirectingUnauthorized
+          ? const Center(child: CircularProgressIndicator(color: _purple))
+          : _DashboardBody(auth: auth, state: state, ref: ref),
     );
   }
 }
