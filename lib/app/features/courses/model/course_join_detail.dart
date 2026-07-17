@@ -158,6 +158,7 @@ class CourseStructureItem {
     required this.description,
     required this.learningEvents,
     required this.typeCode,
+    required this.isEnrolledInClass,
     this.contentUrl,
     this.downloadUrl,
   });
@@ -173,6 +174,7 @@ class CourseStructureItem {
   final String description;
   final List<LearningEvent> learningEvents;
   final String typeCode;
+  final bool isEnrolledInClass;
   final String? contentUrl;
   final String? downloadUrl;
 
@@ -229,6 +231,8 @@ class CourseStructureItem {
         ? 'Launch'
         : isEnrolledInClass && typeCode == '20'
         ? 'Launch Assessment'
+        : isEnrolledInClass && typeCode == '3'
+        ? 'Attend Class'
         : actionLabel;
     // Parse content URLs from the `content` field
     final contentObj = json['content'];
@@ -318,6 +322,7 @@ class CourseStructureItem {
           .map((e) => LearningEvent.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
       typeCode: typeCode ?? '',
+      isEnrolledInClass: isEnrolledInClass,
       contentUrl: contentUrl,
       downloadUrl: downloadUrl,
     );

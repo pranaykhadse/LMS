@@ -743,7 +743,7 @@ class _StructureItemCard extends StatelessWidget {
           ],
           const SizedBox(height: 1),
           const Divider(color: Color(0xFFECEFF4)),
-          if (item.showDetails || item.showAction) ...[
+          if (item.showDetails || item.showAction || item.isEnrolledInClass) ...[
             const SizedBox(height: 18),
             if (item.showDetails)
               SizedBox(
@@ -763,21 +763,36 @@ class _StructureItemCard extends StatelessWidget {
                   ),
                 ),
               ),
-            // For Watch Video (type '4'), DownloadButton is the primary action â€”
-            // direct streaming fails on iOS (OSStatus -12847 / unsupported format).
-            // Hide the ElevatedButton for that type so only DownloadButton shows.
-            if (item.showDetails &&
-                (item.showAction && item.typeCode != '4'))
+            // Registered Virtual Class: show Attend Class + Cancel Registration
+            if (item.typeCode == '3' && item.isEnrolledInClass) ...[
               const SizedBox(height: 15),
-            if (item.showAction && item.typeCode != '4')
+              if (item.contentUrl != null) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openUrl(item.contentUrl!),
+                    icon: const Icon(Icons.send_rounded, size: 17),
+                    label: const Text('Attend Class'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: _detailPurple,
+                      minimumSize: const Size.fromHeight(39),
+                      elevation: 0,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: isEnrolled
-                      ? () => _handleClassAction(context, item)
-                      : () => _showNotEnrolledDialog(context),
-                  icon: Icon(_actionIcon(item.icon), size: 17),
-                  label: Text(item.actionLabel),
+                  onPressed: () => _showCancelConfirmationDialog(context),
+                  icon: const Icon(Icons.cancel_outlined, size: 17),
+                  label: const Text('Cancel Registration'),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: _detailPurple,
@@ -790,6 +805,34 @@ class _StructureItemCard extends StatelessWidget {
                   ),
                 ),
               ),
+            ] else ...[
+              // For Watch Video (type '4'), DownloadButton is the primary action —
+              // direct streaming fails on iOS (OSStatus -12847 / unsupported format).
+              // Hide the ElevatedButton for that type so only DownloadButton shows.
+              if (item.showDetails && item.showAction && item.typeCode != '4')
+                const SizedBox(height: 15),
+              if (item.showAction && item.typeCode != '4')
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: isEnrolled
+                        ? () => _handleClassAction(context, item)
+                        : () => _showNotEnrolledDialog(context),
+                    icon: Icon(_actionIcon(item.icon), size: 17),
+                    label: Text(item.actionLabel),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: _detailPurple,
+                      minimumSize: const Size.fromHeight(39),
+                      elevation: 0,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
             if (item.downloadUrl != null) ...[
               const SizedBox(height: 10),
               if (item.typeCode == '4')
