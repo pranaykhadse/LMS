@@ -26,6 +26,7 @@ class DownloadButton extends ConsumerWidget {
     required this.label,
     required this.builder,
     required this.courseClass,
+    this.fullWidth = false,
   });
 
   final String? url;
@@ -34,6 +35,7 @@ class DownloadButton extends ConsumerWidget {
   // Nullable: participant-guide downloads have no associated lesson class.
   final CourseClass? courseClass;
   final Widget Function(BuildContext context, FileCacheState file) builder;
+  final bool fullWidth;
 
   void _open(BuildContext context, WidgetRef ref, FileCacheState file) {
     if (courseClass != null) {
@@ -86,6 +88,7 @@ class DownloadButton extends ConsumerWidget {
         label: label,
         onOpen: () => _open(context, ref, data),
         onDelete: () => fileCacheVM.delete(data.url),
+        fullWidth: fullWidth,
       );
     }
 
@@ -106,6 +109,7 @@ class DownloadButton extends ConsumerWidget {
     return _DownloadTriggerButton(
       label: label,
       onTap: () => fileCacheVM.downloadFile(url!),
+      fullWidth: fullWidth,
     );
   }
 }
@@ -114,15 +118,20 @@ class DownloadButton extends ConsumerWidget {
 // ① Download trigger button
 // ─────────────────────────────────────────────────────────────────────────────
 class _DownloadTriggerButton extends StatelessWidget {
-  const _DownloadTriggerButton({required this.label, required this.onTap});
+  const _DownloadTriggerButton({
+    required this.label,
+    required this.onTap,
+    this.fullWidth = false,
+  });
 
   final String label;
   final VoidCallback onTap;
+  final bool fullWidth;
 
   @override
   Widget build(BuildContext context) {
     final primary = context.appColorScheme.primary;
-    if (defaultTargetPlatform == TargetPlatform.macOS) {
+    if (!fullWidth && defaultTargetPlatform == TargetPlatform.macOS) {
       return appActionChip(
         icon: Icons.download_outlined,
         label: "Download $label",
@@ -130,6 +139,24 @@ class _DownloadTriggerButton extends StatelessWidget {
         bgColor: Colors.transparent,
         borderColor: primary,
         onPressed: onTap,
+      );
+    }
+    if (fullWidth) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: onTap,
+          icon: const Icon(Icons.download_outlined, size: 17),
+          label: Text("Download $label"),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primary,
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(39),
+            elevation: 0,
+            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
       );
     }
     return SizedBox(
@@ -216,11 +243,13 @@ class _DownloadedRow extends StatelessWidget {
     required this.label,
     required this.onOpen,
     required this.onDelete,
+    this.fullWidth = false,
   });
 
   final String label;
   final VoidCallback onOpen;
   final VoidCallback onDelete;
+  final bool fullWidth;
 
   bool get _isVideo =>
       label.toLowerCase().contains('video') ||
@@ -228,6 +257,48 @@ class _DownloadedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = context.appColorScheme.primary;
+    final playLabel = _isVideo ? "Play $label" : "Open $label";
+    final playIcon = _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded;
+
+    if (fullWidth) {
+      return Row(
+        children: [
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: onOpen,
+              icon: Icon(playIcon, size: 17),
+              label: Text(playLabel),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(39),
+                elevation: 0,
+                textStyle: const TextStyle(fontWeight: FontWeight.w800),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Tooltip(
+            message: "Remove offline copy",
+            child: InkWell(
+              onTap: onDelete,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.red.shade300),
+                ),
+                child: Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red.shade400),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Wrap(
       spacing: 6,
       runSpacing: 4,
@@ -235,13 +306,11 @@ class _DownloadedRow extends StatelessWidget {
       children: [
         if (defaultTargetPlatform == TargetPlatform.macOS)
           appActionChip(
-            icon: _isVideo
-                ? Icons.play_arrow_rounded
-                : Icons.open_in_new_rounded,
-            label: _isVideo ? "Play $label" : "Open $label",
+            icon: playIcon,
+            label: playLabel,
             fgColor: Colors.white,
-            bgColor: context.appColorScheme.primary,
-            borderColor: context.appColorScheme.primary,
+            bgColor: primary,
+            borderColor: primary,
             onPressed: onOpen,
           )
         else
@@ -249,13 +318,10 @@ class _DownloadedRow extends StatelessWidget {
             height: 30,
             child: ElevatedButton.icon(
               onPressed: onOpen,
-              icon: Icon(
-                _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded,
-                size: 13,
-              ),
-              label: Text(_isVideo ? "Play $label" : "Open $label"),
+              icon: Icon(playIcon, size: 13),
+              label: Text(playLabel),
               style: ElevatedButton.styleFrom(
-                backgroundColor: context.appColorScheme.primary,
+                backgroundColor: primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
                 minimumSize: Size.zero,
@@ -278,11 +344,7 @@ class _DownloadedRow extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.red.shade300),
               ),
-              child: Icon(
-                Icons.delete_outline_rounded,
-                size: 16,
-                color: Colors.red.shade400,
-              ),
+              child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red.shade400),
             ),
           ),
         ),

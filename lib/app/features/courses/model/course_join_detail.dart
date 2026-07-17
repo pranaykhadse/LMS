@@ -242,8 +242,10 @@ class CourseStructureItem {
     String? contentUrl;
     String? downloadUrl;
     switch (typeCode) {
-      case '4': // Watch Video
-        contentUrl = _url(contentMap['video_upload_url']);
+      case '4': // Watch Video — videoUploadUrl lives in classMap, not contentMap
+        contentUrl = _url(classMap['video_upload_url'])
+            ?? _url(contentMap['video_upload_url'])
+            ?? _url(json['video_upload_url']);
         downloadUrl = contentUrl;
         break;
       case '5': // Read Article

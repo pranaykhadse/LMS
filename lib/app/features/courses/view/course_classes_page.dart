@@ -836,16 +836,13 @@ class _StructureItemCard extends StatelessWidget {
             if (item.downloadUrl != null) ...[
               const SizedBox(height: 10),
               if (item.typeCode == '4')
-                // Full-width primary button for Watch Video
-                SizedBox(
-                  width: double.infinity,
-                  child: DownloadButton(
-                    url: item.downloadUrl,
-                    label: _downloadLabel(item.typeCode),
-                    icon: Icons.videocam_rounded,
-                    courseClass: null,
-                    builder: (ctx, file) => VideoContentViewer(file: file),
-                  ),
+                DownloadButton(
+                  url: item.downloadUrl,
+                  label: _downloadLabel(item.typeCode),
+                  icon: Icons.videocam_rounded,
+                  courseClass: null,
+                  fullWidth: true,
+                  builder: (ctx, file) => VideoContentViewer(file: file),
                 )
               else
                 Align(
