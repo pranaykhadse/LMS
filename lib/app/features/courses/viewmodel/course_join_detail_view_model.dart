@@ -45,11 +45,35 @@ class CourseJoinDetailViewModel
       );
       state = DataState.onData(result);
     } catch (error) {
-      state = DataState.onError(error.toString());
+      state = DataState.onError(_friendlyError(error));
     }
   }
 }
 
 int? _loggedInUserId(AuthState? auth) {
   return auth?.userProfile?.userId ?? auth?.user?.id;
+}
+
+String _friendlyError(Object error) {
+  final msg = error.toString().toLowerCase();
+  if (msg.contains('500') || msg.contains('server error')) {
+    return 'The server encountered an error. Please try again later.';
+  }
+  if (msg.contains('401') || msg.contains('unauthorized') || msg.contains('invalid credentials')) {
+    return 'Unauthorized';
+  }
+  if (msg.contains('404') || msg.contains('not found')) {
+    return 'Course not found.';
+  }
+  if (msg.contains('socketexception') ||
+      msg.contains('failed host lookup') ||
+      msg.contains('connection refused') ||
+      msg.contains('network is unreachable') ||
+      msg.contains('no address associated')) {
+    return 'No internet connection. Please check your network and try again.';
+  }
+  if (msg.contains('timeout') || msg.contains('timed out')) {
+    return 'Request timed out. Please try again.';
+  }
+  return error.toString();
 }
