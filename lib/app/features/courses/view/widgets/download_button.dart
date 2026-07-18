@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatf
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
+import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/view/widgets/link_button.dart' show appActionChip;
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -63,6 +64,17 @@ class DownloadButton extends ConsumerWidget {
     // reactive rebuilds for real network drops/restores.
     ref.watch(SyncViewModel.provider);
 
+    // Show toast when a download transitions from in-progress → cached
+    ref.listen<FileCacheViewModel>(FileCacheViewModel.provider, (prev, next) {
+      if (url == null) return;
+      final wasDownloading = prev?.getSync(url!)?.progress != null &&
+          prev?.getSync(url!)?.file == null;
+      final isNowCached = next.getSync(url!)?.file != null;
+      if (wasDownloading && isNowCached && context.mounted) {
+        Toast.success(context, '$label saved for offline access');
+      }
+    });
+
     final isOnline = !isManualOffline && connectionVM.isConnected;
 
     // Kick off an async disk-cache check if not already known.
@@ -87,7 +99,10 @@ class DownloadButton extends ConsumerWidget {
       return _DownloadedRow(
         label: label,
         onOpen: () => _open(context, ref, data),
-        onDelete: () => fileCacheVM.delete(data.url),
+        onDelete: () {
+          fileCacheVM.delete(data.url);
+          Toast.info(context, 'Offline copy of $label removed');
+        },
         fullWidth: fullWidth,
       );
     }

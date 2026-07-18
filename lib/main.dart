@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:lms/app/core/localization/translate.dart';
 
 import 'app/core/design/app_theme.dart';
@@ -32,14 +33,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: Modular.routerConfig,
-      title: 'Leadership Edge Live',
-      theme: AppTheme.getLight(context),
-      localizationsDelegates: context.localizationDelegates,
-      supportedLocales: context.supportedLocales,
+    return StyledToast(
       locale: context.locale,
-      debugShowCheckedModeBanner: false,
+      textStyle: const TextStyle(fontSize: 14, color: Colors.white),
+      child: MaterialApp.router(
+        routerConfig: Modular.routerConfig,
+        title: 'Leadership Edge Live',
+        theme: AppTheme.getLight(context),
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
+        debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }

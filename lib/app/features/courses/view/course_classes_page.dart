@@ -14,6 +14,7 @@ import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app_module.dart';
@@ -215,6 +216,7 @@ class _DetailAppBar extends ConsumerWidget {
           onChanged: (val) {
             ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
             if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+            Toast.info(context, val ? 'Offline mode enabled' : 'Back to online mode');
           },
         ),
         const Icon(Icons.notifications_rounded, size: 28),

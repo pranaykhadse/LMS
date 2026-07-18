@@ -12,6 +12,7 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
+import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app_module.dart';
@@ -421,6 +422,7 @@ class _CatalogAppBar extends ConsumerWidget {
           onChanged: (val) {
             ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
             if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+            Toast.info(context, val ? 'Offline mode enabled' : 'Back to online mode');
           },
         ),
         _TopIconButton(
@@ -1336,6 +1338,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
 
     if (!mounted) return;
     if (result.success) {
+      final wasInPlan = _isInPlan;
       setState(() {
         _isInPlan = !_isInPlan;
         if (!_isInPlan) {
@@ -1346,15 +1349,21 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
         _showOverlay = false;
         _isBusy = false;
       });
+      if (context.mounted) {
+        Toast.success(
+          context,
+          wasInPlan
+              ? 'Course removed from My Development Plan'
+              : 'Course added to My Development Plan',
+        );
+      }
     } else {
       setState(() {
         _isBusy = false;
         _showOverlay = false;
       });
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result.message ?? 'Action failed. Please try again.')),
-        );
+        Toast.error(context, result.message ?? 'Action failed. Please try again.');
       }
     }
   }
