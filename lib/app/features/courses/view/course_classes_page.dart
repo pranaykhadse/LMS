@@ -18,6 +18,7 @@ import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
+import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1770,7 +1771,14 @@ class _DetailNotificationsDialog extends ConsumerWidget {
               ),
             const Divider(height: 1),
             InkWell(
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsPage(),
+                  ),
+                );
+              },
               borderRadius:
                   const BorderRadius.vertical(bottom: Radius.circular(18)),
               child: Container(

@@ -20,6 +20,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:lms/app/features/courses/view/calendar_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
+import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:url_launcher/url_launcher.dart' as launcher;
 
@@ -2065,7 +2066,14 @@ class _NotificationsDialog extends ConsumerWidget {
             // ── Footer ───────────────────────────────────────────────
             const Divider(height: 1),
             InkWell(
-              onTap: () => Navigator.pop(context),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsPage(),
+                  ),
+                );
+              },
               borderRadius: const BorderRadius.vertical(bottom: Radius.circular(18)),
               child: Container(
                 width: double.infinity,
