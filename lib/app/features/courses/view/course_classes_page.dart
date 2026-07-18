@@ -18,6 +18,7 @@ import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
+import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -183,6 +184,7 @@ class _DetailAppBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final isOffline = ref.watch(OfflineModeNotifier.provider);
+    final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
     final avatarBase = profile?.avatarBaseUrl?.toString() ?? '';
     final avatarPath = profile?.avatarPath?.toString() ?? '';
     final photo =
@@ -220,8 +222,22 @@ class _DetailAppBar extends ConsumerWidget {
             Toast.info(context, val ? 'Offline mode enabled' : 'Back to online mode');
           },
         ),
-        const Icon(Icons.notifications_rounded, size: 28),
-        const SizedBox(width: 14),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            _TopIconButton(
+              icon: Icons.notifications_rounded,
+              onTap: () => _showDetailNotifications(context),
+            ),
+            if (unreadCount > 0)
+              Positioned(
+                top: 2,
+                right: 2,
+                child: IgnorePointer(child: _DetailNotifBadge(count: unreadCount)),
+              ),
+          ],
+        ),
+        const SizedBox(width: 6),
         CircleAvatar(
           radius: 21,
           backgroundColor: Colors.white,
@@ -1574,4 +1590,236 @@ String _formatTime(String time) {
   final amPm = hour >= 12 ? 'PM' : 'AM';
   final hour12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
   return '$hour12:$minute $amPm';
+}
+
+// ── Notifications panel for course detail page ────────────────────────────────
+
+void _showDetailNotifications(BuildContext context) {
+  showDialog<void>(
+    context: context,
+    barrierColor: Colors.black26,
+    builder: (ctx) => const _DetailNotificationsDialog(),
+  );
+}
+
+class _DetailNotificationsDialog extends ConsumerWidget {
+  const _DetailNotificationsDialog();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifState = ref.watch(NotificationsViewModel.provider);
+
+    return Dialog(
+      alignment: Alignment.topCenter,
+      insetPadding: const EdgeInsets.fromLTRB(16, 76, 16, 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 430, maxHeight: 520),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
+              child: Row(
+                children: [
+                  const Text(
+                    'Notifications',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF172033),
+                    ),
+                  ),
+                  const Spacer(),
+                  if (notifState.unreadCount > 0)
+                    TextButton(
+                      onPressed: () => ref
+                          .read(NotificationsViewModel.provider.notifier)
+                          .markAllAsRead(),
+                      style: TextButton.styleFrom(
+                        foregroundColor: _detailPurple,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text(
+                        'Mark all as read',
+                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            if (notifState.isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: CircularProgressIndicator(color: _detailPurple),
+              )
+            else if (notifState.notifications.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    CircleAvatar(
+                      backgroundColor: Color(0xFF24C56B),
+                      child: Icon(Icons.check, color: Colors.white, size: 27),
+                    ),
+                    SizedBox(height: 14),
+                    Text(
+                      "You're all caught up",
+                      style: TextStyle(
+                        color: Color(0xFF9AA8C0),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: notifState.notifications.length,
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, indent: 56, endIndent: 16),
+                  itemBuilder: (ctx, i) {
+                    final item = notifState.notifications[i];
+                    return InkWell(
+                      onTap: () {
+                        ref
+                            .read(NotificationsViewModel.provider.notifier)
+                            .markOneAsRead(item.id);
+                        final url = item.redirectUrl;
+                        if (url != null && url.isNotEmpty) {
+                          final uri = Uri.tryParse(url);
+                          if (uri != null) {
+                            launchUrl(uri,
+                                mode: LaunchMode.externalApplication);
+                          }
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: _detailPurple.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.notifications_rounded,
+                                color: _detailPurple,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.title,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: item.isRead
+                                          ? const Color(0xFF7C879D)
+                                          : const Color(0xFF172033),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    item.message,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF7C879D),
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (!item.isRead)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8, top: 4),
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: _detailPurple,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            const Divider(height: 1),
+            InkWell(
+              onTap: () => Navigator.pop(context),
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(18)),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFAFBFD),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(18)),
+                ),
+                child: const Center(
+                  child: Text(
+                    'View All Notifications',
+                    style: TextStyle(
+                      color: _detailPurple,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailNotifBadge extends StatelessWidget {
+  const _DetailNotifBadge({required this.count});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+        decoration: const BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        child: Text(
+          count > 99 ? '99+' : '$count',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 9,
+            fontWeight: FontWeight.w800,
+            height: 1.4,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      );
 }
