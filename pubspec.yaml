@@ -55,6 +55,7 @@ dependencies:
   easy_localization: ^3.0.7+1
   internet_connection_checker_plus: ^2.7.2
   flutter_styled_toast: ^2.2.1
+  table_calendar: ^3.1.2
   form_validator: ^2.1.1
 
   # ------------------------------------------------------------------------------

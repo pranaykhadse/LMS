@@ -17,6 +17,7 @@ import 'package:lms/app/features/dashboard/repository/development_plan_action_re
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:lms/app/features/courses/view/calendar_courses_page.dart';
 
 const _catalogPurple = Color(0xFF5756C9);
 const _catalogPink = Color(0xFFB0006D);
@@ -132,6 +133,11 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     setState(() => _selectedSkillId = null);
                     ref.read(CourseCatalogViewModel.provider.notifier).reset();
                   },
+                  onCalendarView: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const CalendarCoursesPage(),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -671,6 +677,7 @@ class _FilterPanel extends StatelessWidget {
     required this.onSkillChanged,
     required this.onApply,
     required this.onReset,
+    required this.onCalendarView,
   });
 
   final bool expanded;
@@ -682,6 +689,7 @@ class _FilterPanel extends StatelessWidget {
   final ValueChanged<String?> onSkillChanged;
   final VoidCallback onApply;
   final VoidCallback onReset;
+  final VoidCallback onCalendarView;
 
   @override
   Widget build(BuildContext context) {
@@ -813,6 +821,29 @@ class _FilterPanel extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 12),
+                              SizedBox(
+                                height: 42,
+                                child: ElevatedButton.icon(
+                                  onPressed: onCalendarView,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _catalogInk,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(9),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  ),
+                                  icon: const Icon(
+                                    Icons.calendar_month_rounded,
+                                    size: 16,
+                                  ),
+                                  label: const Text(
+                                    'Calendar View',
+                                    style: TextStyle(fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         )
@@ -866,6 +897,29 @@ class _FilterPanel extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: onCalendarView,
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                              backgroundColor: _catalogInk,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.calendar_month_rounded,
+                              size: 20,
+                            ),
+                            label: const Text(
+                              'Calendar View',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ),
                         ),
                       ],
                     ],
