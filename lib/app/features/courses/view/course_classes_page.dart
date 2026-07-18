@@ -17,6 +17,7 @@ import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
+import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -235,7 +236,14 @@ class _DetailAppBar extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 8),
-        const Icon(Icons.play_arrow_rounded, size: 27),
+        _TopIconButton(
+          icon: Icons.play_arrow_rounded,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const LearningProgressPage(),
+            ),
+          ),
+        ),
         const SizedBox(width: 14),
       ],
     );

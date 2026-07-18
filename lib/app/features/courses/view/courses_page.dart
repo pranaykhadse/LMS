@@ -18,6 +18,7 @@ import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:lms/app/features/courses/view/calendar_courses_page.dart';
+import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
 
 const _catalogPurple = Color(0xFF5756C9);
 const _catalogPink = Color(0xFFB0006D);
@@ -482,7 +483,15 @@ class _CatalogAppBar extends ConsumerWidget {
           child: _Avatar(profile: profile, radius: isWide ? 15 : 21),
         ),
         SizedBox(width: isWide ? 7 : 8),
-        Icon(Icons.play_arrow_rounded, size: isWide ? 18 : 26),
+        _TopIconButton(
+          icon: Icons.play_arrow_rounded,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const LearningProgressPage(),
+            ),
+          ),
+          boxed: false,
+        ),
         SizedBox(width: isWide ? 10 : 12),
       ],
       bottom: isWide ? const _HeaderNavBar() : null,
