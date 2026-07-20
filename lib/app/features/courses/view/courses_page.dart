@@ -560,7 +560,7 @@ class _FilterPanel extends StatelessWidget {
                   final fields = <Widget>[
                     _CatalogField(
                       controller: searchController,
-                      hint: 'Course',
+                      hint: 'Search Course',
                       showClear: true,
                     ),
                     _SkillDropdown(
@@ -868,7 +868,7 @@ class _SkillDropdown extends StatelessWidget {
               },
       borderRadius: BorderRadius.circular(9),
       child: InputDecorator(
-        decoration: _fieldDecoration('Skills or Behavior').copyWith(
+        decoration: _fieldDecoration('Search Skills or Behavior').copyWith(
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -891,7 +891,7 @@ class _SkillDropdown extends StatelessWidget {
           ),
         ),
         child: Text(
-          selected?.name ?? 'Skills or Behavior',
+          selected?.name ?? 'Search Skills or Behavior',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
