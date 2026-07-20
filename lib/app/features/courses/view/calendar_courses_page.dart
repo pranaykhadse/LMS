@@ -72,6 +72,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
         backgroundColor: _calPurple,
         foregroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
         title: const Text(
           'Course Calendar',
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
@@ -79,24 +80,31 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: Material(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () => setState(() {
-                  _format = _format == CalendarFormat.month
-                      ? CalendarFormat.week
-                      : CalendarFormat.month;
-                }),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  child: Text(
-                    _format == CalendarFormat.month ? 'Weekly View' : 'Monthly View',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+            child: Center(
+              child: SizedBox(
+                height: 30,
+                child: Material(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8),
+                    onTap: () => setState(() {
+                      _format = _format == CalendarFormat.month
+                          ? CalendarFormat.week
+                          : CalendarFormat.month;
+                    }),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          _format == CalendarFormat.month ? 'Weekly View' : 'Monthly View',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
