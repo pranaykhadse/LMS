@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
+import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
@@ -149,6 +150,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
               );
+            } else if (value == 'points') {
+              Modular.to.pushNamed(
+                CoursesModule.construct(CoursesModule.redeemPoints),
+              );
             }
           },
           itemBuilder: (context) => [
@@ -165,7 +170,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ),
             PopupMenuItem<String>(
-              enabled: false,
+              value: 'points',
               child: _ProfileMenuRow(
                 icon: Icons.workspace_premium_outlined,
                 label: 'My Points: ${profile?.points ?? 0}',
