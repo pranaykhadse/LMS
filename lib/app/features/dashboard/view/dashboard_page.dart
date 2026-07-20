@@ -9,7 +9,9 @@ import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
+import 'package:lms/app/features/dashboard/model/my_course_item.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -41,6 +43,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Widget build(BuildContext context) {
     final auth = ref.watch(AuthStateNotifier.provider);
     final state = ref.watch(DashboardViewModel.provider);
+    final myCoursesState = ref.watch(MyCoursesViewModel.provider);
 
     if (!_redirectingUnauthorized &&
         state.state == DataProviderState.error &&
@@ -70,21 +73,30 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       ),
       body: _redirectingUnauthorized
           ? const Center(child: CircularProgressIndicator(color: _purple))
-          : _DashboardBody(auth: auth, state: state, ref: ref),
+          : _DashboardBody(
+              auth: auth,
+              state: state,
+              myCoursesState: myCoursesState,
+              ref: ref,
+            ),
     );
   }
 }
 
 // ─── Body ─────────────────────────────────────────────────────────────────────
 
+const _dashboardCourseLimit = 4;
+
 class _DashboardBody extends StatelessWidget {
   const _DashboardBody({
     required this.auth,
     required this.state,
+    required this.myCoursesState,
     required this.ref,
   });
   final AuthState? auth;
   final DataState<DashboardResponse> state;
+  final DataState<MyCoursesResult> myCoursesState;
   final WidgetRef ref;
 
   @override
@@ -103,15 +115,25 @@ class _DashboardBody extends StatelessWidget {
         if (data == null) {
           return const _ErrorView(message: 'No dashboard data found.');
         }
+        final allCourses = myCoursesState.data?.courses ?? const <MyCourseItem>[];
+        final visibleCourses = allCourses.take(_dashboardCourseLimit).toList();
         return RefreshIndicator(
           color: _purple,
-          onRefresh:
-              () => ref.read(DashboardViewModel.provider.notifier).fetch(),
+          onRefresh: () => Future.wait([
+            ref.read(DashboardViewModel.provider.notifier).fetch(),
+            ref.read(MyCoursesViewModel.provider.notifier).fetch(),
+          ]),
           child: ListView(
             padding: EdgeInsets.zero,
             children: [
               _BannerSection(auth: auth),
-              if (data.ongoingCourses.isNotEmpty) ...[
+              if (myCoursesState.state == DataProviderState.loading ||
+                  myCoursesState.state == DataProviderState.idle) ...[
+                const SizedBox(height: 28),
+                const _SectionHeader(title: 'My Courses'),
+                const SizedBox(height: 16),
+                const Center(child: CircularProgressIndicator(color: _purple)),
+              ] else if (visibleCourses.isNotEmpty) ...[
                 const SizedBox(height: 28),
                 _SectionHeader(
                   title: 'My Courses',
@@ -122,7 +144,7 @@ class _DashboardBody extends StatelessWidget {
                       ),
                 ),
                 const SizedBox(height: 16),
-                _CourseCarousel(courses: data.ongoingCourses),
+                _CourseCarousel(courses: visibleCourses),
               ],
               if (data.resources.isNotEmpty) ...[
                 const SizedBox(height: 28),
@@ -267,7 +289,7 @@ class _SectionHeader extends StatelessWidget {
 
 class _CourseCarousel extends StatelessWidget {
   const _CourseCarousel({required this.courses});
-  final List<DashboardCourse> courses;
+  final List<MyCourseItem> courses;
 
   @override
   Widget build(BuildContext context) {
@@ -291,7 +313,7 @@ class _CourseCarousel extends StatelessWidget {
 
 class _CourseCard extends StatelessWidget {
   const _CourseCard({required this.course});
-  final DashboardCourse course;
+  final MyCourseItem course;
 
   @override
   Widget build(BuildContext context) {
@@ -331,7 +353,7 @@ class _CourseCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    course.name,
+                    course.courseName,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -357,7 +379,7 @@ class _CourseCard extends StatelessWidget {
                       onPressed:
                           () => Modular.to.pushNamed(
                             CoursesModule.construct(
-                              '${CoursesModule.detail}/${course.id}',
+                              '${CoursesModule.detail}/${course.courseId}',
                             ),
                           ),
                       style: ElevatedButton.styleFrom(
