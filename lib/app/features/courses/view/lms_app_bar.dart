@@ -6,6 +6,7 @@ import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
+import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
 import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
@@ -144,6 +145,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             if (value == 'logout') {
               ref.read(AuthStateNotifier.provider.notifier).logout();
               Modular.to.navigate('/');
+            } else if (value == 'settings') {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
+              );
             }
           },
           itemBuilder: (context) => [
