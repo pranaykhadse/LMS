@@ -20,12 +20,13 @@ class CourseCatalogRepository with RepoNetworkHelper {
     Map<String, int> groupPages = const {},
     String? search,
     String? skillId,
+    int perPage = 5,
   }) async {
     final response = await getRequest(
       'lms-screen/course-catalog',
       queryParameters: {
         'user_id': userId,
-        'per_page': 5,
+        'per_page': perPage,
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
         if (skillId != null && skillId.isNotEmpty) 'skill_id': skillId,
         for (final entry in groupPages.entries)
