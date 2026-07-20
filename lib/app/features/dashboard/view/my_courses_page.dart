@@ -3,12 +3,15 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
+import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
 
 const _purple = Color(0xFF5756C9);
+const _pink = Color(0xFFB0006D);
 const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
@@ -328,9 +331,19 @@ class _CoursesList extends StatelessWidget {
   }
 }
 
-class _CourseCard extends StatelessWidget {
+class _CourseCard extends ConsumerStatefulWidget {
   const _CourseCard({required this.course});
   final MyCourseItem course;
+
+  @override
+  ConsumerState<_CourseCard> createState() => _CourseCardState();
+}
+
+class _CourseCardState extends ConsumerState<_CourseCard> {
+  bool _showOverlay = false;
+  bool _isInPlan = false;
+  int? _planId;
+  bool _isBusy = false;
 
   String _formatSession(DateTime dt) {
     const months = [
@@ -345,8 +358,51 @@ class _CourseCard extends StatelessWidget {
     return '${months[dt.month - 1]} $dayStr, $hourStr:$minuteStr $period';
   }
 
+  Future<void> _handleDevPlanAction() async {
+    final userId = ref.read(AuthStateNotifier.provider)?.user?.id;
+    if (userId == null) return;
+
+    setState(() => _isBusy = true);
+    final repo = ref.read(DevelopmentPlanActionRepository.provider);
+    final result = _isInPlan
+        ? await repo.removeFromDevPlan(
+            userId: userId,
+            courseId: widget.course.courseId,
+            planId: _planId,
+          )
+        : await repo.addToDevPlan(userId: userId, courseId: widget.course.courseId);
+
+    if (!mounted) return;
+    if (result.success) {
+      final wasInPlan = _isInPlan;
+      setState(() {
+        _isInPlan = !_isInPlan;
+        _planId = _isInPlan ? (result.planId ?? _planId) : null;
+        _showOverlay = false;
+        _isBusy = false;
+      });
+      if (context.mounted) {
+        Toast.success(
+          context,
+          wasInPlan
+              ? 'Course removed from My Development Plan'
+              : 'Course added to My Development Plan',
+        );
+      }
+    } else {
+      setState(() {
+        _isBusy = false;
+        _showOverlay = false;
+      });
+      if (context.mounted) {
+        Toast.error(context, result.message ?? 'Action failed. Please try again.');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final course = widget.course;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -359,27 +415,36 @@ class _CourseCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Stack(
-            children: [
-              SizedBox(
-                height: 170,
-                width: double.infinity,
-                child: course.logo != null
+          SizedBox(
+            height: 170,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                course.logo != null
                     ? Image.network(
                         course.logo!,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const _ImgFallback(),
                       )
                     : const _ImgFallback(),
-              ),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: _CornerButton(
-                  onTap: () => Toast.info(context, 'Coming soon.'),
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: _DevPlanButton(
+                    isInPlan: _isInPlan,
+                    onTap: () => setState(() => _showOverlay = true),
+                  ),
                 ),
-              ),
-            ],
+                if (_showOverlay)
+                  _DevPlanOverlay(
+                    isInPlan: _isInPlan,
+                    isBusy: _isBusy,
+                    onYes: _handleDevPlanAction,
+                    onNo: () => setState(() => _showOverlay = false),
+                  ),
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -469,22 +534,114 @@ class _CourseCard extends StatelessWidget {
   }
 }
 
-class _CornerButton extends StatelessWidget {
-  const _CornerButton({required this.onTap});
+class _DevPlanButton extends StatelessWidget {
+  const _DevPlanButton({required this.isInPlan, required this.onTap});
+  final bool isInPlan;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.85),
+      color: Colors.white,
       shape: const CircleBorder(),
+      elevation: 2,
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
-        child: const SizedBox(
+        child: SizedBox(
           width: 30,
           height: 30,
-          child: Icon(Icons.add_rounded, color: _purple, size: 18),
+          child: Icon(
+            isInPlan ? Icons.remove_rounded : Icons.add_rounded,
+            color: isInPlan ? _pink : _purple,
+            size: 18,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DevPlanOverlay extends StatelessWidget {
+  const _DevPlanOverlay({
+    required this.isInPlan,
+    required this.isBusy,
+    required this.onYes,
+    required this.onNo,
+  });
+  final bool isInPlan;
+  final bool isBusy;
+  final VoidCallback onYes;
+  final VoidCallback onNo;
+
+  @override
+  Widget build(BuildContext context) {
+    final action = isInPlan ? 'Remove' : 'Add';
+    final prep = isInPlan ? 'from' : 'to';
+    return Container(
+      color: const Color(0xCC5756C9),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '$action this course $prep your\ndevelopment plan?',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (isBusy)
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _OverlayBtn(label: 'YES', onTap: onYes, filled: true),
+                const SizedBox(width: 10),
+                _OverlayBtn(label: 'NO', onTap: onNo, filled: false),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OverlayBtn extends StatelessWidget {
+  const _OverlayBtn({required this.label, required this.onTap, required this.filled});
+  final String label;
+  final VoidCallback onTap;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+        decoration: BoxDecoration(
+          color: filled ? Colors.white : Colors.transparent,
+          border: Border.all(color: Colors.white, width: 1.4),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: filled ? _purple : Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.4,
+          ),
         ),
       ),
     );
