@@ -26,21 +26,27 @@ class TypeSerializer<T> {
 
 enum RequestCacheType { fetch, post, none }
 
+bool _alwaysFalse() => false;
+
 class RepoNetworkConfig {
   final String url;
   final String? authToken;
   final InternetConnectionProvider connectionProvider;
   final RequestCacheProvider? requestCacheProvider;
-  /// The user-facing "Offline Mode" toggle. When true, the app behaves as
-  /// offline for its own API calls regardless of real device connectivity.
-  final bool manualOffline;
+  /// Reads the current value of the user-facing "Offline Mode" toggle at
+  /// call time. When true, the app behaves as offline for its own API calls
+  /// regardless of real device connectivity. A getter rather than a frozen
+  /// bool so the config object doesn't need to be rebuilt (tearing down
+  /// already-successful repositories/viewmodels) every time the toggle
+  /// flips — only the next request checks it.
+  final bool Function() isManualOffline;
   RepoNetworkConfig({
     required this.url,
     this.authToken,
     required this.connectionProvider,
     this.requestCacheProvider,
-    this.manualOffline = false,
-  });
+    bool Function()? isManualOffline,
+  }) : isManualOffline = isManualOffline ?? _alwaysFalse;
 
   String get baseUrl => url.endsWith("/") ? url : "$url/";
 
@@ -59,7 +65,7 @@ mixin RepoNetworkHelper {
   Map<String, String> get header => config.header;
   Dio get dio => Dio(BaseOptions(baseUrl: baseUrl, headers: header));
   bool get isOffline =>
-      config.manualOffline || config.connectionProvider.isConnected == false;
+      config.isManualOffline() || config.connectionProvider.isConnected == false;
   @protected
   Future<dynamic> convertToNetworkBody(dynamic data) async {
     final converted = await serializeToNetwork(data);

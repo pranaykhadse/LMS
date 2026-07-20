@@ -22,7 +22,13 @@ class ServerProvider {
       authToken: ref.watch(AuthStateNotifier.provider)?.token,
       connectionProvider: ref.watch(InternetConnectionProvider.provider),
       requestCacheProvider: ref.watch(RequestCacheProvider.provider),
-      manualOffline: ref.watch(OfflineModeNotifier.provider),
+      // Deliberately ref.read (not watch) via a live closure, not a frozen
+      // bool: flipping the toggle must be checked by the NEXT request a
+      // screen makes, but must NOT tear down/recreate already-successful
+      // repository & viewmodel providers (which ref.watch here would do,
+      // wiping already-loaded screens back to a loading/error state the
+      // instant the toggle flips, before the user even navigates anywhere).
+      isManualOffline: () => ref.read(OfflineModeNotifier.provider),
     );
   });
 }
