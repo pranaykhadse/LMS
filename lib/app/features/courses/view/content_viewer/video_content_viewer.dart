@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/local_hls_server.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoContentViewer extends StatefulWidget {
@@ -13,6 +16,7 @@ class VideoContentViewer extends StatefulWidget {
 class _VideoContentViewerState extends State<VideoContentViewer> {
   VideoPlayerController? _videoController;
   ChewieController? _chewieController;
+  LocalHlsServer? _localServer;
   String? _error;
 
   @override
@@ -25,28 +29,28 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
   void dispose() {
     _chewieController?.dispose();
     _videoController?.dispose();
+    _localServer?.close();
     super.dispose();
   }
 
   Future<void> _initialize() async {
     try {
       final isHls = widget.file.url.toLowerCase().contains('.m3u8');
+      final localFile = widget.file.file;
 
-      if (widget.file.file != null && !isHls) {
+      if (localFile != null && isHls) {
+        await _initializeFromLocalHls(localFile);
+      } else if (localFile != null) {
         // Non-HLS local file (.mp4 etc.) — play from disk.
-        _videoController = VideoPlayerController.file(widget.file.file!);
+        _videoController = VideoPlayerController.file(localFile);
+        await _videoController!.initialize();
       } else {
-        // HLS (.m3u8): always stream from network URL so iOS AVFoundation
-        // uses its native HLS stack.  Playing a concatenated .ts file via
-        // VideoPlayerController.file() fails on iOS (OSStatus -12847) because
-        // AVFoundation does not support raw MPEG-TS as a file format.
-        // Non-HLS with no local file: stream from network as well.
+        // No local copy: stream from network.
         _videoController = VideoPlayerController.networkUrl(
           Uri.parse(widget.file.url),
         );
+        await _videoController!.initialize();
       }
-
-      await _videoController!.initialize();
 
       _chewieController = ChewieController(
         videoPlayerController: _videoController!,
@@ -59,6 +63,29 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
       if (mounted) setState(() {});
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
+    }
+  }
+
+  Future<void> _initializeFromLocalHls(File localFile) async {
+    try {
+      // Serve the downloaded segment via a loopback HTTP server so iOS
+      // AVFoundation's HLS engine can open it (it refuses raw local .ts
+      // files, but plays the identical bytes fine over HTTP).
+      _localServer = await LocalHlsServer.serve(localFile);
+      _videoController = VideoPlayerController.networkUrl(
+        Uri.parse(_localServer!.playlistUrl),
+      );
+      await _videoController!.initialize();
+    } catch (_) {
+      // Local playback failed for some other reason — fall back to
+      // streaming the original URL (works if we're actually online).
+      await _localServer?.close();
+      _localServer = null;
+      await _videoController?.dispose();
+      _videoController = VideoPlayerController.networkUrl(
+        Uri.parse(widget.file.url),
+      );
+      await _videoController!.initialize();
     }
   }
 

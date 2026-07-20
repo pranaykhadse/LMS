@@ -149,7 +149,9 @@ class FileCacheViewModel extends ChangeNotifier {
       cachedState[hlsUrl] = FileCacheState(url: hlsUrl, file: outputFile);
       notifyListeners();
     } catch (e) {
-      progressController.close();
+      if (!progressController.isClosed) progressController.close();
+      final partial = await _hlsLocalFile(hlsUrl);
+      if (partial.existsSync()) partial.deleteSync();
       cachedState.remove(hlsUrl);
       notifyListeners();
     }
