@@ -79,27 +79,26 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: TextButton(
-              onPressed: () => setState(() {
-                _format = _format == CalendarFormat.month
-                    ? CalendarFormat.week
-                    : CalendarFormat.month;
-              }),
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.15),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: Text(
-                _format == CalendarFormat.month ? 'Weekly View' : 'Monthly View',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => setState(() {
+                  _format = _format == CalendarFormat.month
+                      ? CalendarFormat.week
+                      : CalendarFormat.month;
+                }),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: Text(
+                    _format == CalendarFormat.month ? 'Weekly View' : 'Monthly View',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ),
             ),
