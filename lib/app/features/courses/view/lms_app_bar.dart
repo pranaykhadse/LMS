@@ -377,7 +377,9 @@ class _NotificationsDialog extends ConsumerWidget {
                 child: ListView.separated(
                   shrinkWrap: true,
                   padding: EdgeInsets.zero,
-                  itemCount: notifState.notifications.length,
+                  itemCount: notifState.notifications.length > 5
+                      ? 5
+                      : notifState.notifications.length,
                   separatorBuilder: (_, __) =>
                       const Divider(height: 1, indent: 56, endIndent: 16),
                   itemBuilder: (ctx, i) {
