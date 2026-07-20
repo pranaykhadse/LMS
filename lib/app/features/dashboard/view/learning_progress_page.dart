@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
 
@@ -30,9 +31,17 @@ class LearningProgressPage extends ConsumerWidget {
         backgroundColor: _lpPurple,
         foregroundColor: Colors.white,
         elevation: 2,
+        leading: LmsAppBarButton(
+          icon: Icons.arrow_back_ios_new_rounded,
+          onTap: () => Navigator.of(context).pop(),
+        ),
         title: const Text(
           'My Learning Progress',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            color: Colors.white,
+          ),
         ),
       ),
       body: _buildBody(context, ref, state, firstName),
