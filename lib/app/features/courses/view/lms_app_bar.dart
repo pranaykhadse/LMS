@@ -94,12 +94,16 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             ),
       title: title == null
           ? const SizedBox.shrink()
-          : Text(
-              title!,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
+          : Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Text(
+                title!,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                ),
               ),
             ),
       actions: [
@@ -120,7 +124,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             LmsAppBarButton(
               icon: Icons.notifications_rounded,
               onTap: () => showLmsNotifications(context),
-              boxed: false,
             ),
             if (unreadCount > 0)
               Positioned(
@@ -177,7 +180,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const LearningProgressPage()),
           ),
-          boxed: false,
         ),
         SizedBox(width: isWide ? 10 : 12),
       ],
@@ -193,11 +195,9 @@ class LmsAppBarButton extends StatelessWidget {
     super.key,
     required this.icon,
     required this.onTap,
-    this.boxed = true,
   });
   final IconData icon;
   final VoidCallback onTap;
-  final bool boxed;
 
   @override
   Widget build(BuildContext context) {
@@ -207,9 +207,7 @@ class LmsAppBarButton extends StatelessWidget {
       child: SizedBox.square(
         dimension: size,
         child: Material(
-          color: boxed
-              ? Colors.white.withValues(alpha: .12)
-              : Colors.transparent,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
