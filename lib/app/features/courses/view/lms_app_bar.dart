@@ -306,6 +306,7 @@ class LmsNotifBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        alignment: Alignment.center,
         decoration: const BoxDecoration(
           color: Colors.red,
           borderRadius: BorderRadius.all(Radius.circular(11)),
@@ -316,7 +317,7 @@ class LmsNotifBadge extends StatelessWidget {
             color: Colors.white,
             fontSize: 14,
             fontWeight: FontWeight.w800,
-            height: 1.3,
+            height: 1.0,
           ),
           textAlign: TextAlign.center,
         ),
