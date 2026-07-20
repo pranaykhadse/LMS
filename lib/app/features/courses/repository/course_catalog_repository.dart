@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -22,23 +23,29 @@ class CourseCatalogRepository with RepoNetworkHelper {
     String? skillId,
     int perPage = 5,
   }) async {
+    final queryParameters = {
+      'user_id': userId,
+      'per_page': perPage,
+      if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+      if (skillId != null && skillId.isNotEmpty) 'skill_id': skillId,
+      for (final entry in groupPages.entries)
+        'group_page[${entry.key}]': entry.value,
+    };
+    debugPrint('[CourseCatalogRepository] fetch query=$queryParameters');
     final response = await getRequest(
       'lms-screen/course-catalog',
-      queryParameters: {
-        'user_id': userId,
-        'per_page': perPage,
-        if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
-        if (skillId != null && skillId.isNotEmpty) 'skill_id': skillId,
-        for (final entry in groupPages.entries)
-          'group_page[${entry.key}]': entry.value,
-      },
+      queryParameters: queryParameters,
       cacheType: RequestCacheType.none,
     );
+    debugPrint('[CourseCatalogRepository] raw response (${response.runtimeType}): $response');
     final data = Map<String, dynamic>.from(response as Map);
     if (data['status']?.toString() != '1') {
       throw Exception(data['message']?.toString() ?? 'Unable to load courses.');
     }
-    return CourseCatalogResponse.fromJson(data);
+    final parsed = CourseCatalogResponse.fromJson(data);
+    debugPrint('[CourseCatalogRepository] parsed groups=${parsed.groups.length} '
+        'flatCourses=${parsed.courses.length} total=${parsed.total}');
+    return parsed;
   }
 
   Future<CourseCatalogResponse> search({
