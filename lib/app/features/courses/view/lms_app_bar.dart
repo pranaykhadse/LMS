@@ -82,6 +82,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         LmsAppBarButton(
                           icon: Icons.arrow_back_ios_new_rounded,
                           onTap: onBack ?? () => Navigator.pop(context),
+                          iconSize: isWide ? 21 : 31,
                         ),
                         const SizedBox(width: 6),
                       ],
@@ -205,9 +206,15 @@ class LmsAppBarButton extends StatelessWidget {
     super.key,
     required this.icon,
     required this.onTap,
+    this.iconSize,
   });
   final IconData icon;
   final VoidCallback onTap;
+
+  /// Overrides the default responsive icon size (e.g. to visually balance
+  /// glyphs like `arrow_back_ios` that render smaller than others at the
+  /// same nominal size).
+  final double? iconSize;
 
   @override
   Widget build(BuildContext context) {
@@ -222,7 +229,11 @@ class LmsAppBarButton extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
-            child: Icon(icon, color: Colors.white, size: isWide ? 18 : 27),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: iconSize ?? (isWide ? 18 : 27),
+            ),
           ),
         ),
       ),
@@ -276,17 +287,17 @@ class LmsNotifBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
         decoration: const BoxDecoration(
           color: Colors.red,
-          borderRadius: BorderRadius.all(Radius.circular(10)),
+          borderRadius: BorderRadius.all(Radius.circular(11)),
         ),
         child: Text(
           count > 99 ? '99+' : '$count',
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: FontWeight.w800,
             height: 1.3,
           ),

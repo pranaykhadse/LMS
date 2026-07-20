@@ -70,6 +70,7 @@ class _NotifHeader extends StatelessWidget {
           LmsAppBarButton(
             icon: Icons.arrow_back_ios_new_rounded,
             onTap: () => Navigator.of(context).pop(),
+            iconSize: 31,
           ),
           const SizedBox(width: 12),
           Expanded(

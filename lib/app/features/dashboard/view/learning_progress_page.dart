@@ -34,6 +34,7 @@ class LearningProgressPage extends ConsumerWidget {
         leading: LmsAppBarButton(
           icon: Icons.arrow_back_ios_new_rounded,
           onTap: () => Navigator.of(context).pop(),
+          iconSize: 31,
         ),
         title: const Text(
           'My Learning Progress',
