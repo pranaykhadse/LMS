@@ -23,6 +23,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.isWide = false,
     this.bottom,
     this.onBack,
+    this.title,
+    this.centerTitle = false,
   });
 
   /// Responsive wide-screen layout (catalog page only).
@@ -34,6 +36,13 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   /// If provided, a back button is shown that calls this. If null and
   /// `Navigator.canPop` is true, standard pop is used instead.
   final VoidCallback? onBack;
+
+  /// Optional title text (e.g. "Dashboard"). Omitted on pages that render
+  /// their own heading in the body (e.g. the course catalog).
+  final String? title;
+
+  /// Whether [title] is centered. Ignored when [title] is null.
+  final bool centerTitle;
 
   @override
   Size get preferredSize => Size.fromHeight(
@@ -54,7 +63,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       backgroundColor: _appPurple,
       foregroundColor: Colors.white,
       elevation: 2,
-      centerTitle: false,
+      centerTitle: title != null && centerTitle,
       titleSpacing: 0,
       leadingWidth: isWide ? 0 : (showBack ? 106 : 68),
       leading: isWide
@@ -83,7 +92,16 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
               ),
             ),
-      title: const SizedBox.shrink(),
+      title: title == null
+          ? const SizedBox.shrink()
+          : Text(
+              title!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 18,
+              ),
+            ),
       actions: [
         if (isWide) ...[const _DatePill(), const SizedBox(width: 8)],
         LmsOfflineToggle(
