@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/provider/internet_connection_provider.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -13,10 +15,18 @@ import 'package:lms/app/features/courses/view/content_viewer/video_content_viewe
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+bool _watchIsOnline(WidgetRef ref) {
+  final isManualOffline = ref.watch(OfflineModeNotifier.provider);
+  final connectionVM = ref.watch(InternetConnectionProvider.provider);
+  ref.watch(SyncViewModel.provider);
+  return !isManualOffline && connectionVM.isConnected;
+}
 
 const _detailPurple = Color(0xFF5756C9);
 const _detailPurple2 = Color(0xFF775FE8);
@@ -126,27 +136,43 @@ class _DetailBody extends ConsumerWidget {
                           _InfoCard(
                             child: Align(
                               alignment: Alignment.centerLeft,
-                              child: OutlinedButton(
-                                onPressed:
-                                    () => _openUrl(detail.participantGuide!),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: _detailPurple,
-                                  side: const BorderSide(
-                                    color: Color(0xFFD9D5FF),
-                                  ),
-                                  backgroundColor: const Color(0xFFFAF9FF),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 18,
-                                    vertical: 13,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Download Participant Guide',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
+                              child: Consumer(
+                                builder: (context, ref, _) {
+                                  final isOnline = _watchIsOnline(ref);
+                                  return OutlinedButton.icon(
+                                    onPressed: isOnline
+                                        ? () => _openUrl(detail.participantGuide!)
+                                        : null,
+                                    icon: isOnline
+                                        ? const SizedBox.shrink()
+                                        : const Icon(Icons.cloud_off_rounded, size: 15),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: isOnline ? _detailPurple : _detailMuted,
+                                      disabledForegroundColor: _detailMuted,
+                                      side: BorderSide(
+                                        color: isOnline
+                                            ? const Color(0xFFD9D5FF)
+                                            : const Color(0xFFE0E3E8),
+                                      ),
+                                      backgroundColor: isOnline
+                                          ? const Color(0xFFFAF9FF)
+                                          : const Color(0xFFF3F4F6),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 13,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    label: Text(
+                                      isOnline
+                                          ? 'Download Participant Guide'
+                                          : 'Internet required to download',
+                                      style: const TextStyle(fontWeight: FontWeight.w700),
+                                    ),
+                                  );
+                                },
                               ),
                             ),
                           ),
@@ -664,41 +690,19 @@ class _StructureItemCard extends StatelessWidget {
             if (item.typeCode == '3' && item.isEnrolledInClass) ...[
               const SizedBox(height: 15),
               if (item.contentUrl != null) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _openUrl(item.contentUrl!),
-                    icon: const Icon(Icons.send_rounded, size: 17),
-                    label: const Text('Attend Class'),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: _detailPurple,
-                      minimumSize: const Size.fromHeight(39),
-                      elevation: 0,
-                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
+                _OnlineActionButton(
+                  icon: Icons.send_rounded,
+                  label: 'Attend Class',
+                  onPressed: () => _openUrl(item.contentUrl!),
                 ),
                 const SizedBox(height: 10),
               ],
               // Recordings — Watch (browser) + Download (offline)
               for (final recordingUrl in item.recordingUrls) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _openUrl(recordingUrl),
-                    icon: const Icon(Icons.play_circle_outline_rounded, size: 17),
-                    label: const Text('Watch Recording'),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: _detailPurple,
-                      minimumSize: const Size.fromHeight(39),
-                      elevation: 0,
-                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
+                _OnlineActionButton(
+                  icon: Icons.play_circle_outline_rounded,
+                  label: 'Watch Recording',
+                  onPressed: () => _openUrl(recordingUrl),
                 ),
                 const SizedBox(height: 8),
                 DownloadButton(
@@ -711,63 +715,29 @@ class _StructureItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
               ],
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showCancelConfirmationDialog(context),
-                  icon: const Icon(Icons.cancel_outlined, size: 17),
-                  label: const Text('Cancel Registration'),
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: _detailPurple,
-                    minimumSize: const Size.fromHeight(39),
-                    elevation: 0,
-                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
+              _OnlineActionButton(
+                icon: Icons.cancel_outlined,
+                label: 'Cancel Registration',
+                onPressed: () => _showCancelConfirmationDialog(context),
               ),
             ] else if (item.typeCode == '4') ...[
               // Watch Video — "Watch" opens browser (handles HLS/VP9 on iOS);
               // "Download" is handled by DownloadButton below for offline MP4.
               const SizedBox(height: 15),
               if (item.contentUrl != null)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _openUrl(item.contentUrl!),
-                    icon: const Icon(Icons.play_circle_outline_rounded, size: 17),
-                    label: const Text('Watch Video'),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: _detailPurple,
-                      minimumSize: const Size.fromHeight(39),
-                      elevation: 0,
-                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
+                _OnlineActionButton(
+                  icon: Icons.play_circle_outline_rounded,
+                  label: 'Watch Video',
+                  onPressed: () => _openUrl(item.contentUrl!),
                 ),
             ] else ...[
               if (item.showDetails && item.showAction) const SizedBox(height: 15),
               if (item.showAction)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: isEnrolled
-                        ? () => _handleClassAction(context, item)
-                        : () => _showNotEnrolledDialog(context),
-                    icon: Icon(_actionIcon(item.icon), size: 17),
-                    label: Text(item.actionLabel),
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: _detailPurple,
-                      minimumSize: const Size.fromHeight(39),
-                      elevation: 0,
-                      textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
+                _EnrollActionButton(
+                  isEnrolled: isEnrolled,
+                  icon: _actionIcon(item.icon),
+                  label: item.actionLabel,
+                  item: item,
                 ),
             ],
             if (item.downloadUrl != null) ...[
@@ -796,6 +766,87 @@ class _StructureItemCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// A full-width elevated action button that disables itself with a
+/// "cloud off" state whenever offline, since [onPressed] always performs a
+/// network action (opening a link, launching content, etc.).
+class _OnlineActionButton extends ConsumerWidget {
+  const _OnlineActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = _watchIsOnline(ref);
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: isOnline ? onPressed : null,
+        icon: Icon(isOnline ? icon : Icons.cloud_off_rounded, size: 17),
+        label: Text(isOnline ? label : 'Internet required'),
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: isOnline ? _detailPurple : Colors.grey.shade400,
+          disabledBackgroundColor: Colors.grey.shade400,
+          disabledForegroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(39),
+          elevation: 0,
+          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    );
+  }
+}
+
+/// The generic course-structure action button (e.g. "Agreement", "Launch
+/// Web Application"). Unlike [_OnlineActionButton], the not-enrolled path
+/// only opens a local dialog, so it stays enabled offline — only the
+/// enrolled/network-performing path gets disabled when offline.
+class _EnrollActionButton extends ConsumerWidget {
+  const _EnrollActionButton({
+    required this.isEnrolled,
+    required this.icon,
+    required this.label,
+    required this.item,
+  });
+  final bool isEnrolled;
+  final IconData icon;
+  final String label;
+  final CourseStructureItem item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!isEnrolled) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _showNotEnrolledDialog(context),
+          icon: Icon(icon, size: 17),
+          label: Text(label),
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: _detailPurple,
+            minimumSize: const Size.fromHeight(39),
+            elevation: 0,
+            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+      );
+    }
+    return _OnlineActionButton(
+      icon: icon,
+      label: label,
+      onPressed: () => _handleClassAction(context, item),
     );
   }
 }

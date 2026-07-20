@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/provider/internet_connection_provider.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
+import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
@@ -18,6 +21,13 @@ const _purple2 = Color(0xFF775FE8);
 const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
+
+bool _watchIsOnline(WidgetRef ref) {
+  final isManualOffline = ref.watch(OfflineModeNotifier.provider);
+  final connectionVM = ref.watch(InternetConnectionProvider.provider);
+  ref.watch(SyncViewModel.provider);
+  return !isManualOffline && connectionVM.isConnected;
+}
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -413,7 +423,7 @@ class _ResourceCarousel extends StatelessWidget {
   }
 }
 
-class _ResourceCard extends StatelessWidget {
+class _ResourceCard extends ConsumerWidget {
   const _ResourceCard({required this.resource});
   final DashboardResource resource;
 
@@ -424,11 +434,13 @@ class _ResourceCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final hasAction = resource.actionType != 'none';
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = _watchIsOnline(ref);
+    final needsInternet = resource.actionType == 'link';
+    final hasAction = resource.actionType != 'none' && (!needsInternet || isOnline);
     final label =
         resource.actionType == 'link'
-            ? 'Open Link'
+            ? (isOnline ? 'Open Link' : 'Internet required')
             : resource.actionType == 'resource'
             ? 'View Resource'
             : 'No Content';
