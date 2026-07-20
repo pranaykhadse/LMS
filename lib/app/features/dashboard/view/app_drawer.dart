@@ -19,10 +19,19 @@ bool _watchIsOnline(WidgetRef ref) {
 }
 
 class AppDrawer extends ConsumerWidget {
-  const AppDrawer({super.key, this.selectedLabel});
+  const AppDrawer({super.key, this.selectedLabel, this.selectedSubLabel});
 
-  /// The nav item label that should appear highlighted (e.g. 'Dashboard', 'Course Catalog').
+  /// The top-level nav item label that should appear highlighted (e.g.
+  /// 'Dashboard', 'Course Catalog', or a group label like 'My Courses' —
+  /// grouped items also auto-expand and highlight their header when this
+  /// or [selectedSubLabel] matches one of their children).
   final String? selectedLabel;
+
+  /// The specific child label within a group that should also appear
+  /// highlighted (e.g. 'My Enrolled Courses'). Its parent group header
+  /// highlights and auto-expands automatically — no need to also pass
+  /// [selectedLabel] for the group.
+  final String? selectedSubLabel;
 
   Future<void> _launchContactUrl(BuildContext context, WidgetRef ref) async {
     final user = ref.read(AuthStateNotifier.provider)?.user;
@@ -51,6 +60,21 @@ class AppDrawer extends ConsumerWidget {
             : 'Main Menu';
     final width = MediaQuery.sizeOf(context).width;
     final sel = selectedLabel;
+    final subSel = selectedSubLabel;
+
+    const myCoursesChildren = [
+      'My Enrolled Courses',
+      'My Completed Courses',
+      'My Development Plan',
+      'My Required Courses',
+    ];
+    const pointsBadgesChildren = ['Redeem your Points', 'Badges'];
+
+    final myCoursesActive =
+        sel == 'My Courses' || myCoursesChildren.contains(subSel);
+    final pointsBadgesActive =
+        sel == 'Points & Badges' || pointsBadgesChildren.contains(subSel);
+
     return Drawer(
       width: (width * .8).clamp(300, 315).toDouble(),
       backgroundColor: Colors.white,
@@ -125,10 +149,12 @@ class AppDrawer extends ConsumerWidget {
                     _DrawerItem(
                       icon: Icons.library_books_outlined,
                       label: 'My Courses',
+                      selected: myCoursesActive,
                       children: [
                         _SubItem(
                           label: 'My Enrolled Courses',
                           icon: Icons.school_outlined,
+                          selected: subSel == 'My Enrolled Courses',
                           onTap: () {
                             Navigator.pop(context);
                             Modular.to.pushNamed(
@@ -141,6 +167,7 @@ class AppDrawer extends ConsumerWidget {
                         _SubItem(
                           label: 'My Completed Courses',
                           icon: Icons.task_alt,
+                          selected: subSel == 'My Completed Courses',
                           onTap: () {
                             Navigator.pop(context);
                             Modular.to.pushNamed(
@@ -153,6 +180,7 @@ class AppDrawer extends ConsumerWidget {
                         _SubItem(
                           label: 'My Development Plan',
                           icon: Icons.timeline_outlined,
+                          selected: subSel == 'My Development Plan',
                           onTap: () {
                             Navigator.pop(context);
                             Modular.to.pushNamed(
@@ -165,6 +193,7 @@ class AppDrawer extends ConsumerWidget {
                         _SubItem(
                           label: 'My Required Courses',
                           icon: Icons.assignment_outlined,
+                          selected: subSel == 'My Required Courses',
                           onTap: () {
                             Navigator.pop(context);
                             Modular.to.pushNamed(
@@ -189,10 +218,12 @@ class AppDrawer extends ConsumerWidget {
                     _DrawerItem(
                       icon: Icons.workspace_premium_outlined,
                       label: 'Points & Badges',
+                      selected: pointsBadgesActive,
                       children: [
                         _SubItem(
                           label: 'Redeem your Points',
                           icon: Icons.redeem_outlined,
+                          selected: subSel == 'Redeem your Points',
                           onTap: () {
                             Navigator.pop(context);
                             Modular.to.pushNamed(
@@ -203,6 +234,7 @@ class AppDrawer extends ConsumerWidget {
                         _SubItem(
                           label: 'Badges',
                           icon: Icons.military_tech_outlined,
+                          selected: subSel == 'Badges',
                           onTap: () {
                             Navigator.pop(context);
                             Modular.to.pushNamed(
@@ -253,11 +285,13 @@ class _SubItem {
     this.icon,
     this.onTap,
     this.disabled = false,
+    this.selected = false,
   });
   final String label;
   final IconData? icon;
   final VoidCallback? onTap;
   final bool disabled;
+  final bool selected;
 }
 
 class _DrawerItem extends StatelessWidget {
@@ -295,19 +329,23 @@ class _DrawerItem extends StatelessWidget {
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
+            key: ValueKey('drawer-group-$label-$selected'),
+            initiallyExpanded: selected,
             tilePadding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             childrenPadding: const EdgeInsets.only(left: 12, bottom: 4),
+            backgroundColor: selected ? const Color(0xFFF7F6FF) : null,
+            collapsedBackgroundColor: selected ? const Color(0xFFF7F6FF) : null,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             collapsedShape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
-            leading: _iconBox(false),
+            leading: _iconBox(selected),
             title: Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF354056),
+              style: TextStyle(
+                color: selected ? _purple : const Color(0xFF354056),
                 fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
               ),
             ),
             iconColor: _muted,
@@ -316,18 +354,27 @@ class _DrawerItem extends StatelessWidget {
                 .map(
                   (sub) => ListTile(
                     dense: true,
+                    tileColor: sub.selected ? const Color(0xFFF0EFFF) : null,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     contentPadding: const EdgeInsets.fromLTRB(10, 0, 8, 0),
                     leading: Icon(
                       sub.disabled ? Icons.cloud_off_rounded : sub.icon,
                       size: 16,
-                      color: _muted,
+                      color: sub.disabled
+                          ? _muted
+                          : (sub.selected ? _purple : _muted),
                     ),
                     title: Text(
                       sub.label,
                       style: TextStyle(
-                        color: sub.disabled ? _muted : const Color(0xFF354056),
+                        color: sub.disabled
+                            ? _muted
+                            : (sub.selected ? _purple : const Color(0xFF354056)),
                         fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                        fontWeight:
+                            sub.selected ? FontWeight.w800 : FontWeight.w500,
                       ),
                     ),
                     onTap: sub.disabled ? null : sub.onTap,

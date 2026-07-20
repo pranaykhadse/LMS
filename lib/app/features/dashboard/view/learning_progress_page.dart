@@ -6,6 +6,7 @@ import 'package:lms/app/features/authentication/app_state/auth_state_provider.da
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
+import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
 
 const _lpPurple = Color(0xFF5756C9);
@@ -27,23 +28,10 @@ class LearningProgressPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: _lpBg,
-      appBar: AppBar(
-        backgroundColor: _lpPurple,
-        foregroundColor: Colors.white,
-        elevation: 2,
-        leading: LmsAppBarButton(
-          icon: Icons.arrow_back_ios_new_rounded,
-          onTap: () => Navigator.of(context).pop(),
-          iconSize: 31,
-        ),
-        title: const Text(
-          'My Learning Progress',
-          style: TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-            color: Colors.white,
-          ),
-        ),
+      drawer: const AppDrawer(),
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(60),
+        child: LmsAppBar(title: 'My Learning Progress'),
       ),
       body: _buildBody(context, ref, state, firstName),
     );

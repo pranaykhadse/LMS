@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_paths_view_model.dart';
@@ -39,44 +40,10 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
 
     return Scaffold(
       backgroundColor: _bg,
-      drawer: const AppDrawer(),
-      appBar: AppBar(
-        backgroundColor: _purple,
-        foregroundColor: Colors.white,
-        elevation: 2,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        leadingWidth: 106,
-        leading: Builder(
-          builder: (ctx) => Padding(
-            padding: const EdgeInsets.only(left: 14),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _AppBarBtn(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(width: 6),
-                  _AppBarBtn(
-                    icon: Icons.menu_rounded,
-                    onTap: () => Scaffold.of(ctx).openDrawer(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        title: const Text(
-          'Learning Paths',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
+      drawer: const AppDrawer(selectedLabel: 'Learning Paths'),
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(60),
+        child: LmsAppBar(title: 'Learning Paths', centerTitle: true),
       ),
       body: Column(
         children: [
@@ -724,27 +691,3 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-// ─── AppBar icon button ───────────────────────────────────────────────────────
-
-class _AppBarBtn extends StatelessWidget {
-  const _AppBarBtn({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: .12),
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: SizedBox(
-          width: 38,
-          height: 38,
-          child: Icon(icon, color: Colors.white, size: 24),
-        ),
-      ),
-    );
-  }
-}

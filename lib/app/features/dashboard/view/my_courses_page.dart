@@ -5,6 +5,7 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
 import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
@@ -52,44 +53,10 @@ class _MyCoursesPageState extends ConsumerState<MyCoursesPage> {
 
     return Scaffold(
       backgroundColor: _bg,
-      drawer: const AppDrawer(),
-      appBar: AppBar(
-        backgroundColor: _purple,
-        foregroundColor: Colors.white,
-        elevation: 2,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        leadingWidth: 106,
-        leading: Builder(
-          builder: (ctx) => Padding(
-            padding: const EdgeInsets.only(left: 14),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _AppBarBtn(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(width: 6),
-                  _AppBarBtn(
-                    icon: Icons.menu_rounded,
-                    onTap: () => Scaffold.of(ctx).openDrawer(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        title: const Text(
-          'My Courses',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-          ),
-        ),
+      drawer: const AppDrawer(selectedLabel: 'My Courses'),
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(60),
+        child: LmsAppBar(title: 'My Courses', centerTitle: true),
       ),
       body: switch (state.state) {
         DataProviderState.idle ||
@@ -685,29 +652,6 @@ class _ImgFallback extends StatelessWidget {
       color: const Color(0xFFF0ECFF),
       alignment: Alignment.center,
       child: const Icon(Icons.school_outlined, color: _purple, size: 60),
-    );
-  }
-}
-
-class _AppBarBtn extends StatelessWidget {
-  const _AppBarBtn({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: SizedBox(
-          width: 42,
-          height: 42,
-          child: Icon(icon, color: Colors.white, size: 31),
-        ),
-      ),
     );
   }
 }
