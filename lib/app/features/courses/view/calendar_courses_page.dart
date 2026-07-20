@@ -3,9 +3,9 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
-import 'package:lms/app/features/courses/model/course_catalog.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/features/courses/viewmodel/calendar_sessions_view_model.dart';
+import 'package:lms/app/features/dashboard/model/my_course_item.dart';
+import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
 
 const _calPurple = Color(0xFF5756C9);
 const _calNavy = Color(0xFF172033);
@@ -28,10 +28,10 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
   DateTime? _selectedDay;
   DateTime _weekAnchor = DateTime.now();
 
-  Map<DateTime, List<CatalogCourse>> _buildEventMap(
-    List<CatalogCourse> courses,
+  Map<DateTime, List<MyCourseItem>> _buildEventMap(
+    List<MyCourseItem> courses,
   ) {
-    final map = <DateTime, List<CatalogCourse>>{};
+    final map = <DateTime, List<MyCourseItem>>{};
     for (final c in courses) {
       if (c.nextSession == null) continue;
       final key = _dateOnly(c.nextSession!);
@@ -40,24 +40,24 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
     return map;
   }
 
-  List<CatalogCourse> _eventsForDay(
-    Map<DateTime, List<CatalogCourse>> map,
+  List<MyCourseItem> _eventsForDay(
+    Map<DateTime, List<MyCourseItem>> map,
     DateTime day,
   ) => map[_dateOnly(day)] ?? [];
 
   @override
   Widget build(BuildContext context) {
-    final sessionsState = ref.watch(CalendarSessionsViewModel.provider);
+    final myCoursesState = ref.watch(MyCoursesViewModel.provider);
     final allCourses =
-        sessionsState.state == DataProviderState.data
-            ? (sessionsState.data ?? const <CatalogCourse>[])
-            : const <CatalogCourse>[];
+        myCoursesState.state == DataProviderState.data
+            ? (myCoursesState.data?.courses ?? const <MyCourseItem>[])
+            : const <MyCourseItem>[];
 
     final eventMap = _buildEventMap(allCourses);
     final selectedEvents =
         _selectedDay != null
             ? _eventsForDay(eventMap, _selectedDay!)
-            : <CatalogCourse>[];
+            : <MyCourseItem>[];
 
     // Upcoming courses (with dates) for the default "no date selected" view
     final upcoming =
@@ -115,15 +115,15 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
       ),
       body: _format == CalendarFormat.week
           ? _buildWeekView(eventMap)
-          : _buildMonthView(eventMap, selectedEvents, upcoming, sessionsState),
+          : _buildMonthView(eventMap, selectedEvents, upcoming, myCoursesState),
     );
   }
 
   Widget _buildMonthView(
-    Map<DateTime, List<CatalogCourse>> eventMap,
-    List<CatalogCourse> selectedEvents,
-    List<CatalogCourse> upcoming,
-    DataState<List<CatalogCourse>> sessionsState,
+    Map<DateTime, List<MyCourseItem>> eventMap,
+    List<MyCourseItem> selectedEvents,
+    List<MyCourseItem> upcoming,
+    DataState<MyCoursesResult> myCoursesState,
   ) {
     return Column(
         children: [
@@ -141,7 +141,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                 ),
               ],
             ),
-            child: TableCalendar<CatalogCourse>(
+            child: TableCalendar<MyCourseItem>(
               firstDay: DateTime(2020),
               lastDay: DateTime(2030),
               focusedDay: _focusedDay,
@@ -219,7 +219,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                 markerBuilder: (context, day, events) {
                   if (events.isEmpty) return const SizedBox.shrink();
                   final label = events.length == 1
-                      ? _shortName(events.first.name)
+                      ? _shortName(events.first.courseName)
                       : '${events.length} courses';
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 3),
@@ -293,13 +293,13 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
           // ── Course list ─────────────────────────────────────────────────
           Expanded(
             child: Builder(builder: (context) {
-              if (sessionsState.state == DataProviderState.loading ||
-                  sessionsState.state == DataProviderState.idle) {
+              if (myCoursesState.state == DataProviderState.loading ||
+                  myCoursesState.state == DataProviderState.idle) {
                 return const Center(
                   child: CircularProgressIndicator(color: _calPurple),
                 );
               }
-              if (sessionsState.state == DataProviderState.error) {
+              if (myCoursesState.state == DataProviderState.error) {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -310,14 +310,14 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                             size: 40, color: _calMuted.withValues(alpha: 0.6)),
                         const SizedBox(height: 12),
                         Text(
-                          sessionsState.error ?? 'Unable to load your sessions.',
+                          myCoursesState.error ?? 'Unable to load your sessions.',
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: _calMuted, fontSize: 13),
                         ),
                         const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: () =>
-                              ref.read(CalendarSessionsViewModel.provider.notifier).fetch(),
+                              ref.read(MyCoursesViewModel.provider.notifier).fetch(),
                           style: ElevatedButton.styleFrom(backgroundColor: _calPurple),
                           child: const Text('Try Again', style: TextStyle(color: Colors.white)),
                         ),
@@ -386,7 +386,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
     return '${weekdayAbbrev[d.weekday % 7]} ${d.month}/${d.day}';
   }
 
-  Widget _buildWeekView(Map<DateTime, List<CatalogCourse>> eventMap) {
+  Widget _buildWeekView(Map<DateTime, List<MyCourseItem>> eventMap) {
     final weekStart = _weekStart(_weekAnchor);
     final today = _dateOnly(DateTime.now());
     final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
@@ -483,13 +483,13 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                             child: Column(
                               children: [
                                 for (final course
-                                    in (eventMap[_dateOnly(day)] ?? const <CatalogCourse>[]))
+                                    in (eventMap[_dateOnly(day)] ?? const <MyCourseItem>[]))
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 3),
                                     child: GestureDetector(
                                       onTap: () => Modular.to.pushNamed(
                                         CoursesModule.construct(
-                                          '${CoursesModule.detail}/${course.id}',
+                                          '${CoursesModule.detail}/${course.courseId}',
                                         ),
                                       ),
                                       child: Container(
@@ -501,7 +501,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
-                                          _shortName(course.name),
+                                          _shortName(course.courseName),
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 8,
@@ -545,7 +545,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
 
 class _CourseEventTile extends StatelessWidget {
   const _CourseEventTile({required this.course});
-  final CatalogCourse course;
+  final MyCourseItem course;
 
   @override
   Widget build(BuildContext context) {
@@ -559,7 +559,7 @@ class _CourseEventTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => Modular.to.pushNamed(
-          CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+          CoursesModule.construct('${CoursesModule.detail}/${course.courseId}'),
         ),
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -584,7 +584,7 @@ class _CourseEventTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      course.name,
+                      course.courseName,
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
