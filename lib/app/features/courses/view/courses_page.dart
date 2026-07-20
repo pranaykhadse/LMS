@@ -1226,9 +1226,10 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
   @override
   Widget build(BuildContext context) {
     ref.watch(OfflineViewModel.provider);
-    ref.watch(OfflineModeNotifier.provider);
-    ref.watch(InternetConnectionProvider.provider);
+    final isManualOffline = ref.watch(OfflineModeNotifier.provider);
+    final connectionVM = ref.watch(InternetConnectionProvider.provider);
     ref.watch(SyncViewModel.provider);
+    final isOnline = !isManualOffline && connectionVM.isConnected;
 
     final isWide = MediaQuery.sizeOf(context).width >= 760;
 
@@ -1264,7 +1265,9 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                       right: 12,
                       child: _DevPlanButton(
                         isInPlan: _isInPlan,
-                        onTap: () => setState(() => _showOverlay = true),
+                        onTap: isOnline
+                            ? () => setState(() => _showOverlay = true)
+                            : null,
                       ),
                     ),
                   ],
@@ -1342,10 +1345,11 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
 class _DevPlanButton extends StatelessWidget {
   const _DevPlanButton({required this.isInPlan, required this.onTap});
   final bool isInPlan;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final isDisabled = onTap == null;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -1365,9 +1369,11 @@ class _DevPlanButton extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: Icon(
-          isInPlan ? Icons.remove_rounded : Icons.add_rounded,
-          size: 20,
-          color: isInPlan ? _catalogPink : _catalogPurple,
+          isDisabled
+              ? Icons.cloud_off_rounded
+              : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
+          size: isDisabled ? 16 : 20,
+          color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : _catalogPurple),
         ),
       ),
     );

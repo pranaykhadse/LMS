@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/provider/internet_connection_provider.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const _purple = Color(0xFF5756C9);
 const _muted = Color(0xFF7C879D);
+
+bool _watchIsOnline(WidgetRef ref) {
+  final isManualOffline = ref.watch(OfflineModeNotifier.provider);
+  final connectionVM = ref.watch(InternetConnectionProvider.provider);
+  ref.watch(SyncViewModel.provider);
+  return !isManualOffline && connectionVM.isConnected;
+}
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key, this.selectedLabel});
@@ -34,6 +44,7 @@ class AppDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(AuthStateNotifier.provider);
+    final isOnline = _watchIsOnline(ref);
     final title =
         auth?.group?.isNotEmpty == true
             ? auth!.group!.first.name
@@ -208,6 +219,7 @@ class AppDrawer extends ConsumerWidget {
                         _SubItem(
                           label: 'Contact a Development Pro',
                           icon: Icons.person_outline_rounded,
+                          disabled: !isOnline,
                           onTap: () {
                             Navigator.pop(context);
                             _launchContactUrl(context, ref);
@@ -216,6 +228,7 @@ class AppDrawer extends ConsumerWidget {
                         _SubItem(
                           label: 'Virtual Development Pro',
                           icon: Icons.smart_toy_outlined,
+                          disabled: !isOnline,
                           onTap: () {
                             Navigator.pop(context);
                             _launchVirtualDev();
@@ -235,10 +248,16 @@ class AppDrawer extends ConsumerWidget {
 }
 
 class _SubItem {
-  const _SubItem({required this.label, this.icon, this.onTap});
+  const _SubItem({
+    required this.label,
+    this.icon,
+    this.onTap,
+    this.disabled = false,
+  });
   final String label;
   final IconData? icon;
   final VoidCallback? onTap;
+  final bool disabled;
 }
 
 class _DrawerItem extends StatelessWidget {
@@ -298,18 +317,20 @@ class _DrawerItem extends StatelessWidget {
                   (sub) => ListTile(
                     dense: true,
                     contentPadding: const EdgeInsets.fromLTRB(10, 0, 8, 0),
-                    leading: sub.icon != null
-                        ? Icon(sub.icon, size: 16, color: _muted)
-                        : const SizedBox(width: 16),
+                    leading: Icon(
+                      sub.disabled ? Icons.cloud_off_rounded : sub.icon,
+                      size: 16,
+                      color: _muted,
+                    ),
                     title: Text(
                       sub.label,
-                      style: const TextStyle(
-                        color: Color(0xFF354056),
+                      style: TextStyle(
+                        color: sub.disabled ? _muted : const Color(0xFF354056),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    onTap: sub.onTap,
+                    onTap: sub.disabled ? null : sub.onTap,
                   ),
                 )
                 .toList(),

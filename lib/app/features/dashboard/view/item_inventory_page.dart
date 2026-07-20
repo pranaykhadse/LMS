@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/features/courses/view/lms_app_bar.dart' show watchIsOnline;
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/view/redeem_history_page.dart';
@@ -339,35 +340,46 @@ class _ItemCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: item.canRedeem && !isRedeeming ? onRedeem : null,
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(0, 32),
-                      backgroundColor: _purple,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: const Color(0xFFB0AFD4),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: isRedeeming
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            item.isRedeemed ? 'Redeemed' : 'Redeem',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final isOnline = watchIsOnline(ref);
+                      return ElevatedButton(
+                        onPressed: item.canRedeem && !isRedeeming && isOnline
+                            ? onRedeem
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: const Size(0, 32),
+                          backgroundColor: _purple,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: const Color(0xFFB0AFD4),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
+                        ),
+                        child: isRedeeming
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                item.isRedeemed
+                                    ? 'Redeemed'
+                                    : (!isOnline && item.canRedeem
+                                        ? 'Offline'
+                                        : 'Redeem'),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                      );
+                    },
                   ),
                 ),
               ],

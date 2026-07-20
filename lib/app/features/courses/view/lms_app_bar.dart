@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -16,6 +17,22 @@ import 'package:url_launcher/url_launcher.dart';
 const _appPurple = Color(0xFF5756C9);
 const _appInk = Color(0xFF172033);
 const _appMuted = Color(0xFF9AA8C0);
+
+bool watchIsOnline(WidgetRef ref) {
+  final isManualOffline = ref.watch(OfflineModeNotifier.provider);
+  final connectionVM = ref.watch(InternetConnectionProvider.provider);
+  ref.watch(SyncViewModel.provider);
+  return !isManualOffline && connectionVM.isConnected;
+}
+
+/// Same check as [watchIsOnline] but safe to call from callbacks
+/// (onTap/onPressed) where `ref.watch` isn't allowed — reads the current
+/// value once instead of subscribing to changes.
+bool readIsOnline(WidgetRef ref) {
+  final isManualOffline = ref.read(OfflineModeNotifier.provider);
+  final connectionVM = ref.read(InternetConnectionProvider.provider);
+  return !isManualOffline && connectionVM.isConnected;
+}
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
@@ -411,6 +428,10 @@ class _NotificationsDialog extends ConsumerWidget {
                             .markOneAsRead(item.id);
                         final url = item.redirectUrl;
                         if (url != null && url.isNotEmpty) {
+                          if (!readIsOnline(ref)) {
+                            Toast.info(context, 'Internet required to open this link.');
+                            return;
+                          }
                           final uri = Uri.tryParse(url);
                           if (uri != null) {
                             launchUrl(uri,

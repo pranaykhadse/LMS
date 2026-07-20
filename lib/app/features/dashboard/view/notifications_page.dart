@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
@@ -277,6 +278,10 @@ class _NotifCard extends StatelessWidget {
           ref.read(NotificationsViewModel.provider.notifier).markOneAsRead(item.id);
           final url = item.redirectUrl;
           if (url != null && url.isNotEmpty) {
+            if (!readIsOnline(ref)) {
+              Toast.info(context, 'Internet required to open this link.');
+              return;
+            }
             final uri = Uri.tryParse(url);
             if (uri != null) {
               launchUrl(uri, mode: LaunchMode.externalApplication);
