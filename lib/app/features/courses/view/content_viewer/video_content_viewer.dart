@@ -66,17 +66,22 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
     }
   }
 
-  Future<void> _initializeFromLocalHls(File localFile) async {
+  Future<void> _initializeFromLocalHls(File manifestFile) async {
     try {
-      // Serve the downloaded segment via a loopback HTTP server so iOS
-      // AVFoundation's HLS engine can open it (it refuses raw local .ts
-      // files, but plays the identical bytes fine over HTTP).
-      _localServer = await LocalHlsServer.serve(localFile);
+      // Serve the downloaded playlist + segments via a loopback HTTP server
+      // so iOS AVFoundation's HLS engine can open it (it refuses raw local
+      // .ts/.m3u8 files, but plays the identical bytes fine over HTTP).
+      debugPrint('[VideoContentViewer] playing local HLS from ${manifestFile.path}');
+      _localServer = await LocalHlsServer.serve(manifestFile);
+      debugPrint('[VideoContentViewer] local HLS server: ${_localServer!.playlistUrl}');
       _videoController = VideoPlayerController.networkUrl(
         Uri.parse(_localServer!.playlistUrl),
       );
       await _videoController!.initialize();
-    } catch (_) {
+      debugPrint('[VideoContentViewer] local HLS playback initialized OK');
+    } catch (e, st) {
+      debugPrint('[VideoContentViewer] local HLS playback FAILED: $e');
+      debugPrint('$st');
       // Local playback failed for some other reason — fall back to
       // streaming the original URL (works if we're actually online).
       await _localServer?.close();

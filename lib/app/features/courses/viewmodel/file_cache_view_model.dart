@@ -40,10 +40,10 @@ class FileCacheViewModel extends ChangeNotifier {
   }
 
   Future<void> _checkHlsCache(String url) async {
-    final localFile = await _hlsLocalFile(url);
+    final manifestFile = await _hlsManifestFile(url);
     _checking.remove(url);
-    cachedState[url] = localFile.existsSync()
-        ? FileCacheState(url: url, file: localFile)
+    cachedState[url] = manifestFile.existsSync()
+        ? FileCacheState(url: url, file: manifestFile)
         : FileCacheState(url: url);
     notifyListeners();
   }
@@ -59,8 +59,8 @@ class FileCacheViewModel extends ChangeNotifier {
 
   void delete(String url) {
     if (_isHls(url)) {
-      _hlsLocalFile(url).then((f) {
-        if (f.existsSync()) f.deleteSync();
+      _hlsLocalDir(url).then((d) {
+        if (d.existsSync()) d.deleteSync(recursive: true);
       });
     } else {
       DefaultCacheManager().removeFile(url);
@@ -91,7 +91,14 @@ class FileCacheViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── HLS download: manifest → segments → local .ts file ─────────────────────
+  // ── HLS download: manifest → individual segment files + local manifest ─────
+  //
+  // Each segment is saved as its own file, and a local .m3u8 playlist is
+  // written referencing them by relative filename — mirroring the original
+  // remote HLS structure exactly (same segment count, same per-segment
+  // EXTINF durations). This is what LocalHlsServer later serves back over
+  // loopback HTTP, so AVFoundation's HLS engine consumes it exactly like a
+  // normal HLS stream instead of a single opaque blob.
 
   Future<void> _downloadHls(String hlsUrl) async {
     final progressController = StreamController<double>.broadcast();
@@ -123,35 +130,51 @@ class FileCacheViewModel extends ChangeNotifier {
         }
       }
 
-      // 3. Parse .ts segment URLs
+      // 3. Parse segment URLs + their durations
       final segments = _parseSegments(manifest, baseUrl);
       if (segments.isEmpty) throw Exception('No segments in HLS manifest');
 
-      // 4. Download + concatenate into one local .ts file
-      final outputFile = await _hlsLocalFile(hlsUrl);
-      final sink = outputFile.openWrite();
+      // 4. Download each segment to its own local file
+      final dir = await _hlsLocalDir(hlsUrl);
+      if (!dir.existsSync()) dir.createSync(recursive: true);
+
+      final localPlaylist = StringBuffer()
+        ..writeln('#EXTM3U')
+        ..writeln('#EXT-X-VERSION:3')
+        ..writeln('#EXT-X-PLAYLIST-TYPE:VOD')
+        ..writeln(
+          '#EXT-X-TARGETDURATION:'
+          '${segments.map((s) => s.duration).reduce((a, b) => a > b ? a : b).ceil()}',
+        );
 
       for (int i = 0; i < segments.length; i++) {
         final segResp = await _dio.get<List<int>>(
-          segments[i],
+          segments[i].url,
           options: http.Options(responseType: http.ResponseType.bytes),
         );
-        if (segResp.data != null) sink.add(segResp.data!);
+        final segmentName = 'segment_${i.toString().padLeft(5, '0')}.ts';
+        if (segResp.data != null) {
+          await File('${dir.path}/$segmentName').writeAsBytes(segResp.data!);
+        }
+        localPlaylist
+          ..writeln('#EXTINF:${segments[i].duration},')
+          ..writeln(segmentName);
         if (!progressController.isClosed) {
           progressController.add((i + 1) / segments.length);
         }
       }
+      localPlaylist.writeln('#EXT-X-ENDLIST');
 
-      await sink.flush();
-      await sink.close();
+      final manifestFile = File('${dir.path}/playlist.m3u8');
+      await manifestFile.writeAsString(localPlaylist.toString());
       progressController.close();
 
-      cachedState[hlsUrl] = FileCacheState(url: hlsUrl, file: outputFile);
+      cachedState[hlsUrl] = FileCacheState(url: hlsUrl, file: manifestFile);
       notifyListeners();
     } catch (e) {
       if (!progressController.isClosed) progressController.close();
-      final partial = await _hlsLocalFile(hlsUrl);
-      if (partial.existsSync()) partial.deleteSync();
+      final dir = await _hlsLocalDir(hlsUrl);
+      if (dir.existsSync()) dir.deleteSync(recursive: true);
       cachedState.remove(hlsUrl);
       notifyListeners();
     }
@@ -189,24 +212,45 @@ class FileCacheViewModel extends ChangeNotifier {
     return best;
   }
 
-  static List<String> _parseSegments(String manifest, String base) =>
-      manifest
-          .split('\n')
-          .map((l) => l.trim())
-          .where((l) => l.isNotEmpty && !l.startsWith('#'))
-          .map((l) => _resolve(l, base))
-          .toList();
-
-  static Future<File> _hlsLocalFile(String hlsUrl) async {
-    final dir = await getApplicationDocumentsDirectory();
-    return File('${dir.path}/hls_${hlsUrl.hashCode.abs()}.ts');
+  static List<_HlsSegment> _parseSegments(String manifest, String base) {
+    final segments = <_HlsSegment>[];
+    double pendingDuration = 6.0;
+    for (final raw in manifest.split('\n')) {
+      final line = raw.trim();
+      if (line.isEmpty) continue;
+      if (line.startsWith('#EXTINF:')) {
+        final durStr = line.substring(8).split(',').first;
+        pendingDuration = double.tryParse(durStr) ?? pendingDuration;
+        continue;
+      }
+      if (line.startsWith('#')) continue;
+      segments.add(_HlsSegment(url: _resolve(line, base), duration: pendingDuration));
+    }
+    return segments;
   }
+
+  static Future<Directory> _hlsLocalDir(String hlsUrl) async {
+    final dir = await getApplicationDocumentsDirectory();
+    return Directory('${dir.path}/hls_${hlsUrl.hashCode.abs()}');
+  }
+
+  static Future<File> _hlsManifestFile(String hlsUrl) async {
+    final dir = await _hlsLocalDir(hlsUrl);
+    return File('${dir.path}/playlist.m3u8');
+  }
+}
+
+class _HlsSegment {
+  const _HlsSegment({required this.url, required this.duration});
+  final String url;
+  final double duration;
 }
 
 class FileCacheState {
   final String url;
   final Stream<double>? progress;
-  // dart:io File — works for both flutter_cache_manager downloads and HLS .ts output.
+  // dart:io File — works for both flutter_cache_manager downloads and the
+  // local HLS playlist.m3u8 (its sibling segment files live alongside it).
   File? file;
 
   FileCacheState({required this.url, this.file, this.progress});
