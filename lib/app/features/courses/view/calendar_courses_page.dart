@@ -26,6 +26,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
   CalendarFormat _format = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
+  DateTime _weekAnchor = DateTime.now();
 
   Map<DateTime, List<MyCourseItem>> _buildEventMap(
     List<MyCourseItem> courses,
@@ -104,7 +105,19 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
           ),
         ],
       ),
-      body: Column(
+      body: _format == CalendarFormat.week
+          ? _buildWeekView(eventMap)
+          : _buildMonthView(eventMap, selectedEvents, upcoming, myCoursesState),
+    );
+  }
+
+  Widget _buildMonthView(
+    Map<DateTime, List<MyCourseItem>> eventMap,
+    List<MyCourseItem> selectedEvents,
+    List<MyCourseItem> upcoming,
+    DataState<MyCoursesResult> myCoursesState,
+  ) {
+    return Column(
         children: [
           // ── Calendar card ───────────────────────────────────────────────
           Container(
@@ -339,7 +352,171 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
             }),
           ),
         ],
-      ),
+      );
+  }
+
+  DateTime _weekStart(DateTime d) {
+    final daysSinceSunday = d.weekday % 7;
+    return _dateOnly(d.subtract(Duration(days: daysSinceSunday)));
+  }
+
+  String _weekRangeLabel(DateTime start) {
+    final end = start.add(const Duration(days: 6));
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    if (start.month == end.month) {
+      return '${months[start.month - 1]} ${start.day} – ${end.day}, ${end.year}';
+    }
+    return '${months[start.month - 1]} ${start.day} – '
+        '${months[end.month - 1]} ${end.day}, ${end.year}';
+  }
+
+  String _dayHeaderLabel(DateTime d) {
+    const weekdayAbbrev = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return '${weekdayAbbrev[d.weekday % 7]} ${d.month}/${d.day}';
+  }
+
+  Widget _buildWeekView(Map<DateTime, List<MyCourseItem>> eventMap) {
+    final weekStart = _weekStart(_weekAnchor);
+    final today = _dateOnly(DateTime.now());
+    final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Row(
+            children: [
+              Text(
+                _weekRangeLabel(weekStart),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: _calNavy,
+                ),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () => setState(() => _weekAnchor = DateTime.now()),
+                style: TextButton.styleFrom(foregroundColor: _calMuted),
+                child: const Text('Today', style: TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              IconButton(
+                onPressed: () =>
+                    setState(() => _weekAnchor = _weekAnchor.subtract(const Duration(days: 7))),
+                icon: const Icon(Icons.chevron_left, color: _calPurple),
+              ),
+              IconButton(
+                onPressed: () =>
+                    setState(() => _weekAnchor = _weekAnchor.add(const Duration(days: 7))),
+                icon: const Icon(Icons.chevron_right, color: _calPurple),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFE3E7EF)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    for (final day in days)
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isSameDay(day, today)
+                                ? const Color(0xFFFFF6D9)
+                                : const Color(0xFFF7F8FB),
+                            border: const Border(
+                              right: BorderSide(color: Color(0xFFE3E7EF)),
+                              bottom: BorderSide(color: Color(0xFFE3E7EF)),
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          alignment: Alignment.center,
+                          child: Text(
+                            _dayHeaderLabel(day),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _calNavy,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (final day in days)
+                        Expanded(
+                          child: Container(
+                            constraints: const BoxConstraints(minHeight: 70),
+                            decoration: BoxDecoration(
+                              color: isSameDay(day, today)
+                                  ? const Color(0xFFFFFBEF)
+                                  : Colors.white,
+                              border: const Border(
+                                right: BorderSide(color: Color(0xFFE3E7EF)),
+                              ),
+                            ),
+                            padding: const EdgeInsets.all(4),
+                            child: Column(
+                              children: [
+                                for (final course
+                                    in (eventMap[_dateOnly(day)] ?? const <MyCourseItem>[]))
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 3),
+                                    child: GestureDetector(
+                                      onTap: () => Modular.to.pushNamed(
+                                        CoursesModule.construct(
+                                          '${CoursesModule.detail}/${course.courseId}',
+                                        ),
+                                      ),
+                                      child: Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 4, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: _calPurple,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          _shortName(course.courseName),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
