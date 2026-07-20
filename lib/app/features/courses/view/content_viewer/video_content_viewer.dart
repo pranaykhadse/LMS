@@ -17,15 +17,14 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
   late final VideoController _controller;
   StreamSubscription<String>? _errorSub;
   String? _error;
+  bool _mutedFallbackAttempted = false;
 
   @override
   void initState() {
     super.initState();
     _player = Player();
     _controller = VideoController(_player);
-    _errorSub = _player.stream.error.listen((message) {
-      if (mounted) setState(() => _error = message);
-    });
+    _errorSub = _player.stream.error.listen(_onPlayerError);
     _initialize();
   }
 
@@ -36,6 +35,11 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
     super.dispose();
   }
 
+  String get _source {
+    final localFile = widget.file.file;
+    return localFile != null ? localFile.path : widget.file.url;
+  }
+
   Future<void> _initialize() async {
     try {
       // media_kit (libmpv) decodes every format this app serves — MP4,
@@ -43,9 +47,33 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
       // manifest + segments) — through the same unified API, on every
       // platform including iOS, where AVFoundation supports none of the
       // WebM content and only remote HLS.
-      final localFile = widget.file.file;
-      final source = localFile != null ? localFile.path : widget.file.url;
-      await _player.open(Media(source));
+      await _player.open(Media(_source));
+    } catch (e) {
+      _handleError(e.toString());
+    }
+  }
+
+  void _onPlayerError(String message) => _handleError(message);
+
+  void _handleError(String message) {
+    // iOS Simulator's virtual audio device fails to initialize (confirmed
+    // media_kit issue, real devices are unaffected). Rather than show a
+    // hard error for something that's actually a working video, retry once
+    // with audio disabled so playback still works (silently) wherever the
+    // audio device genuinely can't be opened.
+    if (!_mutedFallbackAttempted &&
+        message.toLowerCase().contains('audio device')) {
+      _mutedFallbackAttempted = true;
+      _retryMuted();
+      return;
+    }
+    if (mounted) setState(() => _error = message);
+  }
+
+  Future<void> _retryMuted() async {
+    try {
+      await _player.setAudioTrack(AudioTrack.no());
+      await _player.open(Media(_source));
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     }
