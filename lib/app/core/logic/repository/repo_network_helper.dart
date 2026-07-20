@@ -31,11 +31,15 @@ class RepoNetworkConfig {
   final String? authToken;
   final InternetConnectionProvider connectionProvider;
   final RequestCacheProvider? requestCacheProvider;
+  /// The user-facing "Offline Mode" toggle. When true, the app behaves as
+  /// offline for its own API calls regardless of real device connectivity.
+  final bool manualOffline;
   RepoNetworkConfig({
     required this.url,
     this.authToken,
     required this.connectionProvider,
     this.requestCacheProvider,
+    this.manualOffline = false,
   });
 
   String get baseUrl => url.endsWith("/") ? url : "$url/";
@@ -54,7 +58,8 @@ mixin RepoNetworkHelper {
   String get baseUrl => config.baseUrl;
   Map<String, String> get header => config.header;
   Dio get dio => Dio(BaseOptions(baseUrl: baseUrl, headers: header));
-  bool get isOffline => config.connectionProvider.isConnected == false;
+  bool get isOffline =>
+      config.manualOffline || config.connectionProvider.isConnected == false;
   @protected
   Future<dynamic> convertToNetworkBody(dynamic data) async {
     final converted = await serializeToNetwork(data);

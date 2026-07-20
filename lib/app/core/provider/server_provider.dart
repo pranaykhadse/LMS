@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/provider/request_cache_provider.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 
@@ -21,6 +22,7 @@ class ServerProvider {
       authToken: ref.watch(AuthStateNotifier.provider)?.token,
       connectionProvider: ref.watch(InternetConnectionProvider.provider),
       requestCacheProvider: ref.watch(RequestCacheProvider.provider),
+      manualOffline: ref.watch(OfflineModeNotifier.provider),
     );
   });
 }
