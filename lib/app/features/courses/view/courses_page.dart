@@ -24,6 +24,7 @@ const _catalogPink = Color(0xFFB0006D);
 const _catalogInk = Color(0xFF172033);
 const _catalogMuted = Color(0xFF7C879D);
 const _catalogBackground = Color(0xFFF4F7F8);
+const _catalogCalendarBlue = Color(0xFF3454D1);
 
 int _catalogColumns(double width) {
   if (width >= 900) return 4;
@@ -559,7 +560,7 @@ class _FilterPanel extends StatelessWidget {
                   final fields = <Widget>[
                     _CatalogField(
                       controller: searchController,
-                      hint: 'Search',
+                      hint: 'Course',
                       showClear: true,
                     ),
                     _SkillDropdown(
@@ -627,7 +628,7 @@ class _FilterPanel extends StatelessWidget {
                                 child: ElevatedButton.icon(
                                   onPressed: onCalendarView,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: _catalogInk,
+                                    backgroundColor: _catalogCalendarBlue,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(9),
@@ -705,7 +706,7 @@ class _FilterPanel extends StatelessWidget {
                             onPressed: onCalendarView,
                             style: ElevatedButton.styleFrom(
                               minimumSize: const Size.fromHeight(48),
-                              backgroundColor: _catalogInk,
+                              backgroundColor: _catalogCalendarBlue,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
