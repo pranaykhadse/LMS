@@ -71,9 +71,12 @@ dependencies:
   # ------------------------------------------------------------------------------
   # Content Viewer
   # ------------------------------------------------------------------------------
-  video_player: ^2.10.0
-  video_player_win: ^3.1.1
-  chewie: ^1.11.3
+  # media_kit (libmpv-backed) instead of video_player/chewie: it decodes
+  # WebM/VP9 (and everything else) in software on every platform, including
+  # iOS, where AVFoundation has no WebM support at all.
+  media_kit: ^1.2.6
+  media_kit_video: ^2.0.1
+  media_kit_libs_video: ^1.0.7
   pdfrx: ^1.2.5
   path_provider: ^2.1.5
 

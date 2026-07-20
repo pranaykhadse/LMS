@@ -1,10 +1,9 @@
-import 'dart:io';
+import 'dart:async';
 
-import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
-import 'package:lms/app/features/courses/viewmodel/local_hls_server.dart';
-import 'package:video_player/video_player.dart';
 
 class VideoContentViewer extends StatefulWidget {
   const VideoContentViewer({super.key, required this.file});
@@ -14,93 +13,48 @@ class VideoContentViewer extends StatefulWidget {
 }
 
 class _VideoContentViewerState extends State<VideoContentViewer> {
-  VideoPlayerController? _videoController;
-  ChewieController? _chewieController;
-  LocalHlsServer? _localServer;
+  late final Player _player;
+  late final VideoController _controller;
+  StreamSubscription<String>? _errorSub;
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    _player = Player();
+    _controller = VideoController(_player);
+    _errorSub = _player.stream.error.listen((message) {
+      if (mounted) setState(() => _error = message);
+    });
     _initialize();
   }
 
   @override
   void dispose() {
-    _chewieController?.dispose();
-    _videoController?.dispose();
-    _localServer?.close();
+    _errorSub?.cancel();
+    _player.dispose();
     super.dispose();
   }
 
   Future<void> _initialize() async {
     try {
-      final isHls = widget.file.url.toLowerCase().contains('.m3u8');
+      // media_kit (libmpv) decodes every format this app serves — MP4,
+      // WebM/VP9, and HLS (.m3u8, whether remote or a locally downloaded
+      // manifest + segments) — through the same unified API, on every
+      // platform including iOS, where AVFoundation supports none of the
+      // WebM content and only remote HLS.
       final localFile = widget.file.file;
-
-      if (localFile != null && isHls) {
-        await _initializeFromLocalHls(localFile);
-      } else if (localFile != null) {
-        // Non-HLS local file (.mp4 etc.) — play from disk.
-        _videoController = VideoPlayerController.file(localFile);
-        await _videoController!.initialize();
-      } else {
-        // No local copy: stream from network.
-        _videoController = VideoPlayerController.networkUrl(
-          Uri.parse(widget.file.url),
-        );
-        await _videoController!.initialize();
-      }
-
-      _chewieController = ChewieController(
-        videoPlayerController: _videoController!,
-        autoPlay: true,
-        autoInitialize: true,
-        errorBuilder: (context, errorMessage) =>
-            _ErrorView(message: errorMessage),
-      );
-
-      if (mounted) setState(() {});
+      final source = localFile != null ? localFile.path : widget.file.url;
+      await _player.open(Media(source));
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
-    }
-  }
-
-  Future<void> _initializeFromLocalHls(File manifestFile) async {
-    try {
-      // Serve the downloaded playlist + segments via a loopback HTTP server
-      // so iOS AVFoundation's HLS engine can open it (it refuses raw local
-      // .ts/.m3u8 files, but plays the identical bytes fine over HTTP).
-      debugPrint('[VideoContentViewer] playing local HLS from ${manifestFile.path}');
-      _localServer = await LocalHlsServer.serve(manifestFile);
-      debugPrint('[VideoContentViewer] local HLS server: ${_localServer!.playlistUrl}');
-      _videoController = VideoPlayerController.networkUrl(
-        Uri.parse(_localServer!.playlistUrl),
-      );
-      await _videoController!.initialize();
-      debugPrint('[VideoContentViewer] local HLS playback initialized OK');
-    } catch (e, st) {
-      debugPrint('[VideoContentViewer] local HLS playback FAILED: $e');
-      debugPrint('$st');
-      // Local playback failed for some other reason — fall back to
-      // streaming the original URL (works if we're actually online).
-      await _localServer?.close();
-      _localServer = null;
-      await _videoController?.dispose();
-      _videoController = VideoPlayerController.networkUrl(
-        Uri.parse(widget.file.url),
-      );
-      await _videoController!.initialize();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     if (_error != null) return _ErrorView(message: _error!);
-    if (_chewieController == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return Chewie(controller: _chewieController!);
+    return Video(controller: _controller);
   }
 }
 

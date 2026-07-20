@@ -96,9 +96,9 @@ class FileCacheViewModel extends ChangeNotifier {
   // Each segment is saved as its own file, and a local .m3u8 playlist is
   // written referencing them by relative filename — mirroring the original
   // remote HLS structure exactly (same segment count, same per-segment
-  // EXTINF durations). This is what LocalHlsServer later serves back over
-  // loopback HTTP, so AVFoundation's HLS engine consumes it exactly like a
-  // normal HLS stream instead of a single opaque blob.
+  // EXTINF durations). media_kit's player opens this local playlist file
+  // directly and resolves the relative segment paths itself, no local HTTP
+  // server needed.
 
   Future<void> _downloadHls(String hlsUrl) async {
     final progressController = StreamController<double>.broadcast();
