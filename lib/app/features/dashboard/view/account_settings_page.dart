@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
@@ -171,6 +172,7 @@ class _AccountSettingsBody extends StatelessWidget {
             ),
           ],
         ),
+        const AppFooter(),
       ],
     );
   }

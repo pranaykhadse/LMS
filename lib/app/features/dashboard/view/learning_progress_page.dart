@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
@@ -153,6 +154,7 @@ class _ProgressBody extends StatelessWidget {
             _RequiredCoursesCard(courses: data.requiredForYou),
             const SizedBox(height: 8),
           ],
+          const AppFooter(),
         ],
       ),
     );

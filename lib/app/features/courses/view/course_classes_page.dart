@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -185,7 +187,7 @@ class _DetailBody extends ConsumerWidget {
                           courseObjective: detail.objective,
                           courseTitle: detail.title,
                         ),
-                        const _DetailFooter(),
+                        const AppFooter(),
                       ],
                     ),
                   ),
@@ -583,18 +585,7 @@ class _StructureCard extends StatelessWidget {
               if (item != items.last) const SizedBox(height: 20),
             ],
           const SizedBox(height: 20),
-          OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _detailPurple,
-              side: const BorderSide(color: _detailPurple),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            child: Text('${items.length} Per Page'),
-          ),
+          PerPageBadge(perPage: items.length),
         ],
       ),
     );
@@ -967,42 +958,6 @@ class _ImageFallback extends StatelessWidget {
       color: const Color(0xFFF0ECFF),
       alignment: Alignment.center,
       child: const Icon(Icons.school_outlined, color: _detailPurple, size: 78),
-    );
-  }
-}
-
-class _DetailFooter extends StatelessWidget {
-  const _DetailFooter();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
-      child: const Row(
-        children: [
-          Text('Terms of Use', style: TextStyle(color: Color(0xFF444A57))),
-          SizedBox(width: 28),
-          Text('Your Profile', style: TextStyle(color: Color(0xFF444A57))),
-          SizedBox(width: 28),
-          Text(
-            'Support',
-            style: TextStyle(
-              color: Color(0xFF444A57),
-              decoration: TextDecoration.underline,
-            ),
-          ),
-          Spacer(),
-          Text(
-            'in',
-            style: TextStyle(
-              color: Color(0xFF777777),
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

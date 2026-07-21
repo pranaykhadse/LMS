@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
+import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
@@ -58,16 +60,31 @@ class _Body extends StatelessWidget {
               child: RefreshIndicator(
                 color: _purple,
                 onRefresh: () => notifier.fetch(page: state.page),
-                child: GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 14,
-                    mainAxisSpacing: 14,
-                    childAspectRatio: 0.62,
-                  ),
-                  itemCount: state.courses.length,
-                  itemBuilder: (ctx, i) => _CourseCard(course: state.courses[i]),
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 14,
+                        childAspectRatio: 0.62,
+                      ),
+                      itemCount: state.courses.length,
+                      itemBuilder: (ctx, i) =>
+                          _CourseCard(course: state.courses[i]),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      // Must match _perPage in completed_courses_view_model.dart.
+                      child: PerPageBadge(perPage: 5),
+                    ),
+                    const AppFooter(),
+                  ],
                 ),
               ),
             ),

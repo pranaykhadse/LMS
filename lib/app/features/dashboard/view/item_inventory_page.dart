@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
@@ -122,6 +123,7 @@ class _Body extends StatelessWidget {
               ),
             ),
           ),
+        const SliverToBoxAdapter(child: AppFooter()),
       ],
     );
   }

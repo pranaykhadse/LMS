@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
@@ -171,8 +172,10 @@ class _Body extends StatelessWidget {
         if (state.paths.isEmpty) return const _EmptyState();
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          itemCount: state.paths.length,
-          itemBuilder: (ctx, i) => _PathCard(path: state.paths[i]),
+          itemCount: state.paths.length + 1,
+          itemBuilder: (ctx, i) => i < state.paths.length
+              ? _PathCard(path: state.paths[i])
+              : const AppFooter(),
         );
     }
   }

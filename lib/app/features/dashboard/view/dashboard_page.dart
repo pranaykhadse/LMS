@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -147,7 +148,7 @@ class _DashboardBody extends StatelessWidget {
                 const SizedBox(height: 12),
                 _ResourceCarousel(resources: data.resources),
               ],
-              const SizedBox(height: 48),
+              const AppFooter(),
             ],
           ),
         );

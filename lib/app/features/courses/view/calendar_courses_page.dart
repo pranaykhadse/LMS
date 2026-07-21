@@ -3,6 +3,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
@@ -351,9 +352,10 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
               }
               return ListView.builder(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                itemCount: list.length,
-                itemBuilder: (context, i) =>
-                    _CourseEventTile(course: list[i]),
+                itemCount: list.length + 1,
+                itemBuilder: (context, i) => i < list.length
+                    ? _CourseEventTile(course: list[i])
+                    : const AppFooter(),
               );
             }),
           ),

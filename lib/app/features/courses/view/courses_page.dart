@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
+import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/model/course_catalog.dart';
@@ -237,6 +239,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
             ),
           ),
           _bottomSpacer,
+          const SliverToBoxAdapter(child: AppFooter()),
         ];
     }
   }
@@ -285,6 +288,8 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
             for (final group in groups) ...[
               _groupTitle(group.name),
               _catalogGrid(group.courses),
+              // Must match CourseCatalogRepository.fetch's default perPage.
+              _perPageBadge(5),
               if (group.pagination.pages > 1)
                 _groupPagination(
                   group,
@@ -292,6 +297,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                 ),
             ],
             _bottomSpacer,
+            const SliverToBoxAdapter(child: AppFooter()),
           ];
         }
 
@@ -304,8 +310,22 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
             ),
           ];
         }
-        return [_groupTitle('Available'), _catalogGrid(courses), _bottomSpacer];
+        return [
+          _groupTitle('Available'),
+          _catalogGrid(courses),
+          _perPageBadge(5),
+          _bottomSpacer,
+          const SliverToBoxAdapter(child: AppFooter()),
+        ];
     }
+  }
+
+  Widget _perPageBadge(int perPage) {
+    final isWide = MediaQuery.sizeOf(context).width >= 760;
+    return SliverPadding(
+      padding: EdgeInsets.fromLTRB(isWide ? 48 : 27, 10, isWide ? 48 : 27, 0),
+      sliver: SliverToBoxAdapter(child: PerPageBadge(perPage: perPage)),
+    );
   }
 
   Widget _groupPagination(CatalogCourseGroup group, int selectedPage) {
