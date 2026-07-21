@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/paginated_fetch.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
@@ -39,8 +40,19 @@ class MyCoursesRepository with RepoNetworkHelper {
         }
         final result = MyCoursesResult.fromJson(data);
         total = result.total;
+        debugPrint(
+          '[MyCoursesRepository] page=$page per_page=$perPage -> '
+          'returned=${result.courses.length} total=$total '
+          'ids=${result.courses.map((c) => c.courseId).toList()} '
+          'nextSessions=${result.courses.map((c) => '${c.courseId}:${c.nextSession}').toList()}',
+        );
         return result.courses;
       },
+    );
+    debugPrint(
+      '[MyCoursesRepository] fetch complete: ${courses.length} courses total '
+      '(server reported total=$total), '
+      '${courses.where((c) => c.nextSession != null).length} with a nextSession',
     );
     return MyCoursesResult(total: total, courses: courses);
   }
