@@ -179,67 +179,136 @@ class _BadgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: earned
-                ? const Color(0xFFFFC107).withValues(alpha: .15)
-                : const Color(0x0A000000),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: earned
-            ? Border.all(color: const Color(0xFFFFC107).withValues(alpha: .4), width: 1.5)
-            : null,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
-              child: _BadgeImage(imageUrl: badge.image, earned: earned),
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: earned
+          ? () => showDialog(
+                context: context,
+                builder: (_) => _BadgeDetailDialog(badge: badge),
+              )
+          : null,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: earned
+                  ? const Color(0xFFFFC107).withValues(alpha: .15)
+                  : const Color(0x0A000000),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
-            child: Text(
-              badge.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: earned ? _ink : _muted,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                height: 1.3,
+          ],
+          border: earned
+              ? Border.all(color: const Color(0xFFFFC107).withValues(alpha: .4), width: 1.5)
+              : null,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+                child: _BadgeImage(imageUrl: badge.image, earned: earned),
               ),
             ),
-          ),
-          if (earned)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.check_circle_rounded, color: Color(0xFFFFC107), size: 14),
-                  SizedBox(width: 4),
-                  Text(
-                    'Earned',
-                    style: TextStyle(
-                      color: Color(0xFFFFC107),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+              child: Text(
+                badge.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: earned ? _ink : _muted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                ),
+              ),
+            ),
+            if (earned)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.check_circle_rounded, color: Color(0xFFFFC107), size: 14),
+                    SizedBox(width: 4),
+                    Text(
+                      'Earned',
+                      style: TextStyle(
+                        color: Color(0xFFFFC107),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Badge detail dialog ──────────────────────────────────────────────────────
+
+class _BadgeDetailDialog extends StatelessWidget {
+  const _BadgeDetailDialog({required this.badge});
+  final UserBadge badge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ),
+            const SizedBox(height: 4),
+            SizedBox(
+              height: 90,
+              child: _BadgeImage(imageUrl: badge.image, earned: true),
+            ),
+            const SizedBox(height: 20),
+            Text.rich(
+              TextSpan(
+                style: const TextStyle(color: _ink, fontSize: 14, height: 1.5),
+                children: [
+                  const TextSpan(text: 'You earned this badge for successfully completing the course '),
+                  TextSpan(
+                    text: "'${badge.title}'",
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
+                  const TextSpan(text: '.'),
                 ],
               ),
+              textAlign: TextAlign.center,
             ),
-        ],
+            const SizedBox(height: 16),
+            const Text(
+              'Congratulations!',
+              style: TextStyle(
+                color: _purple,
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
