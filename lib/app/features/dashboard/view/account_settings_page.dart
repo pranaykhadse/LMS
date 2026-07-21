@@ -15,6 +15,16 @@ const _asMuted = Color(0xFF7C879D);
 const _asBg = Color(0xFFF5F7FC);
 const _asFieldBg = Color(0xFFF4F6FA);
 
+/// Avatar upload isn't wired up yet (no confirmed upload endpoint), so for
+/// now the avatar is just a plain URL the user can paste in — this mirrors
+/// the same resolution the profile PUT's avatar_path/avatar_base_url pair
+/// would otherwise need.
+String _resolveAvatarUrl(UserProfile profile) {
+  final base = profile.avatarBaseUrl?.toString() ?? '';
+  final path = profile.avatarPath?.toString() ?? '';
+  return path.startsWith('http') ? path : (base.isNotEmpty && path.isNotEmpty ? '$base$path' : '');
+}
+
 class AccountSettingsPage extends ConsumerWidget {
   const AccountSettingsPage({super.key});
 
@@ -96,6 +106,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   late final TextEditingController _linkedInCtrl;
   late final TextEditingController _divisionCtrl;
   late final TextEditingController _departmentCtrl;
+  late final TextEditingController _avatarUrlCtrl;
 
   @override
   void initState() {
@@ -108,6 +119,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _linkedInCtrl = TextEditingController(text: p.linkedIn?.toString() ?? '');
     _divisionCtrl = TextEditingController(text: p.division ?? '');
     _departmentCtrl = TextEditingController(text: p.department ?? '');
+    _avatarUrlCtrl = TextEditingController(text: _resolveAvatarUrl(p));
   }
 
   @override
@@ -119,6 +131,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _linkedInCtrl.dispose();
     _divisionCtrl.dispose();
     _departmentCtrl.dispose();
+    _avatarUrlCtrl.dispose();
     super.dispose();
   }
 
@@ -131,6 +144,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _linkedInCtrl.text = p.linkedIn?.toString() ?? '';
     _divisionCtrl.text = p.division ?? '';
     _departmentCtrl.text = p.department ?? '';
+    _avatarUrlCtrl.text = _resolveAvatarUrl(p);
   }
 
   void _startEditing() => setState(() => _isEditing = true);
@@ -142,6 +156,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
 
   Future<void> _save() async {
     setState(() => _isSaving = true);
+    final avatarUrl = _avatarUrlCtrl.text.trim();
     final error = await ref
         .read(AccountSettingsViewModel.provider.notifier)
         .update(
@@ -152,6 +167,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           linkedIn: _linkedInCtrl.text.trim(),
           division: _divisionCtrl.text.trim(),
           department: _departmentCtrl.text.trim(),
+          avatarUrl: avatarUrl.isEmpty ? null : avatarUrl,
         );
     if (!mounted) return;
     setState(() {
@@ -184,6 +200,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           isSaving: _isSaving,
           firstnameController: _firstnameCtrl,
           lastnameController: _lastnameCtrl,
+          avatarUrlController: _avatarUrlCtrl,
           onEdit: _startEditing,
           onCancel: _cancelEditing,
           onSave: _save,
@@ -307,6 +324,7 @@ class _ProfileHeaderCard extends StatelessWidget {
     required this.isSaving,
     required this.firstnameController,
     required this.lastnameController,
+    required this.avatarUrlController,
     required this.onEdit,
     required this.onCancel,
     required this.onSave,
@@ -318,16 +336,13 @@ class _ProfileHeaderCard extends StatelessWidget {
   final bool isSaving;
   final TextEditingController firstnameController;
   final TextEditingController lastnameController;
+  final TextEditingController avatarUrlController;
   final VoidCallback onEdit;
   final VoidCallback onCancel;
   final VoidCallback onSave;
 
   @override
   Widget build(BuildContext context) {
-    final base = profile.avatarBaseUrl?.toString() ?? '';
-    final path = profile.avatarPath?.toString() ?? '';
-    final url = path.startsWith('http') ? path : (base.isNotEmpty && path.isNotEmpty ? '$base$path' : '');
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(18, 16, 14, 24),
@@ -389,23 +404,57 @@ class _ProfileHeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          CircleAvatar(
-            radius: 44,
-            backgroundColor: const Color(0xFF10121B),
-            backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
-            child: url.isEmpty ? const Icon(Icons.person, color: Colors.white, size: 40) : null,
-          ),
+          if (isEditing)
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: avatarUrlController,
+              builder: (context, value, _) => _Avatar(url: value.text.trim()),
+            )
+          else
+            _Avatar(url: _resolveAvatarUrl(profile)),
           const SizedBox(height: 14),
           if (isEditing) ...[
             _EditableName(controller: firstnameController, hint: 'First name'),
             const SizedBox(height: 10),
             _EditableName(controller: lastnameController, hint: 'Last name'),
+            const SizedBox(height: 10),
+            TextField(
+              controller: avatarUrlController,
+              style: const TextStyle(color: _asInk, fontSize: 13),
+              decoration: InputDecoration(
+                hintText: 'Avatar image URL',
+                prefixIcon: const Icon(Icons.image_outlined, size: 18, color: _asMuted),
+                filled: true,
+                fillColor: _asFieldBg,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
           ] else
             Text(name, style: const TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 18)),
           const SizedBox(height: 4),
           Text(email, style: const TextStyle(color: _asMuted, fontSize: 13)),
         ],
       ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.url});
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final valid = url.startsWith('http');
+    return CircleAvatar(
+      radius: 44,
+      backgroundColor: const Color(0xFF10121B),
+      backgroundImage: valid ? NetworkImage(url) : null,
+      onBackgroundImageError: valid ? (_, __) {} : null,
+      child: valid ? null : const Icon(Icons.person, color: Colors.white, size: 40),
     );
   }
 }

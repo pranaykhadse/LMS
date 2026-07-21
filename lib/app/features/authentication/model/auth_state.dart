@@ -619,11 +619,12 @@ class UserProfile {
     dynamic linkedIn,
     String? division,
     String? department,
+    dynamic avatarPath,
   }) => {
     "firstname": firstname ?? this.firstname,
     "middlename": middlename,
     "lastname": lastname ?? this.lastname,
-    "avatar_path": avatarPath,
+    "avatar_path": avatarPath ?? this.avatarPath,
     "avatar_base_url": avatarBaseUrl,
     "locale": locale,
     "gender": gender,

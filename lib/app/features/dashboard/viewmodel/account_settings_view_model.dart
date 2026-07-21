@@ -50,6 +50,7 @@ class AccountSettingsViewModel
     required String linkedIn,
     required String division,
     required String department,
+    String? avatarUrl,
   }) async {
     final current = state.data;
     if (userId == null || current == null) {
@@ -63,6 +64,7 @@ class AccountSettingsViewModel
       linkedIn: linkedIn,
       division: division,
       department: department,
+      avatarPath: avatarUrl,
     );
     final result = await repository.update(userId: userId!, body: body);
     if (!result.success) {
@@ -78,6 +80,7 @@ class AccountSettingsViewModel
           linkedIn: linkedIn,
           division: division,
           department: department,
+          avatarPath: avatarUrl,
         ),
         user: current.user,
         phoneNumber: current.phoneNumber,
