@@ -83,22 +83,15 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (state.providerState == DataProviderState.loading ||
-        state.providerState == DataProviderState.idle) {
+    if (state.result == null) {
+      if (state.providerState == DataProviderState.error) {
+        return _ErrorView(message: state.error ?? 'Unable to load inventory.', onRetry: onRetry);
+      }
       return const Center(child: CircularProgressIndicator(color: _purple));
-    }
-    if (state.providerState == DataProviderState.error) {
-      return _ErrorView(message: state.error ?? 'Unable to load inventory.', onRetry: onRetry);
     }
     final result = state.result!;
     final items = result.items;
-    return Column(
-      children: [
-        Expanded(child: _buildList(context, items)),
-        if (items.isNotEmpty)
-          PaginationWidget(page: state.page, pages: state.totalPages, onPage: onPageChanged),
-      ],
-    );
+    return _buildList(context, items);
   }
 
   Widget _buildList(BuildContext context, List<InventoryItem> items) {
@@ -164,7 +157,7 @@ class _Body extends StatelessWidget {
                               ? IconButton(
                                   onPressed: onClearSearch,
                                   icon: const Icon(
-                                    Icons.close_rounded,
+                                    Icons.undo_rounded,
                                     color: _muted,
                                     size: 18,
                                   ),
@@ -235,8 +228,15 @@ class _Body extends StatelessWidget {
           ),
           const SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 24),
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: PerPageBadge(perPage: _perPage),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: PaginationWidget(
+              page: state.page,
+              pages: state.totalPages,
+              onPage: onPageChanged,
             ),
           ),
         ],
