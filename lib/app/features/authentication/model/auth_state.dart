@@ -409,6 +409,15 @@ class UserProfile {
   final String? recommendedCourses;
   final String? requiredCourses;
 
+  // Admin-managed access-restriction fields. Not editable from the app's
+  // Account Settings screen, but PUT /user-profile/{id} replaces the whole
+  // profile, so these must be round-tripped unchanged rather than dropped.
+  final dynamic meteredAccess;
+  final dynamic restrictedGroupId;
+  final dynamic restrictionType;
+  final dynamic restrictedCourseLimit;
+  final dynamic restrictedDate;
+
   UserProfile({
     this.userId,
     this.firstname,
@@ -438,6 +447,11 @@ class UserProfile {
     this.virtualDevelopmentProStatus,
     this.recommendedCourses,
     this.requiredCourses,
+    this.meteredAccess,
+    this.restrictedGroupId,
+    this.restrictionType,
+    this.restrictedCourseLimit,
+    this.restrictedDate,
   });
 
   UserProfile copyWith({
@@ -469,6 +483,11 @@ class UserProfile {
     int? virtualDevelopmentProStatus,
     String? recommendedCourses,
     String? requiredCourses,
+    dynamic meteredAccess,
+    dynamic restrictedGroupId,
+    dynamic restrictionType,
+    dynamic restrictedCourseLimit,
+    dynamic restrictedDate,
   }) => UserProfile(
     userId: userId ?? this.userId,
     firstname: firstname ?? this.firstname,
@@ -499,6 +518,11 @@ class UserProfile {
         virtualDevelopmentProStatus ?? this.virtualDevelopmentProStatus,
     recommendedCourses: recommendedCourses ?? this.recommendedCourses,
     requiredCourses: requiredCourses ?? this.requiredCourses,
+    meteredAccess: meteredAccess ?? this.meteredAccess,
+    restrictedGroupId: restrictedGroupId ?? this.restrictedGroupId,
+    restrictionType: restrictionType ?? this.restrictionType,
+    restrictedCourseLimit: restrictedCourseLimit ?? this.restrictedCourseLimit,
+    restrictedDate: restrictedDate ?? this.restrictedDate,
   );
 
   factory UserProfile.fromRawJson(String str) =>
@@ -538,6 +562,11 @@ class UserProfile {
     virtualDevelopmentProStatus: _asInt(json["virtual_development_pro_status"]),
     recommendedCourses: _asString(json["recommended_courses"]),
     requiredCourses: _asString(json["required_courses"]),
+    meteredAccess: json["metered_access"],
+    restrictedGroupId: json["restricted_group_id"],
+    restrictionType: json["restriction_type"],
+    restrictedCourseLimit: json["restricted_course_limit"],
+    restrictedDate: json["restricted_date"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -572,5 +601,42 @@ class UserProfile {
     "virtual_development_pro_status": virtualDevelopmentProStatus,
     "recommended_courses": recommendedCourses,
     "required_courses": requiredCourses,
+    "metered_access": meteredAccess,
+    "restricted_group_id": restrictedGroupId,
+    "restriction_type": restrictionType,
+    "restricted_course_limit": restrictedCourseLimit,
+    "restricted_date": restrictedDate,
+  };
+
+  /// Exactly the field set PUT /user-profile/{id} expects — a subset of
+  /// [toJson] (that one also carries fields this endpoint doesn't take,
+  /// like notification/popup bookkeeping) with the given overrides applied.
+  Map<String, dynamic> toUpdateJson({
+    String? firstname,
+    String? lastname,
+    String? location,
+    dynamic website,
+    dynamic linkedIn,
+    String? division,
+    String? department,
+  }) => {
+    "firstname": firstname ?? this.firstname,
+    "middlename": middlename,
+    "lastname": lastname ?? this.lastname,
+    "avatar_path": avatarPath,
+    "avatar_base_url": avatarBaseUrl,
+    "locale": locale,
+    "gender": gender,
+    "division": division ?? this.division,
+    "department": department ?? this.department,
+    "location": location ?? this.location,
+    "points": points,
+    "website": website ?? this.website,
+    "linked_in": linkedIn ?? this.linkedIn,
+    "metered_access": meteredAccess,
+    "restricted_group_id": restrictedGroupId,
+    "restriction_type": restrictionType,
+    "restricted_course_limit": restrictedCourseLimit,
+    "restricted_date": restrictedDate,
   };
 }

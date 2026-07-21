@@ -39,6 +39,54 @@ class AccountSettingsViewModel
     }
   }
 
+  /// Saves edits made from Account Settings. Returns an error message on
+  /// failure, or null on success (after which local state reflects the
+  /// edited values immediately — no need to wait on a re-fetch).
+  Future<String?> update({
+    required String firstname,
+    required String lastname,
+    required String location,
+    required String website,
+    required String linkedIn,
+    required String division,
+    required String department,
+  }) async {
+    final current = state.data;
+    if (userId == null || current == null) {
+      return 'Unable to save — profile not loaded.';
+    }
+    final body = current.profile.toUpdateJson(
+      firstname: firstname,
+      lastname: lastname,
+      location: location,
+      website: website,
+      linkedIn: linkedIn,
+      division: division,
+      department: department,
+    );
+    final result = await repository.update(userId: userId!, body: body);
+    if (!result.success) {
+      return result.message ?? 'Unable to save your changes. Please try again.';
+    }
+    state = DataState.onData(
+      UserProfileDetail(
+        profile: current.profile.copyWith(
+          firstname: firstname,
+          lastname: lastname,
+          location: location,
+          website: website,
+          linkedIn: linkedIn,
+          division: division,
+          department: department,
+        ),
+        user: current.user,
+        phoneNumber: current.phoneNumber,
+        enableTextMessages: current.enableTextMessages,
+      ),
+    );
+    return null;
+  }
+
   String _friendly(Object e) {
     final msg = e.toString();
     if (msg.contains('401') || msg.contains('Unauthorized')) {

@@ -77,14 +77,98 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-class _AccountSettingsBody extends StatelessWidget {
+class _AccountSettingsBody extends ConsumerStatefulWidget {
   const _AccountSettingsBody({required this.detail});
   final UserProfileDetail detail;
 
   @override
+  ConsumerState<_AccountSettingsBody> createState() => _AccountSettingsBodyState();
+}
+
+class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
+  bool _isEditing = false;
+  bool _isSaving = false;
+
+  late final TextEditingController _firstnameCtrl;
+  late final TextEditingController _lastnameCtrl;
+  late final TextEditingController _locationCtrl;
+  late final TextEditingController _websiteCtrl;
+  late final TextEditingController _linkedInCtrl;
+  late final TextEditingController _divisionCtrl;
+  late final TextEditingController _departmentCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.detail.profile;
+    _firstnameCtrl = TextEditingController(text: p.firstname ?? '');
+    _lastnameCtrl = TextEditingController(text: p.lastname ?? '');
+    _locationCtrl = TextEditingController(text: p.location ?? '');
+    _websiteCtrl = TextEditingController(text: p.website?.toString() ?? '');
+    _linkedInCtrl = TextEditingController(text: p.linkedIn?.toString() ?? '');
+    _divisionCtrl = TextEditingController(text: p.division ?? '');
+    _departmentCtrl = TextEditingController(text: p.department ?? '');
+  }
+
+  @override
+  void dispose() {
+    _firstnameCtrl.dispose();
+    _lastnameCtrl.dispose();
+    _locationCtrl.dispose();
+    _websiteCtrl.dispose();
+    _linkedInCtrl.dispose();
+    _divisionCtrl.dispose();
+    _departmentCtrl.dispose();
+    super.dispose();
+  }
+
+  void _resetControllers() {
+    final p = widget.detail.profile;
+    _firstnameCtrl.text = p.firstname ?? '';
+    _lastnameCtrl.text = p.lastname ?? '';
+    _locationCtrl.text = p.location ?? '';
+    _websiteCtrl.text = p.website?.toString() ?? '';
+    _linkedInCtrl.text = p.linkedIn?.toString() ?? '';
+    _divisionCtrl.text = p.division ?? '';
+    _departmentCtrl.text = p.department ?? '';
+  }
+
+  void _startEditing() => setState(() => _isEditing = true);
+
+  void _cancelEditing() {
+    _resetControllers();
+    setState(() => _isEditing = false);
+  }
+
+  Future<void> _save() async {
+    setState(() => _isSaving = true);
+    final error = await ref
+        .read(AccountSettingsViewModel.provider.notifier)
+        .update(
+          firstname: _firstnameCtrl.text.trim(),
+          lastname: _lastnameCtrl.text.trim(),
+          location: _locationCtrl.text.trim(),
+          website: _websiteCtrl.text.trim(),
+          linkedIn: _linkedInCtrl.text.trim(),
+          division: _divisionCtrl.text.trim(),
+          department: _departmentCtrl.text.trim(),
+        );
+    if (!mounted) return;
+    setState(() {
+      _isSaving = false;
+      if (error == null) _isEditing = false;
+    });
+    if (error != null) {
+      Toast.error(context, error);
+    } else {
+      Toast.success(context, 'Profile updated successfully.');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final profile = detail.profile;
-    final user = detail.user;
+    final profile = widget.detail.profile;
+    final user = widget.detail.user;
     final name = [profile.firstname, profile.lastname]
         .where((s) => (s ?? '').trim().isNotEmpty)
         .join(' ');
@@ -92,19 +176,42 @@ class _AccountSettingsBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
-        _ProfileHeaderCard(name: name.isEmpty ? 'User' : name, email: user.email ?? '', profile: profile),
+        _ProfileHeaderCard(
+          name: name.isEmpty ? 'User' : name,
+          email: user.email ?? '',
+          profile: profile,
+          isEditing: _isEditing,
+          isSaving: _isSaving,
+          firstnameController: _firstnameCtrl,
+          lastnameController: _lastnameCtrl,
+          onEdit: _startEditing,
+          onCancel: _cancelEditing,
+          onSave: _save,
+        ),
         const SizedBox(height: 16),
         _SectionCard(
           icon: Icons.person_outline_rounded,
           title: 'Personal Details',
           children: [
-            _FieldRow(label: 'Location', value: profile.location),
-            _FieldRow(label: 'Website', value: profile.website?.toString()),
-            _FieldRow(label: 'LinkedIn', value: profile.linkedIn?.toString()),
-            _FieldRow(label: 'Phone Number', value: detail.phoneNumber),
+            _FieldRow(
+              label: 'Location',
+              value: profile.location,
+              controller: _isEditing ? _locationCtrl : null,
+            ),
+            _FieldRow(
+              label: 'Website',
+              value: profile.website?.toString(),
+              controller: _isEditing ? _websiteCtrl : null,
+            ),
+            _FieldRow(
+              label: 'LinkedIn',
+              value: profile.linkedIn?.toString(),
+              controller: _isEditing ? _linkedInCtrl : null,
+            ),
+            _FieldRow(label: 'Phone Number', value: widget.detail.phoneNumber),
             _ToggleRow(
               label: 'Receive Text Message Reminders',
-              value: detail.enableTextMessages,
+              value: widget.detail.enableTextMessages,
             ),
           ],
         ),
@@ -113,8 +220,16 @@ class _AccountSettingsBody extends StatelessWidget {
           icon: Icons.work_outline_rounded,
           title: 'Work Information',
           children: [
-            _FieldRow(label: 'Division', value: profile.division),
-            _FieldRow(label: 'Department', value: profile.department),
+            _FieldRow(
+              label: 'Division',
+              value: profile.division,
+              controller: _isEditing ? _divisionCtrl : null,
+            ),
+            _FieldRow(
+              label: 'Department',
+              value: profile.department,
+              controller: _isEditing ? _departmentCtrl : null,
+            ),
             _FieldRow(label: 'Cost Code', value: user.costCode),
           ],
         ),
@@ -181,10 +296,28 @@ class _AccountSettingsBody extends StatelessWidget {
 const _notificationOptions = ['Email', 'Slack', 'Teams', 'Text Message (SMS)', 'WhatsApp'];
 
 class _ProfileHeaderCard extends StatelessWidget {
-  const _ProfileHeaderCard({required this.name, required this.email, required this.profile});
+  const _ProfileHeaderCard({
+    required this.name,
+    required this.email,
+    required this.profile,
+    required this.isEditing,
+    required this.isSaving,
+    required this.firstnameController,
+    required this.lastnameController,
+    required this.onEdit,
+    required this.onCancel,
+    required this.onSave,
+  });
   final String name;
   final String email;
   final UserProfile profile;
+  final bool isEditing;
+  final bool isSaving;
+  final TextEditingController firstnameController;
+  final TextEditingController lastnameController;
+  final VoidCallback onEdit;
+  final VoidCallback onCancel;
+  final VoidCallback onSave;
 
   @override
   Widget build(BuildContext context) {
@@ -208,19 +341,48 @@ class _ProfileHeaderCard extends StatelessWidget {
               const SizedBox(width: 6),
               const Text('Profile', style: TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 16)),
               const Spacer(),
-              ElevatedButton.icon(
-                onPressed: () => Toast.info(context, 'Editing your profile is coming soon.'),
-                icon: const Icon(Icons.edit_outlined, size: 16),
-                label: const Text('Edit'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _asPurple,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              if (isEditing) ...[
+                TextButton(
+                  onPressed: isSaving ? null : onCancel,
+                  style: TextButton.styleFrom(foregroundColor: _asMuted),
+                  child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
-              ),
+                const SizedBox(width: 4),
+                ElevatedButton(
+                  onPressed: isSaving ? null : onSave,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _asPurple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Save'),
+                ),
+              ] else
+                ElevatedButton.icon(
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text('Edit'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _asPurple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 18),
@@ -231,10 +393,40 @@ class _ProfileHeaderCard extends StatelessWidget {
             child: url.isEmpty ? const Icon(Icons.person, color: Colors.white, size: 40) : null,
           ),
           const SizedBox(height: 14),
-          Text(name, style: const TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 18)),
+          if (isEditing) ...[
+            _EditableName(controller: firstnameController, hint: 'First name'),
+            const SizedBox(height: 10),
+            _EditableName(controller: lastnameController, hint: 'Last name'),
+          ] else
+            Text(name, style: const TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 18)),
           const SizedBox(height: 4),
           Text(email, style: const TextStyle(color: _asMuted, fontSize: 13)),
         ],
+      ),
+    );
+  }
+}
+
+class _EditableName extends StatelessWidget {
+  const _EditableName({required this.controller, required this.hint});
+  final TextEditingController controller;
+  final String hint;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      textAlign: TextAlign.center,
+      style: const TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 18),
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: _asFieldBg,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }
@@ -286,34 +478,53 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _FieldRow extends StatelessWidget {
-  const _FieldRow({required this.label, this.value});
+  const _FieldRow({required this.label, this.value, this.controller});
   final String label;
   final String? value;
 
+  /// When set, this field is editable — a TextField is shown instead of the
+  /// read-only box, bound to this controller.
+  final TextEditingController? controller;
+
   @override
   Widget build(BuildContext context) {
-    final hasValue = (value ?? '').trim().isNotEmpty;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(color: _asMuted, fontSize: 12, fontWeight: FontWeight.w700)),
         const SizedBox(height: 6),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          decoration: BoxDecoration(
-            color: _asFieldBg,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            hasValue ? value! : 'Not provided',
-            style: TextStyle(
-              color: hasValue ? _asInk : _asMuted,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+        if (controller != null)
+          TextField(
+            controller: controller,
+            style: const TextStyle(color: _asInk, fontSize: 14, fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              hintText: 'Not provided',
+              filled: true,
+              fillColor: _asFieldBg,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            decoration: BoxDecoration(
+              color: _asFieldBg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              (value ?? '').trim().isNotEmpty ? value! : 'Not provided',
+              style: TextStyle(
+                color: (value ?? '').trim().isNotEmpty ? _asInk : _asMuted,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
       ],
     );
   }
