@@ -13,11 +13,33 @@ const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
 
-class ItemInventoryPage extends ConsumerWidget {
+class ItemInventoryPage extends ConsumerStatefulWidget {
   const ItemInventoryPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ItemInventoryPage> createState() => _ItemInventoryPageState();
+}
+
+class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() => _query = _searchController.text.trim().toLowerCase());
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(ItemInventoryViewModel.provider);
     final notifier = ref.read(ItemInventoryViewModel.provider.notifier);
 
@@ -28,7 +50,13 @@ class ItemInventoryPage extends ConsumerWidget {
         preferredSize: Size.fromHeight(60),
         child: LmsAppBar(title: 'Redeem your Points', centerTitle: true),
       ),
-      body: _Body(state: state, onRetry: notifier.fetch, notifier: notifier),
+      body: _Body(
+        state: state,
+        onRetry: notifier.fetch,
+        notifier: notifier,
+        searchController: _searchController,
+        query: _query,
+      ),
     );
   }
 }
@@ -40,10 +68,14 @@ class _Body extends StatelessWidget {
     required this.state,
     required this.onRetry,
     required this.notifier,
+    required this.searchController,
+    required this.query,
   });
   final ItemInventoryState state;
   final VoidCallback onRetry;
   final ItemInventoryViewModel notifier;
+  final TextEditingController searchController;
+  final String query;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +87,9 @@ class _Body extends StatelessWidget {
       return _ErrorView(message: state.error ?? 'Unable to load inventory.', onRetry: onRetry);
     }
     final result = state.result!;
+    final items = query.isEmpty
+        ? result.items
+        : result.items.where((i) => i.name.toLowerCase().contains(query)).toList();
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(child: _PointsBanner(points: result.userPoints)),
@@ -96,24 +131,48 @@ class _Body extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search items...',
+                    hintStyle: const TextStyle(color: _muted, fontSize: 14),
+                    prefixIcon: const Icon(Icons.search_rounded, color: _muted, size: 20),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
         ),
-        if (result.items.isEmpty)
-          const SliverFillRemaining(child: _EmptyState())
+        if (items.isEmpty)
+          SliverFillRemaining(
+            child: query.isNotEmpty
+                ? const _NoSearchResults()
+                : const _EmptyState(),
+          )
         else
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
             sliver: SliverGrid(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _ItemCard(
-                  item: result.items[index],
-                  isRedeeming: state.redeemingId == result.items[index].id,
-                  onRedeem: () => _showRedeemDialog(context, result.items[index], notifier),
-                  onView: () => _showDetail(context, result.items[index]),
+                  item: items[index],
+                  isRedeeming: state.redeemingId == items[index].id,
+                  onRedeem: () => _showRedeemDialog(context, items[index], notifier),
+                  onView: () => _showDetail(context, items[index]),
                 ),
-                childCount: result.items.length,
+                childCount: items.length,
               ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: MediaQuery.sizeOf(context).width >= 760 ? 4 : 2,
@@ -405,65 +464,56 @@ class _ItemDetailDialog extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
+            Stack(
+              alignment: Alignment.center,
               children: [
-                const Expanded(
-                  child: Text(
-                    'Item Details',
-                    style: TextStyle(
-                      color: _ink,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                    ),
+                const Text(
+                  'Item Details',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _ink,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-            const Divider(height: 20),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: SizedBox(
-                    width: 100,
-                    height: 100,
-                    child: item.image != null
-                        ? Image.network(
-                            item.image!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const _DialogImageFallback(),
-                          )
-                        : const _DialogImageFallback(),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _DetailRow(label: 'Name:', value: item.name),
-                      if (item.groupName != null)
-                        _DetailRow(label: 'Group:', value: item.groupName!),
-                      if (item.managedBy != null)
-                        _DetailRow(label: 'Managed by:', value: item.managedBy!),
-                      _DetailRow(label: 'Points required:', value: '${item.points}'),
-                      if (item.description.isNotEmpty)
-                        _DetailRow(label: 'Description:', value: item.description),
-                    ],
+                Positioned(
+                  right: 0,
+                  top: -6,
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: 16 / 10,
+                child: item.image != null
+                    ? Image.network(
+                        item.image!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const _DialogImageFallback(),
+                      )
+                    : const _DialogImageFallback(),
+              ),
+            ),
+            const SizedBox(height: 18),
+            _DetailRow(label: 'Name:', value: item.name),
+            if (item.groupName != null)
+              _DetailRow(label: 'Group:', value: item.groupName!),
+            if (item.managedBy != null)
+              _DetailRow(label: 'Managed by:', value: item.managedBy!),
+            _DetailRow(label: 'Points required:', value: '${item.points}'),
+            if (item.description.isNotEmpty)
+              _DetailRow(label: 'Description:', value: item.description),
+            const SizedBox(height: 12),
             Align(
               alignment: Alignment.center,
               child: OutlinedButton(
@@ -496,7 +546,7 @@ class _DialogImageFallback extends StatelessWidget {
     return Container(
       color: const Color(0xFFF0ECFF),
       alignment: Alignment.center,
-      child: const Icon(Icons.redeem_outlined, color: _purple, size: 40),
+      child: const Icon(Icons.redeem_outlined, color: _purple, size: 56),
     );
   }
 }
@@ -651,6 +701,24 @@ class _RedeemDialogState extends State<_RedeemDialog> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NoSearchResults extends StatelessWidget {
+  const _NoSearchResults();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 60),
+        child: Text(
+          'No items match your search.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: _muted, fontSize: 14),
         ),
       ),
     );

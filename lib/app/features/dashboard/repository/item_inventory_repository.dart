@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/paginated_fetch.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
@@ -31,6 +32,13 @@ class ItemInventoryRepository with RepoNetworkHelper {
         final data = Map<String, dynamic>.from(response as Map);
         if (data['status']?.toString() != '1') {
           throw Exception(data['message']?.toString() ?? 'Unable to load inventory.');
+        }
+        if (page == 1) {
+          final rawItems = (data['payload'] as List? ?? []).whereType<Map>().toList();
+          debugPrint(
+            '[ItemInventoryRepository] first raw item: '
+            '${rawItems.isNotEmpty ? rawItems.first : null}',
+          );
         }
         final result = InventoryResult.fromJson(data);
         total = result.total;
