@@ -11,6 +11,7 @@ const _purple = Color(0xFF5756C9);
 const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
+const _sectionTitle = Color(0xFFB0006D);
 
 class LearningPathsPage extends ConsumerStatefulWidget {
   const LearningPathsPage({super.key});
@@ -32,6 +33,11 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
     ref
         .read(LearningPathsViewModel.provider.notifier)
         .fetch(name: _searchController.text.trim().isEmpty ? null : _searchController.text.trim());
+  }
+
+  void _onReset() {
+    _searchController.clear();
+    ref.read(LearningPathsViewModel.provider.notifier).fetch();
   }
 
   @override
@@ -56,6 +62,7 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
             child: _Body(
               state: state,
               onRetry: () => notifier.fetch(),
+              onReset: _onReset,
             ),
           ),
         ],
@@ -153,9 +160,10 @@ class _SearchBarState extends State<_SearchBar> {
 // ─── Body ─────────────────────────────────────────────────────────────────────
 
 class _Body extends StatelessWidget {
-  const _Body({required this.state, required this.onRetry});
+  const _Body({required this.state, required this.onRetry, required this.onReset});
   final LearningPathsState state;
   final VoidCallback onRetry;
+  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
@@ -170,21 +178,93 @@ class _Body extends StatelessWidget {
         );
       case DataProviderState.data:
         if (state.paths.isEmpty) return const _EmptyState();
-        return ListView.builder(
+        final total = state.paths.length;
+        return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          itemCount: state.paths.length + 1,
-          itemBuilder: (ctx, i) => i < state.paths.length
-              ? _PathCard(path: state.paths[i])
-              : const AppFooter(),
+          children: [
+            _ResetButton(onTap: onReset),
+            const SizedBox(height: 18),
+            const Text(
+              'Learning Paths',
+              style: TextStyle(color: _sectionTitle, fontSize: 21, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 4),
+            RichText(
+              text: TextSpan(
+                style: const TextStyle(color: _muted, fontSize: 12.5),
+                children: [
+                  const TextSpan(text: 'Showing '),
+                  TextSpan(
+                    text: '1-$total',
+                    style: const TextStyle(fontWeight: FontWeight.w800, color: _ink),
+                  ),
+                  const TextSpan(text: ' of '),
+                  TextSpan(
+                    text: '$total',
+                    style: const TextStyle(fontWeight: FontWeight.w800, color: _ink),
+                  ),
+                  const TextSpan(text: ' items.'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x0A000000), blurRadius: 16, offset: Offset(0, 6)),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  for (var i = 0; i < state.paths.length; i++) ...[
+                    if (i > 0) const Divider(height: 1, color: Color(0xFFEFF1F5)),
+                    _PathRow(index: i + 1, path: state.paths[i]),
+                  ],
+                ],
+              ),
+            ),
+            const AppFooter(),
+          ],
         );
     }
   }
 }
 
-// ─── Learning path card ───────────────────────────────────────────────────────
+// ─── Reset button ───────────────────────────────────────────────────────────
 
-class _PathCard extends StatelessWidget {
-  const _PathCard({required this.path});
+class _ResetButton extends StatelessWidget {
+  const _ResetButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        color: _purple,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: const SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(Icons.undo_rounded, color: Colors.white, size: 20),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Learning path row ────────────────────────────────────────────────────────
+
+class _PathRow extends StatelessWidget {
+  const _PathRow({required this.index, required this.path});
+  final int index;
   final LearningPath path;
 
   void _showDetail(BuildContext context) {
@@ -198,86 +278,55 @@ class _PathCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showDetail(context),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showDetail(context),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Thumbnail(logoUrl: path.thumbnail),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        path.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: _ink,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                          height: 1.3,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEEEDFF),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.menu_book_outlined,
-                                  color: _purple,
-                                  size: 12,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${path.totalCourses} ${path.totalCourses == 1 ? 'course' : 'courses'}',
-                                  style: const TextStyle(
-                                    color: _purple,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+              SizedBox(
+                width: 22,
+                child: Text(
+                  '$index.',
+                  style: const TextStyle(color: _muted, fontSize: 14, fontWeight: FontWeight.w600),
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(right: 16),
-                child: Icon(Icons.chevron_right_rounded, color: _muted, size: 22),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      path.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: _purple,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14.5,
+                        height: 1.3,
+                      ),
+                    ),
+                    if (path.groupName.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        path.groupName,
+                        style: const TextStyle(color: _muted, fontSize: 12),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(color: _purple, borderRadius: BorderRadius.circular(8)),
+                alignment: Alignment.center,
+                child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
               ),
             ],
           ),
@@ -573,39 +622,6 @@ class _NoCompetencies extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _Thumbnail extends StatelessWidget {
-  const _Thumbnail({this.logoUrl});
-  final String? logoUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 80,
-      height: 80,
-      child: logoUrl != null
-          ? Image.network(
-              logoUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const _DefaultThumb(),
-            )
-          : const _DefaultThumb(),
-    );
-  }
-}
-
-class _DefaultThumb extends StatelessWidget {
-  const _DefaultThumb();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF0ECFF),
-      alignment: Alignment.center,
-      child: const Icon(Icons.account_tree_outlined, color: _purple, size: 36),
     );
   }
 }
