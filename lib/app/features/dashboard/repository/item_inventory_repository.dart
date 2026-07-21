@@ -24,7 +24,6 @@ class ItemInventoryRepository with RepoNetworkHelper {
           queryParameters: {
             'user_id': userId,
             'page': page,
-            'per_page': perPage,
             'limit': perPage,
           },
           cacheType: RequestCacheType.none,

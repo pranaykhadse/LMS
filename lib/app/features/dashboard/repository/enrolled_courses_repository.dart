@@ -42,7 +42,7 @@ class EnrolledCoursesRepository with RepoNetworkHelper {
   }) async {
     final response = await getRequest(
       'lms-screen/enrolled-courses',
-      queryParameters: {'user_id': userId, 'page': page, 'per_page': perPage},
+      queryParameters: {'user_id': userId, 'page': page, 'limit': perPage},
       cacheType: RequestCacheType.none,
     );
     final data = Map<String, dynamic>.from(response as Map);

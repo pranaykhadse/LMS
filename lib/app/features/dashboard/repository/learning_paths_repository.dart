@@ -25,7 +25,6 @@ class LearningPathsRepository with RepoNetworkHelper {
           queryParameters: {
             'user_id': userId,
             'page': page,
-            'per_page': perPage,
             'limit': perPage,
             if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
           },

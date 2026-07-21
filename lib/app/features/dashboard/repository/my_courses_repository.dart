@@ -18,7 +18,7 @@ class MyCoursesRepository with RepoNetworkHelper {
   // My Courses feeds both the My Courses list and the Calendar's
   // Weekly/Monthly views, both of which need the user's FULL course set
   // (not just one page) — so this walks every page the backend has via
-  // page/per_page/limit rather than exposing pagination to callers.
+  // page/limit rather than exposing pagination to callers.
   Future<MyCoursesResult> fetch() async {
     var total = 0;
     final courses = await fetchAllPages<MyCourseItem>(
@@ -27,7 +27,6 @@ class MyCoursesRepository with RepoNetworkHelper {
           'lms-screen/my-courses',
           queryParameters: {
             'page': page,
-            'per_page': perPage,
             'limit': perPage,
           },
           cacheType: RequestCacheType.none,
@@ -41,7 +40,7 @@ class MyCoursesRepository with RepoNetworkHelper {
         final result = MyCoursesResult.fromJson(data);
         total = result.total;
         debugPrint(
-          '[MyCoursesRepository] page=$page per_page=$perPage -> '
+          '[MyCoursesRepository] page=$page limit=$perPage -> '
           'returned=${result.courses.length} total=$total '
           'ids=${result.courses.map((c) => c.courseId).toList()} '
           'nextSessions=${result.courses.map((c) => '${c.courseId}:${c.nextSession}').toList()}',

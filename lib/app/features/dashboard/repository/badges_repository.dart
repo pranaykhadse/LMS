@@ -16,7 +16,7 @@ class BadgesRepository with RepoNetworkHelper {
   Future<BadgesResult> fetch({required int userId}) async {
     final response = await getRequest(
       'lms-screen/user-badges',
-      queryParameters: {'user_id': userId, 'page': 1, 'per_page': 200, 'limit': 200},
+      queryParameters: {'user_id': userId, 'page': 1, 'limit': 200},
       cacheType: RequestCacheType.none,
     );
     final data = Map<String, dynamic>.from(response as Map);

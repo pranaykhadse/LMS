@@ -25,7 +25,7 @@ class CourseCatalogRepository with RepoNetworkHelper {
   }) async {
     final queryParameters = {
       'user_id': userId,
-      'per_page': perPage,
+      'limit': perPage,
       if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
       if (skillId != null && skillId.isNotEmpty) 'skill_id': skillId,
       for (final entry in groupPages.entries)
