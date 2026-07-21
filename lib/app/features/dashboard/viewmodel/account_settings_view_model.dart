@@ -51,6 +51,7 @@ class AccountSettingsViewModel
     required String division,
     required String department,
     String? avatarUrl,
+    String? phoneNumber,
   }) async {
     final current = state.data;
     if (userId == null || current == null) {
@@ -66,6 +67,12 @@ class AccountSettingsViewModel
       department: department,
       avatarPath: avatarUrl,
     );
+    // Not part of the documented PUT schema — included as a best-effort
+    // guess (it's the exact key the GET response returns this value under).
+    // Check the request/response log after saving to confirm it actually
+    // persists; if the backend ignores unknown keys, this will silently
+    // no-op instead of erroring.
+    if (phoneNumber != null) body['phone_number'] = phoneNumber;
     final result = await repository.update(userId: userId!, body: body);
     if (!result.success) {
       return result.message ?? 'Unable to save your changes. Please try again.';
@@ -83,7 +90,7 @@ class AccountSettingsViewModel
           avatarPath: avatarUrl,
         ),
         user: current.user,
-        phoneNumber: current.phoneNumber,
+        phoneNumber: phoneNumber ?? current.phoneNumber,
         enableTextMessages: current.enableTextMessages,
       ),
     );

@@ -107,6 +107,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   late final TextEditingController _divisionCtrl;
   late final TextEditingController _departmentCtrl;
   late final TextEditingController _avatarUrlCtrl;
+  late final TextEditingController _phoneCtrl;
 
   @override
   void initState() {
@@ -120,6 +121,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _divisionCtrl = TextEditingController(text: p.division ?? '');
     _departmentCtrl = TextEditingController(text: p.department ?? '');
     _avatarUrlCtrl = TextEditingController(text: _resolveAvatarUrl(p));
+    _phoneCtrl = TextEditingController(text: widget.detail.phoneNumber ?? '');
   }
 
   @override
@@ -132,6 +134,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _divisionCtrl.dispose();
     _departmentCtrl.dispose();
     _avatarUrlCtrl.dispose();
+    _phoneCtrl.dispose();
     super.dispose();
   }
 
@@ -145,6 +148,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _divisionCtrl.text = p.division ?? '';
     _departmentCtrl.text = p.department ?? '';
     _avatarUrlCtrl.text = _resolveAvatarUrl(p);
+    _phoneCtrl.text = widget.detail.phoneNumber ?? '';
   }
 
   void _startEditing() => setState(() => _isEditing = true);
@@ -168,6 +172,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           division: _divisionCtrl.text.trim(),
           department: _departmentCtrl.text.trim(),
           avatarUrl: avatarUrl.isEmpty ? null : avatarUrl,
+          phoneNumber: _phoneCtrl.text.trim(),
         );
     if (!mounted) return;
     setState(() {
@@ -225,7 +230,12 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
               value: profile.linkedIn?.toString(),
               controller: _isEditing ? _linkedInCtrl : null,
             ),
-            _FieldRow(label: 'Phone Number', value: widget.detail.phoneNumber),
+            _FieldRow(
+              label: 'Phone Number',
+              value: widget.detail.phoneNumber,
+              controller: _isEditing ? _phoneCtrl : null,
+              keyboardType: TextInputType.phone,
+            ),
             _ToggleRow(
               label: 'Receive Text Message Reminders',
               value: widget.detail.enableTextMessages,
@@ -724,13 +734,19 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _FieldRow extends StatelessWidget {
-  const _FieldRow({required this.label, this.value, this.controller});
+  const _FieldRow({
+    required this.label,
+    this.value,
+    this.controller,
+    this.keyboardType,
+  });
   final String label;
   final String? value;
 
   /// When set, this field is editable — a TextField is shown instead of the
   /// read-only box, bound to this controller.
   final TextEditingController? controller;
+  final TextInputType? keyboardType;
 
   @override
   Widget build(BuildContext context) {
@@ -742,6 +758,7 @@ class _FieldRow extends StatelessWidget {
         if (controller != null)
           TextField(
             controller: controller,
+            keyboardType: keyboardType,
             style: const TextStyle(color: _asInk, fontSize: 14, fontWeight: FontWeight.w600),
             decoration: InputDecoration(
               hintText: 'Not provided',
