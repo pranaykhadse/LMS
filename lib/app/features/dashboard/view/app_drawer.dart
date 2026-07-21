@@ -224,6 +224,7 @@ class AppDrawer extends ConsumerWidget {
                     _DrawerItem(
                       icon: Icons.account_tree_outlined,
                       label: 'Learning Paths',
+                      selected: sel == 'Learning Paths',
                       onTap: () {
                         _closeIfNeeded(context);
                         _goTo(

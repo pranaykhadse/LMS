@@ -541,9 +541,11 @@ class _ItemDetailDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420, maxHeight: 640),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -613,6 +615,7 @@ class _ItemDetailDialog extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

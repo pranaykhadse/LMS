@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -386,18 +387,23 @@ class _CompetencyPreview extends StatelessWidget {
               _CompetencyPreviewRow(index: i + 1, competency: competencies[i]),
             ],
           const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: onView,
-            icon: const Icon(Icons.remove_red_eye_outlined, size: 15),
-            label: const Text('View'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _purple,
-              side: const BorderSide(color: _purple),
-              minimumSize: const Size(0, 34),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+          Align(
+            alignment: Responsive.isTablet(context)
+                ? Alignment.centerRight
+                : Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: onView,
+              icon: const Icon(Icons.remove_red_eye_outlined, size: 15),
+              label: const Text('View'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _purple,
+                side: const BorderSide(color: _purple),
+                minimumSize: const Size(0, 34),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+                textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+              ),
             ),
           ),
         ],
