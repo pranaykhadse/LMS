@@ -262,27 +262,32 @@ class _ResetButton extends StatelessWidget {
 
 // ─── Learning path row ────────────────────────────────────────────────────────
 
-class _PathRow extends StatelessWidget {
+class _PathRow extends StatefulWidget {
   const _PathRow({required this.index, required this.path});
   final int index;
   final LearningPath path;
+
+  @override
+  State<_PathRow> createState() => _PathRowState();
+}
+
+class _PathRowState extends State<_PathRow> {
+  bool _expanded = false;
 
   void _showDetail(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _LearningPathDetailSheet(path: path),
+      builder: (_) => _LearningPathDetailSheet(path: widget.path),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => _showDetail(context),
-        child: Padding(
+    return Column(
+      children: [
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,7 +295,7 @@ class _PathRow extends StatelessWidget {
               SizedBox(
                 width: 22,
                 child: Text(
-                  '$index.',
+                  '${widget.index}.',
                   style: const TextStyle(color: _muted, fontSize: 14, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -300,20 +305,20 @@ class _PathRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      path.name,
+                      widget.path.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: _purple,
-                        fontWeight: FontWeight.w700,
+                        color: _ink,
+                        fontWeight: FontWeight.w600,
                         fontSize: 14.5,
                         height: 1.3,
                       ),
                     ),
-                    if (path.groupName.isNotEmpty) ...[
+                    if (widget.path.groupName.isNotEmpty) ...[
                       const SizedBox(height: 3),
                       Text(
-                        path.groupName,
+                        widget.path.groupName,
                         style: const TextStyle(color: _muted, fontSize: 12),
                       ),
                     ],
@@ -321,17 +326,163 @@ class _PathRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(color: _purple, borderRadius: BorderRadius.circular(8)),
-                alignment: Alignment.center,
-                child: const Icon(Icons.add_rounded, color: Colors.white, size: 18),
+              Material(
+                color: _purple,
+                borderRadius: BorderRadius.circular(8),
+                child: InkWell(
+                  onTap: () => setState(() => _expanded = !_expanded),
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    width: 30,
+                    height: 30,
+                    child: Icon(
+                      _expanded ? Icons.remove_rounded : Icons.add_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
         ),
+        if (_expanded)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+            child: _CompetencyPreview(
+              path: widget.path,
+              onView: () => _showDetail(context),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _CompetencyPreview extends StatelessWidget {
+  const _CompetencyPreview({required this.path, required this.onView});
+  final LearningPath path;
+  final VoidCallback onView;
+
+  @override
+  Widget build(BuildContext context) {
+    final competencies = path.competencies;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEAF6F6),
+        borderRadius: BorderRadius.circular(10),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (competencies.isEmpty)
+            Text(
+              path.courses.isEmpty
+                  ? 'No competency details available.'
+                  : 'Courses: ${path.courses.map((c) => c.name).join(', ')}',
+              style: const TextStyle(color: _ink, fontSize: 12.5, height: 1.4),
+            )
+          else
+            for (var i = 0; i < competencies.length; i++) ...[
+              if (i > 0) const SizedBox(height: 10),
+              _CompetencyPreviewRow(index: i + 1, competency: competencies[i]),
+            ],
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: onView,
+            icon: const Icon(Icons.remove_red_eye_outlined, size: 15),
+            label: const Text('View'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _purple,
+              side: const BorderSide(color: _purple),
+              minimumSize: const Size(0, 34),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompetencyPreviewRow extends StatelessWidget {
+  const _CompetencyPreviewRow({required this.index, required this.competency});
+  final int index;
+  final LearningPathCompetency competency;
+
+  @override
+  Widget build(BuildContext context) {
+    final courses = competency.courseNames;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 18,
+          height: 18,
+          margin: const EdgeInsets.only(top: 1),
+          decoration: BoxDecoration(color: _purple, borderRadius: BorderRadius.circular(4)),
+          alignment: Alignment.center,
+          child: Text(
+            '$index',
+            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              RichText(
+                text: TextSpan(
+                  style: const TextStyle(color: _ink, fontSize: 12.5, fontWeight: FontWeight.w700),
+                  children: [
+                    const TextSpan(text: 'Competency: '),
+                    TextSpan(
+                      text: competency.name.isEmpty ? '—' : competency.name,
+                      style: const TextStyle(color: _purple, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+              if (courses.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(color: _ink, fontSize: 12.5, fontWeight: FontWeight.w700),
+                    children: [
+                      const TextSpan(text: 'Courses: '),
+                      TextSpan(
+                        text: courses.join(', '),
+                        style: const TextStyle(color: _muted, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              if (competency.competencyType.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                RichText(
+                  text: TextSpan(
+                    style: const TextStyle(color: _ink, fontSize: 12.5, fontWeight: FontWeight.w700),
+                    children: [
+                      const TextSpan(text: 'Type: '),
+                      TextSpan(
+                        text: competency.competencyType.toUpperCase(),
+                        style: const TextStyle(color: _muted, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
