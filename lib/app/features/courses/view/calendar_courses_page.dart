@@ -4,10 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
 
 const _calPurple = Color(0xFF5756C9);
@@ -69,13 +68,11 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
             .toList()
           ..sort((a, b) => a.nextSession!.compareTo(b.nextSession!));
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _calBg,
-      drawer: const AppDrawer(),
-      appBar: LmsAppBar(
-        title: 'Course Calendar',
-        centerTitle: true,
-        bottom: PreferredSize(
+      title: 'Course Calendar',
+      centerTitle: true,
+      bottom: PreferredSize(
           preferredSize: const Size.fromHeight(44),
           child: Container(
             color: _calPurple,
@@ -111,7 +108,6 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
             ),
           ),
         ),
-      ),
       body: _format == CalendarFormat.week
           ? _buildWeekView(eventMap)
           : _buildMonthView(eventMap, selectedEvents, upcoming, myCoursesState),

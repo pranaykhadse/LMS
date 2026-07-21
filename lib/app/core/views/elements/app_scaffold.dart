@@ -1,0 +1,95 @@
+import 'package:flutter/material.dart';
+import 'package:lms/app/core/design/responsive.dart';
+import 'package:lms/app/features/courses/view/lms_app_bar.dart';
+import 'package:lms/app/features/dashboard/view/app_drawer.dart';
+
+/// Shared page shell for every top-level screen. On a phone it behaves the
+/// same as before (hamburger + slide-out [AppDrawer]); on a tablet/desktop
+/// window it shows the nav as a persistent sidebar instead and caps the
+/// body's width so content doesn't stretch edge-to-edge on very wide
+/// windows.
+class AppScaffold extends StatelessWidget {
+  const AppScaffold({
+    super.key,
+    required this.body,
+    this.title,
+    this.centerTitle = true,
+    this.selectedLabel,
+    this.selectedSubLabel,
+    this.onBack,
+    this.bottom,
+    this.backgroundColor,
+    this.maxContentWidth = 1100,
+  });
+
+  final Widget body;
+  final String? title;
+  final bool centerTitle;
+  final String? selectedLabel;
+  final String? selectedSubLabel;
+  final VoidCallback? onBack;
+
+  /// Optional app-bar bottom widget (e.g. a nav-tab bar or calendar toolbar).
+  final PreferredSizeWidget? bottom;
+  final Color? backgroundColor;
+
+  /// Body content is centered and capped at this width on tablet/desktop
+  /// so text/cards don't stretch uncomfortably wide.
+  final double maxContentWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final isTablet = Responsive.isTablet(context);
+
+    final content = isTablet
+        ? Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxContentWidth),
+              child: body,
+            ),
+          )
+        : body;
+
+    if (!isTablet) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        drawer: AppDrawer(
+          selectedLabel: selectedLabel,
+          selectedSubLabel: selectedSubLabel,
+        ),
+        appBar: LmsAppBar(
+          title: title,
+          centerTitle: centerTitle,
+          onBack: onBack,
+          bottom: bottom,
+        ),
+        body: content,
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: LmsAppBar(
+        title: title,
+        centerTitle: centerTitle,
+        onBack: onBack,
+        bottom: bottom,
+        isWide: true,
+      ),
+      body: Row(
+        children: [
+          SizedBox(
+            width: 280,
+            child: AppDrawer(
+              selectedLabel: selectedLabel,
+              selectedSubLabel: selectedSubLabel,
+              embedded: true,
+            ),
+          ),
+          const VerticalDivider(width: 1, color: Color(0xFFEDEFF3)),
+          Expanded(child: content),
+        ],
+      ),
+    );
+  }
+}

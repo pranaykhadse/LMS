@@ -3,13 +3,12 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
 import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dev_plan_membership_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
 
@@ -53,13 +52,10 @@ class _MyCoursesPageState extends ConsumerState<MyCoursesPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(MyCoursesViewModel.provider);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _bg,
-      drawer: const AppDrawer(selectedLabel: 'My Courses'),
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: LmsAppBar(title: 'My Courses', centerTitle: true),
-      ),
+      title: 'My Courses',
+      selectedLabel: 'My Courses',
       body: switch (state.state) {
         DataProviderState.idle ||
         DataProviderState.loading =>

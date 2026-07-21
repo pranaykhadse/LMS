@@ -7,6 +7,7 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
@@ -18,8 +19,6 @@ import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -62,12 +61,10 @@ class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
       });
     }
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _detailBackground,
-      drawer: const AppDrawer(selectedLabel: 'Course Catalog'),
-      appBar: LmsAppBar(
-        onBack: () => _goBackToCatalog(context),
-      ),
+      selectedLabel: 'Course Catalog',
+      onBack: () => _goBackToCatalog(context),
       body: _DetailBody(courseId: courseId, state: state),
     );
   }

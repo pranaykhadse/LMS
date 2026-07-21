@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/features/dashboard/model/badge.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/badges_view_model.dart';
 
 const _purple = Color(0xFF5756C9);
@@ -20,13 +20,10 @@ class BadgesPage extends ConsumerWidget {
     final state = ref.watch(BadgesViewModel.provider);
     final notifier = ref.read(BadgesViewModel.provider.notifier);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _bg,
-      drawer: const AppDrawer(selectedSubLabel: 'Badges'),
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: LmsAppBar(title: 'Badges', centerTitle: true),
-      ),
+      title: 'Badges',
+      selectedSubLabel: 'Badges',
       body: _Body(state: state, onRetry: notifier.fetch),
     );
   }
@@ -158,8 +155,13 @@ class _BadgeGrid extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: Responsive.columns(
+          context,
+          phone: 3,
+          tablet: 5,
+          desktop: 6,
+        ),
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
         childAspectRatio: 0.82,

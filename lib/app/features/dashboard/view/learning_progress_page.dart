@@ -3,11 +3,10 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
 
 const _lpPurple = Color(0xFF5756C9);
@@ -27,13 +26,9 @@ class LearningProgressPage extends ConsumerWidget {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final firstName = profile?.firstname?.trim() ?? 'there';
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _lpBg,
-      drawer: const AppDrawer(),
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: LmsAppBar(title: 'My Learning Progress'),
-      ),
+      title: 'My Learning Progress',
       body: _buildBody(context, ref, state, firstName),
     );
   }

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/development_plan_view_model.dart';
 
 const _purple = Color(0xFF5756C9);
@@ -24,13 +24,10 @@ class DevelopmentPlanPage extends ConsumerWidget {
     final state = ref.watch(DevelopmentPlanViewModel.provider);
     final notifier = ref.read(DevelopmentPlanViewModel.provider.notifier);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _bg,
-      drawer: const AppDrawer(selectedSubLabel: 'My Development Plan'),
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: LmsAppBar(title: 'My Development Plan', centerTitle: true),
-      ),
+      title: 'My Development Plan',
+      selectedSubLabel: 'My Development Plan',
       body: _Body(state: state, notifier: notifier),
     );
   }
@@ -68,8 +65,13 @@ class _Body extends StatelessWidget {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
+                          SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: Responsive.columns(
+                          context,
+                          phone: 2,
+                          tablet: 3,
+                          desktop: 4,
+                        ),
                         crossAxisSpacing: 14,
                         mainAxisSpacing: 14,
                         childAspectRatio: 0.62,

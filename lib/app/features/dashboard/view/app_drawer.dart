@@ -21,7 +21,12 @@ bool _watchIsOnline(WidgetRef ref) {
 }
 
 class AppDrawer extends ConsumerWidget {
-  const AppDrawer({super.key, this.selectedLabel, this.selectedSubLabel});
+  const AppDrawer({
+    super.key,
+    this.selectedLabel,
+    this.selectedSubLabel,
+    this.embedded = false,
+  });
 
   /// The top-level nav item label that should appear highlighted (e.g.
   /// 'Dashboard', 'Course Catalog', or a group label like 'My Courses' —
@@ -34,6 +39,11 @@ class AppDrawer extends ConsumerWidget {
   /// highlights and auto-expands automatically — no need to also pass
   /// [selectedLabel] for the group.
   final String? selectedSubLabel;
+
+  /// True when rendered as a persistent sidebar (tablet/desktop) instead of
+  /// a slide-out [Drawer] (phone). Suppresses the close button and the
+  /// `Navigator.pop` calls that would otherwise dismiss the slide-out panel.
+  final bool embedded;
 
   Future<void> _launchContactUrl(BuildContext context, WidgetRef ref) async {
     final user = ref.read(AuthStateNotifier.provider)?.user;
@@ -50,6 +60,10 @@ class AppDrawer extends ConsumerWidget {
       'https://staging.trainingpipeline.com/backend/web/chatgpt/virtual-development-pro/index',
     );
     await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void _closeIfNeeded(BuildContext context) {
+    if (!embedded) Navigator.pop(context);
   }
 
   @override
@@ -72,11 +86,9 @@ class AppDrawer extends ConsumerWidget {
     final pointsBadgesActive =
         sel == 'Points & Badges' || pointsBadgesChildren.contains(subSel);
 
-    return Drawer(
-      width: (width * .8).clamp(300, 315).toDouble(),
-      backgroundColor: Colors.white,
-      child: SafeArea(
-        child: Column(
+    final content = SafeArea(
+      top: !embedded,
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
@@ -94,13 +106,14 @@ class AppDrawer extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, size: 20, color: _purple),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    splashRadius: 18,
-                  ),
+                  if (!embedded)
+                    IconButton(
+                      onPressed: () => _closeIfNeeded(context),
+                      icon: const Icon(Icons.close, size: 20, color: _purple),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: 18,
+                    ),
                 ],
               ),
             ),
@@ -115,7 +128,7 @@ class AppDrawer extends ConsumerWidget {
                       label: 'Dashboard',
                       selected: sel == 'Dashboard',
                       onTap: () {
-                        Navigator.pop(context);
+                        _closeIfNeeded(context);
                         if (sel != 'Dashboard') {
                           Modular.to.navigate(
                             CoursesModule.construct(CoursesModule.dashboard),
@@ -128,7 +141,7 @@ class AppDrawer extends ConsumerWidget {
                       label: 'Course Catalog',
                       selected: sel == 'Course Catalog',
                       onTap: () {
-                        Navigator.pop(context);
+                        _closeIfNeeded(context);
                         if (sel != 'Course Catalog') {
                           Modular.to.navigate(
                             CoursesModule.construct(CoursesModule.root),
@@ -146,7 +159,7 @@ class AppDrawer extends ConsumerWidget {
                           icon: Icons.school_outlined,
                           selected: subSel == 'My Enrolled Courses',
                           onTap: () {
-                            Navigator.pop(context);
+                            _closeIfNeeded(context);
                             Modular.to.pushNamed(
                               CoursesModule.construct(
                                 CoursesModule.enrolledCourses,
@@ -159,7 +172,7 @@ class AppDrawer extends ConsumerWidget {
                           icon: Icons.task_alt,
                           selected: subSel == 'My Completed Courses',
                           onTap: () {
-                            Navigator.pop(context);
+                            _closeIfNeeded(context);
                             Modular.to.pushNamed(
                               CoursesModule.construct(
                                 CoursesModule.completedCourses,
@@ -172,7 +185,7 @@ class AppDrawer extends ConsumerWidget {
                           icon: Icons.timeline_outlined,
                           selected: subSel == 'My Development Plan',
                           onTap: () {
-                            Navigator.pop(context);
+                            _closeIfNeeded(context);
                             Modular.to.pushNamed(
                               CoursesModule.construct(
                                 CoursesModule.developmentPlan,
@@ -185,7 +198,7 @@ class AppDrawer extends ConsumerWidget {
                           icon: Icons.assignment_outlined,
                           selected: subSel == 'My Required Courses',
                           onTap: () {
-                            Navigator.pop(context);
+                            _closeIfNeeded(context);
                             Modular.to.pushNamed(
                               CoursesModule.construct(
                                 CoursesModule.requiredCourses,
@@ -199,7 +212,7 @@ class AppDrawer extends ConsumerWidget {
                       icon: Icons.account_tree_outlined,
                       label: 'Learning Paths',
                       onTap: () {
-                        Navigator.pop(context);
+                        _closeIfNeeded(context);
                         Modular.to.pushNamed(
                           CoursesModule.construct(CoursesModule.learningPaths),
                         );
@@ -215,7 +228,7 @@ class AppDrawer extends ConsumerWidget {
                           icon: Icons.redeem_outlined,
                           selected: subSel == 'Redeem your Points',
                           onTap: () {
-                            Navigator.pop(context);
+                            _closeIfNeeded(context);
                             Modular.to.pushNamed(
                               CoursesModule.construct(CoursesModule.redeemPoints),
                             );
@@ -226,7 +239,7 @@ class AppDrawer extends ConsumerWidget {
                           icon: Icons.military_tech_outlined,
                           selected: subSel == 'Badges',
                           onTap: () {
-                            Navigator.pop(context);
+                            _closeIfNeeded(context);
                             Modular.to.pushNamed(
                               CoursesModule.construct(CoursesModule.badges),
                             );
@@ -243,7 +256,7 @@ class AppDrawer extends ConsumerWidget {
                           icon: Icons.person_outline_rounded,
                           disabled: !isOnline,
                           onTap: () {
-                            Navigator.pop(context);
+                            _closeIfNeeded(context);
                             _launchContactUrl(context, ref);
                           },
                         ),
@@ -252,7 +265,7 @@ class AppDrawer extends ConsumerWidget {
                           icon: Icons.smart_toy_outlined,
                           disabled: !isOnline,
                           onTap: () {
-                            Navigator.pop(context);
+                            _closeIfNeeded(context);
                             _launchVirtualDev();
                           },
                         ),
@@ -264,7 +277,16 @@ class AppDrawer extends ConsumerWidget {
             ),
           ],
         ),
-      ),
+    );
+
+    if (embedded) {
+      return Material(color: Colors.white, child: content);
+    }
+
+    return Drawer(
+      width: (width * .8).clamp(300, 315).toDouble(),
+      backgroundColor: Colors.white,
+      child: content,
     );
   }
 }

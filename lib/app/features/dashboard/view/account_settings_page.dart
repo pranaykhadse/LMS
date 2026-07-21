@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/user_profile_detail.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/account_settings_view_model.dart';
 
 const _asPurple = Color(0xFF5756C9);
@@ -32,13 +31,8 @@ class AccountSettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(AccountSettingsViewModel.provider);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _asBg,
-      drawer: const AppDrawer(),
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: LmsAppBar(),
-      ),
       body: switch (state.state) {
         DataProviderState.idle ||
         DataProviderState.loading =>

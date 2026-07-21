@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
@@ -87,13 +87,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       });
     }
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _bg,
-      drawer: const AppDrawer(selectedLabel: 'Dashboard'),
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: LmsAppBar(title: 'Dashboard', centerTitle: true),
-      ),
+      title: 'Dashboard',
+      selectedLabel: 'Dashboard',
       body: _redirectingUnauthorized
           ? const Center(child: CircularProgressIndicator(color: _purple))
           : _DashboardBody(auth: auth, state: state, ref: ref),
@@ -300,8 +297,13 @@ class _CourseCarousel extends StatelessWidget {
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: Responsive.columns(
+            context,
+            phone: 2,
+            tablet: 3,
+            desktop: 4,
+          ),
           crossAxisSpacing: 14,
           mainAxisSpacing: 14,
           childAspectRatio: 0.62,

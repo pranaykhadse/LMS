@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/features/dashboard/model/redeem_history_item.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/redeem_history_view_model.dart';
 
 const _rhPurple = Color(0xFF5756C9);
@@ -19,13 +19,8 @@ class RedeemHistoryPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(RedeemHistoryViewModel.provider);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _rhBg,
-      drawer: const AppDrawer(),
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: LmsAppBar(),
-      ),
       body: switch (state.state) {
         DataProviderState.idle ||
         DataProviderState.loading =>
@@ -97,7 +92,12 @@ class _Body extends StatelessWidget {
                 childCount: result.items.length,
               ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: MediaQuery.sizeOf(context).width >= 760 ? 4 : 2,
+                crossAxisCount: Responsive.columns(
+                  context,
+                  phone: 2,
+                  tablet: 4,
+                  desktop: 5,
+                ),
                 mainAxisSpacing: 14,
                 crossAxisSpacing: 14,
                 childAspectRatio: 0.85,

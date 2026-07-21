@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/view/redeem_history_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/item_inventory_view_model.dart';
 
@@ -36,13 +37,10 @@ class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
     final state = ref.watch(ItemInventoryViewModel.provider);
     final notifier = ref.read(ItemInventoryViewModel.provider.notifier);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _bg,
-      drawer: const AppDrawer(selectedSubLabel: 'Redeem your Points'),
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: LmsAppBar(title: 'Redeem your Points', centerTitle: true),
-      ),
+      title: 'Redeem your Points',
+      selectedSubLabel: 'Redeem your Points',
       body: _Body(
         state: state,
         onRetry: notifier.fetch,
@@ -212,7 +210,12 @@ class _Body extends StatelessWidget {
                 childCount: items.length,
               ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: MediaQuery.sizeOf(context).width >= 760 ? 4 : 2,
+                crossAxisCount: Responsive.columns(
+                  context,
+                  phone: 2,
+                  tablet: 4,
+                  desktop: 5,
+                ),
                 mainAxisSpacing: 14,
                 crossAxisSpacing: 14,
                 childAspectRatio: 0.72,

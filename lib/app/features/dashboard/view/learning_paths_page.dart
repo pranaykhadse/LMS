@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_paths_view_model.dart';
 
 const _purple = Color(0xFF5756C9);
@@ -45,13 +44,10 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
     final state = ref.watch(LearningPathsViewModel.provider);
     final notifier = ref.read(LearningPathsViewModel.provider.notifier);
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _bg,
-      drawer: const AppDrawer(selectedLabel: 'Learning Paths'),
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: LmsAppBar(title: 'Learning Paths', centerTitle: true),
-      ),
+      title: 'Learning Paths',
+      selectedLabel: 'Learning Paths',
       body: Column(
         children: [
           _SearchBar(
