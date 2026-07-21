@@ -1159,8 +1159,8 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
     final connectionVM = ref.watch(InternetConnectionProvider.provider);
     ref.watch(SyncViewModel.provider);
     final isOnline = !isManualOffline && connectionVM.isConnected;
-    final isInPlan =
-        ref.watch(DevPlanMembershipViewModel.provider).contains(widget.course.id);
+    final membership = ref.watch(DevPlanMembershipViewModel.provider);
+    final isInPlan = membership.ids.contains(widget.course.id);
 
     final isWide = MediaQuery.sizeOf(context).width >= 760;
 
@@ -1182,14 +1182,15 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
         children: [
           // Image fills the whole card
           _CourseImage(url: widget.course.logo),
-          Positioned(
-            top: 12,
-            right: 12,
-            child: _DevPlanButton(
-              isInPlan: isInPlan,
-              onTap: isOnline ? () => setState(() => _showOverlay = true) : null,
+          if (membership.loaded)
+            Positioned(
+              top: 12,
+              right: 12,
+              child: _DevPlanButton(
+                isInPlan: isInPlan,
+                onTap: isOnline ? () => setState(() => _showOverlay = true) : null,
+              ),
             ),
-          ),
           // Title + View Course overlaid on the bottom of the image
           Positioned(
             left: 0,

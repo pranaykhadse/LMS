@@ -368,8 +368,8 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
   @override
   Widget build(BuildContext context) {
     final course = widget.course;
-    final isInPlan =
-        ref.watch(DevPlanMembershipViewModel.provider).contains(course.courseId);
+    final membership = ref.watch(DevPlanMembershipViewModel.provider);
+    final isInPlan = membership.ids.contains(course.courseId);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -395,14 +395,15 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
                         errorBuilder: (_, __, ___) => const _ImgFallback(),
                       )
                     : const _ImgFallback(),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: _DevPlanButton(
-                    isInPlan: isInPlan,
-                    onTap: () => setState(() => _showOverlay = true),
+                if (membership.loaded)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: _DevPlanButton(
+                      isInPlan: isInPlan,
+                      onTap: () => setState(() => _showOverlay = true),
+                    ),
                   ),
-                ),
                 if (_showOverlay)
                   _DevPlanOverlay(
                     isInPlan: isInPlan,
