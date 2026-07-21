@@ -552,8 +552,8 @@ class _ResourceCard extends ConsumerWidget {
               ),
             ),
           ),
-          AspectRatio(
-            aspectRatio: 16 / 10,
+          SizedBox(
+            height: 180,
             child: Stack(
               fit: StackFit.expand,
               children: [

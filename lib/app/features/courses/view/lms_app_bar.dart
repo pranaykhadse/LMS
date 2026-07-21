@@ -65,7 +65,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        (isWide ? 42.0 : 60.0) + (bottom?.preferredSize.height ?? 0),
+        (isWide ? 52.0 : 60.0) + (bottom?.preferredSize.height ?? 0),
       );
 
   @override
@@ -78,7 +78,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return AppBar(
       automaticallyImplyLeading: false,
-      toolbarHeight: isWide ? 42 : 60,
+      toolbarHeight: isWide ? 52 : 60,
       backgroundColor: _appPurple,
       foregroundColor: Colors.white,
       elevation: 2,
@@ -200,7 +200,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
             ),
           ],
-          child: LmsAvatar(profile: profile, radius: isWide ? 15 : 21),
+          child: LmsAvatar(profile: profile, radius: isWide ? 19 : 21),
         ),
         SizedBox(width: isWide ? 7 : 8),
         LmsAppBarButton(
@@ -236,7 +236,7 @@ class LmsAppBarButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final size = isWide ? 30.0 : 42.0;
+    final size = isWide ? 38.0 : 42.0;
     return Center(
       child: SizedBox.square(
         dimension: size,
@@ -249,7 +249,7 @@ class LmsAppBarButton extends StatelessWidget {
             child: Icon(
               icon,
               color: Colors.white,
-              size: iconSize ?? (isWide ? 18 : 27),
+              size: iconSize ?? (isWide ? 24 : 27),
             ),
           ),
         ),
@@ -276,11 +276,11 @@ class LmsOfflineToggle extends StatelessWidget {
       children: [
         Icon(
           isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
-          size: 17,
+          size: 22,
           color: isOffline ? Colors.amber.shade600 : Colors.white70,
         ),
         Transform.scale(
-          scale: 0.72,
+          scale: 0.85,
           child: Switch(
             value: isOffline,
             onChanged: onChanged,
@@ -304,18 +304,18 @@ class LmsNotifBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
         alignment: Alignment.center,
         decoration: const BoxDecoration(
           color: Colors.red,
-          borderRadius: BorderRadius.all(Radius.circular(11)),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
         ),
         child: Text(
           count > 99 ? '99+' : '$count',
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 14,
+            fontSize: 9,
             fontWeight: FontWeight.w800,
             height: 1.0,
           ),
@@ -679,7 +679,9 @@ class _DatePill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      height: 30,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(22),
@@ -687,7 +689,7 @@ class _DatePill extends StatelessWidget {
       ),
       child: const Text(
         'Tuesday July 14, 2026|1:04 PM',
-        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600),
+        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, height: 1.0),
       ),
     );
   }
