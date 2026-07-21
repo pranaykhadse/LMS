@@ -81,7 +81,7 @@ class _Body extends StatelessWidget {
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 16),
                       // Must match _perPage in enrolled_courses_view_model.dart.
-                      child: PerPageBadge(perPage: 5),
+                      child: PerPageBadge(perPage: 10),
                     ),
                     const AppFooter(),
                   ],

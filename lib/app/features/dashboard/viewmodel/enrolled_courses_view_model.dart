@@ -5,7 +5,7 @@ import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/repository/enrolled_courses_repository.dart';
 
-const _perPage = 5;
+const _perPage = 10;
 
 class EnrolledState {
   const EnrolledState({
