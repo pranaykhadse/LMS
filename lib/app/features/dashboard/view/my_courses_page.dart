@@ -9,6 +9,7 @@ import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
 import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
+import 'package:lms/app/features/dashboard/viewmodel/dev_plan_membership_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
 
 const _purple = Color(0xFF5756C9);
@@ -308,7 +309,6 @@ class _CourseCard extends ConsumerStatefulWidget {
 
 class _CourseCardState extends ConsumerState<_CourseCard> {
   bool _showOverlay = false;
-  bool _isInPlan = false;
   bool _isBusy = false;
 
   String _formatSession(DateTime dt) {
@@ -324,28 +324,32 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
     return '${months[dt.month - 1]} $dayStr, $hourStr:$minuteStr $period';
   }
 
-  Future<void> _handleDevPlanAction() async {
+  Future<void> _handleDevPlanAction(bool isInPlan) async {
     final userId = ref.read(AuthStateNotifier.provider)?.user?.id;
     if (userId == null) return;
 
     setState(() => _isBusy = true);
     final repo = ref.read(DevelopmentPlanActionRepository.provider);
-    final result = _isInPlan
+    final result = isInPlan
         ? await repo.removeFromDevPlan(courseId: widget.course.courseId)
         : await repo.addToDevPlan(courseId: widget.course.courseId);
 
     if (!mounted) return;
     if (result.success) {
-      final wasInPlan = _isInPlan;
+      final membership = ref.read(DevPlanMembershipViewModel.provider.notifier);
+      if (isInPlan) {
+        membership.markRemoved(widget.course.courseId);
+      } else {
+        membership.markInPlan(widget.course.courseId);
+      }
       setState(() {
-        _isInPlan = !_isInPlan;
         _showOverlay = false;
         _isBusy = false;
       });
       if (context.mounted) {
         Toast.success(
           context,
-          wasInPlan
+          isInPlan
               ? 'Course removed from My Development Plan'
               : 'Course added to My Development Plan',
         );
@@ -364,6 +368,8 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
   @override
   Widget build(BuildContext context) {
     final course = widget.course;
+    final isInPlan =
+        ref.watch(DevPlanMembershipViewModel.provider).contains(course.courseId);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -393,15 +399,15 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
                   top: 10,
                   right: 10,
                   child: _DevPlanButton(
-                    isInPlan: _isInPlan,
+                    isInPlan: isInPlan,
                     onTap: () => setState(() => _showOverlay = true),
                   ),
                 ),
                 if (_showOverlay)
                   _DevPlanOverlay(
-                    isInPlan: _isInPlan,
+                    isInPlan: isInPlan,
                     isBusy: _isBusy,
-                    onYes: _handleDevPlanAction,
+                    onYes: () => _handleDevPlanAction(isInPlan),
                     onNo: () => setState(() => _showOverlay = false),
                   ),
               ],

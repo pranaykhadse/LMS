@@ -15,6 +15,7 @@ import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
+import 'package:lms/app/features/dashboard/viewmodel/dev_plan_membership_view_model.dart';
 import 'package:lms/app_module.dart';
 import 'package:lms/app/features/courses/view/calendar_courses_page.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
@@ -1106,16 +1107,9 @@ class _CatalogCourseCard extends ConsumerStatefulWidget {
 
 class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
   bool _showOverlay = false;
-  late bool _isInPlan;
   bool _isBusy = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _isInPlan = widget.course.inDevelopmentPlan;
-  }
-
-  Future<void> _handleDevPlanAction(BuildContext context) async {
+  Future<void> _handleDevPlanAction(BuildContext context, bool isInPlan) async {
     final auth = ref.read(AuthStateNotifier.provider);
     final userId = auth?.user?.id;
     if (userId == null) return;
@@ -1123,25 +1117,26 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
     setState(() => _isBusy = true);
     final repo = ref.read(DevelopmentPlanActionRepository.provider);
 
-    DevPlanActionResult result;
-    if (_isInPlan) {
-      result = await repo.removeFromDevPlan(courseId: widget.course.id);
-    } else {
-      result = await repo.addToDevPlan(courseId: widget.course.id);
-    }
+    final result = isInPlan
+        ? await repo.removeFromDevPlan(courseId: widget.course.id)
+        : await repo.addToDevPlan(courseId: widget.course.id);
 
     if (!mounted) return;
     if (result.success) {
-      final wasInPlan = _isInPlan;
+      final membership = ref.read(DevPlanMembershipViewModel.provider.notifier);
+      if (isInPlan) {
+        membership.markRemoved(widget.course.id);
+      } else {
+        membership.markInPlan(widget.course.id);
+      }
       setState(() {
-        _isInPlan = !_isInPlan;
         _showOverlay = false;
         _isBusy = false;
       });
       if (context.mounted) {
         Toast.success(
           context,
-          wasInPlan
+          isInPlan
               ? 'Course removed from My Development Plan'
               : 'Course added to My Development Plan',
         );
@@ -1164,6 +1159,8 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
     final connectionVM = ref.watch(InternetConnectionProvider.provider);
     ref.watch(SyncViewModel.provider);
     final isOnline = !isManualOffline && connectionVM.isConnected;
+    final isInPlan =
+        ref.watch(DevPlanMembershipViewModel.provider).contains(widget.course.id);
 
     final isWide = MediaQuery.sizeOf(context).width >= 760;
 
@@ -1189,7 +1186,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
             top: 12,
             right: 12,
             child: _DevPlanButton(
-              isInPlan: _isInPlan,
+              isInPlan: isInPlan,
               onTap: isOnline ? () => setState(() => _showOverlay = true) : null,
             ),
           ),
@@ -1255,9 +1252,9 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
           // Overlay covers the full card (image + text area)
           if (_showOverlay)
             _DevPlanOverlay(
-              isInPlan: _isInPlan,
+              isInPlan: isInPlan,
               isBusy: _isBusy,
-              onYes: () => _handleDevPlanAction(context),
+              onYes: () => _handleDevPlanAction(context, isInPlan),
               onNo: () => setState(() => _showOverlay = false),
             ),
         ],
