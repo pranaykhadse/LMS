@@ -153,17 +153,6 @@ class _Body extends StatelessWidget {
                             vertical: 0,
                             horizontal: 14,
                           ),
-                          suffixIcon: state.query.isNotEmpty
-                              ? IconButton(
-                                  onPressed: onClearSearch,
-                                  icon: const Icon(
-                                    Icons.undo_rounded,
-                                    color: _muted,
-                                    size: 18,
-                                  ),
-                                  tooltip: 'Clear search',
-                                )
-                              : null,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
@@ -195,6 +184,10 @@ class _Body extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (state.query.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _ResetButton(onTap: onClearSearch),
+                ],
               ],
             ),
           ),
@@ -274,6 +267,33 @@ class _Body extends StatelessWidget {
             );
           }
         },
+      ),
+    );
+  }
+}
+
+// ─── Reset button ───────────────────────────────────────────────────────────
+
+class _ResetButton extends StatelessWidget {
+  const _ResetButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Material(
+        color: _purple,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: const SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(Icons.undo_rounded, color: Colors.white, size: 20),
+          ),
+        ),
       ),
     );
   }
