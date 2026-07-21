@@ -678,18 +678,21 @@ class _DatePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 30,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .12),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: const Text(
-        'Tuesday July 14, 2026|1:04 PM',
-        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, height: 1.0),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Container(
+        height: 26,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: .12),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: const Text(
+          'Tuesday July 14, 2026|1:04 PM',
+          style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, height: 1.0),
+        ),
       ),
     );
   }
