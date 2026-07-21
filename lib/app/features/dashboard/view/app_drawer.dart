@@ -66,6 +66,19 @@ class AppDrawer extends ConsumerWidget {
     if (!embedded) Navigator.pop(context);
   }
 
+  // Desktop's sidebar is always visible, so switching between its
+  // destinations should replace the stack like the top-level items do
+  // (otherwise routes quietly pile up and the back button starts
+  // reappearing). Phone's slide-out drawer keeps its original push
+  // behavior unchanged.
+  void _goTo(String route) {
+    if (embedded) {
+      Modular.to.navigate(route);
+    } else {
+      Modular.to.pushNamed(route);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOnline = _watchIsOnline(ref);
@@ -160,7 +173,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'My Enrolled Courses',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.navigate(
+                            _goTo(
                               CoursesModule.construct(
                                 CoursesModule.enrolledCourses,
                               ),
@@ -173,7 +186,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'My Completed Courses',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.navigate(
+                            _goTo(
                               CoursesModule.construct(
                                 CoursesModule.completedCourses,
                               ),
@@ -186,7 +199,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'My Development Plan',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.navigate(
+                            _goTo(
                               CoursesModule.construct(
                                 CoursesModule.developmentPlan,
                               ),
@@ -199,7 +212,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'My Required Courses',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.navigate(
+                            _goTo(
                               CoursesModule.construct(
                                 CoursesModule.requiredCourses,
                               ),
@@ -213,7 +226,7 @@ class AppDrawer extends ConsumerWidget {
                       label: 'Learning Paths',
                       onTap: () {
                         _closeIfNeeded(context);
-                        Modular.to.navigate(
+                        _goTo(
                           CoursesModule.construct(CoursesModule.learningPaths),
                         );
                       },
@@ -229,7 +242,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'Redeem your Points',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.navigate(
+                            _goTo(
                               CoursesModule.construct(CoursesModule.redeemPoints),
                             );
                           },
@@ -240,7 +253,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'Badges',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.navigate(
+                            _goTo(
                               CoursesModule.construct(CoursesModule.badges),
                             );
                           },

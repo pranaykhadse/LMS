@@ -74,7 +74,8 @@ class _Body extends StatelessWidget {
                         ),
                         crossAxisSpacing: 14,
                         mainAxisSpacing: 14,
-                        mainAxisExtent: 260,
+                        childAspectRatio: 0.62,
+                        mainAxisExtent: Responsive.isTablet(context) ? 260 : null,
                       ),
                       itemCount: state.courses.length,
                       itemBuilder: (ctx, i) =>
