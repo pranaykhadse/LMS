@@ -309,7 +309,6 @@ class _CourseCard extends ConsumerStatefulWidget {
 class _CourseCardState extends ConsumerState<_CourseCard> {
   bool _showOverlay = false;
   bool _isInPlan = false;
-  int? _planId;
   bool _isBusy = false;
 
   String _formatSession(DateTime dt) {
@@ -332,19 +331,14 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
     setState(() => _isBusy = true);
     final repo = ref.read(DevelopmentPlanActionRepository.provider);
     final result = _isInPlan
-        ? await repo.removeFromDevPlan(
-            userId: userId,
-            courseId: widget.course.courseId,
-            planId: _planId,
-          )
-        : await repo.addToDevPlan(userId: userId, courseId: widget.course.courseId);
+        ? await repo.removeFromDevPlan(courseId: widget.course.courseId)
+        : await repo.addToDevPlan(courseId: widget.course.courseId);
 
     if (!mounted) return;
     if (result.success) {
       final wasInPlan = _isInPlan;
       setState(() {
         _isInPlan = !_isInPlan;
-        _planId = _isInPlan ? (result.planId ?? _planId) : null;
         _showOverlay = false;
         _isBusy = false;
       });

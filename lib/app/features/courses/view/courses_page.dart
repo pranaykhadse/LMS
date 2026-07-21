@@ -1107,14 +1107,12 @@ class _CatalogCourseCard extends ConsumerStatefulWidget {
 class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
   bool _showOverlay = false;
   late bool _isInPlan;
-  late int? _planId;
   bool _isBusy = false;
 
   @override
   void initState() {
     super.initState();
     _isInPlan = widget.course.inDevelopmentPlan;
-    _planId = widget.course.planId;
   }
 
   Future<void> _handleDevPlanAction(BuildContext context) async {
@@ -1127,16 +1125,9 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
 
     DevPlanActionResult result;
     if (_isInPlan) {
-      result = await repo.removeFromDevPlan(
-        userId: userId,
-        courseId: widget.course.id,
-        planId: _planId,
-      );
+      result = await repo.removeFromDevPlan(courseId: widget.course.id);
     } else {
-      result = await repo.addToDevPlan(
-        userId: userId,
-        courseId: widget.course.id,
-      );
+      result = await repo.addToDevPlan(courseId: widget.course.id);
     }
 
     if (!mounted) return;
@@ -1144,11 +1135,6 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
       final wasInPlan = _isInPlan;
       setState(() {
         _isInPlan = !_isInPlan;
-        if (!_isInPlan) {
-          _planId = null;
-        } else {
-          _planId = result.planId ?? _planId;
-        }
         _showOverlay = false;
         _isBusy = false;
       });

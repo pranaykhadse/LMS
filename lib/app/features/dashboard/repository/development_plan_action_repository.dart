@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart' show Headers, Options;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -21,42 +22,53 @@ class DevelopmentPlanActionRepository with RepoNetworkHelper {
   @override
   final RepoNetworkConfig config;
 
-  Future<DevPlanActionResult> addToDevPlan({
-    required int userId,
+  // Single endpoint for add/remove/switch, distinguished by the `action`
+  // form field — not separate routes/HTTP methods. Body must be
+  // application/x-www-form-urlencoded (formData params), not JSON. `user_id`
+  // is admin-only (to manage another user's plan); the current user's own
+  // plan is resolved from the auth token, so it's omitted here.
+  Future<DevPlanActionResult> _sendAction({
     required int courseId,
+    required String action,
   }) async {
     try {
       final response = await post(
-        'lms-screen/development-plan',
-        data: {'user_id': userId, 'course_id': courseId},
+        'lms-screen/development-plan-course',
+        data: {'course_id': courseId, 'action': action},
+        options: Options(contentType: Headers.formUrlEncodedContentType),
         cacheType: RequestCacheType.none,
       );
-      final data =
-          response is Map
-              ? Map<String, dynamic>.from(response)
-              : <String, dynamic>{};
+      final data = response is Map
+          ? Map<String, dynamic>.from(response)
+          : <String, dynamic>{};
+      if (data['status']?.toString() != '1') {
+        return DevPlanActionResult(
+          success: false,
+          message: data['message']?.toString(),
+        );
+      }
+      final payload = data['payload'] is Map
+          ? Map<String, dynamic>.from(data['payload'] as Map)
+          : data;
       final planId = _asIntOrNull(
-        data['plan_id'] ?? data['id'] ?? data['development_plan_id'],
+        payload['plan_id'] ?? payload['id'] ?? payload['development_plan_id'],
       );
-      return DevPlanActionResult(success: true, planId: planId);
+      return DevPlanActionResult(
+        success: true,
+        planId: planId,
+        message: data['message']?.toString(),
+      );
     } catch (e) {
       return DevPlanActionResult(success: false, message: e.toString());
     }
   }
 
-  Future<DevPlanActionResult> removeFromDevPlan({
-    required int userId,
-    required int courseId,
-    int? planId,
-  }) async {
-    try {
-      final body = <String, dynamic>{'user_id': userId, 'course_id': courseId};
-      if (planId != null) body['plan_id'] = planId;
-      await deleteRequest('lms-screen/development-plan', data: body);
-      return const DevPlanActionResult(success: true);
-    } catch (e) {
-      return DevPlanActionResult(success: false, message: e.toString());
-    }
+  Future<DevPlanActionResult> addToDevPlan({required int courseId}) {
+    return _sendAction(courseId: courseId, action: 'add');
+  }
+
+  Future<DevPlanActionResult> removeFromDevPlan({required int courseId}) {
+    return _sendAction(courseId: courseId, action: 'remove');
   }
 }
 
