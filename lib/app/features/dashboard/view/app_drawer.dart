@@ -309,7 +309,7 @@ class _DrawerItem extends StatelessWidget {
           key: ValueKey('drawer-group-$label-$selected'),
           initiallyExpanded: selected,
           tilePadding: const EdgeInsets.fromLTRB(24, 0, 20, 0),
-          childrenPadding: const EdgeInsets.only(bottom: 4),
+          childrenPadding: EdgeInsets.zero,
           leading: Icon(icon, size: 21, color: selected ? _purple : _navy),
           title: Text(
             label,
@@ -321,33 +321,37 @@ class _DrawerItem extends StatelessWidget {
           ),
           iconColor: _chevron,
           collapsedIconColor: _chevron,
-          children: children
-              .map(
-                (sub) => ListTile(
-                  dense: true,
-                  contentPadding: const EdgeInsets.fromLTRB(48, 0, 20, 0),
-                  leading: Icon(
-                    sub.disabled ? Icons.cloud_off_rounded : sub.icon,
-                    size: 18,
-                    color: sub.disabled
-                        ? _muted
-                        : (sub.selected ? _purple : _navy),
+          children: [
+            Container(
+              margin: const EdgeInsets.fromLTRB(44, 2, 16, 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x26000000),
+                    blurRadius: 18,
+                    offset: Offset(0, 8),
                   ),
-                  title: Text(
-                    sub.label,
-                    style: TextStyle(
-                      color: sub.disabled
-                          ? _muted
-                          : (sub.selected ? _purple : const Color(0xFF23292F)),
-                      fontSize: 14,
-                      fontWeight:
-                          sub.selected ? FontWeight.w700 : FontWeight.w400,
-                    ),
-                  ),
-                  onTap: sub.disabled ? null : sub.onTap,
-                ),
-              )
-              .toList(),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (var i = 0; i < children.length; i++) ...[
+                    if (i > 0)
+                      const Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Color(0xFFF0F1F4),
+                      ),
+                    _SubTile(sub: children[i]),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -371,6 +375,44 @@ class _DrawerItem extends StatelessWidget {
             ),
             if (trailing)
               const Icon(Icons.arrow_forward_ios, size: 13, color: _chevron),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SubTile extends StatelessWidget {
+  const _SubTile({required this.sub});
+  final _SubItem sub;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: sub.disabled ? null : sub.onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              sub.disabled ? Icons.cloud_off_rounded : sub.icon,
+              size: 18,
+              color: sub.disabled ? _muted : (sub.selected ? _purple : _navy),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                sub.label,
+                style: TextStyle(
+                  color: sub.disabled
+                      ? _muted
+                      : (sub.selected ? _purple : const Color(0xFF23292F)),
+                  fontSize: 13.5,
+                  fontWeight: sub.selected ? FontWeight.w700 : FontWeight.w500,
+                  height: 1.25,
+                ),
+              ),
+            ),
           ],
         ),
       ),
