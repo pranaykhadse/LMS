@@ -132,45 +132,24 @@ class _Body extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: searchController,
-                        textInputAction: TextInputAction.search,
-                        onSubmitted: (_) => FocusScope.of(context).unfocus(),
-                        decoration: InputDecoration(
-                          hintText: 'Search items...',
-                          hintStyle: const TextStyle(color: _muted, fontSize: 14),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Material(
-                      color: _purple,
+                TextField(
+                  controller: searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search items...',
+                    hintStyle: const TextStyle(color: _muted, fontSize: 14),
+                    prefixIcon: const Icon(Icons.search_rounded, color: _muted, size: 20),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      child: InkWell(
-                        onTap: () => FocusScope.of(context).unfocus(),
-                        borderRadius: BorderRadius.circular(10),
-                        child: const SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: Icon(Icons.search_rounded, color: Colors.white, size: 20),
-                        ),
-                      ),
+                      borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
                     ),
-                  ],
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
+                    ),
+                  ),
                 ),
               ],
             ),

@@ -44,39 +44,33 @@ class InventoryItem {
   final String? managedBy;
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) {
-    // Redeem-history items carry group/description/managed_by nested under
-    // "item_details" rather than flat — inventory items likely share that
-    // same underlying shape, so check both.
-    final details = json['item_details'] is Map
-        ? Map<String, dynamic>.from(json['item_details'] as Map)
-        : <String, dynamic>{};
+    // Confirmed from a raw response capture: this endpoint returns a flat
+    // object with no image/logo field and no managed_by at all — only
+    // group_id (an int, no display name). So the image placeholder for
+    // items without one is correct, not a bug; "Group N" is the best
+    // available label until/unless the API adds a real group name.
+    final img = json['image']?.toString().trim().isNotEmpty == true
+        ? json['image'].toString().trim()
+        : json['logo']?.toString().trim();
 
-    final img = (json['image']?.toString().trim().isNotEmpty == true
-            ? json['image'].toString()
-            : json['logo']?.toString().trim().isNotEmpty == true
-            ? json['logo'].toString()
-            : details['image']?.toString().trim() ?? '');
-
-    final group = json['group_name']?.toString().isNotEmpty == true
-        ? json['group_name'].toString()
-        : details['group_name']?.toString();
-
-    final managedBy = json['managed_by']?.toString().isNotEmpty == true
-        ? json['managed_by'].toString()
-        : details['managed_by']?.toString();
+    final groupName = json['group_name']?.toString().trim();
+    final groupId = json['group_id'];
+    final resolvedGroup = (groupName?.isNotEmpty ?? false)
+        ? groupName
+        : (groupId != null ? 'Group $groupId' : null);
 
     return InventoryItem(
       id: _asInt(json['id']),
       name: json['name']?.toString() ?? '',
       points: _asInt(json['points']),
-      description: json['description']?.toString().isNotEmpty == true
-          ? json['description'].toString()
-          : details['description']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
       isRedeemed: json['is_redeemed'] == true || json['is_redeemed'].toString() == '1',
       canRedeem: json['can_redeem'] == true || json['can_redeem'].toString() == '1',
-      image: img.trim().isNotEmpty ? img.trim() : null,
-      groupName: (group?.trim().isNotEmpty ?? false) ? group!.trim() : null,
-      managedBy: (managedBy?.trim().isNotEmpty ?? false) ? managedBy!.trim() : null,
+      image: (img?.isNotEmpty ?? false) ? img : null,
+      groupName: (resolvedGroup?.isNotEmpty ?? false) ? resolvedGroup : null,
+      managedBy: json['managed_by']?.toString().trim().isNotEmpty == true
+          ? json['managed_by'].toString().trim()
+          : null,
     );
   }
 }
