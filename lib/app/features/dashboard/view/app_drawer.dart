@@ -10,6 +10,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 const _purple = Color(0xFF5756C9);
 const _muted = Color(0xFF7C879D);
+const _navy = Color(0xFF37424E);
+const _chevron = Color(0xFF98A2B3);
 
 bool _watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -52,12 +54,7 @@ class AppDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final auth = ref.watch(AuthStateNotifier.provider);
     final isOnline = _watchIsOnline(ref);
-    final title =
-        auth?.group?.isNotEmpty == true
-            ? auth!.group!.first.name
-            : 'Main Menu';
     final width = MediaQuery.sizeOf(context).width;
     final sel = selectedLabel;
     final subSel = selectedSubLabel;
@@ -83,39 +80,32 @@ class AppDrawer extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(22, 16, 10, 14),
+              padding: const EdgeInsets.fromLTRB(24, 18, 16, 16),
               child: Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: Text(
-                      title?.toUpperCase() ?? 'MAIN MENU',
-                      style: const TextStyle(
+                      'MAIN NAVIGATION',
+                      style: TextStyle(
                         color: _purple,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.1,
                       ),
                     ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, size: 16, color: _muted),
+                    icon: const Icon(Icons.close, size: 20, color: _purple),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    splashRadius: 18,
                   ),
                 ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 22),
-              child: Text(
-                'MAIN NAVIGATION',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: _muted,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
+            const Divider(height: 1, thickness: 1, color: Color(0xFFEDEFF3)),
+            const SizedBox(height: 6),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -310,110 +300,78 @@ class _DrawerItem extends StatelessWidget {
   final VoidCallback? onTap;
   final List<_SubItem> children;
 
-  Widget _iconBox(bool isSelected) => Container(
-    width: 30,
-    height: 30,
-    alignment: Alignment.center,
-    decoration: BoxDecoration(
-      color: isSelected ? const Color(0xFFE8E7F8) : Colors.transparent,
-      borderRadius: BorderRadius.circular(7),
-    ),
-    child: Icon(icon, size: 17, color: isSelected ? _purple : _muted),
-  );
-
   @override
   Widget build(BuildContext context) {
     if (children.isNotEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 1),
-        child: Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            key: ValueKey('drawer-group-$label-$selected'),
-            initiallyExpanded: selected,
-            tilePadding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            childrenPadding: const EdgeInsets.only(left: 12, bottom: 4),
-            backgroundColor: selected ? const Color(0xFFF7F6FF) : null,
-            collapsedBackgroundColor: selected ? const Color(0xFFF7F6FF) : null,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            collapsedShape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+      return Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: ValueKey('drawer-group-$label-$selected'),
+          initiallyExpanded: selected,
+          tilePadding: const EdgeInsets.fromLTRB(24, 0, 20, 0),
+          childrenPadding: const EdgeInsets.only(bottom: 4),
+          leading: Icon(icon, size: 21, color: selected ? _purple : _navy),
+          title: Text(
+            label,
+            style: TextStyle(
+              color: selected ? _purple : const Color(0xFF23292F),
+              fontSize: 15,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             ),
-            leading: _iconBox(selected),
-            title: Text(
-              label,
-              style: TextStyle(
-                color: selected ? _purple : const Color(0xFF354056),
-                fontSize: 14,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-              ),
-            ),
-            iconColor: _muted,
-            collapsedIconColor: _muted,
-            children: children
-                .map(
-                  (sub) => ListTile(
-                    dense: true,
-                    tileColor: sub.selected ? const Color(0xFFF0EFFF) : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.fromLTRB(10, 0, 8, 0),
-                    leading: Icon(
-                      sub.disabled ? Icons.cloud_off_rounded : sub.icon,
-                      size: 16,
+          ),
+          iconColor: _chevron,
+          collapsedIconColor: _chevron,
+          children: children
+              .map(
+                (sub) => ListTile(
+                  dense: true,
+                  contentPadding: const EdgeInsets.fromLTRB(48, 0, 20, 0),
+                  leading: Icon(
+                    sub.disabled ? Icons.cloud_off_rounded : sub.icon,
+                    size: 18,
+                    color: sub.disabled
+                        ? _muted
+                        : (sub.selected ? _purple : _navy),
+                  ),
+                  title: Text(
+                    sub.label,
+                    style: TextStyle(
                       color: sub.disabled
                           ? _muted
-                          : (sub.selected ? _purple : _muted),
+                          : (sub.selected ? _purple : const Color(0xFF23292F)),
+                      fontSize: 14,
+                      fontWeight:
+                          sub.selected ? FontWeight.w700 : FontWeight.w400,
                     ),
-                    title: Text(
-                      sub.label,
-                      style: TextStyle(
-                        color: sub.disabled
-                            ? _muted
-                            : (sub.selected ? _purple : const Color(0xFF354056)),
-                        fontSize: 13,
-                        fontWeight:
-                            sub.selected ? FontWeight.w800 : FontWeight.w500,
-                      ),
-                    ),
-                    onTap: sub.disabled ? null : sub.onTap,
                   ),
-                )
-                .toList(),
-          ),
+                  onTap: sub.disabled ? null : sub.onTap,
+                ),
+              )
+              .toList(),
         ),
       );
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFFF0EFFF) : null,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              _iconBox(selected),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: selected ? _purple : const Color(0xFF354056),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 14, 20, 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 21, color: selected ? _purple : _navy),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: selected ? _purple : const Color(0xFF23292F),
+                  fontSize: 15,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
-              if (trailing)
-                const Icon(Icons.arrow_forward_ios, size: 13, color: _muted),
-            ],
-          ),
+            ),
+            if (trailing)
+              const Icon(Icons.arrow_forward_ios, size: 13, color: _chevron),
+          ],
         ),
       ),
     );
