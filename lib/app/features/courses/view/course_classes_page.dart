@@ -9,6 +9,7 @@ import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
+import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -274,7 +275,9 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
         .enroll();
     if (!mounted) return;
     setState(() => _enrolling = false);
-    if (!result.success) {
+    if (result.success) {
+      Toast.success(context, result.message ?? 'Enrolled successfully.');
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result.message ?? 'Unable to enroll in this course.')),
       );
@@ -288,7 +291,9 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
         .cancelRegistration();
     if (!mounted) return;
     setState(() => _cancelling = false);
-    if (!result.success) {
+    if (result.success) {
+      Toast.success(context, result.message ?? 'Registration cancelled successfully.');
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result.message ?? 'Unable to cancel registration.')),
       );
@@ -668,7 +673,9 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
         .cancelRegistration(classId: widget.item.classId);
     if (!mounted) return;
     setState(() => _cancelling = false);
-    if (!result.success) {
+    if (result.success) {
+      Toast.success(context, result.message ?? 'Registration cancelled successfully.');
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result.message ?? 'Unable to cancel registration.')),
       );

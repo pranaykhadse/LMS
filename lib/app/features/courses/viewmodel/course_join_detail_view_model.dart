@@ -50,19 +50,32 @@ class CourseJoinDetailViewModel
   }
 
   /// Registers the current user for the whole course, then refreshes the
-  /// detail so `isEnrolled`/`primaryAction` reflect the new state.
+  /// detail so `isEnrolled`/`primaryAction` reflect the new state. Skips the
+  /// loading state so the screen doesn't flash back to a spinner - the
+  /// button itself shows its own in-flight state.
   Future<CourseEnrollResult> enroll() async {
     final result = await repository.register(courseId: courseId);
-    if (result.success) await fetch();
+    if (result.success) await _silentRefetch();
     return result;
   }
 
   /// Cancels the registration - the whole course when [classId] is null, or
-  /// just that class - then refreshes the detail.
+  /// just that class - then refreshes the detail (see [enroll]).
   Future<CourseEnrollResult> cancelRegistration({int? classId}) async {
     final result = await repository.cancel(courseId: courseId, classId: classId);
-    if (result.success) await fetch();
+    if (result.success) await _silentRefetch();
     return result;
+  }
+
+  Future<void> _silentRefetch() async {
+    if (userId == null) return;
+    try {
+      final result = await repository.fetch(userId: userId!, courseId: courseId);
+      state = DataState.onData(result);
+    } catch (_) {
+      // Keep showing the previous (now stale) data rather than replacing
+      // the whole screen with an error after a successful enroll/cancel.
+    }
   }
 }
 
