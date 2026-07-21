@@ -41,17 +41,17 @@ class AppScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTablet = Responsive.isTablet(context);
 
-    final content = Padding(
-      padding: const EdgeInsets.only(top: 14),
-      child: isTablet
-          ? Center(
+    final content = isTablet
+        ? Padding(
+            padding: const EdgeInsets.only(top: 14),
+            child: Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxContentWidth),
                 child: body,
               ),
-            )
-          : body,
-    );
+            ),
+          )
+        : body;
 
     if (!isTablet) {
       return Scaffold(
