@@ -25,55 +25,58 @@ class PaginationWidget extends StatelessWidget {
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _PagBtn(
-            icon: Icons.chevron_left,
-            enabled: page > 1,
-            onTap: () => onPage(page - 1),
-          ),
-          const SizedBox(width: 4),
-          ...nums.map((p) {
-            if (p == -1) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Text('...', style: TextStyle(color: _muted, fontSize: 14)),
-              );
-            }
-            final isCurrent = p == page;
-            return GestureDetector(
-              onTap: isCurrent ? null : () => onPage(p),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isCurrent ? _purple : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  border: isCurrent
-                      ? null
-                      : Border.all(color: const Color(0xFFDDE2EA)),
-                ),
-                child: Text(
-                  '$p',
-                  style: TextStyle(
-                    color: isCurrent ? Colors.white : _ink,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _PagBtn(
+              icon: Icons.chevron_left,
+              enabled: page > 1,
+              onTap: () => onPage(page - 1),
+            ),
+            const SizedBox(width: 4),
+            ...nums.map((p) {
+              if (p == -1) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Text('...', style: TextStyle(color: _muted, fontSize: 14)),
+                );
+              }
+              final isCurrent = p == page;
+              return GestureDetector(
+                onTap: isCurrent ? null : () => onPage(p),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: 34,
+                  height: 34,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: isCurrent ? _purple : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    border: isCurrent
+                        ? null
+                        : Border.all(color: const Color(0xFFDDE2EA)),
+                  ),
+                  child: Text(
+                    '$p',
+                    style: TextStyle(
+                      color: isCurrent ? Colors.white : _ink,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
-          const SizedBox(width: 4),
-          _PagBtn(
-            icon: Icons.chevron_right,
-            enabled: page < pages,
-            onTap: () => onPage(page + 1),
-          ),
-        ],
+              );
+            }),
+            const SizedBox(width: 4),
+            _PagBtn(
+              icon: Icons.chevron_right,
+              enabled: page < pages,
+              onTap: () => onPage(page + 1),
+            ),
+          ],
+        ),
       ),
     );
   }

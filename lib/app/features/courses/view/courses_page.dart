@@ -225,7 +225,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     crossAxisCount: columns,
                     crossAxisSpacing: width >= 760 ? 28 : 18,
                     mainAxisSpacing: width >= 760 ? 28 : 34,
-                    mainAxisExtent: width >= 760 ? 260 : 318,
+                    mainAxisExtent: width >= 760 ? 190 : 230,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _CatalogCourseCard(
@@ -354,7 +354,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               crossAxisCount: columns,
               crossAxisSpacing: width >= 760 ? 28 : 18,
               mainAxisSpacing: width >= 760 ? 28 : 34,
-              mainAxisExtent: width >= 760 ? 260 : 318,
+              mainAxisExtent: width >= 760 ? 190 : 230,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) => _CatalogCourseCard(
@@ -562,6 +562,8 @@ class _FilterPanel extends StatelessWidget {
                       controller: searchController,
                       hint: 'Search Course',
                       showClear: true,
+                      showLeadingIcon: false,
+                      onSubmitted: (_) => onApply(),
                     ),
                     _SkillDropdown(
                       skills: skills,
@@ -648,25 +650,32 @@ class _FilterPanel extends StatelessWidget {
                             ],
                           ),
                         )
-                      else
-                        ...fields.map(
-                          (field) => Padding(
-                            padding: const EdgeInsets.only(bottom: 14),
-                            child: field,
-                          ),
+                      else ...[
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(child: fields[0]),
+                            const SizedBox(width: 8),
+                            _SearchIconButton(onTap: onApply),
+                          ],
                         ),
+                        const SizedBox(height: 14),
+                        fields[1],
+                      ],
                       if (!wide) ...[
-                        const SizedBox(height: 1),
+                        const SizedBox(height: 14),
                         Row(
                           children: [
-                            Expanded(
-                              flex: 1,
-                              child: OutlinedButton(
+                            SizedBox(
+                              width: 52,
+                              height: 48,
+                              child: ElevatedButton(
                                 onPressed: onReset,
-                                style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(48),
-                                  side: BorderSide.none,
-                                  backgroundColor: const Color(0xFFF1F5F9),
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  backgroundColor: _catalogPurple,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
@@ -674,53 +683,30 @@ class _FilterPanel extends StatelessWidget {
                                 child: const Icon(Icons.undo_rounded),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
-                              flex: 2,
                               child: ElevatedButton.icon(
-                                onPressed: onApply,
+                                onPressed: onCalendarView,
                                 style: ElevatedButton.styleFrom(
                                   minimumSize: const Size.fromHeight(48),
-                                  backgroundColor: _catalogPurple,
+                                  backgroundColor: _catalogCalendarBlue,
                                   foregroundColor: Colors.white,
+                                  elevation: 0,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
                                 icon: const Icon(
-                                  Icons.search_rounded,
+                                  Icons.calendar_month_rounded,
                                   size: 20,
                                 ),
                                 label: const Text(
-                                  'Search',
+                                  'Calendar View',
                                   style: TextStyle(fontWeight: FontWeight.w700),
                                 ),
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: onCalendarView,
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                              backgroundColor: _catalogCalendarBlue,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            icon: const Icon(
-                              Icons.calendar_month_rounded,
-                              size: 20,
-                            ),
-                            label: const Text(
-                              'Calendar View',
-                              style: TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                          ),
                         ),
                       ],
                     ],
@@ -735,17 +721,43 @@ class _FilterPanel extends StatelessWidget {
   }
 }
 
+class _SearchIconButton extends StatelessWidget {
+  const _SearchIconButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: _catalogPurple,
+      borderRadius: BorderRadius.circular(9),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(9),
+        child: const SizedBox(
+          width: 46,
+          height: 46,
+          child: Icon(Icons.search_rounded, color: Colors.white, size: 22),
+        ),
+      ),
+    );
+  }
+}
+
 class _CatalogField extends StatelessWidget {
   const _CatalogField({
     this.controller,
     required this.hint,
     this.enabled = true,
     this.showClear = false,
+    this.showLeadingIcon = true,
+    this.onSubmitted,
   });
   final TextEditingController? controller;
   final String hint;
   final bool enabled;
   final bool showClear;
+  final bool showLeadingIcon;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -754,6 +766,8 @@ class _CatalogField extends StatelessWidget {
       enabled: enabled,
       hint: hint,
       showClear: showClear,
+      showLeadingIcon: showLeadingIcon,
+      onSubmitted: onSubmitted,
     );
   }
 }
@@ -764,16 +778,20 @@ class _ClearableTextField extends StatefulWidget {
     this.controller,
     this.enabled = true,
     this.showClear = false,
+    this.showLeadingIcon = true,
     this.autofocus = false,
     this.onChanged,
+    this.onSubmitted,
   });
 
   final TextEditingController? controller;
   final String hint;
   final bool enabled;
   final bool showClear;
+  final bool showLeadingIcon;
   final bool autofocus;
   final ValueChanged<String>? onChanged;
+  final ValueChanged<String>? onSubmitted;
 
   @override
   State<_ClearableTextField> createState() => _ClearableTextFieldState();
@@ -809,9 +827,13 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
       enabled: widget.enabled,
       autofocus: widget.autofocus,
       onChanged: widget.onChanged,
-      onSubmitted: (_) => FocusScope.of(context).unfocus(),
+      onSubmitted: (value) {
+        FocusScope.of(context).unfocus();
+        widget.onSubmitted?.call(value);
+      },
       decoration: _fieldDecoration(
         widget.hint,
+        showLeadingIcon: widget.showLeadingIcon,
         suffixIcon:
             widget.showClear && _controller.text.isNotEmpty
                 ? IconButton(
@@ -868,7 +890,10 @@ class _SkillDropdown extends StatelessWidget {
               },
       borderRadius: BorderRadius.circular(9),
       child: InputDecorator(
-        decoration: _fieldDecoration('Search Skills or Behavior').copyWith(
+        decoration: _fieldDecoration(
+          'Search Skills or Behavior',
+          showLeadingIcon: false,
+        ).copyWith(
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1048,15 +1073,20 @@ class _SkillPickerSheetState extends State<_SkillPickerSheet> {
   }
 }
 
-InputDecoration _fieldDecoration(String hint, {Widget? suffixIcon}) =>
-    InputDecoration(
+InputDecoration _fieldDecoration(
+  String hint, {
+  Widget? suffixIcon,
+  bool showLeadingIcon = true,
+}) => InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: _catalogMuted, fontSize: 13),
-      prefixIcon: const Icon(
-        Icons.search_rounded,
-        color: Color(0xFF91A0B8),
-        size: 18,
-      ),
+      prefixIcon: showLeadingIcon
+          ? const Icon(
+              Icons.search_rounded,
+              color: Color(0xFF91A0B8),
+              size: 18,
+            )
+          : null,
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: const Color(0xFFF8FAFC),
@@ -1249,84 +1279,74 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Card content
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                height: isWide ? 112 : 188,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _CourseImage(url: widget.course.logo),
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: _DevPlanButton(
-                        isInPlan: _isInPlan,
-                        onTap: isOnline
-                            ? () => setState(() => _showOverlay = true)
-                            : null,
+          // Image fills the whole card
+          _CourseImage(url: widget.course.logo),
+          Positioned(
+            top: 12,
+            right: 12,
+            child: _DevPlanButton(
+              isInPlan: _isInPlan,
+              onTap: isOnline ? () => setState(() => _showOverlay = true) : null,
+            ),
+          ),
+          // Title + View Course overlaid on the bottom of the image
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
+              decoration: BoxDecoration(color: _catalogPurple.withValues(alpha: 0.93)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (widget.course.nextSessionLabel != null) ...[
+                    _NextSession(
+                      date: widget.course.nextSession,
+                      label: widget.course.nextSessionLabel!,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  Text(
+                    widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isWide ? 13 : 15,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
+                    ),
+                  ),
+                  SizedBox(height: isWide ? 8 : 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Modular.to.pushNamed(
+                        CoursesModule.construct(
+                          '${CoursesModule.detail}/${widget.course.id}',
+                        ),
+                        arguments: widget.course.offlineCourse,
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: Size.fromHeight(isWide ? 34 : 42),
+                        backgroundColor: const Color(0xFF433FA0),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(isWide ? 7 : 10),
+                        ),
+                      ),
+                      child: const Text(
+                        'View Course',
+                        style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(15, isWide ? 8 : 10, 15, 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (widget.course.nextSessionLabel != null) ...[
-                        _NextSession(
-                          date: widget.course.nextSession,
-                          label: widget.course.nextSessionLabel!,
-                        ),
-                        const SizedBox(height: 8),
-                      ],
-                      Text(
-                        widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: _catalogInk,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          height: 1.18,
-                        ),
-                      ),
-                      const Spacer(),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => Modular.to.pushNamed(
-                            CoursesModule.construct(
-                              '${CoursesModule.detail}/${widget.course.id}',
-                            ),
-                            arguments: widget.course.offlineCourse,
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: Size.fromHeight(isWide ? 38 : 42),
-                            backgroundColor: _catalogPurple,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(isWide ? 7 : 10),
-                            ),
-                          ),
-                          child: const Text(
-                            'View Course',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
           // Overlay covers the full card (image + text area)
           if (_showOverlay)
@@ -1600,42 +1620,38 @@ class _NextSession extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4F3FF),
-        border: Border.all(color: const Color(0xFFDCD9F7)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'NEXT AVAILABLE',
-            style: TextStyle(fontSize: 9, color: _catalogMuted),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'NEXT AVAILABLE',
+          style: TextStyle(
+            fontSize: 9,
+            color: Colors.white70,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
           ),
-          const SizedBox(height: 2),
-          Row(
-            children: [
-              const Icon(
-                Icons.calendar_month_outlined,
-                size: 15,
-                color: _catalogPurple,
+        ),
+        const SizedBox(height: 2),
+        Row(
+          children: [
+            const Icon(
+              Icons.calendar_month_outlined,
+              size: 14,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              date == null ? label : _formatDate(date!),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(width: 4),
-              Text(
-                date == null ? label : _formatDate(date!),
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: _catalogPurple,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
