@@ -42,9 +42,12 @@ class CoursesPage extends ConsumerStatefulWidget {
 
 class _CoursesPageState extends ConsumerState<CoursesPage> {
   final _searchController = TextEditingController();
-  bool _filtersExpanded = false;
   bool _redirectingUnauthorized = false;
   String? _selectedSkillId;
+
+  // Extra breathing room below the last card so it isn't flush against the
+  // screen edge / home indicator.
+  static const _bottomSpacer = SliverToBoxAdapter(child: SizedBox(height: 32));
 
   @override
   void dispose() {
@@ -121,11 +124,6 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               ),
               sliver: SliverToBoxAdapter(
                 child: _FilterPanel(
-                  expanded: isWide || _filtersExpanded,
-                  showHeader: !isWide,
-                  onToggle:
-                      () =>
-                          setState(() => _filtersExpanded = !_filtersExpanded),
                   searchController: _searchController,
                   skills: catalogState.filterOptions,
                   selectedSkillId: _selectedSkillId,
@@ -237,6 +235,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               },
             ),
           ),
+          _bottomSpacer,
         ];
     }
   }
@@ -291,6 +290,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                   catalogState.groupPages[group.id] ?? group.pagination.page,
                 ),
             ],
+            _bottomSpacer,
           ];
         }
 
@@ -303,7 +303,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
             ),
           ];
         }
-        return [_groupTitle('Available'), _catalogGrid(courses)];
+        return [_groupTitle('Available'), _catalogGrid(courses), _bottomSpacer];
     }
   }
 
@@ -469,9 +469,6 @@ class _NavItem extends StatelessWidget {
 
 class _FilterPanel extends StatelessWidget {
   const _FilterPanel({
-    required this.expanded,
-    required this.showHeader,
-    required this.onToggle,
     required this.searchController,
     required this.skills,
     required this.selectedSkillId,
@@ -481,9 +478,6 @@ class _FilterPanel extends StatelessWidget {
     required this.onCalendarView,
   });
 
-  final bool expanded;
-  final bool showHeader;
-  final VoidCallback onToggle;
   final TextEditingController searchController;
   final List<CatalogSkill> skills;
   final String? selectedSkillId;
@@ -494,12 +488,11 @@ class _FilterPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.sizeOf(context).width < 760;
     return Container(
-      padding: EdgeInsets.all(isMobile ? 10 : 10),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(isMobile ? 14 : 14),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0B172033),
@@ -508,236 +501,161 @@ class _FilterPanel extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          if (showHeader)
-            InkWell(
-              onTap: onToggle,
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                height: 52,
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.filter_alt_rounded,
-                      color: _catalogPurple,
-                      size: 20,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 720;
+          final fields = <Widget>[
+            _CatalogField(
+              controller: searchController,
+              hint: 'Search Course',
+              showClear: true,
+              showLeadingIcon: false,
+              onSubmitted: (_) => onApply(),
+            ),
+            _SkillDropdown(
+              skills: skills,
+              value: selectedSkillId,
+              onChanged: onSkillChanged,
+            ),
+          ];
+
+          if (wide) {
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  SizedBox(width: 230, child: fields[0]),
+                  const SizedBox(width: 12),
+                  SizedBox(width: 240, child: fields[1]),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 56,
+                    height: 42,
+                    child: OutlinedButton(
+                      onPressed: onReset,
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide.none,
+                        backgroundColor: _catalogBackground,
+                      ),
+                      child: const Icon(Icons.undo_rounded),
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Filters',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: _catalogInk,
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    width: 118,
+                    height: 42,
+                    child: ElevatedButton.icon(
+                      onPressed: onApply,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _catalogPurple,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                      ),
+                      icon: const Icon(Icons.search_rounded, size: 18),
+                      label: const Text(
+                        'Search',
+                        style: TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
-                    const Spacer(),
-                    Icon(
-                      expanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      color: _catalogPurple,
+                  ),
+                  const SizedBox(width: 12),
+                  SizedBox(
+                    height: 42,
+                    child: ElevatedButton.icon(
+                      onPressed: onCalendarView,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _catalogCalendarBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                      ),
+                      icon: const Icon(Icons.calendar_month_rounded, size: 16),
+                      label: const Text(
+                        'Calendar View',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              fields[0],
+              const SizedBox(height: 14),
+              fields[1],
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: onApply,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    backgroundColor: _catalogPurple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  icon: const Icon(Icons.search_rounded, size: 20),
+                  label: const Text(
+                    'Search',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
-            ),
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 220),
-            crossFadeState:
-                expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-            firstChild: const SizedBox(width: double.infinity),
-            secondChild: Padding(
-              padding: EdgeInsets.only(top: showHeader ? 10 : 0),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final wide = constraints.maxWidth >= 720;
-                  final fields = <Widget>[
-                    _CatalogField(
-                      controller: searchController,
-                      hint: 'Search Course',
-                      showClear: true,
-                      showLeadingIcon: false,
-                      onSubmitted: (_) => onApply(),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 52,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: onReset,
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        backgroundColor: _catalogPurple,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Icon(Icons.undo_rounded),
                     ),
-                    _SkillDropdown(
-                      skills: skills,
-                      value: selectedSkillId,
-                      onChanged: onSkillChanged,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: onCalendarView,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        backgroundColor: _catalogCalendarBlue,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      icon: const Icon(Icons.calendar_month_rounded, size: 20),
+                      label: const Text(
+                        'Calendar View',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
-                  ];
-                  return Column(
-                    children: [
-                      if (!wide && showHeader)
-                        const Padding(
-                          padding: EdgeInsets.only(bottom: 14),
-                          child: Divider(height: 1, color: Color(0xFFE9EDF4)),
-                        ),
-                      if (wide)
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              SizedBox(width: 230, child: fields[0]),
-                              const SizedBox(width: 12),
-                              SizedBox(width: 240, child: fields[1]),
-                              const SizedBox(width: 12),
-                              SizedBox(
-                                width: 56,
-                                height: 42,
-                                child: OutlinedButton(
-                                  onPressed: onReset,
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide.none,
-                                    backgroundColor: _catalogBackground,
-                                  ),
-                                  child: const Icon(Icons.undo_rounded),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              SizedBox(
-                                width: 118,
-                                height: 42,
-                                child: ElevatedButton.icon(
-                                  onPressed: onApply,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _catalogPurple,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(9),
-                                    ),
-                                  ),
-                                  icon: const Icon(
-                                    Icons.search_rounded,
-                                    size: 18,
-                                  ),
-                                  label: const Text(
-                                    'Search',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              SizedBox(
-                                height: 42,
-                                child: ElevatedButton.icon(
-                                  onPressed: onCalendarView,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _catalogCalendarBlue,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(9),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                                  ),
-                                  icon: const Icon(
-                                    Icons.calendar_month_rounded,
-                                    size: 16,
-                                  ),
-                                  label: const Text(
-                                    'Calendar View',
-                                    style: TextStyle(fontWeight: FontWeight.w700),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else ...[
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(child: fields[0]),
-                            const SizedBox(width: 8),
-                            _SearchIconButton(onTap: onApply),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        fields[1],
-                      ],
-                      if (!wide) ...[
-                        const SizedBox(height: 14),
-                        Row(
-                          children: [
-                            SizedBox(
-                              width: 52,
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: onReset,
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  backgroundColor: _catalogPurple,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: const Icon(Icons.undo_rounded),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: onCalendarView,
-                                style: ElevatedButton.styleFrom(
-                                  minimumSize: const Size.fromHeight(48),
-                                  backgroundColor: _catalogCalendarBlue,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.calendar_month_rounded,
-                                  size: 20,
-                                ),
-                                label: const Text(
-                                  'Calendar View',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  );
-                },
+                  ),
+                ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SearchIconButton extends StatelessWidget {
-  const _SearchIconButton({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: _catalogPurple,
-      borderRadius: BorderRadius.circular(9),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(9),
-        child: const SizedBox(
-          width: 46,
-          height: 46,
-          child: Icon(Icons.search_rounded, color: Colors.white, size: 22),
-        ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -1374,14 +1292,14 @@ class _DevPlanButton extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: 35,
-        height: 35,
+        width: 30,
+        height: 30,
         decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
+          color: isDisabled ? Colors.white : const Color(0xFFE8E7F8),
+          borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
+              color: Colors.black.withValues(alpha: 0.14),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -1392,7 +1310,7 @@ class _DevPlanButton extends StatelessWidget {
           isDisabled
               ? Icons.cloud_off_rounded
               : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
-          size: isDisabled ? 16 : 20,
+          size: isDisabled ? 15 : 18,
           color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : _catalogPurple),
         ),
       ),
