@@ -84,31 +84,36 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       elevation: 2,
       centerTitle: title != null && centerTitle,
       titleSpacing: 0,
-      leadingWidth: isWide ? 0 : (showBack ? 106 : 68),
-      leading: isWide
+      leadingWidth: isWide
+          ? (showBack ? 46 : 0)
+          : (showBack ? 106 : 68),
+      leading: isWide && !showBack
           ? null
-          : Builder(
-              builder: (ctx) => Padding(
-                padding: const EdgeInsets.only(left: 14),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (showBack) ...[
-                        LmsAppBarButton(
-                          icon: Icons.arrow_back_ios_new_rounded,
-                          onTap: onBack ?? () => Navigator.pop(context),
-                          iconSize: isWide ? 21 : 31,
-                        ),
-                        const SizedBox(width: 6),
-                      ],
+          : Padding(
+              padding: EdgeInsets.only(left: isWide ? 8 : 14),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (showBack) ...[
                       LmsAppBarButton(
-                        icon: Icons.menu_rounded,
-                        onTap: () => Scaffold.of(ctx).openDrawer(),
+                        icon: Icons.arrow_back_ios_new_rounded,
+                        onTap: onBack ?? () => Navigator.pop(context),
+                        iconSize: isWide ? 21 : 31,
                       ),
+                      if (!isWide) const SizedBox(width: 6),
                     ],
-                  ),
+                    // The sidebar is always visible on wide screens, so
+                    // there's nothing for a hamburger button to open.
+                    if (!isWide)
+                      Builder(
+                        builder: (ctx) => LmsAppBarButton(
+                          icon: Icons.menu_rounded,
+                          onTap: () => Scaffold.of(ctx).openDrawer(),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),

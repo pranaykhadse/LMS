@@ -5,6 +5,7 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -16,11 +17,9 @@ import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
-import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dev_plan_membership_view_model.dart';
 import 'package:lms/app_module.dart';
 import 'package:lms/app/features/courses/view/calendar_courses_page.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 
 const _catalogPurple = Color(0xFF5756C9);
 const _catalogPink = Color(0xFFB0006D);
@@ -97,16 +96,9 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
       });
     }
 
-    return Scaffold(
+    return AppScaffold(
       backgroundColor: _catalogBackground,
-      drawer: isWide ? null : const AppDrawer(selectedLabel: 'Course Catalog'),
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(isWide ? 78 : 60),
-        child: LmsAppBar(
-          isWide: isWide,
-          bottom: isWide ? const _HeaderNavBar() : null,
-        ),
-      ),
+      selectedLabel: 'Course Catalog',
       body: RefreshIndicator(
         onRefresh:
             () =>
@@ -398,95 +390,6 @@ bool _isUnauthorizedError(String? error) {
       value.contains(' 401');
 }
 
-
-class _HeaderNavBar extends StatelessWidget implements PreferredSizeWidget {
-  const _HeaderNavBar();
-
-  @override
-  Size get preferredSize => const Size.fromHeight(36);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: preferredSize.height,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 26),
-      alignment: Alignment.centerLeft,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            const _NavItem(icon: Icons.menu_book_outlined, label: 'Course Catalog'),
-            const _NavItem(
-              icon: Icons.library_books_outlined,
-              label: 'My Courses',
-              menu: true,
-            ),
-            _NavItem(
-              icon: Icons.account_tree_outlined,
-              label: 'Learning Paths',
-              onTap: () => Modular.to.pushNamed(
-                CoursesModule.construct(CoursesModule.learningPaths),
-              ),
-            ),
-            const _NavItem(
-              icon: Icons.workspace_premium_outlined,
-              label: 'Points & Badges',
-              menu: true,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    this.menu = false,
-    this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool menu;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.only(right: 18),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 13, color: _catalogMuted),
-            const SizedBox(width: 7),
-            Text(
-              label,
-              style: const TextStyle(
-                color: _catalogInk,
-                fontSize: 10.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            if (menu) ...[
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
-                size: 14,
-                color: _catalogMuted,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _FilterPanel extends StatelessWidget {
   const _FilterPanel({
