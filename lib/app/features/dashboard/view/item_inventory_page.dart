@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/pagination_widget.dart';
+import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
@@ -23,19 +25,19 @@ class ItemInventoryPage extends ConsumerStatefulWidget {
 class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
   final _searchController = TextEditingController();
   String _query = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(() {
-      setState(() => _query = _searchController.text.trim().toLowerCase());
-    });
-  }
+  int _page = 1;
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _search() {
+    setState(() {
+      _query = _searchController.text.trim().toLowerCase();
+      _page = 1;
+    });
   }
 
   @override
@@ -56,6 +58,9 @@ class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
         notifier: notifier,
         searchController: _searchController,
         query: _query,
+        onSearch: _search,
+        page: _page,
+        onPageChanged: (p) => setState(() => _page = p),
       ),
     );
   }
@@ -70,12 +75,20 @@ class _Body extends StatelessWidget {
     required this.notifier,
     required this.searchController,
     required this.query,
+    required this.onSearch,
+    required this.page,
+    required this.onPageChanged,
   });
   final ItemInventoryState state;
   final VoidCallback onRetry;
   final ItemInventoryViewModel notifier;
   final TextEditingController searchController;
   final String query;
+  final VoidCallback onSearch;
+  final int page;
+  final ValueChanged<int> onPageChanged;
+
+  static const _perPage = 10;
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +103,24 @@ class _Body extends StatelessWidget {
     final items = query.isEmpty
         ? result.items
         : result.items.where((i) => i.name.toLowerCase().contains(query)).toList();
+    final totalPages = items.isEmpty ? 1 : (items.length / _perPage).ceil();
+    final safePage = page.clamp(1, totalPages);
+    final pageItems = items.skip((safePage - 1) * _perPage).take(_perPage).toList();
+    return Column(
+      children: [
+        Expanded(child: _buildList(context, items, pageItems)),
+        if (items.isNotEmpty)
+          PaginationWidget(page: safePage, pages: totalPages, onPage: onPageChanged),
+      ],
+    );
+  }
+
+  Widget _buildList(
+    BuildContext context,
+    List<InventoryItem> items,
+    List<InventoryItem> pageItems,
+  ) {
+    final result = state.result!;
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(child: _PointsBanner(points: result.userPoints)),
@@ -132,25 +163,54 @@ class _Body extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 14),
-                TextField(
-                  controller: searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search items...',
-                    hintStyle: const TextStyle(color: _muted, fontSize: 14),
-                    prefixIcon: const Icon(Icons.search_rounded, color: _muted, size: 20),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: searchController,
+                        onSubmitted: (_) => onSearch(),
+                        decoration: InputDecoration(
+                          hintText: 'Search items...',
+                          hintStyle: const TextStyle(color: _muted, fontSize: 14),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 0,
+                            horizontal: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
+                          ),
+                        ),
+                      ),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 44,
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: onSearch,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _purple,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Icon(Icons.search_rounded, size: 20),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
+                const SizedBox(height: 8),
+                const PerPageBadge(perPage: _perPage),
               ],
             ),
           ),
@@ -167,12 +227,12 @@ class _Body extends StatelessWidget {
             sliver: SliverGrid(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _ItemCard(
-                  item: items[index],
-                  isRedeeming: state.redeemingId == items[index].id,
-                  onRedeem: () => _showRedeemDialog(context, items[index], notifier),
-                  onView: () => _showDetail(context, items[index]),
+                  item: pageItems[index],
+                  isRedeeming: state.redeemingId == pageItems[index].id,
+                  onRedeem: () => _showRedeemDialog(context, pageItems[index], notifier),
+                  onView: () => _showDetail(context, pageItems[index]),
                 ),
-                childCount: items.length,
+                childCount: pageItems.length,
               ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: MediaQuery.sizeOf(context).width >= 760 ? 4 : 2,

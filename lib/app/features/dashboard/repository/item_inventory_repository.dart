@@ -18,6 +18,7 @@ class ItemInventoryRepository with RepoNetworkHelper {
     var total = 0;
     var userPoints = 0;
     final items = await fetchAllPages<InventoryItem>(
+      perPage: 10,
       fetchPage: (page, perPage) async {
         final response = await getRequest(
           'lms-screen/item-inventory',
