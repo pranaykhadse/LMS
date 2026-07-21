@@ -433,6 +433,7 @@ class _ResourceCarouselState extends State<_ResourceCarousel> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Stack(
         alignment: Alignment.center,
+        clipBehavior: Clip.none,
         children: [
           SizedBox(
             height: 460,
