@@ -306,7 +306,7 @@ class _CourseCarousel extends StatelessWidget {
           ),
           crossAxisSpacing: 14,
           mainAxisSpacing: 14,
-          childAspectRatio: 0.62,
+          mainAxisExtent: 260,
         ),
         itemCount: courses.length,
         itemBuilder: (context, index) => _CourseCard(course: courses[index]),

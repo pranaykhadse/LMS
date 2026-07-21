@@ -74,7 +74,7 @@ class _Body extends StatelessWidget {
                         ),
                         crossAxisSpacing: 14,
                         mainAxisSpacing: 14,
-                        childAspectRatio: 0.62,
+                        mainAxisExtent: 260,
                       ),
                       itemCount: state.courses.length,
                       itemBuilder: (ctx, i) =>

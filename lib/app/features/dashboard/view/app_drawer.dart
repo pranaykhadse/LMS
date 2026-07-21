@@ -160,7 +160,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'My Enrolled Courses',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.pushNamed(
+                            Modular.to.navigate(
                               CoursesModule.construct(
                                 CoursesModule.enrolledCourses,
                               ),
@@ -173,7 +173,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'My Completed Courses',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.pushNamed(
+                            Modular.to.navigate(
                               CoursesModule.construct(
                                 CoursesModule.completedCourses,
                               ),
@@ -186,7 +186,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'My Development Plan',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.pushNamed(
+                            Modular.to.navigate(
                               CoursesModule.construct(
                                 CoursesModule.developmentPlan,
                               ),
@@ -199,7 +199,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'My Required Courses',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.pushNamed(
+                            Modular.to.navigate(
                               CoursesModule.construct(
                                 CoursesModule.requiredCourses,
                               ),
@@ -213,7 +213,7 @@ class AppDrawer extends ConsumerWidget {
                       label: 'Learning Paths',
                       onTap: () {
                         _closeIfNeeded(context);
-                        Modular.to.pushNamed(
+                        Modular.to.navigate(
                           CoursesModule.construct(CoursesModule.learningPaths),
                         );
                       },
@@ -229,7 +229,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'Redeem your Points',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.pushNamed(
+                            Modular.to.navigate(
                               CoursesModule.construct(CoursesModule.redeemPoints),
                             );
                           },
@@ -240,7 +240,7 @@ class AppDrawer extends ConsumerWidget {
                           selected: subSel == 'Badges',
                           onTap: () {
                             _closeIfNeeded(context);
-                            Modular.to.pushNamed(
+                            Modular.to.navigate(
                               CoursesModule.construct(CoursesModule.badges),
                             );
                           },
