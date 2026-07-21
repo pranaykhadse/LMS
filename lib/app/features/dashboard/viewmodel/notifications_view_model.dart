@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
@@ -55,19 +54,12 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
   final int? userId;
 
   Future<void> fetch() async {
-    debugPrint('[NotificationsViewModel] fetch() called, userId=$userId');
-    if (userId == null) {
-      debugPrint('[NotificationsViewModel] userId is null, aborting fetch');
-      return;
-    }
+    if (userId == null) return;
     state = state.copyWith(isLoading: true, error: null);
     try {
       final items = await repository.fetch(userId: userId!);
-      debugPrint('[NotificationsViewModel] fetch succeeded with ${items.length} items');
       state = state.copyWith(notifications: items, isLoading: false);
-    } catch (e, st) {
-      debugPrint('[NotificationsViewModel] fetch FAILED: $e');
-      debugPrint('$st');
+    } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

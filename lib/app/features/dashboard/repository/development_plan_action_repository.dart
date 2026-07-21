@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart' show Headers, Options;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -32,9 +31,7 @@ class DevelopmentPlanActionRepository with RepoNetworkHelper {
     required int courseId,
     required String action,
   }) async {
-    final url = '${baseUrl}lms-screen/development-plan-course';
     final body = {'course_id': courseId, 'action': action};
-    debugPrint('[DevelopmentPlanActionRepository] POST $url body=$body');
     try {
       final response = await post(
         'lms-screen/development-plan-course',
@@ -42,16 +39,10 @@ class DevelopmentPlanActionRepository with RepoNetworkHelper {
         options: Options(contentType: Headers.formUrlEncodedContentType),
         cacheType: RequestCacheType.none,
       );
-      debugPrint(
-        '[DevelopmentPlanActionRepository] response (${response.runtimeType}): $response',
-      );
       final data = response is Map
           ? Map<String, dynamic>.from(response)
           : <String, dynamic>{};
       if (data['status']?.toString() != '1') {
-        debugPrint(
-          '[DevelopmentPlanActionRepository] failed: ${data['message']}',
-        );
         return DevPlanActionResult(
           success: false,
           message: data['message']?.toString(),
@@ -69,7 +60,6 @@ class DevelopmentPlanActionRepository with RepoNetworkHelper {
         message: data['message']?.toString(),
       );
     } catch (e) {
-      debugPrint('[DevelopmentPlanActionRepository] error: $e');
       return DevPlanActionResult(success: false, message: e.toString());
     }
   }

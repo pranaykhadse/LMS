@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -28,9 +25,6 @@ class CourseJoinDetailRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
     );
     final data = Map<String, dynamic>.from(response as Map);
-    if (kDebugMode) {
-      _debugPrintJson('join-course-detail response for course $courseId', data);
-    }
     if (data['status']?.toString() != '1') {
       throw Exception(
         data['message']?.toString() ?? 'Unable to load course details.',
@@ -38,16 +32,4 @@ class CourseJoinDetailRepository with RepoNetworkHelper {
     }
     return CourseJoinDetail.fromJson(data);
   }
-}
-
-void _debugPrintJson(String label, Map<String, dynamic> data) {
-  final encoded = jsonEncode(data);
-  const chunkSize = 900;
-  debugPrint('===== $label START =====');
-  for (var index = 0; index < encoded.length; index += chunkSize) {
-    final end =
-        index + chunkSize > encoded.length ? encoded.length : index + chunkSize;
-    debugPrint(encoded.substring(index, end));
-  }
-  debugPrint('===== $label END =====');
 }

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -31,21 +30,16 @@ class CourseCatalogRepository with RepoNetworkHelper {
       for (final entry in groupPages.entries)
         'group_page[${entry.key}]': entry.value,
     };
-    debugPrint('[CourseCatalogRepository] fetch query=$queryParameters');
     final response = await getRequest(
       'lms-screen/course-catalog',
       queryParameters: queryParameters,
       cacheType: RequestCacheType.none,
     );
-    debugPrint('[CourseCatalogRepository] raw response (${response.runtimeType}): $response');
     final data = Map<String, dynamic>.from(response as Map);
     if (data['status']?.toString() != '1') {
       throw Exception(data['message']?.toString() ?? 'Unable to load courses.');
     }
-    final parsed = CourseCatalogResponse.fromJson(data);
-    debugPrint('[CourseCatalogRepository] parsed groups=${parsed.groups.length} '
-        'flatCourses=${parsed.courses.length} total=${parsed.total}');
-    return parsed;
+    return CourseCatalogResponse.fromJson(data);
   }
 
   Future<CourseCatalogResponse> search({

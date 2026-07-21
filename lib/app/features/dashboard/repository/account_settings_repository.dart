@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -33,14 +32,12 @@ class AccountSettingsRepository with RepoNetworkHelper {
     required int userId,
     required Map<String, dynamic> body,
   }) async {
-    debugPrint('[AccountSettingsRepository] PUT user-profile/$userId body=$body');
     try {
       final raw = await put(
         'user-profile/$userId',
         data: body,
         cacheType: RequestCacheType.none,
       );
-      debugPrint('[AccountSettingsRepository] response (${raw.runtimeType}): $raw');
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
       if (data['status']?.toString() == '0') {
@@ -54,7 +51,6 @@ class AccountSettingsRepository with RepoNetworkHelper {
         message: data['message']?.toString(),
       );
     } catch (e) {
-      debugPrint('[AccountSettingsRepository] update error: $e');
       return AccountSettingsUpdateResult(success: false, message: e.toString());
     }
   }
