@@ -21,6 +21,7 @@ const _purple2 = Color(0xFF775FE8);
 const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
+const _sectionTitle = Color(0xFFB0006D);
 
 bool _watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -121,23 +122,29 @@ class _DashboardBody extends StatelessWidget {
             padding: EdgeInsets.zero,
             children: [
               _BannerSection(auth: auth),
-              if (data.ongoingCourses.isNotEmpty) ...[
-                const SizedBox(height: 28),
-                _SectionHeader(
-                  title: 'My Courses',
-                  actionLabel: 'View All My Courses',
-                  onAction:
-                      () => Modular.to.pushNamed(
-                        CoursesModule.construct(CoursesModule.myCourses),
+              const SizedBox(height: 28),
+              _SectionHeader(
+                title: 'My Courses',
+                actionLabel: 'View All My Courses',
+                onAction:
+                    () => Modular.to.pushNamed(
+                      CoursesModule.construct(CoursesModule.myCourses),
+                    ),
+              ),
+              const SizedBox(height: 12),
+              data.ongoingCourses.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        'No courses!',
+                        style: TextStyle(color: _ink, fontSize: 14),
                       ),
-                ),
-                const SizedBox(height: 16),
-                _CourseCarousel(courses: data.ongoingCourses),
-              ],
+                    )
+                  : _CourseCarousel(courses: data.ongoingCourses),
               if (data.resources.isNotEmpty) ...[
                 const SizedBox(height: 28),
                 const _SectionHeader(title: 'Resources'),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 _ResourceCarousel(resources: data.resources),
               ],
               const SizedBox(height: 48),
@@ -233,23 +240,15 @@ class _SectionHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Container(
-            width: 4,
-            height: 22,
-            decoration: BoxDecoration(
-              color: _purple,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          const SizedBox(width: 10),
           Expanded(
             child: Text(
               title,
               style: const TextStyle(
-                color: _ink,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
+                color: _sectionTitle,
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
@@ -397,27 +396,94 @@ class _CourseCard extends StatelessWidget {
 }
 
 // ─── Resource carousel ────────────────────────────────────────────────────────
+//
+// A single-item pager (matching the website: one resource card at a time,
+// with left/right arrows to page through) rather than a multi-column grid.
 
-class _ResourceCarousel extends StatelessWidget {
+class _ResourceCarousel extends StatefulWidget {
   const _ResourceCarousel({required this.resources});
   final List<DashboardResource> resources;
+
+  @override
+  State<_ResourceCarousel> createState() => _ResourceCarouselState();
+}
+
+class _ResourceCarouselState extends State<_ResourceCarousel> {
+  final _controller = PageController();
+  int _index = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _go(int delta) {
+    final next = (_index + delta).clamp(0, widget.resources.length - 1);
+    _controller.animateToPage(
+      next,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          childAspectRatio: 0.68,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            height: 460,
+            child: PageView.builder(
+              controller: _controller,
+              onPageChanged: (i) => setState(() => _index = i),
+              itemCount: widget.resources.length,
+              itemBuilder: (context, i) =>
+                  _ResourceCard(resource: widget.resources[i]),
+            ),
+          ),
+          if (widget.resources.length > 1) ...[
+            Positioned(
+              left: -8,
+              child: _NavArrow(
+                icon: Icons.chevron_left_rounded,
+                onTap: _index > 0 ? () => _go(-1) : null,
+              ),
+            ),
+            Positioned(
+              right: -8,
+              child: _NavArrow(
+                icon: Icons.chevron_right_rounded,
+                onTap: _index < widget.resources.length - 1 ? () => _go(1) : null,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _NavArrow extends StatelessWidget {
+  const _NavArrow({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: _purple.withValues(alpha: onTap == null ? 0.06 : 0.14),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 32,
+          height: 32,
+          child: Icon(icon, size: 20, color: onTap == null ? _muted : _purple),
         ),
-        itemCount: resources.length,
-        itemBuilder:
-            (context, index) => _ResourceCard(resource: resources[index]),
       ),
     );
   }
@@ -440,124 +506,93 @@ class _ResourceCard extends ConsumerWidget {
     final hasAction = resource.actionType != 'none' && (!needsInternet || isOnline);
     final label =
         resource.actionType == 'link'
-            ? (isOnline ? 'Open Link' : 'Internet required')
+            ? (isOnline ? 'View' : 'Internet required')
             : resource.actionType == 'resource'
-            ? 'View Resource'
+            ? 'View'
             : 'No Content';
 
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: const [
-          BoxShadow(color: Color(0x0A000000), blurRadius: 16, offset: Offset(0, 6)),
+          BoxShadow(color: Color(0x0F000000), blurRadius: 20, offset: Offset(0, 8)),
         ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Stack(
-            children: [
-              SizedBox(
-                height: 110,
-                width: double.infinity,
-                child: resource.logo != null
-                    ? Image.network(
-                        resource.logo!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImgFallback(),
-                      )
-                    : const _ImgFallback(),
+          Container(
+            width: double.infinity,
+            color: const Color(0xFFEFEDFB),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Text(
+              resource.name,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: _purple,
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
               ),
-              Positioned(
-                top: 8,
-                left: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black54,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'RESOURCE',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: .8,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
+          ),
+          AspectRatio(
+            aspectRatio: 16 / 10,
+            child: resource.logo != null
+                ? Image.network(
+                    resource.logo!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const _ImgFallback(),
+                  )
+                : const _ImgFallback(),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    resource.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _ink,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                    ),
-                  ),
-                  if (resource.subtitle?.isNotEmpty == true) ...[
-                    const SizedBox(height: 3),
+                  if (resource.subtitle?.isNotEmpty == true)
                     Text(
                       resource.subtitle!,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: _muted, fontSize: 11),
+                      style: const TextStyle(color: _muted, fontSize: 13, height: 1.4),
                     ),
-                  ],
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,
-                    child: hasAction
-                        ? OutlinedButton(
-                            onPressed: () {
+                    child: ElevatedButton.icon(
+                      onPressed: hasAction
+                          ? () {
                               if (resource.actionType == 'link' &&
                                   resource.actionUrl != null) {
                                 _openLink(resource.actionUrl!);
                               }
-                            },
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: _purple,
-                              side: const BorderSide(color: _purple),
-                              minimumSize: const Size.fromHeight(32),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              textStyle: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 12,
-                              ),
-                            ),
-                            child: Text(label),
-                          )
-                        : OutlinedButton(
-                            onPressed: null,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: _muted,
-                              side: const BorderSide(color: Color(0xFFDDE2EA)),
-                              minimumSize: const Size.fromHeight(32),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              textStyle: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 12,
-                              ),
-                            ),
-                            child: Text(label),
-                          ),
+                            }
+                          : null,
+                      icon: const Icon(Icons.remove_red_eye_outlined, size: 18),
+                      label: Text(label),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _purple,
+                        disabledBackgroundColor: const Color(0xFFDDE2EA),
+                        foregroundColor: Colors.white,
+                        disabledForegroundColor: _muted,
+                        elevation: 0,
+                        minimumSize: const Size.fromHeight(46),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
