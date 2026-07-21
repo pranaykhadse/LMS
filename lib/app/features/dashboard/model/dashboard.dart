@@ -20,14 +20,20 @@ class DashboardResponse {
               )
               .toList(),
       resources:
-          (payload['resources'] as List? ?? [])
+          (payload['articles'] as List? ?? [])
               .whereType<Map>()
-              .map(
-                (m) => DashboardResource.fromJson(Map<String, dynamic>.from(m)),
-              )
+              .map((m) => Map<String, dynamic>.from(m))
+              .where(_isActiveArticle)
+              .map(DashboardResource.fromJson)
               .toList(),
     );
   }
+}
+
+bool _isActiveArticle(Map<String, dynamic> json) {
+  final isDeleted = json['is_deleted']?.toString() ?? '0';
+  final status = json['status']?.toString() ?? '1';
+  return isDeleted != '1' && status != '0';
 }
 
 class DashboardCourse {
@@ -89,13 +95,20 @@ class DashboardResource {
   final String? actionUrl;
 
   factory DashboardResource.fromJson(Map<String, dynamic> json) {
+    // Dashboard "articles" carry either an external resource_link (e.g. a
+    // deep link into a web page) or a directly-hosted resource_file (e.g. an
+    // uploaded video) — both are just a URL to open, so either satisfies
+    // actionType 'link'. Falls back to the older link/url/resource_link
+    // shape other endpoints have used, for safety.
     final link =
-        json['link']?.toString().isNotEmpty == true
+        json['resource_link']?.toString().isNotEmpty == true
+            ? json['resource_link'].toString()
+            : json['resource_file']?.toString().isNotEmpty == true
+            ? json['resource_file'].toString()
+            : json['link']?.toString().isNotEmpty == true
             ? json['link'].toString()
             : json['url']?.toString().isNotEmpty == true
             ? json['url'].toString()
-            : json['resource_link']?.toString().isNotEmpty == true
-            ? json['resource_link'].toString()
             : null;
     final hasResourceId =
         json['resource_id'] != null || json['resource_type'] != null;
@@ -105,23 +118,32 @@ class DashboardResource {
             : hasResourceId
             ? 'resource'
             : 'none';
+
+    final logoPath = json['logo_path']?.toString() ?? '';
+    final logoBaseUrl = json['logo_base_url']?.toString() ?? '';
+    final logo =
+        logoPath.isNotEmpty
+            ? '$logoBaseUrl$logoPath'
+            : json['logo']?.toString().isNotEmpty == true
+            ? json['logo'].toString()
+            : json['image']?.toString().isNotEmpty == true
+            ? json['image'].toString()
+            : null;
+
     return DashboardResource(
       id: _asInt(json['id'] ?? json['resource_id']),
       name:
-          json['name']?.toString() ??
           json['title']?.toString() ??
+          json['name']?.toString() ??
           json['resource_name']?.toString() ??
           '',
       subtitle:
-          json['description']?.toString().isNotEmpty == true
+          json['body']?.toString().isNotEmpty == true
+              ? json['body'].toString()
+              : json['description']?.toString().isNotEmpty == true
               ? json['description'].toString()
               : json['subtitle']?.toString(),
-      logo:
-          json['logo']?.toString().isNotEmpty == true
-              ? json['logo'].toString()
-              : json['image']?.toString().isNotEmpty == true
-              ? json['image'].toString()
-              : null,
+      logo: logo,
       actionType: type,
       actionUrl: link,
     );

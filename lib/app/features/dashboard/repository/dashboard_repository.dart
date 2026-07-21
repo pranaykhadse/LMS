@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -26,17 +25,6 @@ class DashboardRepository with RepoNetworkHelper {
         data['message']?.toString() ?? 'Unable to load dashboard.',
       );
     }
-    final payload = data['payload'];
-    debugPrint(
-      '[DashboardRepository] payload keys: '
-      '${payload is Map ? payload.keys.toList() : payload.runtimeType}',
-    );
-    debugPrint('[DashboardRepository] raw resources: ${payload is Map ? payload['resources'] : null}');
-    final parsed = DashboardResponse.fromJson(data);
-    debugPrint(
-      '[DashboardRepository] parsed ongoingCourses=${parsed.ongoingCourses.length} '
-      'resources=${parsed.resources.length}',
-    );
-    return parsed;
+    return DashboardResponse.fromJson(data);
   }
 }
