@@ -20,7 +20,11 @@ class UserProfileDetail {
       user: rawUser is Map
           ? User.fromJson(Map<String, dynamic>.from(rawUser))
           : User(),
-      phoneNumber: json['phone_number']?.toString(),
+      // The confirmed GET /user-profile/{id} schema returns this under
+      // "text_phone_number", not "phone_number" — try both, preferring
+      // whichever one is actually present.
+      phoneNumber:
+          json['text_phone_number']?.toString() ?? json['phone_number']?.toString(),
       enableTextMessages: json['enable_text_messages'] == 1 ||
           json['enable_text_messages']?.toString() == '1' ||
           json['enable_text_messages'] == true,

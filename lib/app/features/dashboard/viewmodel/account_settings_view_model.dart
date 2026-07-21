@@ -67,12 +67,10 @@ class AccountSettingsViewModel
       department: department,
       avatarPath: avatarUrl,
     );
-    // Not part of the documented PUT schema — included as a best-effort
-    // guess (it's the exact key the GET response returns this value under).
-    // Check the request/response log after saving to confirm it actually
-    // persists; if the backend ignores unknown keys, this will silently
-    // no-op instead of erroring.
-    if (phoneNumber != null) body['phone_number'] = phoneNumber;
+    // Not part of the documented PUT schema, but GET /user-profile/{id}
+    // confirmed this value comes back under "text_phone_number" — using
+    // that same key here rather than the "phone_number" guess from before.
+    if (phoneNumber != null) body['text_phone_number'] = phoneNumber;
     final result = await repository.update(userId: userId!, body: body);
     if (!result.success) {
       return result.message ?? 'Unable to save your changes. Please try again.';
