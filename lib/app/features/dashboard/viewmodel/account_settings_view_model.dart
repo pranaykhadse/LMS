@@ -87,6 +87,23 @@ class AccountSettingsViewModel
     return null;
   }
 
+  /// Changes the logged-in user's password. Returns an error message on
+  /// failure, or null on success.
+  Future<String?> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    if (userId == null) return 'Unable to change password — not logged in.';
+    final result = await repository.changePassword(
+      userId: userId!,
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+    );
+    return result.success
+        ? null
+        : (result.message ?? 'Unable to change password. Please try again.');
+  }
+
   String _friendly(Object e) {
     final msg = e.toString();
     if (msg.contains('401') || msg.contains('Unauthorized')) {

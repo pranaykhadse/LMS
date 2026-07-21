@@ -274,7 +274,10 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => Toast.info(context, 'Password reset coming soon.'),
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (_) => const _ResetPasswordDialog(),
+                ),
                 icon: const Icon(Icons.lock_outline_rounded, size: 18),
                 label: const Text('Reset Password'),
                 style: OutlinedButton.styleFrom(
@@ -428,6 +431,200 @@ class _EditableName extends StatelessWidget {
           borderSide: BorderSide.none,
         ),
       ),
+    );
+  }
+}
+
+class _ResetPasswordDialog extends ConsumerStatefulWidget {
+  const _ResetPasswordDialog();
+
+  @override
+  ConsumerState<_ResetPasswordDialog> createState() => _ResetPasswordDialogState();
+}
+
+class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
+  final _oldPasswordCtrl = TextEditingController();
+  final _newPasswordCtrl = TextEditingController();
+  final _confirmPasswordCtrl = TextEditingController();
+  bool _isSubmitting = false;
+  String? _errorText;
+
+  @override
+  void dispose() {
+    _oldPasswordCtrl.dispose();
+    _newPasswordCtrl.dispose();
+    _confirmPasswordCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final oldPassword = _oldPasswordCtrl.text;
+    final newPassword = _newPasswordCtrl.text;
+    final confirmPassword = _confirmPasswordCtrl.text;
+
+    if (oldPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+      setState(() => _errorText = 'All fields are required.');
+      return;
+    }
+    if (newPassword != confirmPassword) {
+      setState(() => _errorText = 'New password and confirm password do not match.');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _errorText = null;
+    });
+    final error = await ref
+        .read(AccountSettingsViewModel.provider.notifier)
+        .changePassword(oldPassword: oldPassword, newPassword: newPassword);
+    if (!mounted) return;
+    if (error != null) {
+      setState(() {
+        _isSubmitting = false;
+        _errorText = error;
+      });
+      return;
+    }
+    Navigator.of(context).pop();
+    Toast.success(context, 'Password changed successfully.');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                const Text(
+                  'Reset Password',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 18),
+                ),
+                Positioned(
+                  right: 0,
+                  top: -4,
+                  child: IconButton(
+                    onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close, size: 20, color: _asMuted),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _PasswordField(label: 'Old Password', controller: _oldPasswordCtrl),
+            const SizedBox(height: 14),
+            _PasswordField(label: 'New Password', controller: _newPasswordCtrl),
+            const SizedBox(height: 14),
+            _PasswordField(label: 'Confirm Password', controller: _confirmPasswordCtrl),
+            if (_errorText != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _errorText!,
+                style: const TextStyle(color: Colors.red, fontSize: 12.5),
+              ),
+            ],
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _asPurple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size(90, 42),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Okay', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE53935),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size(90, 42),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PasswordField extends StatefulWidget {
+  const _PasswordField({required this.label, required this.controller});
+  final String label;
+  final TextEditingController controller;
+
+  @override
+  State<_PasswordField> createState() => _PasswordFieldState();
+}
+
+class _PasswordFieldState extends State<_PasswordField> {
+  bool _obscure = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            style: const TextStyle(color: _asInk, fontSize: 13, fontWeight: FontWeight.w600),
+            children: [
+              TextSpan(text: widget.label),
+              const TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: widget.controller,
+          obscureText: _obscure,
+          style: const TextStyle(color: _asInk, fontSize: 14),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: _asFieldBg,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            suffixIcon: IconButton(
+              onPressed: () => setState(() => _obscure = !_obscure),
+              icon: Icon(
+                _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                size: 18,
+                color: _asMuted,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
