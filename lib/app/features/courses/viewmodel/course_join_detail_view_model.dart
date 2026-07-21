@@ -56,6 +56,14 @@ class CourseJoinDetailViewModel
     if (result.success) await fetch();
     return result;
   }
+
+  /// Cancels the registration - the whole course when [classId] is null, or
+  /// just that class - then refreshes the detail.
+  Future<CourseEnrollResult> cancelRegistration({int? classId}) async {
+    final result = await repository.cancel(courseId: courseId, classId: classId);
+    if (result.success) await fetch();
+    return result;
+  }
 }
 
 int? _loggedInUserId(AuthState? auth) {

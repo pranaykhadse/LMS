@@ -65,4 +65,34 @@ class CourseJoinDetailRepository with RepoNetworkHelper {
       return CourseEnrollResult(success: false, message: e.toString());
     }
   }
+
+  /// Cancels the learner's registration (POST lms-screen/cancel-registration,
+  /// form-urlencoded). Pass only `course_id` to cancel the entire course
+  /// registration, or also `class_id` to cancel a single class only.
+  /// `user_id` is admin-only and omitted here, same as [register].
+  Future<CourseEnrollResult> cancel({required int courseId, int? classId}) async {
+    try {
+      final response = await post(
+        'lms-screen/cancel-registration',
+        data: {
+          'course_id': courseId,
+          if (classId != null) 'class_id': classId,
+        },
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+        cacheType: RequestCacheType.none,
+      );
+      final data = response is Map
+          ? Map<String, dynamic>.from(response)
+          : <String, dynamic>{};
+      if (data['status']?.toString() != '1') {
+        return CourseEnrollResult(
+          success: false,
+          message: data['message']?.toString() ?? 'Unable to cancel registration.',
+        );
+      }
+      return CourseEnrollResult(success: true, message: data['message']?.toString());
+    } catch (e) {
+      return CourseEnrollResult(success: false, message: e.toString());
+    }
+  }
 }

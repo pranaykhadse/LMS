@@ -179,6 +179,7 @@ class _DetailBody extends ConsumerWidget {
                         _CourseImageCard(url: detail.logo),
                         _SkillsCard(skills: detail.skills),
                         _StructureCard(
+                          courseId: detail.id,
                           items: detail.structures,
                           isEnrolled: detail.isEnrolled,
                           courseObjective: detail.objective,
@@ -264,6 +265,7 @@ class _LaunchPanel extends ConsumerStatefulWidget {
 class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   Timer? _timer;
   bool _enrolling = false;
+  bool _cancelling = false;
 
   Future<void> _enroll() async {
     setState(() => _enrolling = true);
@@ -275,6 +277,20 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     if (!result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(result.message ?? 'Unable to enroll in this course.')),
+      );
+    }
+  }
+
+  Future<void> _cancel() async {
+    setState(() => _cancelling = true);
+    final result = await ref
+        .read(CourseJoinDetailViewModel.provider(widget.detail.id).notifier)
+        .cancelRegistration();
+    if (!mounted) return;
+    setState(() => _cancelling = false);
+    if (!result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message ?? 'Unable to cancel registration.')),
       );
     }
   }
@@ -406,23 +422,29 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _enrolling
+              onPressed: (_enrolling || _cancelling)
                   ? null
                   : () {
                       if (detail.isEnrolled) {
-                        _showCancelConfirmationDialog(context);
+                        _showCancelConfirmationDialog(context, onConfirm: _cancel);
                       } else {
                         _enroll();
                       }
                     },
-              icon: _enrolling
+              icon: (_enrolling || _cancelling)
                   ? const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.app_registration_rounded, size: 18),
-              label: Text(_enrolling ? 'Enrolling…' : detail.primaryAction),
+              label: Text(
+                _enrolling
+                    ? 'Enrolling…'
+                    : _cancelling
+                        ? 'Cancelling…'
+                        : detail.primaryAction,
+              ),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(47),
                 backgroundColor: _detailPurple,
@@ -572,11 +594,13 @@ class _SkillsCard extends StatelessWidget {
 
 class _StructureCard extends StatelessWidget {
   const _StructureCard({
+    required this.courseId,
     required this.items,
     required this.isEnrolled,
     required this.courseObjective,
     required this.courseTitle,
   });
+  final int courseId;
   final List<CourseStructureItem> items;
   final bool isEnrolled;
   final String courseObjective;
@@ -599,6 +623,7 @@ class _StructureCard extends StatelessWidget {
           else
             for (final item in items) ...[
               _StructureItemCard(
+                courseId: courseId,
                 item: item,
                 isEnrolled: isEnrolled,
                 courseObjective: courseObjective,
@@ -614,20 +639,48 @@ class _StructureCard extends StatelessWidget {
   }
 }
 
-class _StructureItemCard extends StatelessWidget {
+class _StructureItemCard extends ConsumerStatefulWidget {
   const _StructureItemCard({
+    required this.courseId,
     required this.item,
     required this.isEnrolled,
     required this.courseObjective,
     required this.courseTitle,
   });
+  final int courseId;
   final CourseStructureItem item;
   final bool isEnrolled;
   final String courseObjective;
   final String courseTitle;
 
   @override
+  ConsumerState<_StructureItemCard> createState() => _StructureItemCardState();
+}
+
+class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
+  bool _cancelling = false;
+
+  Future<void> _cancelClass() async {
+    if (_cancelling) return;
+    setState(() => _cancelling = true);
+    final result = await ref
+        .read(CourseJoinDetailViewModel.provider(widget.courseId).notifier)
+        .cancelRegistration(classId: widget.item.classId);
+    if (!mounted) return;
+    setState(() => _cancelling = false);
+    if (!result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message ?? 'Unable to cancel registration.')),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final item = widget.item;
+    final isEnrolled = widget.isEnrolled;
+    final courseObjective = widget.courseObjective;
+    final courseTitle = widget.courseTitle;
     return Container(
       padding: const EdgeInsets.fromLTRB(17, 16, 17, 20),
       decoration: BoxDecoration(
@@ -730,8 +783,9 @@ class _StructureItemCard extends StatelessWidget {
               ],
               _OnlineActionButton(
                 icon: Icons.cancel_outlined,
-                label: 'Cancel Registration',
-                onPressed: () => _showCancelConfirmationDialog(context),
+                label: _cancelling ? 'Cancelling…' : 'Cancel Registration',
+                onPressed: () =>
+                    _showCancelConfirmationDialog(context, onConfirm: _cancelClass),
               ),
             ] else if (item.typeCode == '4') ...[
               // Watch Video — "Watch" opens browser (handles HLS/VP9 on iOS);
@@ -1098,7 +1152,10 @@ void _showNotEnrolledDialog(BuildContext context) {
   );
 }
 
-void _showCancelConfirmationDialog(BuildContext context) {
+void _showCancelConfirmationDialog(
+  BuildContext context, {
+  required VoidCallback onConfirm,
+}) {
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
@@ -1132,7 +1189,10 @@ void _showCancelConfirmationDialog(BuildContext context) {
           ),
         ),
         ElevatedButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context);
+            onConfirm();
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: _detailPurple,
             foregroundColor: Colors.white,

@@ -160,6 +160,7 @@ class CourseStructureItem {
     required this.typeCode,
     required this.isEnrolledInClass,
     required this.recordingUrls,
+    this.classId,
     this.contentUrl,
     this.downloadUrl,
   });
@@ -177,6 +178,7 @@ class CourseStructureItem {
   final String typeCode;
   final bool isEnrolledInClass;
   final List<String> recordingUrls;
+  final int? classId;
   final String? contentUrl;
   final String? downloadUrl;
 
@@ -340,6 +342,9 @@ class CourseStructureItem {
       typeCode: typeCode ?? '',
       isEnrolledInClass: isEnrolledInClass,
       recordingUrls: recordingUrls,
+      classId: _asIntOrNull(
+        _firstValue(json, classMap, const ['class_id', 'classId', 'id']),
+      ),
       contentUrl: contentUrl,
       downloadUrl: downloadUrl,
     );
@@ -747,6 +752,13 @@ int _asInt(dynamic value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
   return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+int? _asIntOrNull(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse(value.toString());
 }
 
 bool _asBool(dynamic value) {
