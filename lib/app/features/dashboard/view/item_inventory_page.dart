@@ -24,20 +24,11 @@ class ItemInventoryPage extends ConsumerStatefulWidget {
 
 class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
   final _searchController = TextEditingController();
-  String _query = '';
-  int _page = 1;
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  void _search() {
-    setState(() {
-      _query = _searchController.text.trim().toLowerCase();
-      _page = 1;
-    });
   }
 
   @override
@@ -57,10 +48,12 @@ class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
         onRetry: notifier.fetch,
         notifier: notifier,
         searchController: _searchController,
-        query: _query,
-        onSearch: _search,
-        page: _page,
-        onPageChanged: (p) => setState(() => _page = p),
+        onSearch: () => notifier.search(_searchController.text),
+        onClearSearch: () {
+          _searchController.clear();
+          notifier.clearSearch();
+        },
+        onPageChanged: notifier.goToPage,
       ),
     );
   }
@@ -74,18 +67,16 @@ class _Body extends StatelessWidget {
     required this.onRetry,
     required this.notifier,
     required this.searchController,
-    required this.query,
     required this.onSearch,
-    required this.page,
+    required this.onClearSearch,
     required this.onPageChanged,
   });
   final ItemInventoryState state;
   final VoidCallback onRetry;
   final ItemInventoryViewModel notifier;
   final TextEditingController searchController;
-  final String query;
   final VoidCallback onSearch;
-  final int page;
+  final VoidCallback onClearSearch;
   final ValueChanged<int> onPageChanged;
 
   static const _perPage = 10;
@@ -100,26 +91,17 @@ class _Body extends StatelessWidget {
       return _ErrorView(message: state.error ?? 'Unable to load inventory.', onRetry: onRetry);
     }
     final result = state.result!;
-    final items = query.isEmpty
-        ? result.items
-        : result.items.where((i) => i.name.toLowerCase().contains(query)).toList();
-    final totalPages = items.isEmpty ? 1 : (items.length / _perPage).ceil();
-    final safePage = page.clamp(1, totalPages);
-    final pageItems = items.skip((safePage - 1) * _perPage).take(_perPage).toList();
+    final items = result.items;
     return Column(
       children: [
-        Expanded(child: _buildList(context, items, pageItems)),
+        Expanded(child: _buildList(context, items)),
         if (items.isNotEmpty)
-          PaginationWidget(page: safePage, pages: totalPages, onPage: onPageChanged),
+          PaginationWidget(page: state.page, pages: state.totalPages, onPage: onPageChanged),
       ],
     );
   }
 
-  Widget _buildList(
-    BuildContext context,
-    List<InventoryItem> items,
-    List<InventoryItem> pageItems,
-  ) {
+  Widget _buildList(BuildContext context, List<InventoryItem> items) {
     final result = state.result!;
     return CustomScrollView(
       slivers: [
@@ -178,6 +160,17 @@ class _Body extends StatelessWidget {
                             vertical: 0,
                             horizontal: 14,
                           ),
+                          suffixIcon: state.query.isNotEmpty
+                              ? IconButton(
+                                  onPressed: onClearSearch,
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    color: _muted,
+                                    size: 18,
+                                  ),
+                                  tooltip: 'Clear search',
+                                )
+                              : null,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
@@ -209,30 +202,28 @@ class _Body extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                const PerPageBadge(perPage: _perPage),
               ],
             ),
           ),
         ),
         if (items.isEmpty)
           SliverFillRemaining(
-            child: query.isNotEmpty
+            child: state.query.isNotEmpty
                 ? const _NoSearchResults()
                 : const _EmptyState(),
           )
-        else
+        else ...[
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             sliver: SliverGrid(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _ItemCard(
-                  item: pageItems[index],
-                  isRedeeming: state.redeemingId == pageItems[index].id,
-                  onRedeem: () => _showRedeemDialog(context, pageItems[index], notifier),
-                  onView: () => _showDetail(context, pageItems[index]),
+                  item: items[index],
+                  isRedeeming: state.redeemingId == items[index].id,
+                  onRedeem: () => _showRedeemDialog(context, items[index], notifier),
+                  onView: () => _showDetail(context, items[index]),
                 ),
-                childCount: pageItems.length,
+                childCount: items.length,
               ),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: MediaQuery.sizeOf(context).width >= 760 ? 4 : 2,
@@ -242,6 +233,13 @@ class _Body extends StatelessWidget {
               ),
             ),
           ),
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 24),
+              child: PerPageBadge(perPage: _perPage),
+            ),
+          ),
+        ],
         const SliverToBoxAdapter(child: AppFooter()),
       ],
     );
