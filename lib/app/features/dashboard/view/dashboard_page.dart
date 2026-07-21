@@ -431,37 +431,20 @@ class _ResourceCarouselState extends State<_ResourceCarousel> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Stack(
-        alignment: Alignment.center,
-        clipBehavior: Clip.none,
-        children: [
-          SizedBox(
-            height: 460,
-            child: PageView.builder(
-              controller: _controller,
-              onPageChanged: (i) => setState(() => _index = i),
-              itemCount: widget.resources.length,
-              itemBuilder: (context, i) =>
-                  _ResourceCard(resource: widget.resources[i]),
-            ),
+      child: SizedBox(
+        height: 460,
+        child: PageView.builder(
+          controller: _controller,
+          onPageChanged: (i) => setState(() => _index = i),
+          itemCount: widget.resources.length,
+          itemBuilder: (context, i) => _ResourceCard(
+            resource: widget.resources[i],
+            showPrev: widget.resources.length > 1 && _index > 0,
+            showNext: widget.resources.length > 1 && _index < widget.resources.length - 1,
+            onPrev: () => _go(-1),
+            onNext: () => _go(1),
           ),
-          if (widget.resources.length > 1) ...[
-            Positioned(
-              left: -8,
-              child: _NavArrow(
-                icon: Icons.chevron_left_rounded,
-                onTap: _index > 0 ? () => _go(-1) : null,
-              ),
-            ),
-            Positioned(
-              right: -8,
-              child: _NavArrow(
-                icon: Icons.chevron_right_rounded,
-                onTap: _index < widget.resources.length - 1 ? () => _go(1) : null,
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -491,8 +474,18 @@ class _NavArrow extends StatelessWidget {
 }
 
 class _ResourceCard extends ConsumerWidget {
-  const _ResourceCard({required this.resource});
+  const _ResourceCard({
+    required this.resource,
+    required this.showPrev,
+    required this.showNext,
+    required this.onPrev,
+    required this.onNext,
+  });
   final DashboardResource resource;
+  final bool showPrev;
+  final bool showNext;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
 
   Future<void> _openLink(String url) async {
     final uri = Uri.tryParse(url);
@@ -542,13 +535,33 @@ class _ResourceCard extends ConsumerWidget {
           ),
           AspectRatio(
             aspectRatio: 16 / 10,
-            child: resource.logo != null
-                ? Image.network(
-                    resource.logo!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const _ImgFallback(),
-                  )
-                : const _ImgFallback(),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                resource.logo != null
+                    ? Image.network(
+                        resource.logo!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const _ImgFallback(),
+                      )
+                    : const _ImgFallback(),
+                if (showPrev || showNext)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        showPrev
+                            ? _NavArrow(icon: Icons.chevron_left_rounded, onTap: onPrev)
+                            : const SizedBox(width: 32),
+                        showNext
+                            ? _NavArrow(icon: Icons.chevron_right_rounded, onTap: onNext)
+                            : const SizedBox(width: 32),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
           Expanded(
             child: Padding(
