@@ -438,6 +438,7 @@ class _ResourceCarouselState extends State<_ResourceCarousel> {
           onPageChanged: (i) => setState(() => _index = i),
           itemCount: widget.resources.length,
           itemBuilder: (context, i) => _ResourceCard(
+            key: ValueKey('resource-${widget.resources[i].id}-$i'),
             resource: widget.resources[i],
             showPrev: widget.resources.length > 1 && _index > 0,
             showNext: widget.resources.length > 1 && _index < widget.resources.length - 1,
@@ -475,6 +476,7 @@ class _NavArrow extends StatelessWidget {
 
 class _ResourceCard extends ConsumerWidget {
   const _ResourceCard({
+    super.key,
     required this.resource,
     required this.showPrev,
     required this.showNext,
@@ -488,6 +490,8 @@ class _ResourceCard extends ConsumerWidget {
   final VoidCallback onNext;
 
   Future<void> _openLink(String url) async {
+    debugPrint('[ResourceCard] opening resource id=${resource.id} '
+        'name=${resource.name} url=$url');
     final uri = Uri.tryParse(url);
     if (uri == null) return;
     await launchUrl(uri, mode: LaunchMode.externalApplication);
