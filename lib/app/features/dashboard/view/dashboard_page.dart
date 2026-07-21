@@ -60,15 +60,29 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       _redirectingUnauthorized = true;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Your session has expired. Please log in again.'),
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Expanded(
+                  child: Text('Your session has expired. Please log in again.'),
+                ),
+                IconButton(
+                  onPressed: messenger.hideCurrentSnackBar,
+                  icon: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
             backgroundColor: Colors.redAccent,
-            duration: Duration(seconds: 3),
+            duration: const Duration(days: 365),
           ),
         );
         await ref.read(AuthStateNotifier.provider.notifier).logout();
         if (!mounted) return;
+        messenger.removeCurrentSnackBar();
         Modular.to.navigate(AppModule.auth);
       });
     }

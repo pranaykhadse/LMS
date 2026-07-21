@@ -12,27 +12,21 @@ class AppFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 16,
+        runSpacing: 8,
         children: [
-          const Divider(height: 1, color: Color(0xFFE9EDF4)),
-          const SizedBox(height: 18),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 18,
-            runSpacing: 8,
-            children: [
-              const _FooterLink(label: 'Terms of Use'),
-              _FooterLink(
-                label: 'Your Profile',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
-                ),
-              ),
-              const _FooterLink(label: 'Support'),
-            ],
+          const _FooterLink(label: 'Terms of Use'),
+          _FooterLink(
+            label: 'Your Profile',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
+            ),
           ),
-          const SizedBox(height: 14),
+          const _FooterLink(label: 'Support'),
           const _LinkedInBadge(),
         ],
       ),
