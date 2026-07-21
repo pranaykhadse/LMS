@@ -48,6 +48,14 @@ class CourseJoinDetailViewModel
       state = DataState.onError(_friendlyError(error));
     }
   }
+
+  /// Registers the current user for the whole course, then refreshes the
+  /// detail so `isEnrolled`/`primaryAction` reflect the new state.
+  Future<CourseEnrollResult> enroll() async {
+    final result = await repository.register(courseId: courseId);
+    if (result.success) await fetch();
+    return result;
+  }
 }
 
 int? _loggedInUserId(AuthState? auth) {

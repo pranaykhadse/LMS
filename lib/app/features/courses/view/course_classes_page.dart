@@ -253,16 +253,31 @@ class _CourseHero extends StatelessWidget {
   }
 }
 
-class _LaunchPanel extends StatefulWidget {
+class _LaunchPanel extends ConsumerStatefulWidget {
   const _LaunchPanel({required this.detail});
   final CourseJoinDetail detail;
 
   @override
-  State<_LaunchPanel> createState() => _LaunchPanelState();
+  ConsumerState<_LaunchPanel> createState() => _LaunchPanelState();
 }
 
-class _LaunchPanelState extends State<_LaunchPanel> {
+class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   Timer? _timer;
+  bool _enrolling = false;
+
+  Future<void> _enroll() async {
+    setState(() => _enrolling = true);
+    final result = await ref
+        .read(CourseJoinDetailViewModel.provider(widget.detail.id).notifier)
+        .enroll();
+    if (!mounted) return;
+    setState(() => _enrolling = false);
+    if (!result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message ?? 'Unable to enroll in this course.')),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -391,13 +406,23 @@ class _LaunchPanelState extends State<_LaunchPanel> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {
-                if (detail.isEnrolled) {
-                  _showCancelConfirmationDialog(context);
-                }
-              },
-              icon: const Icon(Icons.app_registration_rounded, size: 18),
-              label: Text(detail.primaryAction),
+              onPressed: _enrolling
+                  ? null
+                  : () {
+                      if (detail.isEnrolled) {
+                        _showCancelConfirmationDialog(context);
+                      } else {
+                        _enroll();
+                      }
+                    },
+              icon: _enrolling
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.app_registration_rounded, size: 18),
+              label: Text(_enrolling ? 'Enrolling…' : detail.primaryAction),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(47),
                 backgroundColor: _detailPurple,
