@@ -1169,11 +1169,16 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(isWide ? 15 : 14),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x10172033),
-            blurRadius: 24,
-            offset: Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
