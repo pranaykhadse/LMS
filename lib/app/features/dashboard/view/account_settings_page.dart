@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -418,13 +417,13 @@ class _ProfileHeaderCard extends StatelessWidget {
             _Avatar(url: _resolveAvatarUrl(profile)),
           const SizedBox(height: 14),
           if (isEditing) ...[
-            if (Responsive.isTablet(context)) const _DesktopFieldLabel('First Name'),
+            const _FieldLabel('First Name'),
             _EditableName(controller: firstnameController, hint: 'First name'),
             const SizedBox(height: 10),
-            if (Responsive.isTablet(context)) const _DesktopFieldLabel('Last Name'),
+            const _FieldLabel('Last Name'),
             _EditableName(controller: lastnameController, hint: 'Last name'),
             const SizedBox(height: 10),
-            if (Responsive.isTablet(context)) const _DesktopFieldLabel('Avatar URL'),
+            const _FieldLabel('Avatar URL'),
             TextField(
               controller: avatarUrlController,
               style: const TextStyle(color: _asInk, fontSize: 13),
@@ -450,8 +449,8 @@ class _ProfileHeaderCard extends StatelessWidget {
   }
 }
 
-class _DesktopFieldLabel extends StatelessWidget {
-  const _DesktopFieldLabel(this.text);
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
   final String text;
 
   @override
