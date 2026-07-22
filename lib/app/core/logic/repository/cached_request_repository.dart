@@ -27,6 +27,5 @@ class CachedRequestRepository with RepoNetworkHelper {
       data: request.body,
       cacheType: RequestCacheType.none,
     );
-    print("Sent request: ${request.path}:   $response");
   }
 }

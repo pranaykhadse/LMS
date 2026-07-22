@@ -10,9 +10,10 @@ class ContentViewPage extends ConsumerWidget {
     // required this.file,
     required this.view,
   });
-  final CourseClass courseClass;
-  // final FileCacheState file;
+  // Nullable: participant-guide content has no associated lesson class.
+  final CourseClass? courseClass;
   final Widget view;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(appBar: FlatAppBar(title: ""), body: view);
@@ -20,14 +21,14 @@ class ContentViewPage extends ConsumerWidget {
 
   static void show({
     required BuildContext context,
-    required CourseClass courseClass,
+    CourseClass? courseClass,
     required Widget child,
   }) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return ContentViewPage(courseClass: courseClass, view: child);
-      },
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) =>
+            ContentViewPage(courseClass: courseClass, view: child),
+      ),
     );
   }
 }

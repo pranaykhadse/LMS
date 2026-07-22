@@ -1,10 +1,12 @@
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:lms/app/core/core.dart';
+import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
+import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 
 class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const FlatAppBar({
@@ -13,83 +15,203 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.actions,
     this.enableBack = true,
   });
+
   final String title;
   final List<Widget>? actions;
   final bool enableBack;
 
   @override
-  Widget build(BuildContext context, ref) {
-    var userProfile2 = ref.watch(AuthStateNotifier.provider)?.userProfile;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userProfile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final isOfflineMode = ref.watch(OfflineModeNotifier.provider);
+    final syncVM = ref.watch(SyncViewModel.provider);
+    final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
+    // macOS has no status bar — use zero top padding and center items vertically.
+    final topPadding = isMacOS ? 0.0 : MediaQuery.of(context).padding.top;
+
+    final userName =
+        '${userProfile?.firstname ?? ''} ${(userProfile?.middlename ?? '').trim()} ${userProfile?.lastname ?? ''}'
+            .trim()
+            .replaceAll(RegExp(r'\s+'), ' ');
+
     return PrimaryCard(
-      // color: context.appColorScheme.background,
-      // centerTitle: true,
-      child: Row(
-        children: [
-          Opacity(
-            opacity: enableBack ? 1.0 : 0.0,
-            child: AbsorbPointer(
-              absorbing: !enableBack,
-              child: IconButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                icon: Icon(HugeIcons.strokeRoundedArrowLeft01),
-              ),
-            ),
-          ),
-          SizedBox(width: context.smallSpace),
+      child: Padding(
+        padding: EdgeInsets.only(top: topPadding, bottom: isMacOS ? 0 : 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
 
-          Text("Course Catalog", style: context.textTheme.titleLarge),
-          SizedBox(width: context.smallSpace),
-          ConnectionAwareWidget(
-            offlineChild: Chip(
-              label: Text(
-                "OFFLINE",
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: Colors.white,
-                ),
-              ),
-              backgroundColor: Colors.redAccent,
-            ),
-            onlineChild: SizedBox(),
-          ),
-          Spacer(),
-          SizedBox(width: context.minorSpace),
+            // ── Back button OR leading space ────────────────────────────
+            if (enableBack)
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                constraints: const BoxConstraints(),
+              )
+            else
+              const SizedBox(width: 16),
 
-          PopupMenuButton(
-            itemBuilder: (context) {
-              return [
-                PopupMenuItem(
-                  onTap: () {
-                    ref.read(AuthStateNotifier.provider.notifier).logout();
-                    Modular.to.navigate("/");
-                  },
-                  child: Row(
-                    spacing: context.minorSpace,
-                    children: [Icon(Icons.logout), Text("Logout")],
+            // ── Title + OFFLINE chip — Expanded pushes avatar to far right
+            Expanded(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      title,
+                      style: context.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
-                ),
-              ];
-            },
-            child: Row(
+                  // "OFFLINE" chip (physical network loss indicator)
+                  ConnectionAwareWidget(
+                    offlineChild: Container(
+                      margin: const EdgeInsets.only(left: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text(
+                        'OFFLINE',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    onlineChild: const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Gap between title section and offline toggle ───────────
+            const SizedBox(width: 8),
+
+            // ── Offline toggle (wifi icon + Switch) ────────────────────
+            Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                CircleAvatar(child: Icon(Icons.person)),
-                SizedBox(width: context.minorSpace),
-                Center(
-                  child: Text(
-                    "${userProfile2?.firstname ?? ""} ${(userProfile2?.middlename ?? "")} ${userProfile2?.lastname ?? ""}",
-                    style: context.textTheme.labelLarge,
+                Icon(
+                  isOfflineMode
+                      ? Icons.wifi_off_rounded
+                      : Icons.wifi_rounded,
+                  size: 18,
+                  color: isOfflineMode
+                      ? Colors.amber.shade700
+                      : context.textTheme.bodySmall?.color,
+                ),
+                Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: isOfflineMode,
+                    onChanged: (val) {
+                      ref
+                          .read(OfflineModeNotifier.provider.notifier)
+                          .setMode(val);
+                      // When switching back to online, flush the sync queue.
+                      if (!val) {
+                        ref.read(SyncViewModel.provider).onManualOnline();
+                      }
+                    },
+                    activeColor: Colors.amber.shade700,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),
               ],
             ),
-          ),
-          SizedBox(width: context.minorSpace),
-        ],
+
+            // ── User avatar with popup menu ─────────────────────────────
+            PopupMenuButton<String>(
+              padding: EdgeInsets.zero,
+              itemBuilder: (_) => [
+                // Show user name at the top of the menu (non-tappable)
+                if (userName.isNotEmpty)
+                  PopupMenuItem<String>(
+                    enabled: false,
+                    height: 36,
+                    child: Text(
+                      userName,
+                      style: context.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.logout, size: 18),
+                      const SizedBox(width: 8),
+                      const Text('Logout'),
+                    ],
+                  ),
+                ),
+              ],
+              onSelected: (val) {
+                if (val == 'logout') {
+                  ref.read(AuthStateNotifier.provider.notifier).logout();
+                  Modular.to.navigate('/');
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8, right: 16),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const CircleAvatar(
+                      radius: 16,
+                      child: Icon(Icons.person_rounded, size: 18),
+                    ),
+                    if (syncVM.pendingCount > 0)
+                      Positioned(
+                        top: -3,
+                        right: -3,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                            color: Colors.amber,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${syncVM.pendingCount}',
+                            style: const TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   @override
-  Size get preferredSize => AppBar().preferredSize;
+  Size get preferredSize {
+    // macOS has no status bar and no bottom padding — use a flat toolbar height.
+    if (defaultTargetPlatform == TargetPlatform.macOS) {
+      return const Size.fromHeight(kToolbarHeight);
+    }
+    final topPadding =
+        WidgetsBinding.instance.platformDispatcher.views.first.padding.top /
+            WidgetsBinding
+                .instance.platformDispatcher.views.first.devicePixelRatio;
+    return Size.fromHeight(kToolbarHeight + topPadding + 10);
+  }
 }

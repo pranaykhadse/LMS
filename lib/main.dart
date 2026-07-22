@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_styled_toast/flutter_styled_toast.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:lms/app/core/localization/translate.dart';
 
 import 'app/core/design/app_theme.dart';
@@ -10,6 +12,7 @@ import 'app_module.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  MediaKit.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   runApp(
     EasyLocalization(
@@ -30,17 +33,20 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: Modular.routerConfig,
-      title: 'Leadership Edge Live',
-      theme: AppTheme.getLight(context),
-      localizationsDelegates: context.localizationDelegates,
-      supportedLocales: context.supportedLocales,
+    return StyledToast(
       locale: context.locale,
-      debugShowCheckedModeBanner: false,
+      textStyle: const TextStyle(fontSize: 14, color: Colors.white),
+      child: MaterialApp.router(
+        routerConfig: Modular.routerConfig,
+        title: 'Leadership Edge Live',
+        theme: AppTheme.getLight(context),
+        localizationsDelegates: context.localizationDelegates,
+        supportedLocales: context.supportedLocales,
+        locale: context.locale,
+        debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }

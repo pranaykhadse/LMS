@@ -4,6 +4,18 @@ import 'package:dio/dio.dart';
 
 import 'app_exception.dart';
 
+/// The server doesn't always return a JSON object on error (sometimes a
+/// plain string, a list of validation messages, or nothing at all), so
+/// pulling a "message" key out of it must not assume it's a Map — doing
+/// that with dynamic typing throws (List's [] operator wants an int index,
+/// not a String key), turning a normal HTTP error into a confusing crash.
+String? _messageFrom(dynamic data) {
+  if (data is Map) return data["message"]?.toString();
+  if (data is List && data.isNotEmpty) return data.join("\n");
+  if (data is String && data.isNotEmpty) return data;
+  return null;
+}
+
 void handelException(e) {
   if (e is! DioException) {
     if (e is SocketException) {
@@ -27,17 +39,17 @@ void handelException(e) {
     case DioExceptionType.badResponse:
       switch (e.response?.statusCode) {
         case 400:
-          throw BadRequestException(e.response?.data?["message"] ??
+          throw BadRequestException(_messageFrom(e.response?.data) ??
               e.response?.statusMessage.toString() ??
               "");
         case 401:
         case 403:
-          throw UnauthorizedException(e.response?.data?["message"] ??
+          throw UnauthorizedException(_messageFrom(e.response?.data) ??
               e.response?.statusMessage.toString() ??
               "No Permission");
         case 404:
           throw NotFoundException(
-              e.response?.data?['message'] ?? "Requested Data Not Found");
+              _messageFrom(e.response?.data) ?? "Requested Data Not Found");
 
         case 413:
           throw AppException(
@@ -45,14 +57,17 @@ void handelException(e) {
 
         case 422:
           String data2 = "";
-          var data3 = e.response?.data?["errors"];
-          if (data3 is Map) {
-            for (var item in data3.values) {
-              data2 += (item.join("\n") ?? "") + "\n";
+          final responseData = e.response?.data;
+          final errors = responseData is Map ? responseData["errors"] : null;
+          if (errors is Map) {
+            for (var item in errors.values) {
+              data2 += (item is List ? item.join("\n") : item.toString()) + "\n";
             }
+          } else if (errors is List) {
+            data2 = errors.join("\n");
           }
           throw InvalidInputException(
-              (data2.isEmpty ? e.response?.data["message"] : data2).toString());
+              data2.isEmpty ? (_messageFrom(responseData) ?? "Invalid input.") : data2);
         // throw UnauthorisedException(e.response.statusMessage.toString());
         case 429:
           throw TooManyRequestException();

@@ -107,13 +107,13 @@ class SignInPage extends ConsumerWidget {
                                       if (value == true) {
                                         Modular.to.navigate(
                                           CoursesModule.construct(
-                                            CoursesModule.root,
+                                            CoursesModule.dashboard,
                                           ),
                                         );
                                       }
                                     },
                                     onError: (error) {
-                                      Toast.error(context, error);
+                                      Toast.error(context, _loginErrorText(error));
                                     },
                                   );
                             },
@@ -156,4 +156,13 @@ class SignInPage extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// The backend's own login-failure message says "Auth Key" (its internal
+/// term for the credential it checks), but this screen only ever shows the
+/// user a "Password" field — so that wording is rewritten before display.
+String _loginErrorText(Object error) {
+  return error
+      .toString()
+      .replaceAll(RegExp(r'auth\s*key', caseSensitive: false), 'Password');
 }

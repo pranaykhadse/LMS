@@ -57,41 +57,75 @@ class Toast {
   }
 
   static void success(BuildContext context, String message) {
+    _showTopToast(
+      context: context,
+      message: message,
+      icon: Icons.check_circle_outline_rounded,
+      color: const Color(0xFF2E7D32),
+    );
+  }
+
+  static void info(BuildContext context, String message) {
+    _showTopToast(
+      context: context,
+      message: message,
+      icon: Icons.info_outline_rounded,
+      color: const Color(0xFF5756C9),
+    );
+  }
+
+  static void warning(BuildContext context, String message) {
+    _showTopToast(
+      context: context,
+      message: message,
+      icon: Icons.warning_amber_rounded,
+      color: const Color(0xFFF59E0B),
+    );
+  }
+
+  static void _showTopToast({
+    required BuildContext context,
+    required String message,
+    required IconData icon,
+    required Color color,
+    Duration duration = const Duration(seconds: 3),
+  }) {
     showToastWidget(
-      Container(
-        margin: const EdgeInsets.only(right: 20),
-        constraints: const BoxConstraints(
-          minHeight: 50,
-          maxWidth: 500,
-        ),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: context.appColorScheme.success,
-          borderRadius: BorderRadius.circular(context.smallRadius),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.check_circle_outline_rounded,
-              color: Colors.white,
-            ),
-            const SizedBox(
-              width: 10,
-            ),
-            Expanded(
-              child: Text(
-                message,
-                style: const TextStyle(color: Colors.white),
+      SafeArea(
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: const [
+              BoxShadow(color: Color(0x30000000), blurRadius: 10, offset: Offset(0, 3)),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       context: context,
-      animation: StyledToastAnimation.slideFromRight,
-      reverseAnimation: StyledToastAnimation.fade,
-      position:
-          const StyledToastPosition(align: Alignment.topRight, offset: 17.0),
+      duration: duration,
+      animation: StyledToastAnimation.slideFromTop,
+      reverseAnimation: StyledToastAnimation.slideToTop,
+      animDuration: const Duration(milliseconds: 280),
+      position: const StyledToastPosition(align: Alignment.topCenter, offset: 0),
     );
   }
    static Future<void> successDialog(

@@ -30,7 +30,7 @@ class StartupViewModel extends ChangeNotifier {
     }
     await Future.delayed(const Duration(seconds: 1));
     if (ref.read(AuthStateNotifier.provider) != null) {
-      Modular.to.navigate(CoursesModule.construct(CoursesModule.root));
+      Modular.to.navigate(CoursesModule.construct(CoursesModule.dashboard));
     } else {
       Modular.to.navigate(AppModule.auth);
     }
