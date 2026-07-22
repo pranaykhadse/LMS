@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -388,9 +387,7 @@ class _CompetencyPreview extends StatelessWidget {
             ],
           const SizedBox(height: 10),
           Align(
-            alignment: Responsive.isTablet(context)
-                ? Alignment.centerRight
-                : Alignment.centerLeft,
+            alignment: Alignment.centerRight,
             child: OutlinedButton.icon(
               onPressed: onView,
               icon: const Icon(Icons.remove_red_eye_outlined, size: 15),
