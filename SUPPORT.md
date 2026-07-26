@@ -25,3 +25,4 @@ If the FAQ does not solve your issue, please contact our developer support:
 
 ---
 *Leadership Edge Live - Version 1.0*
+
