@@ -109,7 +109,7 @@ class _Body extends StatelessWidget {
                         ),
                         itemCount: state.courses.length,
                         itemBuilder: (ctx, i) =>
-                            _CourseCard(course: state.courses[i]),
+                            _CourseCard(course: state.courses[i], notifier: notifier),
                       ),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 16),
@@ -250,11 +250,152 @@ class _AddPlanItemDialogState extends State<_AddPlanItemDialog> {
   }
 }
 
+void _showUpdatePlanItemDialog(
+  BuildContext context,
+  DevelopmentPlanViewModel notifier,
+  DashboardCourse course,
+) {
+  showDialog(
+    context: context,
+    builder: (dialogContext) => _UpdatePlanItemDialog(
+      name: course.name,
+      initialPercentage: course.progress,
+      onUpdate: (percentage) async {
+        final result = await notifier.updateCustomPlanItem(course.id, percentage);
+        if (dialogContext.mounted) Navigator.pop(dialogContext);
+        if (!context.mounted) return;
+        if (result.success) {
+          Toast.success(context, result.message ?? 'Plan item updated successfully.');
+        } else {
+          Toast.error(context, result.message ?? 'Unable to update plan item.');
+        }
+      },
+    ),
+  );
+}
+
+// ─── Update custom plan item dialog ────────────────────────────────────────────
+
+class _UpdatePlanItemDialog extends StatefulWidget {
+  const _UpdatePlanItemDialog({
+    required this.name,
+    required this.initialPercentage,
+    required this.onUpdate,
+  });
+  final String name;
+  final int initialPercentage;
+  final Future<void> Function(int percentage) onUpdate;
+
+  @override
+  State<_UpdatePlanItemDialog> createState() => _UpdatePlanItemDialogState();
+}
+
+class _UpdatePlanItemDialogState extends State<_UpdatePlanItemDialog> {
+  late final _controller = TextEditingController(text: '${widget.initialPercentage}');
+  bool _submitting = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final percentage = int.tryParse(_controller.text.trim());
+    if (percentage == null || percentage < 0 || percentage > 100) {
+      setState(() => _error = 'Enter a value between 0 and 100');
+      return;
+    }
+    if (_submitting) return;
+    setState(() {
+      _error = null;
+      _submitting = true;
+    });
+    await widget.onUpdate(percentage);
+    if (mounted) setState(() => _submitting = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Non Course Development Plan',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: _muted, fontSize: 13),
+            ),
+            const SizedBox(height: 18),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+              decoration: InputDecoration(
+                hintText: 'Completion percentage (0-100)',
+                hintStyle: const TextStyle(color: _muted, fontSize: 13),
+                suffixText: '%',
+                errorText: _error,
+                filled: true,
+                fillColor: _bg,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _submitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _purple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  disabledBackgroundColor: _purple.withValues(alpha: 0.6),
+                  minimumSize: const Size(0, 44),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: _submitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Update', style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Course card ─────────────────────────────────────────────────────────────
 
 class _CourseCard extends StatelessWidget {
-  const _CourseCard({required this.course});
+  const _CourseCard({required this.course, required this.notifier});
   final DashboardCourse course;
+  final DevelopmentPlanViewModel notifier;
 
   @override
   Widget build(BuildContext context) {
@@ -319,11 +460,13 @@ class _CourseCard extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Modular.to.pushNamed(
-                        CoursesModule.construct(
-                          '${CoursesModule.detail}/${course.id}',
-                        ),
-                      ),
+                      onPressed: course.isNonCourse
+                          ? () => _showUpdatePlanItemDialog(context, notifier, course)
+                          : () => Modular.to.pushNamed(
+                              CoursesModule.construct(
+                                '${CoursesModule.detail}/${course.id}',
+                              ),
+                            ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _purple,
                         foregroundColor: Colors.white,
@@ -337,7 +480,7 @@ class _CourseCard extends StatelessWidget {
                           fontSize: 12,
                         ),
                       ),
-                      child: const Text('View Course'),
+                      child: Text(course.isNonCourse ? 'Update' : 'View Course'),
                     ),
                   ),
                 ],

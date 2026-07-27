@@ -86,4 +86,33 @@ class DevelopmentPlanRepository with RepoNetworkHelper {
       return NonCoursePlanResult(success: false, message: e.toString());
     }
   }
+
+  /// POST lms-screen/non-course-development-plan, form-urlencoded.
+  /// request=update + value=<percentage 0-100> + id=<non-course item id>
+  /// updates the completion percentage of an existing non-course plan item.
+  Future<NonCoursePlanResult> updateCustomPlanItem({
+    required int id,
+    required int percentage,
+  }) async {
+    try {
+      final response = await post(
+        'lms-screen/non-course-development-plan',
+        data: {'request': 'update', 'value': percentage, 'id': id},
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+        cacheType: RequestCacheType.none,
+      );
+      final data = response is Map
+          ? Map<String, dynamic>.from(response)
+          : <String, dynamic>{};
+      if (data['status']?.toString() != '1') {
+        return NonCoursePlanResult(
+          success: false,
+          message: data['message']?.toString() ?? 'Unable to update plan item.',
+        );
+      }
+      return NonCoursePlanResult(success: true, message: data['message']?.toString());
+    } catch (e) {
+      return NonCoursePlanResult(success: false, message: e.toString());
+    }
+  }
 }

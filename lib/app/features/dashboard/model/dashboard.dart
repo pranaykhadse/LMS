@@ -45,6 +45,7 @@ class DashboardCourse {
     required this.displayRating,
     required this.averageRating,
     required this.ratingCount,
+    this.isNonCourse = false,
   });
 
   final int id;
@@ -54,8 +55,13 @@ class DashboardCourse {
   final bool displayRating;
   final double averageRating;
   final int ratingCount;
+  // True when this entry has no real course_id - e.g. a custom
+  // "Non Course Development Plan" item, which has no course to view and is
+  // instead updated by percentage via lms-screen/non-course-development-plan.
+  final bool isNonCourse;
 
   factory DashboardCourse.fromJson(Map<String, dynamic> json) {
+    final hasCourseId = json['course_id'] != null;
     return DashboardCourse(
       id: _asInt(json['course_id'] ?? json['id']),
       name:
@@ -73,6 +79,7 @@ class DashboardCourse {
           json['display_rating']?.toString() == '1',
       averageRating: _asDouble(json['average_rating']),
       ratingCount: _asInt(json['rating_count']),
+      isNonCourse: !hasCourseId,
     );
   }
 }

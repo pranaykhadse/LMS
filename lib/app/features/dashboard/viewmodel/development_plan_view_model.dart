@@ -116,6 +116,14 @@ class DevelopmentPlanViewModel extends StateNotifier<DevelopmentPlanState> {
     }
     return result;
   }
+
+  Future<NonCoursePlanResult> updateCustomPlanItem(int id, int percentage) async {
+    final result = await repository.updateCustomPlanItem(id: id, percentage: percentage);
+    if (result.success) {
+      await fetch(page: state.page);
+    }
+    return result;
+  }
 }
 
 int? _loggedInUserId(AuthState? auth) =>
