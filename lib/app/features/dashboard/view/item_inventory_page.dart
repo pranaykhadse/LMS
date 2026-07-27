@@ -460,7 +460,10 @@ class _ItemCard extends StatelessWidget {
                     builder: (context, ref, _) {
                       final isOnline = watchIsOnline(ref);
                       return ElevatedButton(
-                        onPressed: item.canRedeem && !isRedeeming && isOnline
+                        onPressed: item.canRedeem &&
+                                !item.isRedeemed &&
+                                !isRedeeming &&
+                                isOnline
                             ? onRedeem
                             : null,
                         style: ElevatedButton.styleFrom(
