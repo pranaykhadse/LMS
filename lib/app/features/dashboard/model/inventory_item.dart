@@ -44,11 +44,11 @@ class InventoryItem {
   final String? managedBy;
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) {
-    // Confirmed from a raw response capture: this endpoint returns a flat
-    // object with no image/logo field and no managed_by at all — only
-    // group_id (an int, no display name). So the image placeholder for
-    // items without one is correct, not a bug; "Group N" is the best
-    // available label until/unless the API adds a real group name.
+    // Confirmed from a raw response capture: this endpoint does return
+    // group_name and managed_by directly - no image/logo field though, so
+    // the image placeholder for items without one is expected, not a bug.
+    // "Group $groupId" is kept as a fallback label only for the rare case
+    // group_name comes back empty.
     final img = json['image']?.toString().trim().isNotEmpty == true
         ? json['image'].toString().trim()
         : json['logo']?.toString().trim();
