@@ -258,8 +258,6 @@ void _showUpdatePlanItemDialog(
   showDialog(
     context: context,
     builder: (dialogContext) => _UpdatePlanItemDialog(
-      name: course.name,
-      initialPercentage: course.progress,
       onUpdate: (percentage) async {
         final result = await notifier.updateCustomPlanItem(course.id, percentage);
         if (dialogContext.mounted) Navigator.pop(dialogContext);
@@ -277,13 +275,7 @@ void _showUpdatePlanItemDialog(
 // ─── Update custom plan item dialog ────────────────────────────────────────────
 
 class _UpdatePlanItemDialog extends StatefulWidget {
-  const _UpdatePlanItemDialog({
-    required this.name,
-    required this.initialPercentage,
-    required this.onUpdate,
-  });
-  final String name;
-  final int initialPercentage;
+  const _UpdatePlanItemDialog({required this.onUpdate});
   final Future<void> Function(int percentage) onUpdate;
 
   @override
@@ -291,7 +283,7 @@ class _UpdatePlanItemDialog extends StatefulWidget {
 }
 
 class _UpdatePlanItemDialogState extends State<_UpdatePlanItemDialog> {
-  late final _controller = TextEditingController(text: '${widget.initialPercentage}');
+  final _controller = TextEditingController();
   bool _submitting = false;
   String? _error;
 
@@ -326,15 +318,9 @@ class _UpdatePlanItemDialogState extends State<_UpdatePlanItemDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Non Course Development Plan',
+              'Status Update',
               textAlign: TextAlign.center,
               style: TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              widget.name,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: _muted, fontSize: 13),
             ),
             const SizedBox(height: 18),
             TextField(
@@ -344,9 +330,8 @@ class _UpdatePlanItemDialogState extends State<_UpdatePlanItemDialog> {
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _submit(),
               decoration: InputDecoration(
-                hintText: 'Completion percentage (0-100)',
+                hintText: 'Status (in percentage)',
                 hintStyle: const TextStyle(color: _muted, fontSize: 13),
-                suffixText: '%',
                 errorText: _error,
                 filled: true,
                 fillColor: _bg,
