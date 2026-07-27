@@ -1083,7 +1083,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(OfflineViewModel.provider);
+    final offlineVM = ref.watch(OfflineViewModel.provider);
     final isManualOffline = ref.watch(OfflineModeNotifier.provider);
     final connectionVM = ref.watch(InternetConnectionProvider.provider);
     ref.watch(SyncViewModel.provider);
@@ -1125,6 +1125,18 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                 onTap: isOnline ? () => setState(() => _showOverlay = true) : null,
               ),
             ),
+          Positioned(
+            top: 12,
+            left: 12,
+            child: _OfflineCourseAction(
+              isOnline: isOnline,
+              isSavedOffline: offlineVM.isAvailable(widget.course.offlineCourse),
+              isDownloading: offlineVM.isDownloading(widget.course.offlineCourse),
+              progress: offlineVM.downloadProgress(widget.course.offlineCourse),
+              onSave: () => offlineVM.download(widget.course.offlineCourse),
+              onRemove: () => offlineVM.removeOffline(widget.course.offlineCourse),
+            ),
+          ),
           // Title + View Course overlaid on the bottom of the image
           Positioned(
             left: 0,
