@@ -19,12 +19,12 @@ class ContentViewPage extends ConsumerWidget {
     return Scaffold(appBar: FlatAppBar(title: ""), body: view);
   }
 
-  static void show({
+  static Future<void> show({
     required BuildContext context,
     CourseClass? courseClass,
     required Widget child,
   }) {
-    Navigator.of(context).push(
+    return Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) =>
             ContentViewPage(courseClass: courseClass, view: child),

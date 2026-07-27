@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:lms/app/core/localization/translate.dart';
+import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 
 import 'app/core/design/app_theme.dart';
 import 'app_module.dart';
@@ -14,6 +17,10 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  // Best-effort: remove any decrypted-for-viewing temp copies left behind
+  // by a previous run that crashed or was force-quit before cleaning up
+  // after itself.
+  unawaited(FileCacheViewModel.clearAllViewing());
   runApp(
     EasyLocalization(
       supportedLocales: AppTranslations.languages,

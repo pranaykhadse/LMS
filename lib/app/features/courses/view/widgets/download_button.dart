@@ -38,17 +38,30 @@ class DownloadButton extends ConsumerWidget {
   final Widget Function(BuildContext context, FileCacheState file) builder;
   final bool fullWidth;
 
-  void _open(BuildContext context, WidgetRef ref, FileCacheState file) {
+  Future<void> _open(BuildContext context, WidgetRef ref, FileCacheState file) async {
     if (courseClass != null) {
       ref
           .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
           .markAsRead(courseClass!);
     }
-    ContentViewPage.show(
+    // The on-disk copy is encrypted - decrypt it into a throwaway plaintext
+    // file for this app's own viewer, and clean that copy up again once the
+    // viewer is closed. Never pass the encrypted file straight to a viewer.
+    final fileCacheVM = ref.read(FileCacheViewModel.provider);
+    final decrypted = await fileCacheVM.prepareForViewing(file.url);
+    if (decrypted == null) {
+      if (context.mounted) {
+        Toast.error(context, 'Unable to open $label - please re-download it.');
+      }
+      return;
+    }
+    if (!context.mounted) return;
+    await ContentViewPage.show(
       context: context,
       courseClass: courseClass,
-      child: builder(context, file),
+      child: builder(context, FileCacheState(url: file.url, file: decrypted)),
     );
+    await fileCacheVM.cleanupViewing(file.url);
   }
 
   @override
