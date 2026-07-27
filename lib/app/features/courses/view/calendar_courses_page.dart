@@ -5,9 +5,9 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/features/courses/model/calendar_event.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/features/dashboard/model/my_course_item.dart';
-import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/calendar_view_model.dart';
 
 const _calPurple = Color(0xFF5756C9);
 const _calNavy = Color(0xFF172033);
@@ -30,43 +30,46 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
   DateTime? _selectedDay;
   DateTime _weekAnchor = DateTime.now();
 
-  Map<DateTime, List<MyCourseItem>> _buildEventMap(
-    List<MyCourseItem> courses,
+  Map<DateTime, List<CalendarEvent>> _buildEventMap(
+    List<CalendarEvent> events,
   ) {
-    final map = <DateTime, List<MyCourseItem>>{};
-    for (final c in courses) {
-      if (c.nextSession == null) continue;
-      final key = _dateOnly(c.nextSession!);
-      map.putIfAbsent(key, () => []).add(c);
+    final map = <DateTime, List<CalendarEvent>>{};
+    for (final e in events) {
+      final key = _dateOnly(e.startDate);
+      map.putIfAbsent(key, () => []).add(e);
     }
     return map;
   }
 
-  List<MyCourseItem> _eventsForDay(
-    Map<DateTime, List<MyCourseItem>> map,
+  List<CalendarEvent> _eventsForDay(
+    Map<DateTime, List<CalendarEvent>> map,
     DateTime day,
   ) => map[_dateOnly(day)] ?? [];
 
+  void _openEventDetails(CalendarEvent event) {
+    showDialog(
+      context: context,
+      builder: (_) => _EventDetailsDialog(event: event),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final myCoursesState = ref.watch(MyCoursesViewModel.provider);
-    final allCourses =
-        myCoursesState.state == DataProviderState.data
-            ? (myCoursesState.data?.courses ?? const <MyCourseItem>[])
-            : const <MyCourseItem>[];
+    final calendarState = ref.watch(CalendarViewModel.provider);
+    final allEvents =
+        calendarState.state == DataProviderState.data
+            ? (calendarState.data?.events ?? const <CalendarEvent>[])
+            : const <CalendarEvent>[];
 
-    final eventMap = _buildEventMap(allCourses);
+    final eventMap = _buildEventMap(allEvents);
     final selectedEvents =
         _selectedDay != null
             ? _eventsForDay(eventMap, _selectedDay!)
-            : <MyCourseItem>[];
+            : <CalendarEvent>[];
 
-    // Upcoming courses (with dates) for the default "no date selected" view
-    final upcoming =
-        allCourses
-            .where((c) => c.nextSession != null)
-            .toList()
-          ..sort((a, b) => a.nextSession!.compareTo(b.nextSession!));
+    // Upcoming events for the default "no date selected" view
+    final upcoming = List<CalendarEvent>.from(allEvents)
+      ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
 
     return AppScaffold(
       backgroundColor: _calBg,
@@ -110,15 +113,15 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
         ),
       body: _format == CalendarFormat.week
           ? _buildWeekView(eventMap)
-          : _buildMonthView(eventMap, selectedEvents, upcoming, myCoursesState),
+          : _buildMonthView(eventMap, selectedEvents, upcoming, calendarState),
     );
   }
 
   Widget _buildMonthView(
-    Map<DateTime, List<MyCourseItem>> eventMap,
-    List<MyCourseItem> selectedEvents,
-    List<MyCourseItem> upcoming,
-    DataState<MyCoursesResult> myCoursesState,
+    Map<DateTime, List<CalendarEvent>> eventMap,
+    List<CalendarEvent> selectedEvents,
+    List<CalendarEvent> upcoming,
+    DataState<CalendarViewResult> calendarState,
   ) {
     return Column(
         children: [
@@ -136,7 +139,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                 ),
               ],
             ),
-            child: TableCalendar<MyCourseItem>(
+            child: TableCalendar<CalendarEvent>(
               firstDay: DateTime(2020),
               lastDay: DateTime(2030),
               focusedDay: _focusedDay,
@@ -214,29 +217,36 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                 markerBuilder: (context, day, events) {
                   if (events.isEmpty) return const SizedBox.shrink();
                   final label = events.length == 1
-                      ? _shortName(events.first.courseName)
-                      : '${events.length} courses';
+                      ? _shortName(events.first.title.isNotEmpty
+                          ? events.first.title
+                          : events.first.courseName)
+                      : '${events.length} events';
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 3),
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 52),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _calPurple,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        label,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 7.5,
-                          fontWeight: FontWeight.w700,
+                    child: GestureDetector(
+                      onTap: events.length == 1
+                          ? () => _openEventDetails(events.first)
+                          : null,
+                      child: Container(
+                        constraints: const BoxConstraints(maxWidth: 52),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        decoration: BoxDecoration(
+                          color: _calPurple,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 7.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
                   );
@@ -285,16 +295,16 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
             ),
           ),
 
-          // ── Course list ─────────────────────────────────────────────────
+          // ── Event list ─────────────────────────────────────────────────
           Expanded(
             child: Builder(builder: (context) {
-              if (myCoursesState.state == DataProviderState.loading ||
-                  myCoursesState.state == DataProviderState.idle) {
+              if (calendarState.state == DataProviderState.loading ||
+                  calendarState.state == DataProviderState.idle) {
                 return const Center(
                   child: CircularProgressIndicator(color: _calPurple),
                 );
               }
-              if (myCoursesState.state == DataProviderState.error) {
+              if (calendarState.state == DataProviderState.error) {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -305,14 +315,14 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                             size: 40, color: _calMuted.withValues(alpha: 0.6)),
                         const SizedBox(height: 12),
                         Text(
-                          myCoursesState.error ?? 'Unable to load your sessions.',
+                          calendarState.error ?? 'Unable to load your sessions.',
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: _calMuted, fontSize: 13),
                         ),
                         const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: () =>
-                              ref.read(MyCoursesViewModel.provider.notifier).fetch(),
+                              ref.read(CalendarViewModel.provider.notifier).fetch(),
                           style: ElevatedButton.styleFrom(backgroundColor: _calPurple),
                           child: const Text('Try Again', style: TextStyle(color: Colors.white)),
                         ),
@@ -335,7 +345,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                       const SizedBox(height: 12),
                       Text(
                         _selectedDay != null
-                            ? 'No courses on this date'
+                            ? 'No events on this date'
                             : 'No upcoming sessions found',
                         style: const TextStyle(
                           color: _calMuted,
@@ -350,7 +360,10 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                 itemCount: list.length + 1,
                 itemBuilder: (context, i) => i < list.length
-                    ? _CourseEventTile(course: list[i])
+                    ? _CalendarEventTile(
+                        event: list[i],
+                        onTap: () => _openEventDetails(list[i]),
+                      )
                     : const AppFooter(),
               );
             }),
@@ -382,7 +395,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
     return '${weekdayAbbrev[d.weekday % 7]} ${d.month}/${d.day}';
   }
 
-  Widget _buildWeekView(Map<DateTime, List<MyCourseItem>> eventMap) {
+  Widget _buildWeekView(Map<DateTime, List<CalendarEvent>> eventMap) {
     final weekStart = _weekStart(_weekAnchor);
     final today = _dateOnly(DateTime.now());
     final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
@@ -478,16 +491,12 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                             padding: const EdgeInsets.all(4),
                             child: Column(
                               children: [
-                                for (final course
-                                    in (eventMap[_dateOnly(day)] ?? const <MyCourseItem>[]))
+                                for (final event
+                                    in (eventMap[_dateOnly(day)] ?? const <CalendarEvent>[]))
                                   Padding(
                                     padding: const EdgeInsets.only(bottom: 3),
                                     child: GestureDetector(
-                                      onTap: () => Modular.to.pushNamed(
-                                        CoursesModule.construct(
-                                          '${CoursesModule.detail}/${course.courseId}',
-                                        ),
-                                      ),
+                                      onTap: () => _openEventDetails(event),
                                       child: Container(
                                         width: double.infinity,
                                         padding: const EdgeInsets.symmetric(
@@ -497,7 +506,9 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                                           borderRadius: BorderRadius.circular(4),
                                         ),
                                         child: Text(
-                                          _shortName(course.courseName),
+                                          _shortName(event.title.isNotEmpty
+                                              ? event.title
+                                              : event.courseName),
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 8,
@@ -539,12 +550,14 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
   }
 }
 
-class _CourseEventTile extends StatelessWidget {
-  const _CourseEventTile({required this.course});
-  final MyCourseItem course;
+class _CalendarEventTile extends StatelessWidget {
+  const _CalendarEventTile({required this.event, required this.onTap});
+  final CalendarEvent event;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final displayTitle = event.title.isNotEmpty ? event.title : event.courseName;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       elevation: 0,
@@ -554,25 +567,19 @@ class _CourseEventTile extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => Modular.to.pushNamed(
-          CoursesModule.construct('${CoursesModule.detail}/${course.courseId}'),
-        ),
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Thumbnail
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: course.logo != null && course.logo!.isNotEmpty
-                    ? Image.network(
-                        course.logo!,
-                        width: 52,
-                        height: 52,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _logoPlaceholder(),
-                      )
-                    : _logoPlaceholder(),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: _calPurple.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.event_rounded, color: _calPurple, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -580,7 +587,7 @@ class _CourseEventTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      course.courseName,
+                      displayTitle,
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
@@ -589,26 +596,24 @@ class _CourseEventTile extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (course.nextSession != null) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.calendar_today_rounded,
-                            size: 12,
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_today_rounded,
+                          size: 12,
+                          color: _calMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _sessionLabel(event.startDateTime),
+                          style: const TextStyle(
                             color: _calMuted,
+                            fontSize: 12,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _sessionLabel(course.nextSession!),
-                            style: const TextStyle(
-                              color: _calMuted,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -619,16 +624,6 @@ class _CourseEventTile extends StatelessWidget {
       ),
     );
   }
-
-  Widget _logoPlaceholder() => Container(
-        width: 52,
-        height: 52,
-        decoration: BoxDecoration(
-          color: _calPurple.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Icon(Icons.book_rounded, color: _calPurple, size: 24),
-      );
 
   String _sessionLabel(DateTime dt) {
     const months = [
@@ -641,5 +636,155 @@ class _CourseEventTile extends StatelessWidget {
     final m = dt.minute.toString().padLeft(2, '0');
     final ampm = dt.hour >= 12 ? 'PM' : 'AM';
     return '$date · $h:$m $ampm';
+  }
+}
+
+// ─── Event details dialog ───────────────────────────────────────────────────
+
+class _EventDetailsDialog extends StatelessWidget {
+  const _EventDetailsDialog({required this.event});
+  final CalendarEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayTitle = event.title.isNotEmpty ? event.title : event.courseName;
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 620),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Text(
+                    'Event Details',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _calNavy,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: -6,
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, color: _calMuted, size: 20),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              _DetailRow(label: 'Title:', value: displayTitle),
+              _DetailRow(
+                label: 'Register Status:',
+                value: event.registrationStatus.isNotEmpty
+                    ? event.registrationStatus
+                    : 'Unknown',
+              ),
+              if (event.description.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                const Text(
+                  'Description:',
+                  style: TextStyle(
+                    color: _calNavy,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  event.description,
+                  style: const TextStyle(color: _calMuted, fontSize: 13, height: 1.4),
+                ),
+              ],
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFD0CFE8)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+                    ),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(color: _calMuted, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Modular.to.pushNamed(
+                        CoursesModule.construct(
+                          '${CoursesModule.detail}/${event.courseId}',
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _calPurple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                    ),
+                    child: const Text(
+                      'View Course',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '$label ',
+              style: const TextStyle(
+                color: _calNavy,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            TextSpan(
+              text: value,
+              style: const TextStyle(color: _calMuted, fontSize: 13, height: 1.4),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
