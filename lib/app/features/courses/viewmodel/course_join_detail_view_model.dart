@@ -4,6 +4,14 @@ import 'package:lms/app/features/authentication/app_state/auth_state_provider.da
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/repository/course_join_detail_repository.dart';
+import 'package:lms/app/features/courses/viewmodel/calendar_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/completed_courses_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/development_plan_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/enrolled_courses_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/required_courses_view_model.dart';
 
 class CourseJoinDetailViewModel
     extends StateNotifier<DataState<CourseJoinDetail>> {
@@ -11,6 +19,7 @@ class CourseJoinDetailViewModel
     required this.repository,
     required this.userId,
     required this.courseId,
+    required this.ref,
   }) : super(DataState.idle<CourseJoinDetail>()) {
     fetch();
   }
@@ -25,12 +34,14 @@ class CourseJoinDetailViewModel
           repository: ref.watch(CourseJoinDetailRepository.provider),
           userId: _loggedInUserId(auth),
           courseId: courseId,
+          ref: ref,
         );
       });
 
   final CourseJoinDetailRepository repository;
   final int? userId;
   final int courseId;
+  final Ref ref;
 
   Future<void> fetch() async {
     if (userId == null) {
@@ -55,7 +66,10 @@ class CourseJoinDetailViewModel
   /// button itself shows its own in-flight state.
   Future<CourseEnrollResult> enroll() async {
     final result = await repository.register(courseId: courseId);
-    if (result.success) await _silentRefetch();
+    if (result.success) {
+      await _silentRefetch();
+      _refreshRelatedScreens();
+    }
     return result;
   }
 
@@ -63,7 +77,10 @@ class CourseJoinDetailViewModel
   /// just that class - then refreshes the detail (see [enroll]).
   Future<CourseEnrollResult> cancelRegistration({int? classId}) async {
     final result = await repository.cancel(courseId: courseId, classId: classId);
-    if (result.success) await _silentRefetch();
+    if (result.success) {
+      await _silentRefetch();
+      _refreshRelatedScreens();
+    }
     return result;
   }
 
@@ -76,6 +93,24 @@ class CourseJoinDetailViewModel
       // Keep showing the previous (now stale) data rather than replacing
       // the whole screen with an error after a successful enroll/cancel.
     }
+  }
+
+  /// Enrollment status affects every other screen that lists or filters
+  /// courses (catalog, my courses, enrolled/completed/required, dashboard,
+  /// development plan, calendar). Invalidate them so any that are still
+  /// alive (e.g. sitting underneath this page on the nav stack) refetch
+  /// immediately instead of showing stale data when the user navigates back
+  /// to them; ones that aren't currently alive just fetch fresh next time
+  /// they're created anyway.
+  void _refreshRelatedScreens() {
+    ref.invalidate(CourseCatalogViewModel.provider);
+    ref.invalidate(MyCoursesViewModel.provider);
+    ref.invalidate(EnrolledCoursesViewModel.provider);
+    ref.invalidate(CompletedCoursesViewModel.provider);
+    ref.invalidate(RequiredCoursesViewModel.provider);
+    ref.invalidate(DashboardViewModel.provider);
+    ref.invalidate(DevelopmentPlanViewModel.provider);
+    ref.invalidate(CalendarViewModel.provider);
   }
 }
 
