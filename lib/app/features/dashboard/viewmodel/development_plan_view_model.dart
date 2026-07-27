@@ -3,7 +3,8 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
-import 'package:lms/app/features/dashboard/repository/development_plan_repository.dart';
+import 'package:lms/app/features/dashboard/repository/development_plan_repository.dart'
+    show DevelopmentPlanRepository, NonCoursePlanResult;
 
 const _perPage = 10;
 
@@ -106,6 +107,14 @@ class DevelopmentPlanViewModel extends StateNotifier<DevelopmentPlanState> {
   Future<String?> goToPage(int page) {
     if (page >= 1 && page <= state.totalPages) return fetch(page: page);
     return Future.value(null);
+  }
+
+  Future<NonCoursePlanResult> addCustomPlanItem(String name) async {
+    final result = await repository.addCustomPlanItem(name: name);
+    if (result.success) {
+      await fetch(page: 1);
+    }
+    return result;
   }
 }
 

@@ -1,7 +1,14 @@
+import 'package:dio/dio.dart' show Headers, Options;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
+
+class NonCoursePlanResult {
+  const NonCoursePlanResult({required this.success, this.message});
+  final bool success;
+  final String? message;
+}
 
 class DevelopmentPlanResult {
   const DevelopmentPlanResult({required this.total, required this.courses});
@@ -50,5 +57,33 @@ class DevelopmentPlanRepository with RepoNetworkHelper {
       throw Exception(data['message']?.toString() ?? 'Unable to load development plan.');
     }
     return DevelopmentPlanResult.fromJson(data);
+  }
+
+  /// POST lms-screen/non-course-development-plan, form-urlencoded.
+  /// request=add + value=<name> creates a new non-course plan item.
+  /// user_id is admin-only (acting on behalf of another user) and omitted
+  /// here - the logged-in user is resolved from the auth token, same as
+  /// course register/cancel and item redeem.
+  Future<NonCoursePlanResult> addCustomPlanItem({required String name}) async {
+    try {
+      final response = await post(
+        'lms-screen/non-course-development-plan',
+        data: {'request': 'add', 'value': name},
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+        cacheType: RequestCacheType.none,
+      );
+      final data = response is Map
+          ? Map<String, dynamic>.from(response)
+          : <String, dynamic>{};
+      if (data['status']?.toString() != '1') {
+        return NonCoursePlanResult(
+          success: false,
+          message: data['message']?.toString() ?? 'Unable to add plan item.',
+        );
+      }
+      return NonCoursePlanResult(success: true, message: data['message']?.toString());
+    } catch (e) {
+      return NonCoursePlanResult(success: false, message: e.toString());
+    }
   }
 }

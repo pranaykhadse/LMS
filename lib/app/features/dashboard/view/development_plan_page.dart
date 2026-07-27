@@ -51,7 +51,6 @@ class _Body extends StatelessWidget {
           onRetry: () => notifier.fetch(),
         );
       case DataProviderState.data:
-        if (state.courses.isEmpty) return const _EmptyState();
         return Column(
           children: [
             Expanded(
@@ -63,32 +62,61 @@ class _Body extends StatelessWidget {
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: [
-                    GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: Responsive.columns(
-                          context,
-                          phone: 2,
-                          tablet: 3,
-                          desktop: 4,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showAddPlanItemDialog(context, notifier),
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('Add Custom Plan Item'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _purple,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            minimumSize: const Size(0, 40),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                          ),
                         ),
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                        childAspectRatio: 0.62,
-                        mainAxisExtent: Responsive.isTablet(context) ? 290 : null,
                       ),
-                      itemCount: state.courses.length,
-                      itemBuilder: (ctx, i) =>
-                          _CourseCard(course: state.courses[i]),
                     ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      // Must match _perPage in development_plan_view_model.dart.
-                      child: PerPageBadge(perPage: 10),
-                    ),
+                    if (state.courses.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.only(top: 40),
+                        child: _EmptyState(),
+                      )
+                    else ...[
+                      GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: Responsive.columns(
+                            context,
+                            phone: 2,
+                            tablet: 3,
+                            desktop: 4,
+                          ),
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 0.62,
+                          mainAxisExtent: Responsive.isTablet(context) ? 290 : null,
+                        ),
+                        itemCount: state.courses.length,
+                        itemBuilder: (ctx, i) =>
+                            _CourseCard(course: state.courses[i]),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        // Must match _perPage in development_plan_view_model.dart.
+                        child: PerPageBadge(perPage: 10),
+                      ),
+                    ],
                     const AppFooter(),
                   ],
                 ),
@@ -108,6 +136,117 @@ class _Body extends StatelessWidget {
     notifier.goToPage(page).then((error) {
       if (error != null && context.mounted) Toast.error(context, error);
     });
+  }
+}
+
+void _showAddPlanItemDialog(BuildContext context, DevelopmentPlanViewModel notifier) {
+  showDialog(
+    context: context,
+    builder: (dialogContext) => _AddPlanItemDialog(
+      onAdd: (name) async {
+        final result = await notifier.addCustomPlanItem(name);
+        if (dialogContext.mounted) Navigator.pop(dialogContext);
+        if (!context.mounted) return;
+        if (result.success) {
+          Toast.success(context, result.message ?? 'Plan item added successfully.');
+        } else {
+          Toast.error(context, result.message ?? 'Unable to add plan item.');
+        }
+      },
+    ),
+  );
+}
+
+// ─── Add custom plan item dialog ───────────────────────────────────────────────
+
+class _AddPlanItemDialog extends StatefulWidget {
+  const _AddPlanItemDialog({required this.onAdd});
+  final Future<void> Function(String name) onAdd;
+
+  @override
+  State<_AddPlanItemDialog> createState() => _AddPlanItemDialogState();
+}
+
+class _AddPlanItemDialogState extends State<_AddPlanItemDialog> {
+  final _controller = TextEditingController();
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final name = _controller.text.trim();
+    if (name.isEmpty || _submitting) return;
+    setState(() => _submitting = true);
+    await widget.onAdd(name);
+    if (mounted) setState(() => _submitting = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Non Course Development Plan',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: _ink, fontSize: 17, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 18),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+              decoration: InputDecoration(
+                hintText: 'Enter Name of Development Plan Item',
+                hintStyle: const TextStyle(color: _muted, fontSize: 13),
+                filled: true,
+                fillColor: _bg,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _submitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _purple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  disabledBackgroundColor: _purple.withValues(alpha: 0.6),
+                  minimumSize: const Size(0, 44),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: _submitting
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Add', style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
