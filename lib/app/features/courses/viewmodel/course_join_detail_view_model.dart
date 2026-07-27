@@ -6,6 +6,7 @@ import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/repository/course_join_detail_repository.dart';
 import 'package:lms/app/features/courses/viewmodel/calendar_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/completed_courses_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/development_plan_view_model.dart';
@@ -74,10 +75,16 @@ class CourseJoinDetailViewModel
   }
 
   /// Cancels the registration - the whole course when [classId] is null, or
-  /// just that class - then refreshes the detail (see [enroll]).
+  /// just that class - then refreshes the detail (see [enroll]). Cancelling
+  /// the whole course also deletes any of its content that was downloaded
+  /// for offline access - once unenrolled, the user is no longer entitled
+  /// to it.
   Future<CourseEnrollResult> cancelRegistration({int? classId}) async {
     final result = await repository.cancel(courseId: courseId, classId: classId);
     if (result.success) {
+      if (classId == null) {
+        await ref.read(OfflineViewModel.provider).removeOfflineByCourseId(courseId);
+      }
       await _silentRefetch();
       _refreshRelatedScreens();
     }

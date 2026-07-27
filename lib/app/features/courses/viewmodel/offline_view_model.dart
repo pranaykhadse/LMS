@@ -114,6 +114,15 @@ class OfflineViewModel extends ChangeNotifier {
     await _fetch();
   }
 
+  /// Same as [removeOffline], but by courseId - for callers (e.g. cancelling
+  /// a course's registration) that don't have a full [Course] object on
+  /// hand. No-op if the course was never downloaded offline.
+  Future<void> removeOfflineByCourseId(int courseId) async {
+    final cached = await repository.getCachedCourse(courseId.toString());
+    if (cached == null) return;
+    await removeOffline(cached);
+  }
+
   // ── Internal helpers ──────────────────────────────────────────────────────
 
   Future<void> _fetch() async {

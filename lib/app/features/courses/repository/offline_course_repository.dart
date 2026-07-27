@@ -122,6 +122,20 @@ class OfflineCourseRepository {
     }
   }
 
+  /// Returns the locally cached [Course] for [courseId], or null if that
+  /// course was never downloaded / isn't cached offline.
+  Future<Course?> getCachedCourse(String courseId) async {
+    try {
+      final keys = await _getCachedKeys();
+      if (!keys.contains(courseId)) return null;
+      final raw = await storage.getString(courseId);
+      if (raw == null || raw.isEmpty) return null;
+      return Course.fromRawJson(raw);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<List<Course>> getCachedCourses() async {
     try {
       final keys = await _getCachedKeys();
