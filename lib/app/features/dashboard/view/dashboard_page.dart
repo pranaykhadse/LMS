@@ -9,7 +9,9 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
+import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
@@ -342,7 +344,9 @@ class _CourseCard extends StatelessWidget {
           SizedBox(
             height: 110,
             width: double.infinity,
-            child:
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
                 course.logo != null
                     ? Image.network(
                       course.logo!,
@@ -350,6 +354,22 @@ class _CourseCard extends StatelessWidget {
                       errorBuilder: (_, __, ___) => const _ImgFallback(),
                     )
                     : const _ImgFallback(),
+                Positioned(
+                  top: 6,
+                  left: 6,
+                  child: OfflineCourseButton(
+                    course: Course(
+                      id: course.id,
+                      name: course.name,
+                      logoLink: course.logo,
+                      averageRating: course.averageRating,
+                      ratingCount: course.ratingCount,
+                      displayRating: course.displayRating ? 1 : 0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: Padding(

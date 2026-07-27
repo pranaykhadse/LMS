@@ -8,7 +8,9 @@ import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/enrolled_courses_view_model.dart';
 
@@ -138,13 +140,32 @@ class _CourseCard extends StatelessWidget {
           SizedBox(
             height: 110,
             width: double.infinity,
-            child: course.logo != null
-                ? Image.network(
-                    course.logo!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const _ImgFallback(),
-                  )
-                : const _ImgFallback(),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                course.logo != null
+                    ? Image.network(
+                        course.logo!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const _ImgFallback(),
+                      )
+                    : const _ImgFallback(),
+                Positioned(
+                  top: 6,
+                  left: 6,
+                  child: OfflineCourseButton(
+                    course: Course(
+                      id: course.id,
+                      name: course.name,
+                      logoLink: course.logo,
+                      averageRating: course.averageRating,
+                      ratingCount: course.ratingCount,
+                      displayRating: course.displayRating ? 1 : 0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: Padding(

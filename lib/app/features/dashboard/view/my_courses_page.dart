@@ -6,7 +6,9 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
+import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
 import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dev_plan_membership_view_model.dart';
@@ -402,6 +404,20 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
                       onTap: () => setState(() => _showOverlay = true),
                     ),
                   ),
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: OfflineCourseButton(
+                    course: Course(
+                      id: course.courseId,
+                      name: course.courseName,
+                      logoLink: course.logo,
+                      averageRating: course.averageRating,
+                      ratingCount: course.ratingCount,
+                      displayRating: course.displayRating ? 1 : 0,
+                    ),
+                  ),
+                ),
                 if (_showOverlay)
                   _DevPlanOverlay(
                     isInPlan: isInPlan,
