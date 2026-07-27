@@ -58,6 +58,15 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
     super.dispose();
   }
 
+  Future<void> _changeGroupPage(String groupId, int page) async {
+    final error = await ref
+        .read(CourseCatalogViewModel.provider.notifier)
+        .changeGroupPage(groupId, page);
+    if (error != null && mounted) {
+      Toast.error(context, error);
+    }
+  }
+
   void _applyCatalogFilters() {
     final options = ref.read(CourseCatalogViewModel.provider).filterOptions;
     final selected = _selectedSkill(options, _selectedSkillId);
@@ -102,13 +111,10 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
       title: Responsive.isTablet(context) ? 'Course Catalog' : null,
       selectedLabel: 'Course Catalog',
       body: RefreshIndicator(
-        onRefresh:
-            () =>
-                effectivelyOffline
-                    ? Future.value()
-                    : ref
-                        .read(CourseCatalogViewModel.provider.notifier)
-                        .fetch(),
+        onRefresh: () async {
+          if (effectivelyOffline) return;
+          await ref.read(CourseCatalogViewModel.provider.notifier).fetch();
+        },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -329,9 +335,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
         child: PaginationWidget(
           page: selectedPage,
           pages: group.pagination.pages,
-          onPage: (page) => ref
-              .read(CourseCatalogViewModel.provider.notifier)
-              .changeGroupPage(group.id, page),
+          onPage: (page) => _changeGroupPage(group.id, page),
         ),
       ),
     );

@@ -64,11 +64,14 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
 
   int? get _userId => _ref.read(AuthStateNotifier.provider)?.user?.id;
 
-  Future<void> fetch({int page = 1, String? search}) async {
+  Future<String?> fetch({int page = 1, String? search}) async {
     final userId = _userId;
-    if (userId == null) return;
+    if (userId == null) return null;
     final query = search ?? state.query;
-    state = state.copyWith(providerState: DataProviderState.loading, page: page, query: query);
+    final hasData = state.providerState == DataProviderState.data;
+    if (!hasData) {
+      state = state.copyWith(providerState: DataProviderState.loading, page: page, query: query);
+    }
     try {
       final result = await _repo.fetch(
         userId: userId,
@@ -79,21 +82,31 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
       state = state.copyWith(
         result: result,
         providerState: DataProviderState.data,
+        page: page,
+        query: query,
       );
+      return null;
     } catch (e) {
-      state = state.copyWith(
-        providerState: DataProviderState.error,
-        error: e.toString(),
-      );
+      final message = e.toString();
+      if (!hasData) {
+        state = state.copyWith(
+          providerState: DataProviderState.error,
+          error: message,
+        );
+      }
+      return message;
     }
   }
 
-  void search(String query) => fetch(page: 1, search: query);
+  Future<String?> search(String query) => fetch(page: 1, search: query);
 
-  void clearSearch() => fetch(page: 1, search: '');
+  Future<String?> clearSearch() => fetch(page: 1, search: '');
 
-  void goToPage(int page) {
-    if (page >= 1 && page <= state.totalPages) fetch(page: page, search: state.query);
+  Future<String?> goToPage(int page) {
+    if (page >= 1 && page <= state.totalPages) {
+      return fetch(page: page, search: state.query);
+    }
+    return Future.value(null);
   }
 
   Future<bool> redeem(int itemId, {required String address, String? note}) async {

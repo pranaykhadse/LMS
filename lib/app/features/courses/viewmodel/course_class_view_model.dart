@@ -33,11 +33,12 @@ class CourseClassViewModel extends BaseViewModel<CourseClass> {
   Map<String, dynamic> get queryParams => {"course_id": courseId};
 
   @override
-  Future<void> fetch([int page = 0]) async {
-    await super.fetch(page);
+  Future<String?> fetch([int page = 0]) async {
+    final error = await super.fetch(page);
     final classes = state.data.data;
     if (classes != null && classes.isNotEmpty && courseId != null) {
       offlineCourseRepository.saveClasses(courseId!, classes);
     }
+    return error;
   }
 }

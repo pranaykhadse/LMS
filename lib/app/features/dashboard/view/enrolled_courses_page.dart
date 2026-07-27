@@ -7,6 +7,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
+import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/enrolled_courses_view_model.dart';
@@ -56,7 +57,9 @@ class _Body extends StatelessWidget {
             Expanded(
               child: RefreshIndicator(
                 color: _purple,
-                onRefresh: () => notifier.fetch(page: state.page),
+                onRefresh: () async {
+                  await notifier.fetch(page: state.page);
+                },
                 child: ListView(
                   padding: EdgeInsets.zero,
                   children: [
@@ -94,11 +97,17 @@ class _Body extends StatelessWidget {
             PaginationWidget(
               page: state.page,
               pages: state.totalPages,
-              onPage: notifier.goToPage,
+              onPage: (page) => _goToPage(context, page),
             ),
           ],
         );
     }
+  }
+
+  void _goToPage(BuildContext context, int page) {
+    notifier.goToPage(page).then((error) {
+      if (error != null && context.mounted) Toast.error(context, error);
+    });
   }
 }
 

@@ -64,15 +64,19 @@ class RequiredCoursesViewModel extends StateNotifier<RequiredCoursesState> {
   final RequiredCoursesRepository repository;
   final int? userId;
 
-  Future<void> fetch({int page = 1}) async {
+  Future<String?> fetch({int page = 1}) async {
     if (userId == null) {
+      const message = 'The logged-in user ID is unavailable.';
       state = state.copyWith(
         providerState: DataProviderState.error,
-        error: 'The logged-in user ID is unavailable.',
+        error: message,
       );
-      return;
+      return message;
     }
-    state = state.copyWith(providerState: DataProviderState.loading, page: page);
+    final hasData = state.providerState == DataProviderState.data;
+    if (!hasData) {
+      state = state.copyWith(providerState: DataProviderState.loading, page: page);
+    }
     try {
       final result = await repository.fetch(
         userId: userId!,
@@ -87,18 +91,26 @@ class RequiredCoursesViewModel extends StateNotifier<RequiredCoursesState> {
         totalPages: result.pages > 0 ? result.pages : 1,
         page: page,
       );
+      return null;
     } catch (error) {
-      state = state.copyWith(
-        providerState: DataProviderState.error,
-        error: error.toString(),
-      );
+      final message = error.toString();
+      if (!hasData) {
+        state = state.copyWith(
+          providerState: DataProviderState.error,
+          error: message,
+        );
+      }
+      return message;
     }
   }
 
-  void nextPage() { if (state.hasNext) fetch(page: state.page + 1); }
-  void prevPage() { if (state.hasPrev) fetch(page: state.page - 1); }
-  void goToPage(int page) {
-    if (page >= 1 && page <= state.totalPages) fetch(page: page);
+  Future<String?> nextPage() =>
+      state.hasNext ? fetch(page: state.page + 1) : Future.value(null);
+  Future<String?> prevPage() =>
+      state.hasPrev ? fetch(page: state.page - 1) : Future.value(null);
+  Future<String?> goToPage(int page) {
+    if (page >= 1 && page <= state.totalPages) return fetch(page: page);
+    return Future.value(null);
   }
 }
 

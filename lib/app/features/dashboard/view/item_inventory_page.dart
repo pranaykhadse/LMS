@@ -6,6 +6,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
+import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
 import 'package:lms/app/features/dashboard/view/redeem_history_page.dart';
@@ -51,9 +52,15 @@ class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
           _searchController.clear();
           notifier.clearSearch();
         },
-        onPageChanged: notifier.goToPage,
+        onPageChanged: (page) => _goToPage(context, notifier, page),
       ),
     );
+  }
+
+  void _goToPage(BuildContext context, ItemInventoryViewModel notifier, int page) {
+    notifier.goToPage(page).then((error) {
+      if (error != null && context.mounted) Toast.error(context, error);
+    });
   }
 }
 

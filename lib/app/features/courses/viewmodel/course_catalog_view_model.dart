@@ -74,18 +74,22 @@ class CourseCatalogViewModel extends StateNotifier<CourseCatalogState> {
   final CourseCatalogRepository repository;
   final int? userId;
 
-  Future<void> fetch({Map<String, int>? groupPages}) async {
+  Future<String?> fetch({Map<String, int>? groupPages}) async {
     if (userId == null) {
-      state = state.copyWith(
-        result: DataState.onError('The logged-in user ID is unavailable.'),
-      );
-      return;
+      const message = 'The logged-in user ID is unavailable.';
+      state = state.copyWith(result: DataState.onError(message));
+      return message;
     }
     final pages = groupPages ?? state.groupPages;
-    state = state.copyWith(
-      result: DataState.loading<CourseCatalogResponse>(),
-      groupPages: pages,
-    );
+    // Keep whatever is already on screen while a page/filter change is in
+    // flight instead of flashing back to a full-screen spinner.
+    final hasData = state.result.state == DataProviderState.data;
+    if (!hasData) {
+      state = state.copyWith(
+        result: DataState.loading<CourseCatalogResponse>(),
+        groupPages: pages,
+      );
+    }
     try {
       final result =
           state.isSearchMode
@@ -104,17 +108,25 @@ class CourseCatalogViewModel extends StateNotifier<CourseCatalogState> {
               );
       state = state.copyWith(
         result: DataState.onData(result),
+        groupPages: pages,
         filterOptions:
             result.skills.isNotEmpty ? result.skills : state.filterOptions,
       );
+      return null;
     } catch (error) {
-      state = state.copyWith(result: DataState.onError(error.toString()));
+      final message = error.toString();
+      // On failure, leave the previously shown page/data untouched so the
+      // pagination widget keeps highlighting the page that's actually shown.
+      if (!hasData) {
+        state = state.copyWith(result: DataState.onError(message));
+      }
+      return message;
     }
   }
 
-  Future<void> changeGroupPage(String groupId, int page) async {
+  Future<String?> changeGroupPage(String groupId, int page) async {
     final updated = Map<String, int>.from(state.groupPages)..[groupId] = page;
-    await fetch(groupPages: updated);
+    return fetch(groupPages: updated);
   }
 
   Future<void> applyFilters({

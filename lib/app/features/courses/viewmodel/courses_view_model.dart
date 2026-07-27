@@ -18,10 +18,9 @@ class CoursesViewModel extends BaseViewModel<Course> {
   CoursesViewModel({required super.repository});
 
   @override
-  Future<void> fetch(int page) async {
+  Future<String?> fetch(int page) async {
     if (page != 0) {
-      await super.fetch(page);
-      return;
+      return super.fetch(page);
     }
     // Load ALL pages on initial fetch so My Courses tab can filter across
     // all enrolled courses, not just the 50 items on the current page.
@@ -40,8 +39,11 @@ class CoursesViewModel extends BaseViewModel<Course> {
         data: DataState.onData(all),
         pageInfo: first.pageInfo.copyWith(pages: 1),
       );
+      return null;
     } catch (e) {
-      state = state.copyWith(data: DataState.onError(e.toString()));
+      final message = e.toString();
+      state = state.copyWith(data: DataState.onError(message));
+      return message;
     }
   }
 }

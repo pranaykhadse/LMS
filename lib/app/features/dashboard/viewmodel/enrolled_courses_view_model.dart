@@ -62,15 +62,22 @@ class EnrolledCoursesViewModel extends StateNotifier<EnrolledState> {
   final EnrolledCoursesRepository repository;
   final int? userId;
 
-  Future<void> fetch({int page = 1}) async {
+  Future<String?> fetch({int page = 1}) async {
     if (userId == null) {
+      const message = 'The logged-in user ID is unavailable.';
       state = state.copyWith(
         providerState: DataProviderState.error,
-        error: 'The logged-in user ID is unavailable.',
+        error: message,
       );
-      return;
+      return message;
     }
-    state = state.copyWith(providerState: DataProviderState.loading, page: page);
+    // Keep the currently shown page on screen while fetching another page
+    // instead of flashing a full-screen spinner; only show the spinner when
+    // there's nothing on screen yet (first load / after an error).
+    final hasData = state.providerState == DataProviderState.data;
+    if (!hasData) {
+      state = state.copyWith(providerState: DataProviderState.loading, page: page);
+    }
     try {
       final result = await repository.fetch(
         userId: userId!,
@@ -83,18 +90,28 @@ class EnrolledCoursesViewModel extends StateNotifier<EnrolledState> {
         totalCourses: result.totalCourses,
         page: page,
       );
+      return null;
     } catch (error) {
-      state = state.copyWith(
-        providerState: DataProviderState.error,
-        error: error.toString(),
-      );
+      final message = error.toString();
+      // Leave the previously shown page/data in place on failure so the
+      // pagination widget keeps highlighting the page that's actually shown.
+      if (!hasData) {
+        state = state.copyWith(
+          providerState: DataProviderState.error,
+          error: message,
+        );
+      }
+      return message;
     }
   }
 
-  void nextPage() { if (state.hasNext) fetch(page: state.page + 1); }
-  void prevPage() { if (state.hasPrev) fetch(page: state.page - 1); }
-  void goToPage(int page) {
-    if (page >= 1 && page <= state.totalPages) fetch(page: page);
+  Future<String?> nextPage() =>
+      state.hasNext ? fetch(page: state.page + 1) : Future.value(null);
+  Future<String?> prevPage() =>
+      state.hasPrev ? fetch(page: state.page - 1) : Future.value(null);
+  Future<String?> goToPage(int page) {
+    if (page >= 1 && page <= state.totalPages) return fetch(page: page);
+    return Future.value(null);
   }
 }
 

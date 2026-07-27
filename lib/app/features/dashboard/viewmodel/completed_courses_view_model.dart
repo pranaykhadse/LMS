@@ -61,15 +61,19 @@ class CompletedCoursesViewModel extends StateNotifier<CompletedState> {
   final CompletedCoursesRepository repository;
   final int? userId;
 
-  Future<void> fetch({int page = 1}) async {
+  Future<String?> fetch({int page = 1}) async {
     if (userId == null) {
+      const message = 'The logged-in user ID is unavailable.';
       state = state.copyWith(
         providerState: DataProviderState.error,
-        error: 'The logged-in user ID is unavailable.',
+        error: message,
       );
-      return;
+      return message;
     }
-    state = state.copyWith(providerState: DataProviderState.loading, page: page);
+    final hasData = state.providerState == DataProviderState.data;
+    if (!hasData) {
+      state = state.copyWith(providerState: DataProviderState.loading, page: page);
+    }
     try {
       final result = await repository.fetch(
         userId: userId!,
@@ -82,18 +86,26 @@ class CompletedCoursesViewModel extends StateNotifier<CompletedState> {
         total: result.total,
         page: page,
       );
+      return null;
     } catch (error) {
-      state = state.copyWith(
-        providerState: DataProviderState.error,
-        error: error.toString(),
-      );
+      final message = error.toString();
+      if (!hasData) {
+        state = state.copyWith(
+          providerState: DataProviderState.error,
+          error: message,
+        );
+      }
+      return message;
     }
   }
 
-  void nextPage() { if (state.hasNext) fetch(page: state.page + 1); }
-  void prevPage() { if (state.hasPrev) fetch(page: state.page - 1); }
-  void goToPage(int page) {
-    if (page >= 1 && page <= state.totalPages) fetch(page: page);
+  Future<String?> nextPage() =>
+      state.hasNext ? fetch(page: state.page + 1) : Future.value(null);
+  Future<String?> prevPage() =>
+      state.hasPrev ? fetch(page: state.page - 1) : Future.value(null);
+  Future<String?> goToPage(int page) {
+    if (page >= 1 && page <= state.totalPages) return fetch(page: page);
+    return Future.value(null);
   }
 }
 
