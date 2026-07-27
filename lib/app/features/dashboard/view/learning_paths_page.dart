@@ -4,6 +4,7 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
+import 'package:lms/app/features/dashboard/view/view_competency_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_paths_view_model.dart';
 
 const _purple = Color(0xFF5756C9);
@@ -11,6 +12,21 @@ const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
 const _sectionTitle = Color(0xFFB0006D);
+
+void _openViewCompetency(
+  BuildContext context, {
+  required int learningPathId,
+  required String competency,
+}) {
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => ViewCompetencyPage(
+        learningPathId: learningPathId,
+        competency: competency,
+      ),
+    ),
+  );
+}
 
 class LearningPathsPage extends ConsumerStatefulWidget {
   const LearningPathsPage({super.key});
@@ -383,7 +399,11 @@ class _CompetencyPreview extends StatelessWidget {
           else
             for (var i = 0; i < competencies.length; i++) ...[
               if (i > 0) const SizedBox(height: 10),
-              _CompetencyPreviewRow(index: i + 1, competency: competencies[i]),
+              _CompetencyPreviewRow(
+                index: i + 1,
+                pathId: path.id,
+                competency: competencies[i],
+              ),
             ],
           const SizedBox(height: 10),
           Align(
@@ -410,8 +430,13 @@ class _CompetencyPreview extends StatelessWidget {
 }
 
 class _CompetencyPreviewRow extends StatelessWidget {
-  const _CompetencyPreviewRow({required this.index, required this.competency});
+  const _CompetencyPreviewRow({
+    required this.index,
+    required this.pathId,
+    required this.competency,
+  });
   final int index;
+  final int pathId;
   final LearningPathCompetency competency;
 
   @override
@@ -475,6 +500,30 @@ class _CompetencyPreviewRow extends StatelessWidget {
                         style: const TextStyle(color: _muted, fontWeight: FontWeight.w500),
                       ),
                     ],
+                  ),
+                ),
+              ],
+              if (competency.name.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    onPressed: () => _openViewCompetency(
+                      context,
+                      learningPathId: pathId,
+                      competency: competency.name,
+                    ),
+                    icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
+                    label: const Text('View'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _purple,
+                      side: const BorderSide(color: _purple),
+                      minimumSize: const Size(0, 30),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5),
+                    ),
                   ),
                 ),
               ],
@@ -599,6 +648,19 @@ class _LearningPathDetailSheet extends StatelessWidget {
                       ),
                     ),
                   ),
+                  SizedBox(
+                    width: 64,
+                    child: Text(
+                      'Action',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _muted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -612,7 +674,10 @@ class _LearningPathDetailSheet extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 32),
                       itemCount: competencies.length,
                       separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (_, i) => _CompetencyRow(competency: competencies[i]),
+                      itemBuilder: (_, i) => _CompetencyRow(
+                        pathId: path.id,
+                        competency: competencies[i],
+                      ),
                     ),
             ),
           ],
@@ -623,7 +688,8 @@ class _LearningPathDetailSheet extends StatelessWidget {
 }
 
 class _CompetencyRow extends StatelessWidget {
-  const _CompetencyRow({required this.competency});
+  const _CompetencyRow({required this.pathId, required this.competency});
+  final int pathId;
   final LearningPathCompetency competency;
 
   @override
@@ -706,6 +772,26 @@ class _CompetencyRow extends StatelessWidget {
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 64,
+            child: competency.name.isEmpty
+                ? const SizedBox()
+                : Center(
+                    child: IconButton(
+                      onPressed: () => _openViewCompetency(
+                        context,
+                        learningPathId: pathId,
+                        competency: competency.name,
+                      ),
+                      icon: const Icon(Icons.remove_red_eye_outlined, size: 18),
+                      color: _purple,
+                      tooltip: 'View',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     ),
                   ),
           ),

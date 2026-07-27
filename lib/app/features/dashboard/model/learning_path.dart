@@ -70,7 +70,10 @@ class LearningPathCompetency {
     }
     return LearningPathCompetency(
       id: _asInt(json['competency_id'] ?? json['id']),
-      name: json['competency_name']?.toString() ?? json['name']?.toString() ?? '',
+      name: json['competency']?.toString() ??
+          json['competency_name']?.toString() ??
+          json['name']?.toString() ??
+          '',
       courseNames: courseNames,
       competencyType: json['competency_type']?.toString() ?? json['type']?.toString() ?? '',
     );
