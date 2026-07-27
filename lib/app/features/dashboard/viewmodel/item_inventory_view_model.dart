@@ -2,7 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
-import 'package:lms/app/features/dashboard/repository/item_inventory_repository.dart';
+import 'package:lms/app/features/dashboard/repository/item_inventory_repository.dart'
+    show ItemInventoryRepository, RedeemResult;
 
 const _perPage = 10;
 
@@ -109,18 +110,23 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
     return Future.value(null);
   }
 
-  Future<bool> redeem(int itemId, {required String address, String? note}) async {
-    final userId = _userId;
-    if (userId == null) return false;
-    state = state.copyWith(redeemingId: itemId);
-    try {
-      await _repo.redeem(userId: userId, itemId: itemId, address: address, note: note);
-      await fetch(page: state.page, search: state.query);
-      state = state.copyWith(clearRedeeming: true);
-      return true;
-    } catch (e) {
-      state = state.copyWith(clearRedeeming: true);
-      return false;
+  Future<RedeemResult> redeem(
+    int itemId, {
+    required String address,
+    String? note,
+  }) async {
+    if (_userId == null) {
+      return const RedeemResult(
+        success: false,
+        message: 'The logged-in user ID is unavailable.',
+      );
     }
+    state = state.copyWith(redeemingId: itemId);
+    final result = await _repo.redeem(itemId: itemId, address: address, note: note);
+    if (result.success) {
+      await fetch(page: state.page, search: state.query);
+    }
+    state = state.copyWith(clearRedeeming: true);
+    return result;
   }
 }

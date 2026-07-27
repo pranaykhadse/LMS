@@ -262,19 +262,20 @@ class _Body extends StatelessWidget {
   ) {
     showDialog(
       context: context,
-      builder: (_) => _RedeemDialog(
+      builder: (dialogContext) => _RedeemDialog(
         item: item,
         onConfirm: (address, note) async {
-          Navigator.pop(context);
-          final ok = await notifier.redeem(
+          final result = await notifier.redeem(
             item.id,
             address: address,
             note: note.isNotEmpty ? note : null,
           );
-          if (!ok && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to redeem. Please try again.')),
-            );
+          if (dialogContext.mounted) Navigator.pop(dialogContext);
+          if (!context.mounted) return;
+          if (result.success) {
+            Toast.success(context, result.message ?? 'Item redeemed successfully.');
+          } else {
+            Toast.error(context, result.message ?? 'Failed to redeem. Please try again.');
           }
         },
       ),
@@ -678,7 +679,7 @@ class _DetailRow extends StatelessWidget {
 class _RedeemDialog extends StatefulWidget {
   const _RedeemDialog({required this.item, required this.onConfirm});
   final InventoryItem item;
-  final void Function(String address, String note) onConfirm;
+  final Future<void> Function(String address, String note) onConfirm;
 
   @override
   State<_RedeemDialog> createState() => _RedeemDialogState();
@@ -688,6 +689,7 @@ class _RedeemDialogState extends State<_RedeemDialog> {
   final _formKey = GlobalKey<FormState>();
   final _addressCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
+  bool _submitting = false;
 
   @override
   void dispose() {
@@ -767,27 +769,40 @@ class _RedeemDialogState extends State<_RedeemDialog> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      widget.onConfirm(
-                        _addressCtrl.text.trim(),
-                        _noteCtrl.text.trim(),
-                      );
-                    }
-                  },
+                  onPressed: _submitting
+                      ? null
+                      : () async {
+                          if (!_formKey.currentState!.validate()) return;
+                          setState(() => _submitting = true);
+                          await widget.onConfirm(
+                            _addressCtrl.text.trim(),
+                            _noteCtrl.text.trim(),
+                          );
+                          if (mounted) setState(() => _submitting = false);
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _purple,
                     foregroundColor: Colors.white,
                     elevation: 0,
+                    disabledBackgroundColor: _purple.withValues(alpha: 0.6),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     minimumSize: const Size(0, 44),
                   ),
-                  child: const Text(
-                    'Confirm',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
+                  child: _submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Confirm',
+                          style: TextStyle(fontWeight: FontWeight.w700),
+                        ),
                 ),
               ),
             ],
