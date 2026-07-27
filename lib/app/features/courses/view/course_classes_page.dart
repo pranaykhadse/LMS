@@ -814,7 +814,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   item: item,
                 ),
             ],
-            if (item.downloadUrl != null) ...[
+            // downloadUrl is populated straight from the course-structure
+            // API response regardless of enrollment, so gate visibility on
+            // isEnrolled here too - otherwise non-enrolled learners can see
+            // (and use) the Download button for course content.
+            if (item.downloadUrl != null && isEnrolled) ...[
               const SizedBox(height: 10),
               if (item.typeCode == '4')
                 DownloadButton(

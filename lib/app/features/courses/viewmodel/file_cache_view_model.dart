@@ -230,7 +230,11 @@ class FileCacheViewModel extends ChangeNotifier {
   }
 
   static Future<Directory> _hlsLocalDir(String hlsUrl) async {
-    final dir = await getApplicationDocumentsDirectory();
+    // Application *support* dir (not Documents) — Documents is a
+    // user-visible, easily-browsable folder on desktop platforms, which let
+    // downloaded segments/playlists show up in File Explorer/Finder and be
+    // opened directly outside the app.
+    final dir = await getApplicationSupportDirectory();
     return Directory('${dir.path}/hls_${hlsUrl.hashCode.abs()}');
   }
 
