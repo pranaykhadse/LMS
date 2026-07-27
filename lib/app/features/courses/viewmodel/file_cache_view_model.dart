@@ -87,8 +87,24 @@ class FileCacheViewModel extends ChangeNotifier {
     final fileInfo =
         await downloadStream.firstWhere((r) => r is FileInfo) as FileInfo;
     // Convert package:file/File → dart:io File via path.
-    cachedState[url] = FileCacheState(url: url, file: File(fileInfo.file.path));
+    final file = File(fileInfo.file.path);
+    await _hideFromFileExplorer(file.path);
+    cachedState[url] = FileCacheState(url: url, file: file);
     notifyListeners();
+  }
+
+  /// Best-effort: mark a downloaded file/directory as OS-hidden so it
+  /// doesn't show up in normal File Explorer/Finder browsing. Doesn't
+  /// change the file's path or content, so it's safe to call on files
+  /// flutter_cache_manager still owns and tracks internally.
+  static Future<void> _hideFromFileExplorer(String path) async {
+    try {
+      if (Platform.isWindows) {
+        await Process.run('attrib', ['+h', path]);
+      } else if (Platform.isMacOS) {
+        await Process.run('chflags', ['hidden', path]);
+      }
+    } catch (_) {}
   }
 
   // ── HLS download: manifest → individual segment files + local manifest ─────
@@ -136,7 +152,10 @@ class FileCacheViewModel extends ChangeNotifier {
 
       // 4. Download each segment to its own local file
       final dir = await _hlsLocalDir(hlsUrl);
-      if (!dir.existsSync()) dir.createSync(recursive: true);
+      if (!dir.existsSync()) {
+        dir.createSync(recursive: true);
+        await _hideFromFileExplorer(dir.path);
+      }
 
       final localPlaylist = StringBuffer()
         ..writeln('#EXTM3U')
