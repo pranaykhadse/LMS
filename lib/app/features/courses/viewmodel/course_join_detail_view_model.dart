@@ -84,6 +84,7 @@ class CourseJoinDetailViewModel
     if (result.success) {
       if (classId == null) {
         await ref.read(OfflineViewModel.provider).removeOfflineByCourseId(courseId);
+        await repository.clearCachedDetail(courseId);
       }
       await _silentRefetch();
       _refreshRelatedScreens();

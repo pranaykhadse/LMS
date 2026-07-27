@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart' show Headers, Options;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
+import 'package:lms/app/core/provider/local_storage_provider.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 
@@ -11,34 +14,63 @@ class CourseEnrollResult {
 }
 
 class CourseJoinDetailRepository with RepoNetworkHelper {
-  CourseJoinDetailRepository(this.config);
+  CourseJoinDetailRepository(this.config, this.storage);
 
   static final provider = Provider<CourseJoinDetailRepository>((ref) {
     return CourseJoinDetailRepository(
       ref.watch(ServerProvider.repoConfigProvider),
+      ref.watch(LocalStorage.provider),
     );
   });
 
   @override
   final RepoNetworkConfig config;
+  final LocalStorage storage;
 
+  String _cacheKey(int courseId) => 'join_course_detail_$courseId';
+
+  /// Fetches the course's full join-detail (structure, download links,
+  /// enrollment status, etc.). Every successful fetch is cached raw so the
+  /// same course can still be opened with no internet connection - falls
+  /// back to that cache on any failure (offline, timeout, server error),
+  /// and only surfaces the error if there's nothing cached to fall back to.
   Future<CourseJoinDetail> fetch({
     required int userId,
     required int courseId,
   }) async {
-    final response = await getRequest(
-      'lms-screen/join-course-detail',
-      queryParameters: {'user_id': userId, 'id': courseId},
-      cacheType: RequestCacheType.none,
-    );
-    final data = Map<String, dynamic>.from(response as Map);
-    if (data['status']?.toString() != '1') {
-      throw Exception(
-        data['message']?.toString() ?? 'Unable to load course details.',
+    try {
+      final response = await getRequest(
+        'lms-screen/join-course-detail',
+        queryParameters: {'user_id': userId, 'id': courseId},
+        cacheType: RequestCacheType.none,
       );
+      final data = Map<String, dynamic>.from(response as Map);
+      if (data['status']?.toString() != '1') {
+        throw Exception(
+          data['message']?.toString() ?? 'Unable to load course details.',
+        );
+      }
+      await storage.setString(_cacheKey(courseId), jsonEncode(data));
+      return CourseJoinDetail.fromJson(data);
+    } catch (error) {
+      final cachedRaw = await storage.getString(_cacheKey(courseId));
+      if (cachedRaw != null) {
+        try {
+          final cachedData = jsonDecode(cachedRaw) as Map<String, dynamic>;
+          return CourseJoinDetail.fromJson(cachedData);
+        } catch (_) {
+          // Cached data is unreadable - fall through to the original error.
+        }
+      }
+      rethrow;
     }
-    return CourseJoinDetail.fromJson(data);
   }
+
+  /// Drops the cached detail for [courseId] - called when the user
+  /// unenrolls from the whole course, so a stale "still enrolled" detail
+  /// isn't served from cache afterwards.
+  Future<void> clearCachedDetail(int courseId) =>
+      storage.setString(_cacheKey(courseId), null);
 
   /// Whole-course enrollment (POST lms-screen/register-course, form-urlencoded).
   /// Only `course_id` is sent - `user_id` is admin-only (registering someone
