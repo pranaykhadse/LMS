@@ -258,7 +258,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
         ),
       );
     } else {
-      await _doEnroll([]);
+      await _doEnroll(const <int, int>{});
     }
   }
 
