@@ -695,7 +695,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     if (classId == null) return;
     final event = _earliestUpcomingEvent(widget.item.learningEvents);
     if (event == null) {
-      await _registerClass(classId, null);
+      // Every session this class has is already over - registering with no
+      // session id just gets rejected by the API ("A session must be
+      // selected for this class"), which reads like a bug rather than the
+      // simple fact that there's nothing left to register for.
+      Toast.error(context, 'No upcoming session is available for this class.');
       return;
     }
     await showDialog(
