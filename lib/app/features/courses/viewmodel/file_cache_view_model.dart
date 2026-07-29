@@ -94,12 +94,6 @@ class FileCacheViewModel extends ChangeNotifier {
     final tempFile = await _viewingFile(url, sniffed ?? _extensionOf(url));
     await tempFile.parent.create(recursive: true);
     await tempFile.writeAsBytes(decrypted);
-    if (kDebugMode) {
-      final head = decrypted.take(16).map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ');
-      debugPrint('[FileCacheViewModel] prepareForViewing url=$url');
-      debugPrint('[FileCacheViewModel] decrypted length=${decrypted.length} bytes, first16=$head');
-      debugPrint('[FileCacheViewModel] sniffed=$sniffed urlExt=${_extensionOf(url)} -> ${tempFile.path}');
-    }
     return tempFile;
   }
 

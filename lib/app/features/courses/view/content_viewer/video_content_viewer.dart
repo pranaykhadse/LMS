@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
@@ -43,22 +41,6 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
   }
 
   Future<void> _initialize() async {
-    if (kDebugMode) {
-      final localFile = widget.file.file;
-      debugPrint('[VideoContentViewer] url=${widget.file.url}');
-      debugPrint('[VideoContentViewer] source=$_source (isLocalFile=${localFile != null})');
-      if (localFile != null) {
-        final exists = localFile.existsSync();
-        debugPrint('[VideoContentViewer] local file exists=$exists');
-        if (exists) {
-          final length = localFile.lengthSync();
-          final headBytes = localFile.openSync().readSync(16);
-          debugPrint('[VideoContentViewer] local file length=$length bytes');
-          debugPrint('[VideoContentViewer] local file first 16 bytes (hex)='
-              '${headBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}');
-        }
-      }
-    }
     try {
       // media_kit (libmpv) decodes every format this app serves — MP4,
       // WebM/VP9, and HLS (.m3u8, whether remote or a locally downloaded
@@ -67,15 +49,11 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
       // WebM content and only remote HLS.
       await _player.open(Media(_source));
     } catch (e) {
-      if (kDebugMode) debugPrint('[VideoContentViewer] open() threw: $e');
       _handleError(e.toString());
     }
   }
 
-  void _onPlayerError(String message) {
-    if (kDebugMode) debugPrint('[VideoContentViewer] player error stream: $message');
-    _handleError(message);
-  }
+  void _onPlayerError(String message) => _handleError(message);
 
   void _handleError(String message) {
     // iOS Simulator's virtual audio device fails to initialize (confirmed

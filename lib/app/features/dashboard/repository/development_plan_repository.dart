@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart' show Headers, Options;
-import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -96,9 +95,6 @@ class DevelopmentPlanRepository with RepoNetworkHelper {
     required int percentage,
   }) async {
     try {
-      if (kDebugMode) {
-        debugPrint('[DevelopmentPlanRepository] updateCustomPlanItem id=$id percentage=$percentage');
-      }
       final response = await post(
         'lms-screen/non-course-development-plan',
         data: {'request': 'update', 'value': percentage, 'id': id},

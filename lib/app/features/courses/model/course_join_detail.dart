@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:lms/app/core/core.dart';
 
 class CourseJoinDetail {
@@ -91,29 +90,11 @@ class CourseJoinDetail {
     final courseRegistered = _isRegistered(course);
     final actionCancel = _actionMeansCancel(actionLabel);
     final isEnrolled = rootRegistered || courseRegistered || actionCancel;
-    if (kDebugMode) {
-      debugPrint(
-        '[CourseJoinDetail] course_id=${_firstValue(root, course, const ['course_id', 'courseId', 'id'])} '
-        'actionLabel="$actionLabel" '
-        'isRegistered(root)=$rootRegistered '
-        'isRegistered(course)=$courseRegistered '
-        'actionMeansCancel=$actionCancel '
-        '=> isEnrolled=$isEnrolled',
-      );
-      debugPrint('[CourseJoinDetail] root enrollment-related keys: ${_enrollmentKeySnapshot(root)}');
-      debugPrint('[CourseJoinDetail] course enrollment-related keys: ${_enrollmentKeySnapshot(course)}');
-    }
     final structures = classes
         .whereType<Map>()
         .map((value) => CourseStructureItem.fromJson(Map<String, dynamic>.from(value)))
         .toList();
     final nextVirtualClassEvent = _earliestUpcomingVirtualClassEvent(structures);
-    if (kDebugMode) {
-      debugPrint(
-        '[CourseJoinDetail] nextVirtualClassEvent start='
-        '${nextVirtualClassEvent?.startDateTime}',
-      );
-    }
     return CourseJoinDetail(
       id: _asInt(
         _firstValue(root, course, const ['course_id', 'courseId', 'id']),
@@ -391,15 +372,6 @@ class CourseStructureItem {
     // what should be the same answer. Use the same still-open (start
     // through end) selection as registration, formatted from the already
     // UTC->local-corrected DateTime rather than pasting the raw strings.
-    if (kDebugMode) {
-      final itemTitle = _firstValue(json, classMap, const ['name', 'title', 'class_name', 'className']);
-      debugPrint('[CourseStructureItem] "$itemTitle" typeCode=$typeCode learningEvents=${learningEvents.length}');
-      for (final e in learningEvents) {
-        debugPrint('[CourseStructureItem]   raw start=${e.startDate} ${e.startTime} '
-            'end=${e.endDate} ${e.endTime} => startDateTime=${e.startDateTime} '
-            'endDateTime=${e.endDateTime} learningEventClassId=${e.learningEventClassId}');
-      }
-    }
     final upcomingEvent = _earliestUpcomingEventOf(learningEvents);
     final eventNextSession = upcomingEvent?.startDateTime != null
         ? _formatNextSessionMoment(upcomingEvent!.startDateTime!)
@@ -743,34 +715,6 @@ bool _looksLikeAction(String text) {
       value.contains('register') ||
       value.contains('cancel') ||
       value.contains('join');
-}
-
-/// Debug-only diagnostic dump of whichever registration/enrollment-shaped
-/// keys are actually present at the top level of [map], so a mismatch
-/// between what the API sends and the key names `_isRegistered` looks for
-/// can be spotted directly from a device/console log capture.
-Map<String, dynamic> _enrollmentKeySnapshot(Map<String, dynamic> map) {
-  const candidateKeys = [
-    'is_enrolled', 'isEnrolled', 'is_registered', 'isRegistered', 'registered',
-    'enrolled', 'is_joined', 'isJoined', 'joined', 'is_enroll', 'isEnroll',
-    'is_user_enrolled', 'isUserEnrolled', 'is_user_registered', 'isUserRegistered',
-    'user_registered', 'userRegistered', 'course_enrolled', 'courseEnrolled',
-    'course_registered', 'courseRegistered', 'already_enrolled', 'alreadyEnrolled',
-    'already_registered', 'alreadyRegistered',
-    'registration_status', 'registrationStatus', 'enrollment_status', 'enrollmentStatus',
-    'roster_status', 'rosterStatus', 'roaster_status', 'roasterStatus',
-    'user_course_status', 'userCourseStatus',
-    'registration', 'registration_detail', 'registrationDetail', 'enrollment',
-    'enrollment_detail', 'enrollmentDetail', 'roster', 'roster_detail', 'rosterDetail',
-    'roaster', 'rosters', 'roasters', 'user_roster', 'userRoster', 'user_rosters',
-    'userRosters', 'user_roaster', 'userRoaster', 'user_roasters', 'userRoasters',
-    'user_course', 'userCourse',
-  ];
-  final found = <String, dynamic>{};
-  for (final key in candidateKeys) {
-    if (map.containsKey(key)) found[key] = map[key];
-  }
-  return found;
 }
 
 bool _isRegistered(Map<String, dynamic> map) {
