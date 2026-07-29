@@ -138,17 +138,39 @@ class FileCacheViewModel extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<File> _decryptHlsForViewing(String hlsUrl) async {
+  Future<File?> _decryptHlsForViewing(String hlsUrl) async {
     final srcDir = await _hlsLocalDir(hlsUrl);
     final destDir = await _hlsViewingDir(hlsUrl);
     if (!destDir.existsSync()) destDir.createSync(recursive: true);
+    File? manifestOut;
     await for (final entity in srcDir.list()) {
       if (entity is! File) continue;
       final bytes = await entity.readAsBytes();
       final name = entity.uri.pathSegments.last;
-      await File('${destDir.path}/$name').writeAsBytes(_OfflineCipher.apply(bytes));
+      final outFile = File('${destDir.path}/$name');
+      await outFile.writeAsBytes(_OfflineCipher.apply(bytes));
+      if (name == 'playlist.m3u8') manifestOut = outFile;
     }
-    return File('${destDir.path}/playlist.m3u8');
+    // A download saved by an older build (e.g. before offline content was
+    // encrypted at rest) sits on disk as plaintext - decrypting it here
+    // XORs it *into* garbage instead of out of it. Detect that instead of
+    // silently handing the player unplayable bytes: a real decrypted
+    // manifest always starts with "#EXTM3U". If it doesn't, treat the whole
+    // local copy as stale, drop it, and let the UI fall back to "Download".
+    if (manifestOut == null || !await _looksLikeM3u8(manifestOut)) {
+      if (destDir.existsSync()) await destDir.delete(recursive: true);
+      if (srcDir.existsSync()) await srcDir.delete(recursive: true);
+      cachedState.remove(hlsUrl);
+      notifyListeners();
+      return null;
+    }
+    return manifestOut;
+  }
+
+  Future<bool> _looksLikeM3u8(File file) async {
+    final length = await file.length();
+    final head = await file.openRead(0, length < 7 ? length : 7).first;
+    return utf8.decode(head, allowMalformed: true).startsWith('#EXTM3U');
   }
 
   // ── Regular (non-HLS) download ─────────────────────────────────────────────
