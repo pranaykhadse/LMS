@@ -2067,14 +2067,14 @@ class _LearningEventCard extends StatelessWidget {
               Expanded(
                 child: _ScheduleField(
                   label: 'START',
-                  value: _formatDateTime(event.startDate, event.startTime),
+                  value: _formatEventMoment(event.startDateTime, event.startTime),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _ScheduleField(
                   label: 'END',
-                  value: _formatDateTime(event.endDate, event.endTime),
+                  value: _formatEventMoment(event.endDateTime, event.endTime),
                 ),
               ),
             ],
@@ -2175,10 +2175,15 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
-String _formatDateTime(String date, String time) {
-  if (date == '0000-00-00' || date.isEmpty) return _formatTime(time);
-  final dateTime = DateTime.tryParse('${date}T$time');
-  if (dateTime == null) return '$date $time'.trim();
+// Formats an already timezone-corrected DateTime (LearningEvent.startDateTime
+// / endDateTime, which convert the API's UTC values to local time - see
+// course_join_detail.dart's _combineDateAndTime) rather than reparsing the
+// raw date/time strings naively. Reparsing them here directly used to skip
+// that UTC->local conversion, so this schedule display drifted out of sync
+// with the website by exactly the device's UTC offset (5:30 on an IST
+// device) even though the register/countdown flow elsewhere was correct.
+String _formatEventMoment(DateTime? dateTime, String rawTime) {
+  if (dateTime == null) return _formatTime(rawTime);
   const months = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
