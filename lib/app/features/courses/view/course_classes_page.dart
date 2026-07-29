@@ -242,30 +242,31 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   bool _cancelling = false;
 
   Future<void> _enroll() async {
-    // A course with a future Virtual Class session confirms the date/time
-    // with the learner before actually registering, matching the website's
-    // two-step Register -> Confirm flow. Courses with no such session just
-    // enroll directly, unchanged.
-    final event = widget.detail.nextVirtualClassEvent;
-    if (event != null) {
+    // A course with one or more Virtual/In Person classes that need a
+    // session picked confirms each class's date/time with the learner
+    // before actually registering, matching the website's step-through
+    // Register -> Confirm wizard. Courses with none of those just enroll
+    // directly, unchanged.
+    final classes = widget.detail.classesRequiringSessionSelection;
+    if (classes.isNotEmpty) {
       await showDialog(
         context: context,
-        builder: (_) => _SessionRegisterDialog(
+        builder: (_) => _MultiClassRegisterDialog(
           courseTitle: widget.detail.title,
-          event: event,
+          classes: classes,
           onConfirm: _doEnroll,
         ),
       );
     } else {
-      await _doEnroll();
+      await _doEnroll([]);
     }
   }
 
-  Future<void> _doEnroll() async {
+  Future<void> _doEnroll([Map<int, int>? classLearningEvents]) async {
     setState(() => _enrolling = true);
     final result = await ref
         .read(CourseJoinDetailViewModel.provider(widget.detail.id).notifier)
-        .enroll();
+        .enroll(classLearningEvents: classLearningEvents);
     if (!mounted) return;
     setState(() => _enrolling = false);
     if (result.success) {
@@ -296,7 +297,10 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   @override
   void initState() {
     super.initState();
-    if (widget.detail.launchDate != null) {
+    // The countdown only makes sense once actually registered for a
+    // session - showing it beforehand (against a date the learner hasn't
+    // confirmed yet) is misleading.
+    if (widget.detail.launchDate != null && widget.detail.isEnrolled) {
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (mounted) setState(() {});
       });
@@ -323,10 +327,12 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       margin: const EdgeInsets.fromLTRB(22, 0, 22, 28),
       child: Column(
         children: [
-          // Only show the countdown when there's an actual date to count
-          // down to - showing 00:00:00:00 when none was found is
-          // misleading (looks like the event is starting right now).
-          if (launchDate != null) ...[
+          // Only show the countdown once there's both an actual date to
+          // count down to AND the learner is actually registered - showing
+          // it pre-enrollment implies a commitment that hasn't been made
+          // yet (matches the website, which only starts the countdown
+          // after Register/Confirm).
+          if (launchDate != null && detail.isEnrolled) ...[
             const Text(
               'LAUNCHES IN',
               style: TextStyle(
@@ -1430,6 +1436,306 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sessionField(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: _detailMuted,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: .3,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(color: _detailInk, fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+}
+
+// ─── Multi-class Register -> Confirm wizard ────────────────────────────────
+//
+// Matches the website's step-through flow for whole-course enrollment when
+// more than one Virtual/In Person class needs a session picked: one step per
+// class (radio-select a session, "Next"), "Register" on the last class's
+// step, then a final Confirm step summarizing every selection before the
+// actual registration call fires.
+
+class _MultiClassRegisterDialog extends StatefulWidget {
+  const _MultiClassRegisterDialog({
+    required this.courseTitle,
+    required this.classes,
+    required this.onConfirm,
+  });
+
+  final String courseTitle;
+  final List<CourseStructureItem> classes;
+  final Future<void> Function(Map<int, int> classLearningEvents) onConfirm;
+
+  @override
+  State<_MultiClassRegisterDialog> createState() => _MultiClassRegisterDialogState();
+}
+
+class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
+  late final List<int?> _selectedEventId;
+  int _step = 0;
+  bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedEventId = widget.classes
+        .map((item) => _earliestUpcomingEvent(item.learningEvents)?.learningEventClassId)
+        .toList();
+  }
+
+  bool get _isConfirmStep => _step >= widget.classes.length;
+
+  List<LearningEvent> _upcomingEventsFor(CourseStructureItem item) {
+    final now = DateTime.now();
+    final events = item.learningEvents
+        .where((e) => e.startDateTime != null && e.startDateTime!.isAfter(now))
+        .toList();
+    events.sort((a, b) => a.startDateTime!.compareTo(b.startDateTime!));
+    return events;
+  }
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+    setState(() => _submitting = true);
+    final selections = <int, int>{};
+    for (var i = 0; i < widget.classes.length; i++) {
+      final classId = widget.classes[i].classId;
+      final eventId = _selectedEventId[i];
+      if (classId != null && eventId != null) selections[classId] = eventId;
+    }
+    await widget.onConfirm(selections);
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 44),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [_detailPurple, _detailPurple2]),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    widget.courseTitle,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Positioned(
+                    right: -16,
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: _isConfirmStep ? _buildConfirmStep() : _buildClassStep(_step),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClassStep(int index) {
+    final item = widget.classes[index];
+    final events = _upcomingEventsFor(item);
+    final isLastClass = index == widget.classes.length - 1;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          item.title,
+          style: const TextStyle(color: _detailInk, fontSize: 15, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        const Text('Select a session', style: TextStyle(color: _detailMuted, fontSize: 12.5)),
+        const SizedBox(height: 12),
+        if (events.length <= 1)
+          _sessionCardFor(events.isEmpty ? null : events.first)
+        else
+          ...events.map(
+            (event) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: InkWell(
+                onTap: () => setState(() => _selectedEventId[index] = event.learningEventClassId),
+                borderRadius: BorderRadius.circular(10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Radio<int?>(
+                      value: event.learningEventClassId,
+                      groupValue: _selectedEventId[index],
+                      onChanged: (value) => setState(() => _selectedEventId[index] = value),
+                      activeColor: _detailPurple,
+                    ),
+                    Expanded(child: _sessionCardFor(event)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => setState(() => _step = index + 1),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _detailPurple,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              minimumSize: const Size(0, 46),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(
+              isLastClass ? 'Register' : 'Next',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConfirmStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Please confirm the dates and times for your selections.',
+          style: TextStyle(color: _detailInk),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'You will receive an email with a calendar invitation for each '
+          'learning event after confirmation.',
+          style: TextStyle(color: _detailMuted, fontSize: 12.5),
+        ),
+        const SizedBox(height: 16),
+        for (var i = 0; i < widget.classes.length; i++) ...[
+          Text(
+            widget.classes[i].title,
+            style: const TextStyle(color: _detailInk, fontSize: 13, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          _sessionCardFor(_selectedEventFor(i)),
+          if (i != widget.classes.length - 1) const SizedBox(height: 16),
+        ],
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            OutlinedButton(
+              onPressed: _submitting
+                  ? null
+                  : () => setState(() => _step = widget.classes.length - 1),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _detailInk,
+                side: const BorderSide(color: Color(0xFFCBCBCB)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              ),
+              child: const Text('Previous', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: _submitting ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _detailPurple,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: _submitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  LearningEvent? _selectedEventFor(int index) {
+    final id = _selectedEventId[index];
+    if (id == null) return null;
+    for (final event in widget.classes[index].learningEvents) {
+      if (event.learningEventClassId == id) return event;
+    }
+    return null;
+  }
+
+  Widget _sessionCardFor(LearningEvent? event) {
+    if (event == null) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFE5DFFF)),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Text(
+          'No upcoming session available.',
+          style: TextStyle(color: _detailMuted),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE5DFFF)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _sessionField('START', _formatSessionMoment(event.startDateTime))),
+              Expanded(child: _sessionField('END', _formatSessionMoment(event.endDateTime))),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFECEFF4)),
+          const SizedBox(height: 12),
+          _sessionField('INSTRUCTOR', event.instructor.isEmpty ? '—' : event.instructor),
         ],
       ),
     );

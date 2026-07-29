@@ -61,6 +61,18 @@ class CourseJoinDetail {
     return selections;
   }
 
+  /// Every Virtual Class / In Person class that has at least one upcoming
+  /// session - each one needs its own session picked before whole-course
+  /// enrollment can succeed, matching the website's step-through-each-class
+  /// Register wizard (Next per class, Register on the last, then a final
+  /// Confirm summarizing every selection).
+  List<CourseStructureItem> get classesRequiringSessionSelection => structures
+      .where((item) =>
+          item.classId != null &&
+          (item.typeCode == '2' || item.typeCode == '3') &&
+          _earliestUpcomingEventOf(item.learningEvents) != null)
+      .toList();
+
   factory CourseJoinDetail.fromJson(Map<String, dynamic> json) {
     final root = _payloadMap(json);
     final course = _courseMap(root);
