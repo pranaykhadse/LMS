@@ -415,6 +415,9 @@ class LearningEvent {
   final String instructions;
   final String? sessionLink;
 
+  DateTime? get startDateTime => _combineDateAndTime(startDate, startTime);
+  DateTime? get endDateTime => _combineDateAndTime(endDate, endTime);
+
   factory LearningEvent.fromJson(Map<String, dynamic> json) {
     return LearningEvent(
       startDate: json['start_date']?.toString() ?? '',

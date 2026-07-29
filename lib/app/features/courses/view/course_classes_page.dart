@@ -242,6 +242,26 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   bool _cancelling = false;
 
   Future<void> _enroll() async {
+    // A course with a future Virtual Class session confirms the date/time
+    // with the learner before actually registering, matching the website's
+    // two-step Register -> Confirm flow. Courses with no such session just
+    // enroll directly, unchanged.
+    final event = _earliestUpcomingVirtualClassEvent(widget.detail);
+    if (event != null) {
+      await showDialog(
+        context: context,
+        builder: (_) => _SessionRegisterDialog(
+          courseTitle: widget.detail.title,
+          event: event,
+          onConfirm: _doEnroll,
+        ),
+      );
+    } else {
+      await _doEnroll();
+    }
+  }
+
+  Future<void> _doEnroll() async {
     setState(() => _enrolling = true);
     final result = await ref
         .read(CourseJoinDetailViewModel.provider(widget.detail.id).notifier)
@@ -660,6 +680,37 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     }
   }
 
+  /// There's no per-class registration API - registering for a Virtual
+  /// Class session confirms the date/time (matching the website's
+  /// Register -> Confirm flow) but then calls the same whole-course enroll.
+  Future<void> _registerForVirtualClass() async {
+    final event = _earliestUpcomingEvent(widget.item.learningEvents);
+    if (event == null) {
+      await _enrollWholeCourse();
+      return;
+    }
+    await showDialog(
+      context: context,
+      builder: (_) => _SessionRegisterDialog(
+        courseTitle: widget.courseTitle,
+        event: event,
+        onConfirm: _enrollWholeCourse,
+      ),
+    );
+  }
+
+  Future<void> _enrollWholeCourse() async {
+    final result = await ref
+        .read(CourseJoinDetailViewModel.provider(widget.courseId).notifier)
+        .enroll();
+    if (!mounted) return;
+    if (result.success) {
+      Toast.success(context, result.message ?? 'Registered successfully.');
+    } else {
+      Toast.error(context, result.message ?? 'Unable to register.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
@@ -785,12 +836,18 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             ] else ...[
               if (item.showDetails && item.showAction) const SizedBox(height: 15),
               if (item.showAction)
-                _EnrollActionButton(
-                  isEnrolled: isEnrolled,
-                  icon: _actionIcon(item.icon),
-                  label: item.actionLabel,
-                  item: item,
-                ),
+                item.typeCode == '3' && isEnrolled
+                    ? _OnlineActionButton(
+                        icon: _actionIcon(item.icon),
+                        label: item.actionLabel,
+                        onPressed: _registerForVirtualClass,
+                      )
+                    : _EnrollActionButton(
+                        isEnrolled: isEnrolled,
+                        icon: _actionIcon(item.icon),
+                        label: item.actionLabel,
+                        item: item,
+                      ),
             ],
             // downloadUrl is populated straight from the course-structure
             // API response regardless of enrollment, so gate visibility on
@@ -1124,6 +1181,298 @@ bool _isUnauthorizedError(String? error) {
       value.contains('invalid credentials') ||
       value.contains('status code of 401') ||
       value.contains(' 401');
+}
+
+// ─── Virtual Class session lookup ──────────────────────────────────────────
+
+/// The earliest still-upcoming Virtual Class session across every
+/// structure item in the course, or null if there isn't one.
+LearningEvent? _earliestUpcomingVirtualClassEvent(CourseJoinDetail detail) {
+  LearningEvent? earliest;
+  for (final item in detail.structures) {
+    if (item.typeCode != '3') continue;
+    final candidate = _earliestUpcomingEvent(item.learningEvents);
+    if (candidate == null) continue;
+    if (earliest == null ||
+        candidate.startDateTime!.isBefore(earliest.startDateTime!)) {
+      earliest = candidate;
+    }
+  }
+  return earliest;
+}
+
+LearningEvent? _earliestUpcomingEvent(List<LearningEvent> events) {
+  final now = DateTime.now();
+  LearningEvent? earliest;
+  for (final event in events) {
+    final dt = event.startDateTime;
+    if (dt == null || dt.isBefore(now)) continue;
+    if (earliest == null || dt.isBefore(earliest.startDateTime!)) earliest = event;
+  }
+  return earliest;
+}
+
+// ─── Session Register -> Confirm dialog ────────────────────────────────────
+//
+// Matches the website's two-step flow: session details + a Register button,
+// then a confirm step ("Please confirm the dates and times...") before the
+// actual registration call fires.
+
+class _SessionRegisterDialog extends StatefulWidget {
+  const _SessionRegisterDialog({
+    required this.courseTitle,
+    required this.event,
+    required this.onConfirm,
+  });
+  final String courseTitle;
+  final LearningEvent event;
+  final Future<void> Function() onConfirm;
+
+  @override
+  State<_SessionRegisterDialog> createState() => _SessionRegisterDialogState();
+}
+
+class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
+  bool _confirming = false;
+  bool _submitting = false;
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+    setState(() => _submitting = true);
+    await widget.onConfirm();
+    if (mounted) Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 460),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 44),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [_detailPurple, _detailPurple2]),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    widget.courseTitle,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Positioned(
+                    right: -16,
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: _confirming ? _buildConfirmStep() : _buildDetailsStep(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailsStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _sessionCard(),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => setState(() => _confirming = true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _detailPurple,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              minimumSize: const Size(0, 46),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Register', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConfirmStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Please confirm the dates and times for your selections.',
+          style: TextStyle(color: _detailInk),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'You will receive an email with a calendar invitation for each '
+          'learning event after confirmation.',
+          style: TextStyle(color: _detailMuted, fontSize: 12.5),
+        ),
+        const SizedBox(height: 16),
+        _sessionCard(),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            OutlinedButton(
+              onPressed: _submitting ? null : () => setState(() => _confirming = false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _detailInk,
+                side: const BorderSide(color: Color(0xFFCBCBCB)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              ),
+              child: const Text('Previous', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: _submitting ? null : _submit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _detailPurple,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: _submitting
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _sessionCard() {
+    final event = widget.event;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE5DFFF)),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _sessionField('START', _formatSessionMoment(event.startDateTime)),
+              ),
+              Expanded(
+                child: _sessionField('END', _formatSessionMoment(event.endDateTime)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFECEFF4)),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _sessionField(
+                  'INSTRUCTOR',
+                  event.instructor.isEmpty ? '—' : event.instructor,
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'STATUS',
+                      style: TextStyle(
+                        color: _detailMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: .3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD4EDDA),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Available',
+                        style: TextStyle(
+                          color: Color(0xFF276036),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sessionField(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: _detailMuted,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: .3,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(value, style: const TextStyle(color: _detailInk, fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+}
+
+String _formatSessionMoment(DateTime? dt) {
+  if (dt == null) return '—';
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+  return '${months[dt.month - 1]}-${dt.day.toString().padLeft(2, '0')}-${dt.year}\n'
+      '$hour12:$minute $ampm';
 }
 
 void _showNotEnrolledDialog(BuildContext context) {
