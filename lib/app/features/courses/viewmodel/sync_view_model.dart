@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
+import 'package:lms/app/core/provider/reconnect_refresh.dart';
 import 'package:lms/app/features/courses/repository/roaster_repository.dart';
 import 'package:lms/app/features/courses/repository/sync_queue_repository.dart';
 
@@ -17,6 +18,7 @@ import 'package:lms/app/features/courses/repository/sync_queue_repository.dart';
 class SyncViewModel extends ChangeNotifier {
   static final provider = ChangeNotifierProvider<SyncViewModel>((ref) {
     return SyncViewModel(
+      ref: ref,
       queueRepo: ref.watch(SyncQueueRepository.provider),
       roasterRepo: ref.watch(RoasterRepository.provider),
       connectionProvider: ref.watch(InternetConnectionProvider.provider),
@@ -24,6 +26,7 @@ class SyncViewModel extends ChangeNotifier {
   });
 
   SyncViewModel({
+    required this.ref,
     required this.queueRepo,
     required this.roasterRepo,
     required this.connectionProvider,
@@ -33,6 +36,7 @@ class SyncViewModel extends ChangeNotifier {
     connectionProvider.addListener(_onConnectionChange);
   }
 
+  final Ref ref;
   final SyncQueueRepository queueRepo;
   final RoasterRepository roasterRepo;
   final InternetConnectionProvider connectionProvider;
@@ -88,13 +92,23 @@ class SyncViewModel extends ChangeNotifier {
     // Always notify so OfflineBanner and any other UI watching this VM
     // rebuilds immediately when connectivity changes in either direction.
     notifyListeners();
-    if (isConnected) sync();
+    if (isConnected) {
+      sync();
+      // The device just came back online (real network reconnect) - every
+      // screen's data provider may be showing whatever it had cached from
+      // before the connection dropped, so refetch them all now instead of
+      // waiting for the user to manually pull-to-refresh each one.
+      refreshAllOnReconnect(ref);
+    }
   }
 
   /// Call this when the manual offline toggle is switched OFF so any
-  /// queued completions are flushed immediately.
+  /// queued completions are flushed and every screen refetches fresh data
+  /// immediately, rather than continuing to show offline-cached content.
   void onManualOnline() {
-    if (connectionProvider.isConnected) sync();
+    if (!connectionProvider.isConnected) return;
+    sync();
+    refreshAllOnReconnect(ref);
   }
 
   Future<void> _refreshCount() async {
