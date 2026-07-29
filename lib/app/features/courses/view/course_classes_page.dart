@@ -297,10 +297,13 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   @override
   void initState() {
     super.initState();
-    // The countdown only makes sense once actually registered for a
-    // session - showing it beforehand (against a date the learner hasn't
-    // confirmed yet) is misleading.
-    if (widget.detail.launchDate != null && widget.detail.isEnrolled) {
+    // Start ticking whenever there's a date to count down to, regardless of
+    // enrollment status at mount time - this widget instance is reused (not
+    // remounted) when the user enrolls from this same screen, so gating on
+    // `isEnrolled` here would freeze the timer forever if it wasn't already
+    // true on first build. Visibility of the countdown itself is separately
+    // gated by `isEnrolled` in build().
+    if (widget.detail.launchDate != null) {
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (mounted) setState(() {});
       });
@@ -1583,9 +1586,12 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
         const SizedBox(height: 4),
         const Text('Select a session', style: TextStyle(color: _detailMuted, fontSize: 12.5)),
         const SizedBox(height: 12),
-        if (events.length <= 1)
-          _sessionCardFor(events.isEmpty ? null : events.first)
+        if (events.isEmpty)
+          _sessionCardFor(null)
         else
+          // Always shown as a radio - even with a single session - so the
+          // learner explicitly confirms their pick, matching the reference
+          // design rather than silently auto-selecting the only option.
           ...events.map(
             (event) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
