@@ -5,6 +5,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
+import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart' show isEffectivelyOffline;
 import 'package:lms/app/features/dashboard/view/view_competency_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_paths_view_model.dart';
 
@@ -86,16 +87,16 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
 
 // ─── Search bar ───────────────────────────────────────────────────────────────
 
-class _SearchBar extends StatefulWidget {
+class _SearchBar extends ConsumerStatefulWidget {
   const _SearchBar({required this.controller, required this.onSearch});
   final TextEditingController controller;
   final VoidCallback onSearch;
 
   @override
-  State<_SearchBar> createState() => _SearchBarState();
+  ConsumerState<_SearchBar> createState() => _SearchBarState();
 }
 
-class _SearchBarState extends State<_SearchBar> {
+class _SearchBarState extends ConsumerState<_SearchBar> {
   bool _hasText = false;
 
   @override
@@ -117,6 +118,10 @@ class _SearchBarState extends State<_SearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    // Search hits the live API with no offline fallback - offering it while
+    // there's no real connection just invites a tap that can only fail, the
+    // same reasoning as RetryButton (see lib/app/core/views/elements).
+    final offline = isEffectivelyOffline(ref);
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
@@ -125,13 +130,14 @@ class _SearchBarState extends State<_SearchBar> {
           Expanded(
             child: TextField(
               controller: widget.controller,
+              enabled: !offline,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => widget.onSearch(),
               decoration: InputDecoration(
-                hintText: 'Search learning paths...',
+                hintText: offline ? "You're offline" : 'Search learning paths...',
                 hintStyle: const TextStyle(color: _muted, fontSize: 14),
                 prefixIcon: const Icon(Icons.search_rounded, color: _muted, size: 22),
-                suffixIcon: _hasText
+                suffixIcon: _hasText && !offline
                     ? IconButton(
                         icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
                         onPressed: () {
@@ -152,10 +158,10 @@ class _SearchBarState extends State<_SearchBar> {
           ),
           const SizedBox(width: 8),
           Material(
-            color: _purple,
+            color: offline ? _muted.withValues(alpha: 0.4) : _purple,
             borderRadius: BorderRadius.circular(10),
             child: InkWell(
-              onTap: widget.onSearch,
+              onTap: offline ? null : widget.onSearch,
               borderRadius: BorderRadius.circular(10),
               child: const SizedBox(
                 width: 44,

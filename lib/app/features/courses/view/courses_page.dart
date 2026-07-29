@@ -133,6 +133,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                   searchController: _searchController,
                   skills: catalogState.filterOptions,
                   selectedSkillId: _selectedSkillId,
+                  offline: effectivelyOffline,
                   onSkillChanged:
                       (value) => setState(() => _selectedSkillId = value),
                   onApply: _applyCatalogFilters,
@@ -404,6 +405,7 @@ class _FilterPanel extends StatelessWidget {
     required this.searchController,
     required this.skills,
     required this.selectedSkillId,
+    required this.offline,
     required this.onSkillChanged,
     required this.onApply,
     required this.onReset,
@@ -413,6 +415,10 @@ class _FilterPanel extends StatelessWidget {
   final TextEditingController searchController;
   final List<CatalogSkill> skills;
   final String? selectedSkillId;
+  // Search/Reset both hit the live API with no offline fallback - offering
+  // them while there's no real connection just invites a tap that can only
+  // fail, the same reasoning as RetryButton.
+  final bool offline;
   final ValueChanged<String?> onSkillChanged;
   final VoidCallback onApply;
   final VoidCallback onReset;
@@ -439,9 +445,10 @@ class _FilterPanel extends StatelessWidget {
           final fields = <Widget>[
             _CatalogField(
               controller: searchController,
-              hint: 'Search Course',
+              hint: offline ? "You're offline" : 'Search Course',
               showClear: true,
               showLeadingIcon: false,
+              enabled: !offline,
               onSubmitted: (_) => onApply(),
             ),
             _SkillDropdown(
@@ -464,7 +471,7 @@ class _FilterPanel extends StatelessWidget {
                     width: 56,
                     height: 42,
                     child: OutlinedButton(
-                      onPressed: onReset,
+                      onPressed: offline ? null : onReset,
                       style: OutlinedButton.styleFrom(
                         side: BorderSide.none,
                         backgroundColor: _catalogBackground,
@@ -477,7 +484,7 @@ class _FilterPanel extends StatelessWidget {
                     width: 118,
                     height: 42,
                     child: ElevatedButton.icon(
-                      onPressed: onApply,
+                      onPressed: offline ? null : onApply,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _catalogPurple,
                         foregroundColor: Colors.white,
@@ -526,7 +533,7 @@ class _FilterPanel extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: onApply,
+                  onPressed: offline ? null : onApply,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(48),
                     backgroundColor: _catalogPurple,
@@ -550,7 +557,7 @@ class _FilterPanel extends StatelessWidget {
                     width: 52,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: onReset,
+                      onPressed: offline ? null : onReset,
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.zero,
                         backgroundColor: _catalogPurple,
