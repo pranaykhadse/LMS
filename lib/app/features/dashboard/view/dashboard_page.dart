@@ -11,6 +11,7 @@ import 'package:lms/app/features/authentication/app_state/auth_state_provider.da
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
@@ -318,12 +319,13 @@ class _CourseCarousel extends StatelessWidget {
   }
 }
 
-class _CourseCard extends StatelessWidget {
+class _CourseCard extends ConsumerWidget {
   const _CourseCard({required this.course});
   final DashboardCourse course;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewDisabled = isViewCourseDisabled(ref, course.id);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -402,11 +404,13 @@ class _CourseCard extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed:
-                          () => Modular.to.pushNamed(
-                            CoursesModule.construct(
-                              '${CoursesModule.detail}/${course.id}',
-                            ),
-                          ),
+                          viewDisabled
+                              ? null
+                              : () => Modular.to.pushNamed(
+                                CoursesModule.construct(
+                                  '${CoursesModule.detail}/${course.id}',
+                                ),
+                              ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _purple,
                         foregroundColor: Colors.white,

@@ -7,6 +7,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/features/courses/model/calendar_event.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/viewmodel/calendar_view_model.dart';
 
 const _calPurple = Color(0xFF5756C9);
@@ -641,13 +642,14 @@ class _CalendarEventTile extends StatelessWidget {
 
 // ─── Event details dialog ───────────────────────────────────────────────────
 
-class _EventDetailsDialog extends StatelessWidget {
+class _EventDetailsDialog extends ConsumerWidget {
   const _EventDetailsDialog({required this.event});
   final CalendarEvent event;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final displayTitle = event.title.isNotEmpty ? event.title : event.courseName;
+    final viewDisabled = isViewCourseDisabled(ref, event.courseId);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
@@ -726,14 +728,16 @@ class _EventDetailsDialog extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Modular.to.pushNamed(
-                        CoursesModule.construct(
-                          '${CoursesModule.detail}/${event.courseId}',
-                        ),
-                      );
-                    },
+                    onPressed: viewDisabled
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                            Modular.to.pushNamed(
+                              CoursesModule.construct(
+                                '${CoursesModule.detail}/${event.courseId}',
+                              ),
+                            );
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _calPurple,
                       foregroundColor: Colors.white,

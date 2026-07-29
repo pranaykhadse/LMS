@@ -8,6 +8,7 @@ import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
 import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
@@ -370,6 +371,7 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
     final course = widget.course;
     final membership = ref.watch(DevPlanMembershipViewModel.provider);
     final isInPlan = membership.ids.contains(course.courseId);
+    final viewDisabled = isViewCourseDisabled(ref, course.courseId);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -491,11 +493,13 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => Modular.to.pushNamed(
-                      CoursesModule.construct(
-                        '${CoursesModule.detail}/${course.courseId}',
-                      ),
-                    ),
+                    onPressed: viewDisabled
+                        ? null
+                        : () => Modular.to.pushNamed(
+                            CoursesModule.construct(
+                              '${CoursesModule.detail}/${course.courseId}',
+                            ),
+                          ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _purple,
                       foregroundColor: Colors.white,

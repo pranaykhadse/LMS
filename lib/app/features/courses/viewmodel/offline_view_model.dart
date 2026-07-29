@@ -176,6 +176,14 @@ class OfflineViewModel extends ChangeNotifier {
     return courses.data?.any((e) => e.id == course.id) ?? false;
   }
 
+  /// Same as [isAvailable], but by raw courseId - for the many course-listing
+  /// screens (dashboard, catalog, my courses, calendar) whose own card model
+  /// isn't the courses/model/course.dart Course type.
+  bool isAvailableById(int? courseId) {
+    return courseId != null &&
+        (courses.data?.any((e) => e.id == courseId) ?? false);
+  }
+
   /// Returns the locally-cached lesson list for [courseId].
   Future<List<CourseClass>> getCachedClasses(String courseId) {
     return repository.getCachedClasses(courseId);

@@ -16,6 +16,7 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
+import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
@@ -1090,6 +1091,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
     final isOnline = !isManualOffline && connectionVM.isConnected;
     final membership = ref.watch(DevPlanMembershipViewModel.provider);
     final isInPlan = membership.ids.contains(widget.course.id);
+    final viewDisabled = isViewCourseDisabled(ref, widget.course.id);
 
     final isWide = MediaQuery.sizeOf(context).width >= 760;
 
@@ -1164,12 +1166,14 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => Modular.to.pushNamed(
-                        CoursesModule.construct(
-                          '${CoursesModule.detail}/${widget.course.id}',
-                        ),
-                        arguments: widget.course.offlineCourse,
-                      ),
+                      onPressed: viewDisabled
+                          ? null
+                          : () => Modular.to.pushNamed(
+                              CoursesModule.construct(
+                                '${CoursesModule.detail}/${widget.course.id}',
+                              ),
+                              arguments: widget.course.offlineCourse,
+                            ),
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size.fromHeight(isWide ? 34 : 42),
                         backgroundColor: const Color(0xFF433FA0),
