@@ -71,12 +71,9 @@ class CourseJoinDetail {
         .map((value) => CourseStructureItem.fromJson(Map<String, dynamic>.from(value)))
         .toList();
     if (kDebugMode) {
-      final directLaunchDate = _launchDate(root, course);
-      final fallbackLaunchDate = _earliestUpcomingSessionDate(structures);
       debugPrint(
-        '[CourseJoinDetail] launchDate: direct=$directLaunchDate '
-        'fallback(learning_events)=$fallbackLaunchDate '
-        '=> resolved=${directLaunchDate ?? fallbackLaunchDate}',
+        '[CourseJoinDetail] launchDate (from learning_events)='
+        '${_earliestUpcomingSessionDate(structures)}',
       );
     }
     return CourseJoinDetail(
@@ -149,7 +146,11 @@ class CourseJoinDetail {
                   _isBookingClosed(root)
               ? 'Closed'
               : 'Open'),
-      launchDate: _launchDate(root, course) ?? _earliestUpcomingSessionDate(structures),
+      // Deliberately not sourced from generic top-level date fields
+      // (course_date, available_at, etc.) - those matched unrelated course
+      // metadata for courses with no actual scheduled session, producing a
+      // bogus countdown. Only a real upcoming learning_events entry counts.
+      launchDate: _earliestUpcomingSessionDate(structures),
       progressPercentage: _progressPercent(root, course),
       primaryAction:
           actionLabel ?? (isEnrolled ? 'Cancel Registration' : 'Enroll Now'),
@@ -428,38 +429,9 @@ class LearningEvent {
   }
 }
 
-DateTime? _launchDate(
-  Map<String, dynamic> root,
-  Map<String, dynamic> course,
-) {
-  final raw = _firstValue(root, course, const [
-    'start_date',
-    'startDate',
-    'course_date',
-    'courseDate',
-    'next_session',
-    'nextSession',
-    'next_session_date',
-    'nextSessionDate',
-    'event_date',
-    'eventDate',
-    'launch_date',
-    'launchDate',
-    'course_start_date',
-    'courseStartDate',
-    'event_start',
-    'eventStart',
-    'available_at',
-    'availableAt',
-  ]);
-  if (raw == null) return null;
-  return DateTime.tryParse(raw.toString());
-}
-
-/// Fallback for when no course-level launch date exists: the "LAUNCHES IN"
-/// countdown really wants the next upcoming session's start date+time,
-/// which the API only nests inside each class's own `learning_events`, not
-/// at the course's top level. Combines startDate+startTime (like the
+/// The "LAUNCHES IN" countdown target: the earliest still-upcoming session
+/// start date+time across all of the course's classes, nested inside each
+/// class's own `learning_events`. Combines startDate+startTime (like the
 /// website's own "START: Jul-30-2026 11:45 AM") rather than just the date,
 /// which would default to midnight and show a wrong countdown.
 DateTime? _earliestUpcomingSessionDate(List<CourseStructureItem> structures) {
