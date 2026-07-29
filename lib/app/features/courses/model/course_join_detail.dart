@@ -12,6 +12,7 @@ class CourseJoinDetail {
     required this.learningPath,
     required this.launchStatus,
     required this.launchDate,
+    required this.nextVirtualClassEvent,
     required this.progressPercentage,
     required this.primaryAction,
     required this.isEnrolled,
@@ -29,6 +30,12 @@ class CourseJoinDetail {
   final String? learningPath;
   final String launchStatus;
   final DateTime? launchDate;
+  // The single source of truth for "does this course have an upcoming
+  // Virtual Class session, and when": both the LAUNCHES IN countdown
+  // (launchDate) and the Register -> Confirm dialog in the view layer read
+  // from this same field, so they can never disagree about whether a real
+  // session exists.
+  final LearningEvent? nextVirtualClassEvent;
   final double progressPercentage; // 0.0 to 1.0
   final String primaryAction;
   final bool isEnrolled;
@@ -70,10 +77,11 @@ class CourseJoinDetail {
         .whereType<Map>()
         .map((value) => CourseStructureItem.fromJson(Map<String, dynamic>.from(value)))
         .toList();
+    final nextVirtualClassEvent = _earliestUpcomingVirtualClassEvent(structures);
     if (kDebugMode) {
       debugPrint(
-        '[CourseJoinDetail] launchDate (from learning_events)='
-        '${_earliestUpcomingSessionDate(structures)}',
+        '[CourseJoinDetail] nextVirtualClassEvent start='
+        '${nextVirtualClassEvent?.startDateTime}',
       );
     }
     return CourseJoinDetail(
@@ -149,8 +157,10 @@ class CourseJoinDetail {
       // Deliberately not sourced from generic top-level date fields
       // (course_date, available_at, etc.) - those matched unrelated course
       // metadata for courses with no actual scheduled session, producing a
-      // bogus countdown. Only a real upcoming learning_events entry counts.
-      launchDate: _earliestUpcomingSessionDate(structures),
+      // bogus countdown. Only a real upcoming Virtual Class session counts,
+      // same as nextVirtualClassEvent below.
+      launchDate: nextVirtualClassEvent?.startDateTime,
+      nextVirtualClassEvent: nextVirtualClassEvent,
       progressPercentage: _progressPercent(root, course),
       primaryAction:
           actionLabel ?? (isEnrolled ? 'Cancel Registration' : 'Enroll Now'),
@@ -432,19 +442,21 @@ class LearningEvent {
   }
 }
 
-/// The "LAUNCHES IN" countdown target: the earliest still-upcoming session
-/// start date+time across all of the course's classes, nested inside each
-/// class's own `learning_events`. Combines startDate+startTime (like the
-/// website's own "START: Jul-30-2026 11:45 AM") rather than just the date,
-/// which would default to midnight and show a wrong countdown.
-DateTime? _earliestUpcomingSessionDate(List<CourseStructureItem> structures) {
+/// The earliest still-upcoming Virtual Class (typeCode '3') session across
+/// the course's classes - and nothing else. Scoped to Virtual Class only:
+/// other content types (video/PDF/article/...) can also carry a
+/// `learning_events` array in the API response, and picking up a date from
+/// one of those produced a bogus countdown on courses with no real session
+/// at all.
+LearningEvent? _earliestUpcomingVirtualClassEvent(List<CourseStructureItem> structures) {
   final now = DateTime.now();
-  DateTime? earliest;
+  LearningEvent? earliest;
   for (final item in structures) {
+    if (item.typeCode != '3') continue;
     for (final event in item.learningEvents) {
-      final combined = _combineDateAndTime(event.startDate, event.startTime);
-      if (combined == null || combined.isBefore(now)) continue;
-      if (earliest == null || combined.isBefore(earliest)) earliest = combined;
+      final dt = event.startDateTime;
+      if (dt == null || dt.isBefore(now)) continue;
+      if (earliest == null || dt.isBefore(earliest.startDateTime!)) earliest = event;
     }
   }
   return earliest;

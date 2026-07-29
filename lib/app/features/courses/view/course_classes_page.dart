@@ -246,7 +246,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     // with the learner before actually registering, matching the website's
     // two-step Register -> Confirm flow. Courses with no such session just
     // enroll directly, unchanged.
-    final event = _earliestUpcomingVirtualClassEvent(widget.detail);
+    final event = widget.detail.nextVirtualClassEvent;
     if (event != null) {
       await showDialog(
         context: context,
@@ -1184,22 +1184,12 @@ bool _isUnauthorizedError(String? error) {
 }
 
 // ─── Virtual Class session lookup ──────────────────────────────────────────
-
-/// The earliest still-upcoming Virtual Class session across every
-/// structure item in the course, or null if there isn't one.
-LearningEvent? _earliestUpcomingVirtualClassEvent(CourseJoinDetail detail) {
-  LearningEvent? earliest;
-  for (final item in detail.structures) {
-    if (item.typeCode != '3') continue;
-    final candidate = _earliestUpcomingEvent(item.learningEvents);
-    if (candidate == null) continue;
-    if (earliest == null ||
-        candidate.startDateTime!.isBefore(earliest.startDateTime!)) {
-      earliest = candidate;
-    }
-  }
-  return earliest;
-}
+//
+// The course-level "is there an upcoming Virtual Class session" answer
+// lives on CourseJoinDetail.nextVirtualClassEvent (single source of truth
+// shared with the LAUNCHES IN countdown). This helper is only for picking
+// the earliest upcoming event within one specific structure item's own
+// learningEvents list.
 
 LearningEvent? _earliestUpcomingEvent(List<LearningEvent> events) {
   final now = DateTime.now();
