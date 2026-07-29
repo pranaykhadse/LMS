@@ -9,6 +9,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
+import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/model/course_catalog.dart';
@@ -1431,8 +1432,7 @@ class _CatalogError extends StatelessWidget {
           const SizedBox(height: 12),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          if (onRetry != null)
-            ElevatedButton(onPressed: onRetry, child: const Text('Try Again')),
+          if (onRetry != null) RetryButton(onRetry: onRetry!),
         ],
       ),
     ),

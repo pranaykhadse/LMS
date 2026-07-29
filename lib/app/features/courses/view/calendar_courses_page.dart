@@ -5,6 +5,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/courses/model/calendar_event.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
@@ -321,11 +322,10 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                           style: const TextStyle(color: _calMuted, fontSize: 13),
                         ),
                         const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: () =>
+                        RetryButton(
+                          onRetry: () =>
                               ref.read(CalendarViewModel.provider.notifier).fetch(),
                           style: ElevatedButton.styleFrom(backgroundColor: _calPurple),
-                          child: const Text('Try Again', style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),

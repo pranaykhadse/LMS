@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
 import 'package:lms/app/features/dashboard/view/view_competency_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_paths_view_model.dart';
@@ -572,13 +573,9 @@ class _ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: onRetry,
+              RetryButton(
+                onRetry: onRetry!,
                 style: ElevatedButton.styleFrom(backgroundColor: _purple),
-                child: const Text(
-                  'Try Again',
-                  style: TextStyle(color: Colors.white),
-                ),
               ),
             ],
           ],

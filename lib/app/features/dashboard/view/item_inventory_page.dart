@@ -6,6 +6,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
+import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
@@ -898,10 +899,9 @@ class _ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: onRetry,
+              RetryButton(
+                onRetry: onRetry!,
                 style: ElevatedButton.styleFrom(backgroundColor: _purple),
-                child: const Text('Try Again', style: TextStyle(color: Colors.white)),
               ),
             ],
           ],

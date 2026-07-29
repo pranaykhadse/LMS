@@ -4,6 +4,7 @@ import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/dashboard/model/redeem_history_item.dart';
 import 'package:lms/app/features/dashboard/viewmodel/redeem_history_view_model.dart';
 
@@ -400,10 +401,9 @@ class _ErrorView extends StatelessWidget {
             Text(message, textAlign: TextAlign.center, style: const TextStyle(color: _rhMuted)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: onRetry,
+              RetryButton(
+                onRetry: onRetry!,
                 style: ElevatedButton.styleFrom(backgroundColor: _rhPurple),
-                child: const Text('Try Again', style: TextStyle(color: Colors.white)),
               ),
             ],
           ],
