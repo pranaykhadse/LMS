@@ -1502,6 +1502,12 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
 
   bool get _isConfirmStep => _step >= widget.classes.length;
 
+  void _toggleSelection(int index, int? eventId) {
+    setState(() {
+      _selectedEventId[index] = _selectedEventId[index] == eventId ? null : eventId;
+    });
+  }
+
   List<LearningEvent> _upcomingEventsFor(CourseStructureItem item) {
     final now = DateTime.now();
     final events = item.learningEvents
@@ -1584,7 +1590,12 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
           style: const TextStyle(color: _detailInk, fontSize: 15, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
-        const Text('Select a session', style: TextStyle(color: _detailMuted, fontSize: 12.5)),
+        Text(
+          events.isEmpty
+              ? 'Select a session'
+              : 'Select a session, or tap it again to skip this class',
+          style: const TextStyle(color: _detailMuted, fontSize: 12.5),
+        ),
         const SizedBox(height: 12),
         if (events.isEmpty)
           _sessionCardFor(null)
@@ -1592,11 +1603,13 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
           // Always shown as a radio - even with a single session - so the
           // learner explicitly confirms their pick, matching the reference
           // design rather than silently auto-selecting the only option.
+          // Tapping the already-selected session deselects it - a class
+          // left unselected is simply left out of the registration.
           ...events.map(
             (event) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: InkWell(
-                onTap: () => setState(() => _selectedEventId[index] = event.learningEventClassId),
+                onTap: () => _toggleSelection(index, event.learningEventClassId),
                 borderRadius: BorderRadius.circular(10),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1604,6 +1617,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                     Radio<int?>(
                       value: event.learningEventClassId,
                       groupValue: _selectedEventId[index],
+                      toggleable: true,
                       onChanged: (value) => setState(() => _selectedEventId[index] = value),
                       activeColor: _detailPurple,
                     ),
@@ -1656,7 +1670,19 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
             style: const TextStyle(color: _detailInk, fontSize: 13, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
-          _sessionCardFor(_selectedEventFor(i)),
+          _selectedEventId[i] == null
+              ? Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFFE5DFFF)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'Skipped - this class will not be registered.',
+                    style: TextStyle(color: _detailMuted),
+                  ),
+                )
+              : _sessionCardFor(_selectedEventFor(i)),
           if (i != widget.classes.length - 1) const SizedBox(height: 16),
         ],
         const SizedBox(height: 20),
