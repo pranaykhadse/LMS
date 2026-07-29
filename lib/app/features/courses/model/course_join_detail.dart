@@ -382,9 +382,19 @@ class CourseStructureItem {
         'sessionDate',
       ]),
     );
-    final eventNextSession = learningEvents.isEmpty
-        ? null
-        : _clean('${learningEvents.first.startDate} ${learningEvents.first.startTime}');
+    // Was `learningEvents.first` - the raw, unfiltered, unconverted first
+    // entry in whatever order the API happens to return the class's
+    // sessions in. A class with old/past sessions mixed in with a real
+    // upcoming one (e.g. test data spanning 2021-2026) could show a
+    // years-stale "Next Session" while Register correctly picked the
+    // actual upcoming session underneath - two different displays for
+    // what should be the same answer. Use the same still-open (start
+    // through end) selection as registration, formatted from the already
+    // UTC->local-corrected DateTime rather than pasting the raw strings.
+    final upcomingEvent = _earliestUpcomingEventOf(learningEvents);
+    final eventNextSession = upcomingEvent?.startDateTime != null
+        ? _formatNextSessionMoment(upcomingEvent!.startDateTime!)
+        : null;
 
     return CourseStructureItem(
       title:
@@ -513,6 +523,11 @@ LearningEvent? _earliestUpcomingEventOf(List<LearningEvent> events) {
     if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
   }
   return earliest;
+}
+
+String _formatNextSessionMoment(DateTime dt) {
+  String pad(int n) => n.toString().padLeft(2, '0');
+  return '${dt.year}-${pad(dt.month)}-${pad(dt.day)} ${pad(dt.hour)}:${pad(dt.minute)}:${pad(dt.second)}';
 }
 
 /// The API sends session dates/times in UTC with no timezone marker (plain
