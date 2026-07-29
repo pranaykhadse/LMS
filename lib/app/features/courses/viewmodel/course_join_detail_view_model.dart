@@ -64,9 +64,34 @@ class CourseJoinDetailViewModel
   /// Registers the current user for the whole course, then refreshes the
   /// detail so `isEnrolled`/`primaryAction` reflect the new state. Skips the
   /// loading state so the screen doesn't flash back to a spinner - the
-  /// button itself shows its own in-flight state.
+  /// button itself shows its own in-flight state. Auto-selects each
+  /// Virtual/In Person class's earliest upcoming session so the API doesn't
+  /// reject the registration for missing a session selection.
   Future<CourseEnrollResult> enroll() async {
-    final result = await repository.register(courseId: courseId);
+    final classLearningEvents = state.data?.classLearningEventSelections ?? const {};
+    final result = await repository.register(
+      courseId: courseId,
+      classLearningEvents: classLearningEvents,
+    );
+    if (result.success) {
+      await _silentRefetch();
+      _refreshRelatedScreens();
+    }
+    return result;
+  }
+
+  /// Registers for a single class/session (e.g. the per-item "Register"
+  /// button on a Virtual Class structure item), rather than the whole
+  /// course.
+  Future<CourseEnrollResult> registerClass({
+    required int classId,
+    int? learningEventClassId,
+  }) async {
+    final result = await repository.registerClass(
+      courseId: courseId,
+      classId: classId,
+      learningEventClassId: learningEventClassId,
+    );
     if (result.success) {
       await _silentRefetch();
       _refreshRelatedScreens();

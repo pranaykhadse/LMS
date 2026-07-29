@@ -680,13 +680,16 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     }
   }
 
-  /// There's no per-class registration API - registering for a Virtual
-  /// Class session confirms the date/time (matching the website's
-  /// Register -> Confirm flow) but then calls the same whole-course enroll.
+  /// Confirms the date/time (matching the website's Register -> Confirm
+  /// flow), then registers just this one class/session via
+  /// POST lms-screen/register-course in its single-class mode
+  /// (class_id + learning_event_class_id) - not the whole-course enroll.
   Future<void> _registerForVirtualClass() async {
+    final classId = widget.item.classId;
+    if (classId == null) return;
     final event = _earliestUpcomingEvent(widget.item.learningEvents);
     if (event == null) {
-      await _enrollWholeCourse();
+      await _registerClass(classId, null);
       return;
     }
     await showDialog(
@@ -694,15 +697,15 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
       builder: (_) => _SessionRegisterDialog(
         courseTitle: widget.courseTitle,
         event: event,
-        onConfirm: _enrollWholeCourse,
+        onConfirm: () => _registerClass(classId, event.learningEventClassId),
       ),
     );
   }
 
-  Future<void> _enrollWholeCourse() async {
+  Future<void> _registerClass(int classId, int? learningEventClassId) async {
     final result = await ref
         .read(CourseJoinDetailViewModel.provider(widget.courseId).notifier)
-        .enroll();
+        .registerClass(classId: classId, learningEventClassId: learningEventClassId);
     if (!mounted) return;
     if (result.success) {
       Toast.success(context, result.message ?? 'Registered successfully.');

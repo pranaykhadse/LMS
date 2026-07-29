@@ -43,6 +43,24 @@ class CourseJoinDetail {
   final List<String> skills;
   final List<CourseStructureItem> structures;
 
+  /// classId -> learningEventClassId for every Virtual Class (typeCode '3')
+  /// or In Person (typeCode '2') class that has an upcoming session -
+  /// POST lms-screen/register-course rejects whole-course enrollment
+  /// ("some classes require a session selection") unless this is supplied
+  /// for every such class. Auto-selects each class's own earliest upcoming
+  /// session.
+  Map<int, int> get classLearningEventSelections {
+    final selections = <int, int>{};
+    for (final item in structures) {
+      if (item.classId == null) continue;
+      if (item.typeCode != '2' && item.typeCode != '3') continue;
+      final event = _earliestUpcomingEventOf(item.learningEvents);
+      final eventId = event?.learningEventClassId;
+      if (eventId != null) selections[item.classId!] = eventId;
+    }
+    return selections;
+  }
+
   factory CourseJoinDetail.fromJson(Map<String, dynamic> json) {
     final root = _payloadMap(json);
     final course = _courseMap(root);
@@ -414,6 +432,7 @@ class LearningEvent {
     required this.location,
     required this.instructions,
     this.sessionLink,
+    this.learningEventClassId,
   });
 
   final String startDate;
@@ -424,6 +443,9 @@ class LearningEvent {
   final String location;
   final String instructions;
   final String? sessionLink;
+  // Required by POST lms-screen/register-course to select this specific
+  // session when registering for a class that has one (virtual/in-person).
+  final int? learningEventClassId;
 
   DateTime? get startDateTime => _combineDateAndTime(startDate, startTime);
   DateTime? get endDateTime => _combineDateAndTime(endDate, endTime);
@@ -438,6 +460,7 @@ class LearningEvent {
       location: json['location']?.toString() ?? '',
       instructions: json['instructions']?.toString() ?? '',
       sessionLink: _clean(json['training_session_link']?.toString()),
+      learningEventClassId: _asIntOrNull(json['learning_event_class_id'] ?? json['id']),
     );
   }
 }
@@ -449,15 +472,27 @@ class LearningEvent {
 /// one of those produced a bogus countdown on courses with no real session
 /// at all.
 LearningEvent? _earliestUpcomingVirtualClassEvent(List<CourseStructureItem> structures) {
-  final now = DateTime.now();
   LearningEvent? earliest;
   for (final item in structures) {
     if (item.typeCode != '3') continue;
-    for (final event in item.learningEvents) {
-      final dt = event.startDateTime;
-      if (dt == null || dt.isBefore(now)) continue;
-      if (earliest == null || dt.isBefore(earliest.startDateTime!)) earliest = event;
+    final candidate = _earliestUpcomingEventOf(item.learningEvents);
+    if (candidate == null) continue;
+    if (earliest == null || candidate.startDateTime!.isBefore(earliest.startDateTime!)) {
+      earliest = candidate;
     }
+  }
+  return earliest;
+}
+
+/// The earliest still-upcoming event within a single class's own
+/// learningEvents list.
+LearningEvent? _earliestUpcomingEventOf(List<LearningEvent> events) {
+  final now = DateTime.now();
+  LearningEvent? earliest;
+  for (final event in events) {
+    final dt = event.startDateTime;
+    if (dt == null || dt.isBefore(now)) continue;
+    if (earliest == null || dt.isBefore(earliest.startDateTime!)) earliest = event;
   }
   return earliest;
 }

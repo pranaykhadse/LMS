@@ -73,13 +73,27 @@ class CourseJoinDetailRepository with RepoNetworkHelper {
       storage.setString(_cacheKey(courseId), null);
 
   /// Whole-course enrollment (POST lms-screen/register-course, form-urlencoded).
-  /// Only `course_id` is sent - `user_id` is admin-only (registering someone
-  /// else) and is resolved from the auth token for the current user.
-  Future<CourseEnrollResult> register({required int courseId}) async {
+  /// `user_id` is admin-only (registering someone else) and is resolved
+  /// from the auth token for the current user. [classLearningEvents] maps
+  /// classId -> learningEventClassId for every Virtual/In Person class that
+  /// has an upcoming session - the API rejects the whole registration
+  /// ("some classes require a session selection") if a class needing one
+  /// isn't included here.
+  Future<CourseEnrollResult> register({
+    required int courseId,
+    Map<int, int> classLearningEvents = const {},
+  }) async {
     try {
+      final body = <String, dynamic>{'course_id': courseId};
+      if (classLearningEvents.isNotEmpty) {
+        body['class_learning_events'] = jsonEncode({
+          for (final entry in classLearningEvents.entries)
+            entry.key.toString(): entry.value,
+        });
+      }
       final response = await post(
         'lms-screen/register-course',
-        data: {'course_id': courseId},
+        data: body,
         options: Options(contentType: Headers.formUrlEncodedContentType),
         cacheType: RequestCacheType.none,
       );
@@ -90,6 +104,42 @@ class CourseJoinDetailRepository with RepoNetworkHelper {
         return CourseEnrollResult(
           success: false,
           message: data['message']?.toString() ?? 'Unable to enroll in this course.',
+        );
+      }
+      return CourseEnrollResult(success: true, message: data['message']?.toString());
+    } catch (e) {
+      return CourseEnrollResult(success: false, message: e.toString());
+    }
+  }
+
+  /// Single-class registration (same endpoint, single-class mode): pass
+  /// `class_id` and, for Virtual/In Person classes, `learning_event_class_id`
+  /// to select a specific session. Used by the per-item "Register" button
+  /// on a Virtual Class structure item.
+  Future<CourseEnrollResult> registerClass({
+    required int courseId,
+    required int classId,
+    int? learningEventClassId,
+  }) async {
+    try {
+      final response = await post(
+        'lms-screen/register-course',
+        data: {
+          'course_id': courseId,
+          'class_id': classId,
+          if (learningEventClassId != null)
+            'learning_event_class_id': learningEventClassId,
+        },
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+        cacheType: RequestCacheType.none,
+      );
+      final data = response is Map
+          ? Map<String, dynamic>.from(response)
+          : <String, dynamic>{};
+      if (data['status']?.toString() != '1') {
+        return CourseEnrollResult(
+          success: false,
+          message: data['message']?.toString() ?? 'Unable to register for this class.',
         );
       }
       return CourseEnrollResult(success: true, message: data['message']?.toString());
