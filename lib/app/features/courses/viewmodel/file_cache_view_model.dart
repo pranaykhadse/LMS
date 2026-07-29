@@ -83,9 +83,16 @@ class FileCacheViewModel extends ChangeNotifier {
     if (cached == null || !cached.existsSync()) return null;
     if (_isHls(url)) return _decryptHlsForViewing(url);
     final encrypted = await cached.readAsBytes();
-    final tempFile = await _viewingFile(url);
+    final decrypted = _OfflineCipher.apply(encrypted);
+    // Many CDN download URLs are opaque/signed and carry no file extension
+    // at all (or a misleading one in the query string), so media_kit's
+    // local-file format detection - which relies on the extension - was
+    // still failing even after naming the temp file after the URL. Sniffing
+    // the actual decrypted bytes' magic header is reliable regardless of
+    // what the URL looks like.
+    final tempFile = await _viewingFile(url, _sniffExtension(decrypted) ?? _extensionOf(url));
     await tempFile.parent.create(recursive: true);
-    await tempFile.writeAsBytes(_OfflineCipher.apply(encrypted));
+    await tempFile.writeAsBytes(decrypted);
     return tempFile;
   }
 
@@ -101,14 +108,25 @@ class FileCacheViewModel extends ChangeNotifier {
   }
 
   /// Deletes the plaintext copy created by [prepareForViewing] for [url].
+  /// The regular (non-HLS) branch scans by filename prefix rather than
+  /// recomputing the exact name, since [prepareForViewing] picks the
+  /// extension from the decrypted content's magic header - not something
+  /// this method can redo without re-reading and re-decrypting the file.
   Future<void> cleanupViewing(String url) async {
     try {
       if (_isHls(url)) {
         final dir = await _hlsViewingDir(url);
         if (dir.existsSync()) await dir.delete(recursive: true);
       } else {
-        final file = await _viewingFile(url);
-        if (file.existsSync()) await file.delete();
+        final dir = await getTemporaryDirectory();
+        final viewingDir = Directory('${dir.path}/lms_viewing');
+        if (!viewingDir.existsSync()) return;
+        final prefix = '${url.hashCode.abs()}_';
+        await for (final entity in viewingDir.list()) {
+          if (entity is File && entity.uri.pathSegments.last.startsWith(prefix)) {
+            await entity.delete();
+          }
+        }
       }
     } catch (_) {}
   }
@@ -166,14 +184,17 @@ class FileCacheViewModel extends ChangeNotifier {
     return File('${dir.path}/downloads/${url.hashCode.abs()}.enc');
   }
 
-  // Keeps the original file extension (.mp4, .mov, ...) on the decrypted
-  // temp copy - media_kit/libmpv relies on it to pick a demuxer for local
-  // files (unlike remote URLs, where it can also go by response headers),
-  // so a bare hash-named file with no extension was failing to open with
-  // "Failed to recognize file format" even though the bytes were valid.
-  static Future<File> _viewingFile(String url) async {
+  // Keeps a file extension (.mp4, .webm, ...) on the decrypted temp copy -
+  // media_kit/libmpv relies on it to pick a demuxer for local files (unlike
+  // remote URLs, where it can also go by response headers), so a bare
+  // hash-named file with no extension was failing to open with "Failed to
+  // recognize file format" even though the bytes were valid. The `_` before
+  // the extension is a fixed delimiter so cleanupViewing's prefix scan can't
+  // conflate one url's hash with another's that happens to start the same.
+  static Future<File> _viewingFile(String url, String extension) async {
     final dir = await getTemporaryDirectory();
-    return File('${dir.path}/lms_viewing/${url.hashCode.abs()}${_extensionOf(url)}');
+    final ext = extension.startsWith('.') ? extension.substring(1) : extension;
+    return File('${dir.path}/lms_viewing/${url.hashCode.abs()}_${ext.isEmpty ? 'bin' : ext}');
   }
 
   static String _extensionOf(String url) {
@@ -182,6 +203,26 @@ class FileCacheViewModel extends ChangeNotifier {
     if (dot == -1 || dot == path.length - 1) return '';
     final ext = path.substring(dot);
     return ext.length <= 6 ? ext : '';
+  }
+
+  // Identifies a file format from its magic header bytes, independent of
+  // whatever the source URL looks like.
+  static String? _sniffExtension(List<int> bytes) {
+    if (bytes.length > 8 &&
+        bytes[4] == 0x66 && bytes[5] == 0x74 && bytes[6] == 0x79 && bytes[7] == 0x70) {
+      return '.mp4'; // ISO base media container (mp4/mov/m4v) - 'ftyp' box at offset 4.
+    }
+    if (bytes.length > 4 &&
+        bytes[0] == 0x1A && bytes[1] == 0x45 && bytes[2] == 0xDF && bytes[3] == 0xA3) {
+      return '.webm'; // EBML header (webm/mkv).
+    }
+    if (bytes.isNotEmpty && bytes[0] == 0x47) {
+      return '.ts'; // MPEG-TS sync byte.
+    }
+    if (bytes.length > 3 && bytes[0] == 0x25 && bytes[1] == 0x50 && bytes[2] == 0x44 && bytes[3] == 0x46) {
+      return '.pdf'; // '%PDF'
+    }
+    return null;
   }
 
   // ── HLS download: manifest → individual segment files + local manifest ─────
