@@ -11,6 +11,8 @@ import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
 import 'package:lms/app/features/dashboard/view/redeem_history_page.dart';
+import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart'
+    show isEffectivelyOffline;
 import 'package:lms/app/features/dashboard/viewmodel/item_inventory_view_model.dart';
 
 const _purple = Color(0xFF5756C9);
@@ -67,7 +69,7 @@ class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
 
 // ─── Body ─────────────────────────────────────────────────────────────────────
 
-class _Body extends StatelessWidget {
+class _Body extends ConsumerWidget {
   const _Body({
     required this.state,
     required this.onRetry,
@@ -88,7 +90,7 @@ class _Body extends StatelessWidget {
   static const _perPage = 10;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (state.result == null) {
       if (state.providerState == DataProviderState.error) {
         return _ErrorView(message: state.error ?? 'Unable to load inventory.', onRetry: onRetry);
@@ -97,11 +99,15 @@ class _Body extends StatelessWidget {
     }
     final result = state.result!;
     final items = result.items;
-    return _buildList(context, items);
+    return _buildList(context, ref, items);
   }
 
-  Widget _buildList(BuildContext context, List<InventoryItem> items) {
+  Widget _buildList(BuildContext context, WidgetRef ref, List<InventoryItem> items) {
     final result = state.result!;
+    // Search/clear-search both hit the live API with no offline fallback -
+    // offering them while there's no real connection just invites a tap
+    // that can only fail, the same reasoning as RetryButton.
+    final offline = isEffectivelyOffline(ref);
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(child: _PointsBanner(points: result.userPoints)),
@@ -149,9 +155,10 @@ class _Body extends StatelessWidget {
                     Expanded(
                       child: TextField(
                         controller: searchController,
+                        enabled: !offline,
                         onSubmitted: (_) => onSearch(),
                         decoration: InputDecoration(
-                          hintText: 'Search items...',
+                          hintText: offline ? "You're offline" : 'Search items...',
                           hintStyle: const TextStyle(color: _muted, fontSize: 14),
                           filled: true,
                           fillColor: Colors.white,
@@ -175,7 +182,7 @@ class _Body extends StatelessWidget {
                       width: 44,
                       height: 44,
                       child: ElevatedButton(
-                        onPressed: onSearch,
+                        onPressed: offline ? null : onSearch,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _purple,
                           foregroundColor: Colors.white,
@@ -192,7 +199,7 @@ class _Body extends StatelessWidget {
                 ),
                 if (state.query.isNotEmpty) ...[
                   const SizedBox(height: 10),
-                  _ResetButton(onTap: onClearSearch),
+                  _ResetButton(onTap: offline ? null : onClearSearch),
                 ],
               ],
             ),
@@ -288,14 +295,14 @@ class _Body extends StatelessWidget {
 
 class _ResetButton extends StatelessWidget {
   const _ResetButton({required this.onTap});
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Material(
-        color: _purple,
+        color: onTap == null ? _muted.withValues(alpha: 0.4) : _purple,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: onTap,
