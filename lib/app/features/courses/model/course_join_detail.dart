@@ -496,15 +496,21 @@ LearningEvent? _earliestUpcomingVirtualClassEvent(List<CourseStructureItem> stru
   return earliest;
 }
 
-/// The earliest still-upcoming event within a single class's own
-/// learningEvents list.
+/// The earliest still-registerable event within a single class's own
+/// learningEvents list. A session stays registerable for its whole
+/// duration - from start through end, not just before it starts - matching
+/// the website, which keeps a class's status "Available" until its end
+/// datetime rather than closing registration the moment it starts.
 LearningEvent? _earliestUpcomingEventOf(List<LearningEvent> events) {
   final now = DateTime.now();
   LearningEvent? earliest;
   for (final event in events) {
-    final dt = event.startDateTime;
-    if (dt == null || dt.isBefore(now)) continue;
-    if (earliest == null || dt.isBefore(earliest.startDateTime!)) earliest = event;
+    final start = event.startDateTime;
+    if (start == null) continue;
+    final end = event.endDateTime;
+    final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
+    if (!stillOpen) continue;
+    if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
   }
   return earliest;
 }

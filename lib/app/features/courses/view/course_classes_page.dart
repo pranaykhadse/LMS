@@ -1204,9 +1204,14 @@ LearningEvent? _earliestUpcomingEvent(List<LearningEvent> events) {
   final now = DateTime.now();
   LearningEvent? earliest;
   for (final event in events) {
-    final dt = event.startDateTime;
-    if (dt == null || dt.isBefore(now)) continue;
-    if (earliest == null || dt.isBefore(earliest.startDateTime!)) earliest = event;
+    final start = event.startDateTime;
+    if (start == null) continue;
+    final end = event.endDateTime;
+    // A session stays registerable through its whole duration - from start
+    // through end - not just before it starts, matching the website.
+    final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
+    if (!stillOpen) continue;
+    if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
   }
   return earliest;
 }
@@ -1507,9 +1512,14 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
 
   List<LearningEvent> _upcomingEventsFor(CourseStructureItem item) {
     final now = DateTime.now();
-    final events = item.learningEvents
-        .where((e) => e.startDateTime != null && e.startDateTime!.isAfter(now))
-        .toList();
+    // A session stays selectable through its whole duration - from start
+    // through end, not just before it starts - matching the website.
+    final events = item.learningEvents.where((e) {
+      final start = e.startDateTime;
+      if (start == null) return false;
+      final end = e.endDateTime;
+      return end == null ? !start.isBefore(now) : now.isBefore(end);
+    }).toList();
     events.sort((a, b) => a.startDateTime!.compareTo(b.startDateTime!));
     return events;
   }
