@@ -24,6 +24,8 @@ class RequiredCoursesState {
   final int page;
   final String? error;
 
+  int get perPage => _limit;
+
   bool get hasNext => page < totalPages;
   bool get hasPrev => page > 1;
 

@@ -22,6 +22,8 @@ class CompletedState {
   final int page;
   final String? error;
 
+  int get perPage => _perPage;
+
   int get totalPages => total == 0 ? 1 : ((total + _perPage - 1) ~/ _perPage);
   bool get hasNext => page < totalPages;
   bool get hasPrev => page > 1;

@@ -8,7 +8,6 @@ import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
-import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
@@ -640,8 +639,6 @@ class _StructureCard extends StatelessWidget {
               ),
               if (item != items.last) const SizedBox(height: 20),
             ],
-          const SizedBox(height: 20),
-          PerPageBadge(perPage: items.length),
         ],
       ),
     );

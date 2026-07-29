@@ -113,10 +113,9 @@ class _Body extends StatelessWidget {
                         itemBuilder: (ctx, i) =>
                             _CourseCard(course: state.courses[i], notifier: notifier),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        // Must match _perPage in development_plan_view_model.dart.
-                        child: PerPageBadge(perPage: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: PerPageBadge(perPage: state.perPage),
                       ),
                     ],
                     const AppFooter(),

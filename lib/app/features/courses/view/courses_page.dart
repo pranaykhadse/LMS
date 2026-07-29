@@ -289,8 +289,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
             for (final group in groups) ...[
               _groupTitle(group.name),
               _catalogGrid(group.courses),
-              // Must match CourseCatalogRepository.fetch's default perPage.
-              _perPageBadge(5),
+              _perPageBadge(group.pagination.perPage),
               if (group.pagination.pages > 1)
                 _groupPagination(
                   group,

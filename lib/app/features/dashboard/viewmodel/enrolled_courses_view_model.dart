@@ -22,6 +22,8 @@ class EnrolledState {
   final int page;
   final String? error;
 
+  int get perPage => _perPage;
+
   int get totalPages =>
       totalCourses == 0 ? 1 : ((totalCourses + _perPage - 1) ~/ _perPage);
   bool get hasNext => page < totalPages;

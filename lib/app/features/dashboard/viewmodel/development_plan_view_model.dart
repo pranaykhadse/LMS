@@ -23,6 +23,11 @@ class DevelopmentPlanState {
   final int page;
   final String? error;
 
+  // Exposed so the view can show the actual per_page value used for the
+  // fetch (e.g. in a "N Per Page" badge) instead of duplicating this
+  // constant as a hardcoded literal that could silently drift out of sync.
+  int get perPage => _perPage;
+
   int get totalPages => total == 0 ? 1 : ((total + _perPage - 1) ~/ _perPage);
   bool get hasNext => page < totalPages;
   bool get hasPrev => page > 1;
