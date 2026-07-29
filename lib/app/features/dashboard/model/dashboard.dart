@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
+
 class DashboardResponse {
   const DashboardResponse({
     required this.ongoingCourses,
@@ -62,6 +64,10 @@ class DashboardCourse {
 
   factory DashboardCourse.fromJson(Map<String, dynamic> json) {
     final hasCourseId = json['course_id'] != null;
+    if (kDebugMode && !hasCourseId) {
+      debugPrint('[DashboardCourse] non-course item raw json=$json');
+      debugPrint('[DashboardCourse] resolved id=${_asInt(json['course_id'] ?? json['id'])}');
+    }
     return DashboardCourse(
       id: _asInt(json['course_id'] ?? json['id']),
       name:
