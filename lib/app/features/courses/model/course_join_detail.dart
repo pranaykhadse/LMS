@@ -391,6 +391,15 @@ class CourseStructureItem {
     // what should be the same answer. Use the same still-open (start
     // through end) selection as registration, formatted from the already
     // UTC->local-corrected DateTime rather than pasting the raw strings.
+    if (kDebugMode) {
+      final itemTitle = _firstValue(json, classMap, const ['name', 'title', 'class_name', 'className']);
+      debugPrint('[CourseStructureItem] "$itemTitle" typeCode=$typeCode learningEvents=${learningEvents.length}');
+      for (final e in learningEvents) {
+        debugPrint('[CourseStructureItem]   raw start=${e.startDate} ${e.startTime} '
+            'end=${e.endDate} ${e.endTime} => startDateTime=${e.startDateTime} '
+            'endDateTime=${e.endDateTime} learningEventClassId=${e.learningEventClassId}');
+      }
+    }
     final upcomingEvent = _earliestUpcomingEventOf(learningEvents);
     final eventNextSession = upcomingEvent?.startDateTime != null
         ? _formatNextSessionMoment(upcomingEvent!.startDateTime!)
