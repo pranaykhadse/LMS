@@ -497,15 +497,20 @@ LearningEvent? _earliestUpcomingEventOf(List<LearningEvent> events) {
   return earliest;
 }
 
+/// The API sends session dates/times in UTC with no timezone marker (plain
+/// "2026-07-30" + "11:45:00"), so they're parsed as UTC and converted to
+/// the device's local time here - on an IST device that's +5:30, which is
+/// what makes the countdown/START-END times match what the learner should
+/// actually see the session start locally, not the raw UTC values.
 DateTime? _combineDateAndTime(String dateStr, String timeStr) {
   final date = DateTime.tryParse(dateStr);
   if (date == null) return null;
-  if (timeStr.isEmpty) return date;
+  if (timeStr.isEmpty) return DateTime.utc(date.year, date.month, date.day).toLocal();
   final parts = timeStr.split(':');
   final hour = int.tryParse(parts.isNotEmpty ? parts[0] : '') ?? 0;
   final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
   final second = parts.length > 2 ? int.tryParse(parts[2]) ?? 0 : 0;
-  return DateTime(date.year, date.month, date.day, hour, minute, second);
+  return DateTime.utc(date.year, date.month, date.day, hour, minute, second).toLocal();
 }
 
 double _progressPercent(

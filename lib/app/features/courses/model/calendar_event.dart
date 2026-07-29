@@ -74,14 +74,18 @@ class CalendarEvent {
   }
 }
 
+// The API sends dates/times in UTC with no timezone marker, so the
+// combined value is built as UTC and converted to the device's local time
+// (matching course_join_detail.dart's _combineDateAndTime) - otherwise
+// events show up shifted by the local UTC offset (+5:30 on an IST device).
 DateTime _combine(DateTime date, String? time) {
-  if (time == null || time.isEmpty) return date;
+  if (time == null || time.isEmpty) return DateTime.utc(date.year, date.month, date.day).toLocal();
   final parts = time.split(':');
-  if (parts.isEmpty) return date;
+  if (parts.isEmpty) return DateTime.utc(date.year, date.month, date.day).toLocal();
   final h = int.tryParse(parts[0]) ?? 0;
   final m = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
   final s = parts.length > 2 ? int.tryParse(parts[2]) ?? 0 : 0;
-  return DateTime(date.year, date.month, date.day, h, m, s);
+  return DateTime.utc(date.year, date.month, date.day, h, m, s).toLocal();
 }
 
 String? _nullableString(dynamic value) {
