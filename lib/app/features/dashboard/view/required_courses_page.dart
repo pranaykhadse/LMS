@@ -12,12 +12,15 @@ import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
+import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/viewmodel/required_courses_view_model.dart';
 
 const _purple = Color(0xFF5756C9);
 const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
+
+bool _isRequired(Course course) => course.isRequired == 1;
 
 class RequiredCoursesPage extends ConsumerWidget {
   const RequiredCoursesPage({super.key});
@@ -31,7 +34,13 @@ class RequiredCoursesPage extends ConsumerWidget {
       backgroundColor: _bg,
       title: 'My Required Courses',
       selectedSubLabel: 'My Required Courses',
-      body: _Body(state: state, notifier: notifier),
+      body: isEffectivelyOffline(ref)
+          ? const OfflineCoursesSection(
+              matches: _isRequired,
+              emptyMessage:
+                  'No offline courses found.\nConnect to the internet and save a required course first.',
+            )
+          : _Body(state: state, notifier: notifier),
     );
   }
 }

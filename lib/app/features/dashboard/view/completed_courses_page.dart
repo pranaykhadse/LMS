@@ -12,12 +12,15 @@ import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
+import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/viewmodel/completed_courses_view_model.dart';
 
 const _purple = Color(0xFF5756C9);
 const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
+
+bool _isComplete(Course course) => course.percentage >= 1.0;
 
 class CompletedCoursesPage extends ConsumerWidget {
   const CompletedCoursesPage({super.key});
@@ -31,7 +34,13 @@ class CompletedCoursesPage extends ConsumerWidget {
       backgroundColor: _bg,
       title: 'My Completed Courses',
       selectedSubLabel: 'My Completed Courses',
-      body: _Body(state: state, notifier: notifier),
+      body: isEffectivelyOffline(ref)
+          ? const OfflineCoursesSection(
+              matches: _isComplete,
+              emptyMessage:
+                  'No offline courses found.\nConnect to the internet and save a completed course first.',
+            )
+          : _Body(state: state, notifier: notifier),
     );
   }
 }

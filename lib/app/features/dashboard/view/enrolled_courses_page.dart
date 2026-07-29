@@ -12,12 +12,17 @@ import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
+import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/viewmodel/enrolled_courses_view_model.dart';
 
 const _purple = Color(0xFF5756C9);
 const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
+
+// "Enrolled" here means not yet fully complete - a fully completed offline
+// course belongs on the Completed page's offline section instead.
+bool _isEnrolledNotComplete(Course course) => course.percentage < 1.0;
 
 class EnrolledCoursesPage extends ConsumerWidget {
   const EnrolledCoursesPage({super.key});
@@ -31,7 +36,13 @@ class EnrolledCoursesPage extends ConsumerWidget {
       backgroundColor: _bg,
       title: 'My Enrolled Courses',
       selectedSubLabel: 'My Enrolled Courses',
-      body: _Body(state: state, notifier: notifier),
+      body: isEffectivelyOffline(ref)
+          ? const OfflineCoursesSection(
+              matches: _isEnrolledNotComplete,
+              emptyMessage:
+                  'No offline courses found.\nConnect to the internet and save a course first.',
+            )
+          : _Body(state: state, notifier: notifier),
     );
   }
 }
