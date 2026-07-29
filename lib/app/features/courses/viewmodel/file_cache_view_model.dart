@@ -166,9 +166,22 @@ class FileCacheViewModel extends ChangeNotifier {
     return File('${dir.path}/downloads/${url.hashCode.abs()}.enc');
   }
 
+  // Keeps the original file extension (.mp4, .mov, ...) on the decrypted
+  // temp copy - media_kit/libmpv relies on it to pick a demuxer for local
+  // files (unlike remote URLs, where it can also go by response headers),
+  // so a bare hash-named file with no extension was failing to open with
+  // "Failed to recognize file format" even though the bytes were valid.
   static Future<File> _viewingFile(String url) async {
     final dir = await getTemporaryDirectory();
-    return File('${dir.path}/lms_viewing/${url.hashCode.abs()}');
+    return File('${dir.path}/lms_viewing/${url.hashCode.abs()}${_extensionOf(url)}');
+  }
+
+  static String _extensionOf(String url) {
+    final path = Uri.tryParse(url)?.path ?? url;
+    final dot = path.lastIndexOf('.');
+    if (dot == -1 || dot == path.length - 1) return '';
+    final ext = path.substring(dot);
+    return ext.length <= 6 ? ext : '';
   }
 
   // ── HLS download: manifest → individual segment files + local manifest ─────
