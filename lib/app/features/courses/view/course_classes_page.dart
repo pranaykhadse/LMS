@@ -132,47 +132,20 @@ class _DetailBody extends ConsumerWidget {
                           offset: const Offset(0, -18),
                           child: _LaunchPanel(detail: detail),
                         ),
-                        if (detail.participantGuide != null)
+                        // Only rendered for enrolled learners, and downloaded
+                        // through DownloadButton (encrypted, in-app-only,
+                        // never a raw external link) rather than opened via
+                        // the system browser/default PDF app.
+                        if (detail.participantGuide != null && detail.isEnrolled)
                           _InfoCard(
                             child: Align(
                               alignment: Alignment.centerLeft,
-                              child: Consumer(
-                                builder: (context, ref, _) {
-                                  final isOnline = _watchIsOnline(ref);
-                                  return OutlinedButton.icon(
-                                    onPressed: isOnline
-                                        ? () => _openUrl(detail.participantGuide!)
-                                        : null,
-                                    icon: isOnline
-                                        ? const SizedBox.shrink()
-                                        : const Icon(Icons.cloud_off_rounded, size: 15),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: isOnline ? _detailPurple : _detailMuted,
-                                      disabledForegroundColor: _detailMuted,
-                                      side: BorderSide(
-                                        color: isOnline
-                                            ? const Color(0xFFD9D5FF)
-                                            : const Color(0xFFE0E3E8),
-                                      ),
-                                      backgroundColor: isOnline
-                                          ? const Color(0xFFFAF9FF)
-                                          : const Color(0xFFF3F4F6),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 18,
-                                        vertical: 13,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    label: Text(
-                                      isOnline
-                                          ? 'Download Participant Guide'
-                                          : 'Internet required to download',
-                                      style: const TextStyle(fontWeight: FontWeight.w700),
-                                    ),
-                                  );
-                                },
+                              child: DownloadButton(
+                                url: detail.participantGuide,
+                                label: 'Participant Guide',
+                                icon: Icons.picture_as_pdf_rounded,
+                                courseClass: null,
+                                builder: (ctx, file) => PdfContentViewer(file: file),
                               ),
                             ),
                           ),
@@ -330,25 +303,30 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       margin: const EdgeInsets.fromLTRB(22, 0, 22, 28),
       child: Column(
         children: [
-          const Text(
-            'LAUNCHES IN',
-            style: TextStyle(
-              color: _detailMuted,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              letterSpacing: .4,
+          // Only show the countdown when there's an actual date to count
+          // down to - showing 00:00:00:00 when none was found is
+          // misleading (looks like the event is starting right now).
+          if (launchDate != null) ...[
+            const Text(
+              'LAUNCHES IN',
+              style: TextStyle(
+                color: _detailMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: .4,
+              ),
             ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              _timeEntry(remaining?.inDays ?? 0, 'DAYS'),
-              _timeEntry((remaining?.inHours ?? 0) % 24, 'HRS'),
-              _timeEntry((remaining?.inMinutes ?? 0) % 60, 'MIN'),
-              _timeEntry((remaining?.inSeconds ?? 0) % 60, 'SEC'),
-            ],
-          ),
-          const SizedBox(height: 26),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                _timeEntry(remaining?.inDays ?? 0, 'DAYS'),
+                _timeEntry((remaining?.inHours ?? 0) % 24, 'HRS'),
+                _timeEntry((remaining?.inMinutes ?? 0) % 60, 'MIN'),
+                _timeEntry((remaining?.inSeconds ?? 0) % 60, 'SEC'),
+              ],
+            ),
+            const SizedBox(height: 26),
+          ],
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
@@ -766,7 +744,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 _OnlineActionButton(
                   icon: Icons.send_rounded,
                   label: 'Attend Class',
-                  onPressed: () => _openUrl(item.contentUrl!),
+                  onPressed: () => _openUrl(item.contentUrl!, inApp: true),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -1128,10 +1106,16 @@ String _downloadLabel(String typeCode) {
   }
 }
 
-Future<void> _openUrl(String url) async {
+Future<void> _openUrl(String url, {bool inApp = false}) async {
   final uri = Uri.tryParse(url);
   if (uri == null) return;
-  await launchUrl(uri, mode: LaunchMode.externalApplication);
+  await launchUrl(
+    uri,
+    // Video/recordings need the system browser for HLS/VP9 codec support on
+    // iOS; a plain session link (e.g. Attend Class) has no such constraint
+    // and should stay inside the app instead of switching to Chrome/Safari.
+    mode: inApp ? LaunchMode.inAppWebView : LaunchMode.externalApplication,
+  );
 }
 
 bool _isUnauthorizedError(String? error) {

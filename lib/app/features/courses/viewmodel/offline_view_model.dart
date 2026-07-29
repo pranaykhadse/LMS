@@ -61,11 +61,40 @@ class OfflineViewModel extends ChangeNotifier {
       );
       notifyListeners();
 
-      // Saving a course offline stores the course and lesson metadata only.
-      // Videos, PDFs, articles, agreements, and recordings are downloaded
-      // individually from each lesson row via DownloadButton.
-      await repository.download(course);
-      _progress[course.id ?? -1]?.completed = 1;
+      // Save the course + lesson metadata first.
+      final classes = await repository.download(course);
+
+      // Then download every lesson's actual content (video/PDF/article/
+      // agreement/recording) too - a "saved offline" course must actually
+      // be usable offline, not just show up in the offline list with
+      // nothing playable inside it.
+      final urls = <String>{};
+      for (final c in classes) {
+        if (_validUrl(c.classInfo?.videoUploadUrl)) urls.add(c.classInfo!.videoUploadUrl!);
+        if (_validUrl(c.classInfo?.articleFile)) urls.add(c.classInfo!.articleFile!);
+        if (_validUrl(c.scannedPdf)) urls.add(c.scannedPdf!);
+        urls.addAll(c.recordingUrls.where(_validUrl));
+      }
+      final pgUrl = course.participantGuideFile?.toString();
+      final wmUrl = course.wrapMethodologyFile?.toString();
+      if (_validUrl(pgUrl)) urls.add(pgUrl!);
+      if (_validUrl(wmUrl)) urls.add(wmUrl!);
+
+      _progress[course.id ?? -1] = _CourseDownloadProgress(
+        completed: 0,
+        total: urls.isEmpty ? 1 : urls.length,
+      );
+      notifyListeners();
+
+      final fileVM = ref.read(FileCacheViewModel.provider);
+      var completed = 0;
+      for (final url in urls) {
+        await fileVM.downloadFile(url);
+        completed++;
+        _progress[course.id ?? -1]?.completed = completed;
+        notifyListeners();
+      }
+      if (urls.isEmpty) _progress[course.id ?? -1]?.completed = 1;
     } finally {
       _downloading.remove(course);
       // Use the same null-safe key that was used when the entry was created.

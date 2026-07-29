@@ -65,6 +65,13 @@ class CourseJoinDetail {
       );
       debugPrint('[CourseJoinDetail] root enrollment-related keys: ${_enrollmentKeySnapshot(root)}');
       debugPrint('[CourseJoinDetail] course enrollment-related keys: ${_enrollmentKeySnapshot(course)}');
+      final directLaunchDate = _launchDate(root, course);
+      final fallbackLaunchDate = _earliestUpcomingSessionDate(classes);
+      debugPrint(
+        '[CourseJoinDetail] launchDate: direct=$directLaunchDate '
+        'fallback(learning_events)=$fallbackLaunchDate '
+        '=> resolved=${directLaunchDate ?? fallbackLaunchDate}',
+      );
     }
     return CourseJoinDetail(
       id: _asInt(
@@ -136,7 +143,7 @@ class CourseJoinDetail {
                   _isBookingClosed(root)
               ? 'Closed'
               : 'Open'),
-      launchDate: _launchDate(root, course),
+      launchDate: _launchDate(root, course) ?? _earliestUpcomingSessionDate(classes),
       progressPercentage: _progressPercent(root, course),
       primaryAction:
           actionLabel ?? (isEnrolled ? 'Cancel Registration' : 'Enroll Now'),
@@ -318,6 +325,28 @@ class CourseStructureItem {
         break;
     }
 
+    // Parsed once so a missing top-level next-session field can fall back
+    // to the first learning event's own start date/time - the website's
+    // "Next Session" for a class often only lives nested there, not as a
+    // direct field on the class itself.
+    final learningEvents = ((json['learning_events'] ?? json['learningEvents'] ?? const []) as List? ?? const [])
+        .whereType<Map>()
+        .map((e) => LearningEvent.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+    final directNextSession = _clean(
+      _firstValue(json, classMap, const [
+        'next_session',
+        'nextSession',
+        'start_date',
+        'startDate',
+        'session_date',
+        'sessionDate',
+      ]),
+    );
+    final eventNextSession = learningEvents.isEmpty
+        ? null
+        : _clean('${learningEvents.first.startDate} ${learningEvents.first.startTime}');
+
     return CourseStructureItem(
       title:
           _clean(
@@ -330,28 +359,14 @@ class CourseStructureItem {
           ) ??
           'Course Item',
       subtitle: type.isEmpty ? '' : '($type)',
-      nextSession:
-          _clean(
-            _firstValue(json, classMap, const [
-              'next_session',
-              'nextSession',
-              'start_date',
-              'startDate',
-              'session_date',
-              'sessionDate',
-            ]),
-          ) ??
-          '',
+      nextSession: directNextSession ?? eventNextSession ?? '',
       status: classStatus,
       actionLabel: effectiveActionLabel,
       icon: _structureIcon(typeCode),
       showDetails: _typeShowDetails(typeCode),
       showAction: effectiveActionLabel.isNotEmpty,
       description: _clean(_firstValue(json, classMap, const ['description', 'class_description', 'classDescription'])) ?? '',
-      learningEvents: ((json['learning_events'] ?? json['learningEvents'] ?? const []) as List? ?? const [])
-          .whereType<Map>()
-          .map((e) => LearningEvent.fromJson(Map<String, dynamic>.from(e)))
-          .toList(),
+      learningEvents: learningEvents,
       typeCode: typeCode ?? '',
       isEnrolledInClass: isEnrolledInClass,
       recordingUrls: recordingUrls,
@@ -441,6 +456,41 @@ DateTime? _launchDate(
   ]);
   if (raw == null) return null;
   return DateTime.tryParse(raw.toString());
+}
+
+/// Fallback for when no course-level launch date exists: the "LAUNCHES IN"
+/// countdown really wants the next upcoming session's start time, which the
+/// API only nests inside each class's own `learning_events`, not at the
+/// course's top level - matches the same nesting CourseStructureItem
+/// already reads training_session_link from for Virtual Class items.
+DateTime? _earliestUpcomingSessionDate(List<dynamic> classes) {
+  DateTime? earliest;
+  for (final entry in classes) {
+    if (entry is! Map) continue;
+    final classJson = Map<String, dynamic>.from(entry);
+    final rawEvents = classJson['learning_events'] ?? classJson['learningEvents'];
+    final events = rawEvents is List ? rawEvents : const [];
+    for (final e in events) {
+      if (e is! Map) continue;
+      final eventJson = Map<String, dynamic>.from(e);
+      final raw = _firstValue(classJson, eventJson, const [
+        'start_date',
+        'startDate',
+        'session_date',
+        'sessionDate',
+        'event_date',
+        'eventDate',
+        'training_session_start',
+        'trainingSessionStart',
+        'start_datetime',
+        'startDatetime',
+      ]);
+      final parsed = raw == null ? null : DateTime.tryParse(raw.toString());
+      if (parsed == null) continue;
+      if (earliest == null || parsed.isBefore(earliest)) earliest = parsed;
+    }
+  }
+  return earliest;
 }
 
 double _progressPercent(

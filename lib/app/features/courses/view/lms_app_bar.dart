@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -678,8 +680,30 @@ class _ProfileMenuRow extends StatelessWidget {
 
 // ── Date pill (wide mode only) ────────────────────────────────────────────────
 
-class _DatePill extends StatelessWidget {
+class _DatePill extends StatefulWidget {
   const _DatePill();
+
+  @override
+  State<_DatePill> createState() => _DatePillState();
+}
+
+class _DatePillState extends State<_DatePill> {
+  DateTime _now = DateTime.now();
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -694,11 +718,28 @@ class _DatePill extends StatelessWidget {
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: Colors.white24),
         ),
-        child: const Text(
-          'Tuesday July 14, 2026|1:04 PM',
-          style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, height: 1.0),
+        child: Text(
+          _formatDatePill(_now),
+          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, height: 1.0),
         ),
       ),
     );
   }
+}
+
+const _datePillWeekdays = [
+  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
+];
+const _datePillMonths = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
+String _formatDatePill(DateTime dt) {
+  final weekday = _datePillWeekdays[dt.weekday - 1];
+  final month = _datePillMonths[dt.month - 1];
+  final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+  return '$weekday $month ${dt.day}, ${dt.year}|$hour12:$minute $ampm';
 }
