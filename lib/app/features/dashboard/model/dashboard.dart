@@ -66,10 +66,14 @@ class DashboardCourse {
     final hasCourseId = json['course_id'] != null;
     if (kDebugMode && !hasCourseId) {
       debugPrint('[DashboardCourse] non-course item raw json=$json');
-      debugPrint('[DashboardCourse] resolved id=${_asInt(json['course_id'] ?? json['id'])}');
     }
     return DashboardCourse(
-      id: _asInt(json['course_id'] ?? json['id']),
+      // Non-course dev plan items carry their id as `non_course_id`, not
+      // `id` - the development-plan API's own "Non Course ID" field (see
+      // non-course-development-plan's `id` param). Falling back to `id`
+      // for course entries kept resolving to 0 for these, which the update
+      // endpoint then rejected with "Non-course ID is required."
+      id: _asInt(json['course_id'] ?? json['non_course_id'] ?? json['id']),
       name:
           json['course_name']?.toString() ??
           json['name']?.toString() ??
@@ -79,7 +83,9 @@ class DashboardCourse {
           json['logo']?.toString().isNotEmpty == true
               ? json['logo'].toString()
               : null,
-      progress: _asInt(json['progress']),
+      // Non-course items report their completion percentage via `status`
+      // instead of `progress` (which is always null for them).
+      progress: _asInt(json['progress'] ?? (hasCourseId ? null : json['status'])),
       displayRating:
           json['display_rating'] == true ||
           json['display_rating']?.toString() == '1',
