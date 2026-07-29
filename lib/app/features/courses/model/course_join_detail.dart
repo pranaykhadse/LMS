@@ -65,8 +65,14 @@ class CourseJoinDetail {
       );
       debugPrint('[CourseJoinDetail] root enrollment-related keys: ${_enrollmentKeySnapshot(root)}');
       debugPrint('[CourseJoinDetail] course enrollment-related keys: ${_enrollmentKeySnapshot(course)}');
+    }
+    final structures = classes
+        .whereType<Map>()
+        .map((value) => CourseStructureItem.fromJson(Map<String, dynamic>.from(value)))
+        .toList();
+    if (kDebugMode) {
       final directLaunchDate = _launchDate(root, course);
-      final fallbackLaunchDate = _earliestUpcomingSessionDate(classes);
+      final fallbackLaunchDate = _earliestUpcomingSessionDate(structures);
       debugPrint(
         '[CourseJoinDetail] launchDate: direct=$directLaunchDate '
         'fallback(learning_events)=$fallbackLaunchDate '
@@ -143,7 +149,7 @@ class CourseJoinDetail {
                   _isBookingClosed(root)
               ? 'Closed'
               : 'Open'),
-      launchDate: _launchDate(root, course) ?? _earliestUpcomingSessionDate(classes),
+      launchDate: _launchDate(root, course) ?? _earliestUpcomingSessionDate(structures),
       progressPercentage: _progressPercent(root, course),
       primaryAction:
           actionLabel ?? (isEnrolled ? 'Cancel Registration' : 'Enroll Now'),
@@ -152,15 +158,7 @@ class CourseJoinDetail {
         _firstValue(root, course, const ['allow_rating', 'allowRating']),
       ),
       skills: _skillNames(root, course),
-      structures:
-          classes
-              .whereType<Map>()
-              .map(
-                (value) => CourseStructureItem.fromJson(
-                  Map<String, dynamic>.from(value),
-                ),
-              )
-              .toList(),
+      structures: structures,
     );
   }
 }
@@ -459,38 +457,33 @@ DateTime? _launchDate(
 }
 
 /// Fallback for when no course-level launch date exists: the "LAUNCHES IN"
-/// countdown really wants the next upcoming session's start time, which the
-/// API only nests inside each class's own `learning_events`, not at the
-/// course's top level - matches the same nesting CourseStructureItem
-/// already reads training_session_link from for Virtual Class items.
-DateTime? _earliestUpcomingSessionDate(List<dynamic> classes) {
+/// countdown really wants the next upcoming session's start date+time,
+/// which the API only nests inside each class's own `learning_events`, not
+/// at the course's top level. Combines startDate+startTime (like the
+/// website's own "START: Jul-30-2026 11:45 AM") rather than just the date,
+/// which would default to midnight and show a wrong countdown.
+DateTime? _earliestUpcomingSessionDate(List<CourseStructureItem> structures) {
+  final now = DateTime.now();
   DateTime? earliest;
-  for (final entry in classes) {
-    if (entry is! Map) continue;
-    final classJson = Map<String, dynamic>.from(entry);
-    final rawEvents = classJson['learning_events'] ?? classJson['learningEvents'];
-    final events = rawEvents is List ? rawEvents : const [];
-    for (final e in events) {
-      if (e is! Map) continue;
-      final eventJson = Map<String, dynamic>.from(e);
-      final raw = _firstValue(classJson, eventJson, const [
-        'start_date',
-        'startDate',
-        'session_date',
-        'sessionDate',
-        'event_date',
-        'eventDate',
-        'training_session_start',
-        'trainingSessionStart',
-        'start_datetime',
-        'startDatetime',
-      ]);
-      final parsed = raw == null ? null : DateTime.tryParse(raw.toString());
-      if (parsed == null) continue;
-      if (earliest == null || parsed.isBefore(earliest)) earliest = parsed;
+  for (final item in structures) {
+    for (final event in item.learningEvents) {
+      final combined = _combineDateAndTime(event.startDate, event.startTime);
+      if (combined == null || combined.isBefore(now)) continue;
+      if (earliest == null || combined.isBefore(earliest)) earliest = combined;
     }
   }
   return earliest;
+}
+
+DateTime? _combineDateAndTime(String dateStr, String timeStr) {
+  final date = DateTime.tryParse(dateStr);
+  if (date == null) return null;
+  if (timeStr.isEmpty) return date;
+  final parts = timeStr.split(':');
+  final hour = int.tryParse(parts.isNotEmpty ? parts[0] : '') ?? 0;
+  final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+  final second = parts.length > 2 ? int.tryParse(parts[2]) ?? 0 : 0;
+  return DateTime(date.year, date.month, date.day, hour, minute, second);
 }
 
 double _progressPercent(
