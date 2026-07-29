@@ -15,6 +15,7 @@ import 'package:lms/app/features/courses/view/widgets/course_view_availability.d
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
+import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
 import 'package:lms/app_module.dart';
@@ -26,6 +27,8 @@ const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
 const _sectionTitle = Color(0xFFB0006D);
+
+bool _anyCourse(Course course) => true;
 
 bool _watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -55,6 +58,26 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(AuthStateNotifier.provider);
+
+    // Dashboard's own fetch has no offline fallback (it always needs live
+    // data - banner, resources, etc.), so it used to fail outright with a
+    // generic error screen whenever the manual Offline Mode toggle was on,
+    // even for a course the learner had explicitly saved for offline
+    // access. Show the offline-saved courses instead of ever attempting -
+    // and failing - that live fetch.
+    if (isEffectivelyOffline(ref)) {
+      return AppScaffold(
+        backgroundColor: _bg,
+        title: 'Dashboard',
+        selectedLabel: 'Dashboard',
+        body: const OfflineCoursesSection(
+          matches: _anyCourse,
+          emptyMessage:
+              'No offline courses found.\nConnect to the internet and save a course first.',
+        ),
+      );
+    }
+
     final state = ref.watch(DashboardViewModel.provider);
 
     if (!_redirectingUnauthorized &&
