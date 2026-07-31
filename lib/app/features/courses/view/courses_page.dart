@@ -1152,13 +1152,10 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.course.nextSessionLabel != null) ...[
-                    _NextSession(
-                      date: widget.course.nextSession,
-                      label: widget.course.nextSessionLabel!,
-                    ),
-                    const SizedBox(height: 8),
-                  ],
+                  // The catalog API has no per-course enrollment flag, and a
+                  // session date shouldn't be shown for a course the
+                  // learner hasn't necessarily enrolled in yet - removed
+                  // rather than risk showing it for an unenrolled course.
                   Text(
                     widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
                     maxLines: 2,
@@ -1380,49 +1377,6 @@ class _CourseImage extends StatelessWidget {
   }
 }
 
-class _NextSession extends StatelessWidget {
-  const _NextSession({required this.date, required this.label});
-  final DateTime? date;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'NEXT AVAILABLE',
-          style: TextStyle(
-            fontSize: 9,
-            color: Colors.white70,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.4,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Row(
-          children: [
-            const Icon(
-              Icons.calendar_month_outlined,
-              size: 14,
-              color: Colors.white,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              date == null ? label : _formatDate(date!),
-              style: const TextStyle(
-                fontSize: 11,
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
 class _CatalogError extends StatelessWidget {
   const _CatalogError({required this.message, required this.onRetry});
   final String message;
@@ -1446,24 +1400,3 @@ class _CatalogError extends StatelessWidget {
   );
 }
 
-String _formatDate(DateTime value) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  final hour =
-      value.hour == 0 ? 12 : (value.hour > 12 ? value.hour - 12 : value.hour);
-  final minute = value.minute.toString().padLeft(2, '0');
-  final period = value.hour >= 12 ? 'PM' : 'AM';
-  return '${months[value.month - 1]} ${value.day}, ${hour.toString().padLeft(2, '0')}:$minute $period';
-}

@@ -11,9 +11,9 @@ import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
-import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/repository/redirect_login_repository.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
@@ -725,6 +725,23 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     }
   }
 
+  /// GET user-profile/redirect-login-link?redirectUrl=<contentUrl> returns
+  /// a `login_link` that auto-logs the current user in and redirects to
+  /// contentUrl - loading that in the WebView instead of contentUrl
+  /// directly is what makes Attend Class open already authenticated rather
+  /// than showing the website's login form (LMS-LE-001).
+  Future<void> _attendClass(String contentUrl, String title) async {
+    final loginLink = await ref
+        .read(RedirectLoginRepository.provider)
+        .getLoginLink(contentUrl);
+    if (!mounted) return;
+    await InAppWebViewPage.show(
+      context,
+      url: loginLink ?? contentUrl,
+      title: title,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
@@ -766,7 +783,10 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           const SizedBox(height: 14),
           const Divider(color: Color(0xFFECEFF4)),
           const SizedBox(height: 13),
-          if (item.nextSession.isNotEmpty) ...[
+          // Only show a session date once the learner is actually enrolled -
+          // showing one for a class they haven't registered for implies a
+          // commitment that hasn't been made yet.
+          if (item.nextSession.isNotEmpty && isEnrolled) ...[
             Text(
               'Next Session: ${item.nextSession}',
               style: const TextStyle(
@@ -809,14 +829,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 _OnlineActionButton(
                   icon: Icons.send_rounded,
                   label: 'Attend Class',
-                  onPressed: () => InAppWebViewPage.show(
-                    context,
-                    url: _withAutoLogin(
-                      item.contentUrl!,
-                      ref.read(AuthStateNotifier.provider),
-                    ),
-                    title: item.title,
-                  ),
+                  onPressed: () => _attendClass(item.contentUrl!, item.title),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -1179,26 +1192,6 @@ String _downloadLabel(String typeCode) {
     case '19': return 'Agreement';
     default: return 'File';
   }
-}
-
-/// Appends the same `email` + `auto_login_token` params the app's own
-/// POST auth/auto-login uses, on the theory that the website recognizes
-/// them as query params too and starts an authenticated session from them -
-/// there's no documented web/SSO endpoint for this (checked Swagger), so
-/// this is a best-effort attempt at LMS-LE-001's "no additional login
-/// screen" requirement, not a confirmed API contract. Leaves the URL
-/// untouched if the token/email aren't available, or already present in it.
-String _withAutoLogin(String url, AuthState? auth) {
-  final email = auth?.user?.email;
-  final token = auth?.user?.autoLoginToken;
-  if (email == null || email.isEmpty || token == null || token.isEmpty) return url;
-  final uri = Uri.tryParse(url);
-  if (uri == null) return url;
-  if (uri.queryParameters.containsKey('auto_login_token')) return url;
-  final params = Map<String, String>.from(uri.queryParameters)
-    ..['email'] = email
-    ..['auto_login_token'] = token;
-  return uri.replace(queryParameters: params).toString();
 }
 
 Future<void> _openUrl(String url) async {

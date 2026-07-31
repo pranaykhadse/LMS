@@ -313,19 +313,6 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
   bool _showOverlay = false;
   bool _isBusy = false;
 
-  String _formatSession(DateTime dt) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-    final period = dt.hour >= 12 ? 'PM' : 'AM';
-    final hourStr = hour12.toString().padLeft(2, '0');
-    final minuteStr = dt.minute.toString().padLeft(2, '0');
-    final dayStr = dt.day.toString().padLeft(2, '0');
-    return '${months[dt.month - 1]} $dayStr, $hourStr:$minuteStr $period';
-  }
-
   Future<void> _handleDevPlanAction(bool isInPlan) async {
     final userId = ref.read(AuthStateNotifier.provider)?.user?.id;
     if (userId == null) return;
@@ -436,47 +423,13 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Was else-if (course.nextSession != null) showing a NEXT
+                // SESSION pill - the my_courses API has no per-course
+                // enrollment flag, and a session date shouldn't be shown
+                // for a course the learner hasn't necessarily enrolled in
+                // yet, so removed rather than risk showing it unenrolled.
                 if (course.displayRating) ...[
                   _StarRow(rating: course.averageRating, count: course.ratingCount),
-                  const SizedBox(height: 10),
-                ] else if (course.nextSession != null) ...[
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _lavender,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'NEXT SESSION:',
-                          style: TextStyle(
-                            color: _muted,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.4,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today_rounded, size: 13, color: _purple),
-                            const SizedBox(width: 6),
-                            Text(
-                              _formatSession(course.nextSession!),
-                              style: const TextStyle(
-                                color: _ink,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
                   const SizedBox(height: 10),
                 ],
                 Text(
