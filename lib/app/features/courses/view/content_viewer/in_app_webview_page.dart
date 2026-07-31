@@ -1,4 +1,8 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 const _webviewPurple = Color(0xFF5756C9);
@@ -13,12 +17,28 @@ class InAppWebViewPage extends StatefulWidget {
   final String url;
   final String? title;
 
+  // webview_flutter's macOS embedding doesn't implement the platform-view
+  // "opaque" hit-test property yet, which throws UnimplementedError as soon
+  // as a WebViewWidget builds there (github.com/flutter/flutter/issues/
+  // 128854 and similar). macOS here is only ever a local dev/testing
+  // target - the app actually ships on iOS - so fall back to the system
+  // browser there instead of crashing.
+  static bool get _supportsEmbeddedWebView =>
+      !kIsWeb && (Platform.isIOS || Platform.isAndroid);
+
   static Future<void> show(
     BuildContext context, {
     required String url,
     String? title,
-  }) {
-    return Navigator.of(context).push(
+  }) async {
+    if (!_supportsEmbeddedWebView) {
+      final uri = Uri.tryParse(url);
+      if (uri != null) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      return;
+    }
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => InAppWebViewPage(url: url, title: title),
       ),
