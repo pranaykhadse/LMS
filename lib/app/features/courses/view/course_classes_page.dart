@@ -1,5 +1,6 @@
 ﻿import 'dart:async';
 
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -735,6 +736,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
         .read(RedirectLoginRepository.provider)
         .getLoginLink(contentUrl);
     if (!mounted) return;
+    if (kDebugMode) {
+      debugPrint('[AttendClass] contentUrl=$contentUrl');
+      debugPrint('[AttendClass] opening WebView with url=${loginLink ?? contentUrl} '
+          '(${loginLink != null ? "login_link" : "fallback to contentUrl"})');
+    }
     await InAppWebViewPage.show(
       context,
       url: loginLink ?? contentUrl,
