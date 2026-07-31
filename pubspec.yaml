@@ -64,6 +64,13 @@ dependencies:
   url_launcher: ^6.3.1
 
   # ------------------------------------------------------------------------------
+  # In-app WebView (used for Attend Class - the virtual session must open
+  # inside the app, not hand off to the system browser, so the existing
+  # session/auto-login state carries over)
+  # ------------------------------------------------------------------------------
+  webview_flutter: ^4.10.0
+
+  # ------------------------------------------------------------------------------
   # Cache
   # ------------------------------------------------------------------------------
   flutter_cache_manager: ^3.4.1

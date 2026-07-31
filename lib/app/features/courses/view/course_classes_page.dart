@@ -14,6 +14,7 @@ import 'package:lms/app/features/authentication/app_state/auth_state_provider.da
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
@@ -807,7 +808,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 _OnlineActionButton(
                   icon: Icons.send_rounded,
                   label: 'Attend Class',
-                  onPressed: () => _openUrl(item.contentUrl!, inApp: true),
+                  onPressed: () => InAppWebViewPage.show(
+                    context,
+                    url: item.contentUrl!,
+                    title: item.title,
+                  ),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -1172,16 +1177,13 @@ String _downloadLabel(String typeCode) {
   }
 }
 
-Future<void> _openUrl(String url, {bool inApp = false}) async {
+Future<void> _openUrl(String url) async {
   final uri = Uri.tryParse(url);
   if (uri == null) return;
-  await launchUrl(
-    uri,
-    // Video/recordings need the system browser for HLS/VP9 codec support on
-    // iOS; a plain session link (e.g. Attend Class) has no such constraint
-    // and should stay inside the app instead of switching to Chrome/Safari.
-    mode: inApp ? LaunchMode.inAppWebView : LaunchMode.externalApplication,
-  );
+  // Video/recordings need the system browser for HLS/VP9 codec support on
+  // iOS - Attend Class uses InAppWebViewPage instead, so it stays inside
+  // the app rather than switching to Chrome/Safari.
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
 }
 
 bool _isUnauthorizedError(String? error) {
