@@ -190,6 +190,7 @@ class CourseStructureItem {
     required this.title,
     required this.subtitle,
     required this.nextSession,
+    this.nextSessionEnd,
     required this.status,
     required this.actionLabel,
     required this.icon,
@@ -208,6 +209,7 @@ class CourseStructureItem {
   final String title;
   final String subtitle;
   final String nextSession;
+  final String? nextSessionEnd;
   final String status;
   final String actionLabel;
   final CourseStructureIcon icon;
@@ -376,6 +378,9 @@ class CourseStructureItem {
     final eventNextSession = upcomingEvent?.startDateTime != null
         ? _formatNextSessionMoment(upcomingEvent!.startDateTime!)
         : null;
+    final eventNextSessionEnd = upcomingEvent?.endDateTime != null
+        ? _formatNextSessionMoment(upcomingEvent!.endDateTime!)
+        : null;
 
     return CourseStructureItem(
       title:
@@ -389,7 +394,18 @@ class CourseStructureItem {
           ) ??
           'Course Item',
       subtitle: type.isEmpty ? '' : '($type)',
-      nextSession: directNextSession ?? eventNextSession ?? '',
+      // eventNextSession takes priority whenever there are real
+      // learning_events to check - it's the only one that's actually
+      // filtered by whether the session is still open. directNextSession
+      // (a raw, unfiltered class-level field) is a fallback only for
+      // classes with no learning_events array at all; using it as the
+      // *first* choice was the bug - it kept showing a session that had
+      // already ended, since nothing ever cleared it once eventNextSession
+      // correctly went empty.
+      nextSession: learningEvents.isNotEmpty
+          ? (eventNextSession ?? '')
+          : (directNextSession ?? ''),
+      nextSessionEnd: learningEvents.isNotEmpty ? eventNextSessionEnd : null,
       status: classStatus,
       actionLabel: effectiveActionLabel,
       icon: _structureIcon(typeCode),

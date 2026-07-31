@@ -800,6 +800,16 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 fontWeight: FontWeight.w700,
               ),
             ),
+            if (item.nextSessionEnd != null && item.nextSessionEnd!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Ends: ${item.nextSessionEnd}',
+                style: const TextStyle(
+                  color: _detailMuted,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
           ],
           if (item.status.isNotEmpty) ...[
