@@ -1,9 +1,5 @@
-import 'dart:io' show Platform;
-
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 const _webviewPurple = Color(0xFF5756C9);
 
@@ -11,34 +7,20 @@ const _webviewPurple = Color(0xFF5756C9);
 /// system browser or an SFSafariViewController/Custom Tab hand-off) - used
 /// for Attend Class so the virtual session launches without ever leaving
 /// the app, carrying over whatever auto-login token is embedded in the
-/// session link exactly like it would in an external browser.
+/// session link exactly like it would in an external browser. Backed by
+/// flutter_inappwebview rather than webview_flutter, which has no working
+/// macOS embedding as of this writing.
 class InAppWebViewPage extends StatefulWidget {
   const InAppWebViewPage({super.key, required this.url, this.title});
   final String url;
   final String? title;
 
-  // webview_flutter's macOS embedding doesn't implement the platform-view
-  // "opaque" hit-test property yet, which throws UnimplementedError as soon
-  // as a WebViewWidget builds there (github.com/flutter/flutter/issues/
-  // 128854 and similar). macOS here is only ever a local dev/testing
-  // target - the app actually ships on iOS - so fall back to the system
-  // browser there instead of crashing.
-  static bool get _supportsEmbeddedWebView =>
-      !kIsWeb && (Platform.isIOS || Platform.isAndroid);
-
   static Future<void> show(
     BuildContext context, {
     required String url,
     String? title,
-  }) async {
-    if (!_supportsEmbeddedWebView) {
-      final uri = Uri.tryParse(url);
-      if (uri != null) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-      return;
-    }
-    await Navigator.of(context).push(
+  }) {
+    return Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => InAppWebViewPage(url: url, title: title),
       ),
@@ -50,36 +32,9 @@ class InAppWebViewPage extends StatefulWidget {
 }
 
 class _InAppWebViewPageState extends State<InAppWebViewPage> {
-  late final WebViewController _controller;
+  InAppWebViewController? _controller;
   bool _loading = true;
   String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(Colors.white)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageStarted: (_) {
-            if (mounted) setState(() => _loading = true);
-          },
-          onPageFinished: (_) {
-            if (mounted) setState(() => _loading = false);
-          },
-          onWebResourceError: (error) {
-            if (mounted) {
-              setState(() {
-                _loading = false;
-                _error = error.description;
-              });
-            }
-          },
-        ),
-      )
-      ..loadRequest(Uri.parse(widget.url));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,17 +50,42 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => _controller.reload(),
+            onPressed: () => _controller?.reload(),
           ),
         ],
       ),
       body: Stack(
         children: [
-          if (_error == null) WebViewWidget(controller: _controller),
-          if (_error != null) _ErrorView(message: _error!, onRetry: () {
-            setState(() => _error = null);
-            _controller.reload();
-          }),
+          if (_error == null)
+            InAppWebView(
+              initialUrlRequest: URLRequest(url: WebUri(widget.url)),
+              initialSettings: InAppWebViewSettings(
+                javaScriptEnabled: true,
+                mediaPlaybackRequiresUserGesture: false,
+              ),
+              onWebViewCreated: (controller) => _controller = controller,
+              onLoadStart: (controller, url) {
+                if (mounted) setState(() { _loading = true; _error = null; });
+              },
+              onLoadStop: (controller, url) {
+                if (mounted) setState(() => _loading = false);
+              },
+              onReceivedError: (controller, request, error) {
+                if (!mounted || request.isForMainFrame == false) return;
+                setState(() {
+                  _loading = false;
+                  _error = error.description;
+                });
+              },
+            ),
+          if (_error != null)
+            _ErrorView(
+              message: _error!,
+              onRetry: () {
+                setState(() => _error = null);
+                _controller?.reload();
+              },
+            ),
           if (_loading && _error == null)
             const Center(child: CircularProgressIndicator(color: _webviewPurple)),
         ],

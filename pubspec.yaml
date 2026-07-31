@@ -66,9 +66,13 @@ dependencies:
   # ------------------------------------------------------------------------------
   # In-app WebView (used for Attend Class - the virtual session must open
   # inside the app, not hand off to the system browser, so the existing
-  # session/auto-login state carries over)
+  # session/auto-login state carries over). flutter_inappwebview instead of
+  # webview_flutter: webview_flutter's macOS embedding doesn't implement the
+  # platform-view "opaque" hit-test property yet and throws
+  # UnimplementedError as soon as it builds there; flutter_inappwebview has
+  # solid macOS support alongside iOS/Android.
   # ------------------------------------------------------------------------------
-  webview_flutter: ^4.10.0
+  flutter_inappwebview: ^6.1.5
 
   # ------------------------------------------------------------------------------
   # Cache
