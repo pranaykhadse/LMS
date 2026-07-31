@@ -44,8 +44,18 @@ class InternetConnectionProvider {
   }
 
   void _onConnectionChange(bool isConnected) {
+    // onStatusChange fires periodically even while connectivity hasn't
+    // actually changed (a recurring "still connected" heartbeat, not just
+    // real transitions) - notifying listeners on every one of those was
+    // triggering SyncViewModel's refreshAllOnReconnect() on a recurring
+    // timer instead of only on genuine reconnects, silently wiping out
+    // things like an applied Course Catalog search filter while the user
+    // was just sitting on an unrelated screen with a perfectly stable
+    // connection. Only notify when the status actually flips.
+    final changed = _isConnected != isConnected;
     _isConnected = isConnected;
     _controller.add(isConnected);
+    if (!changed) return;
     for (var listener in _listeners) {
       listener(isConnected);
     }
