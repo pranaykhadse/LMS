@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -20,9 +19,6 @@ class RedirectLoginRepository with RepoNetworkHelper {
   /// Returns null on any failure so the caller can fall back to opening
   /// [redirectUrl] directly.
   Future<String?> getLoginLink(String redirectUrl) async {
-    if (kDebugMode) {
-      debugPrint('[RedirectLoginRepository] requesting login link for redirectUrl=$redirectUrl');
-    }
     try {
       final response = await getRequest(
         'user-profile/redirect-login-link',
@@ -33,15 +29,8 @@ class RedirectLoginRepository with RepoNetworkHelper {
           ? Map<String, dynamic>.from(response)
           : <String, dynamic>{};
       final link = data['login_link']?.toString();
-      if (kDebugMode) {
-        debugPrint('[RedirectLoginRepository] response=$data');
-        debugPrint('[RedirectLoginRepository] resolved login_link=$link');
-      }
       return (link == null || link.isEmpty) ? null : link;
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[RedirectLoginRepository] getLoginLink failed: $e');
-      }
+    } catch (_) {
       return null;
     }
   }
