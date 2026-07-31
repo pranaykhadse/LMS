@@ -11,6 +11,7 @@ import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
+import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
@@ -810,7 +811,10 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   label: 'Attend Class',
                   onPressed: () => InAppWebViewPage.show(
                     context,
-                    url: item.contentUrl!,
+                    url: _withAutoLogin(
+                      item.contentUrl!,
+                      ref.read(AuthStateNotifier.provider),
+                    ),
                     title: item.title,
                   ),
                 ),
@@ -1175,6 +1179,26 @@ String _downloadLabel(String typeCode) {
     case '19': return 'Agreement';
     default: return 'File';
   }
+}
+
+/// Appends the same `email` + `auto_login_token` params the app's own
+/// POST auth/auto-login uses, on the theory that the website recognizes
+/// them as query params too and starts an authenticated session from them -
+/// there's no documented web/SSO endpoint for this (checked Swagger), so
+/// this is a best-effort attempt at LMS-LE-001's "no additional login
+/// screen" requirement, not a confirmed API contract. Leaves the URL
+/// untouched if the token/email aren't available, or already present in it.
+String _withAutoLogin(String url, AuthState? auth) {
+  final email = auth?.user?.email;
+  final token = auth?.user?.autoLoginToken;
+  if (email == null || email.isEmpty || token == null || token.isEmpty) return url;
+  final uri = Uri.tryParse(url);
+  if (uri == null) return url;
+  if (uri.queryParameters.containsKey('auto_login_token')) return url;
+  final params = Map<String, String>.from(uri.queryParameters)
+    ..['email'] = email
+    ..['auto_login_token'] = token;
+  return uri.replace(queryParameters: params).toString();
 }
 
 Future<void> _openUrl(String url) async {
