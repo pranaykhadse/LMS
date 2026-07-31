@@ -330,9 +330,10 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       margin: const EdgeInsets.fromLTRB(22, 0, 22, 28),
       child: Column(
         children: [
-          // Show the countdown whenever there's an actual upcoming session
-          // date, regardless of enrollment status.
-          if (launchDate != null) ...[
+          // Only show the countdown once the learner is actually enrolled -
+          // showing a countdown (even at 00:00:00:00) toward a session they
+          // haven't registered for is misleading.
+          if (launchDate != null && detail.isEnrolled) ...[
             const Text(
               'LAUNCHES IN',
               style: TextStyle(
