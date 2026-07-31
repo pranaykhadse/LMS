@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 const _webviewPurple = Color(0xFF5756C9);
@@ -38,57 +39,72 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: _webviewPurple,
-        foregroundColor: Colors.white,
-        title: Text(widget.title ?? 'Virtual Class'),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => _controller?.reload(),
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          if (_error == null)
-            InAppWebView(
-              initialUrlRequest: URLRequest(url: WebUri(widget.url)),
-              initialSettings: InAppWebViewSettings(
-                javaScriptEnabled: true,
-                mediaPlaybackRequiresUserGesture: false,
+    // Native platform-view WebViews on macOS are known to sometimes swallow
+    // mouse hit-testing for the whole window - a rough edge of macOS's
+    // still-maturing platform-view support, not present on iOS's much more
+    // established embedding. A keyboard Escape binding gives a reliable way
+    // to leave this screen either way, at no cost if the AppBar buttons
+    // already work fine.
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () =>
+            Navigator.of(context).pop(),
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: _webviewPurple,
+            foregroundColor: Colors.white,
+            title: Text(widget.title ?? 'Virtual Class'),
+            leading: IconButton(
+              icon: const Icon(Icons.close_rounded),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                onPressed: () => _controller?.reload(),
               ),
-              onWebViewCreated: (controller) => _controller = controller,
-              onLoadStart: (controller, url) {
-                if (mounted) setState(() { _loading = true; _error = null; });
-              },
-              onLoadStop: (controller, url) {
-                if (mounted) setState(() => _loading = false);
-              },
-              onReceivedError: (controller, request, error) {
-                if (!mounted || request.isForMainFrame == false) return;
-                setState(() {
-                  _loading = false;
-                  _error = error.description;
-                });
-              },
-            ),
-          if (_error != null)
-            _ErrorView(
-              message: _error!,
-              onRetry: () {
-                setState(() => _error = null);
-                _controller?.reload();
-              },
-            ),
-          if (_loading && _error == null)
-            const Center(child: CircularProgressIndicator(color: _webviewPurple)),
-        ],
+            ],
+          ),
+          body: Stack(
+            children: [
+              if (_error == null)
+                InAppWebView(
+                  initialUrlRequest: URLRequest(url: WebUri(widget.url)),
+                  initialSettings: InAppWebViewSettings(
+                    javaScriptEnabled: true,
+                    mediaPlaybackRequiresUserGesture: false,
+                  ),
+                  onWebViewCreated: (controller) => _controller = controller,
+                  onLoadStart: (controller, url) {
+                    if (mounted) setState(() { _loading = true; _error = null; });
+                  },
+                  onLoadStop: (controller, url) {
+                    if (mounted) setState(() => _loading = false);
+                  },
+                  onReceivedError: (controller, request, error) {
+                    if (!mounted || request.isForMainFrame == false) return;
+                    setState(() {
+                      _loading = false;
+                      _error = error.description;
+                    });
+                  },
+                ),
+              if (_error != null)
+                _ErrorView(
+                  message: _error!,
+                  onRetry: () {
+                    setState(() => _error = null);
+                    _controller?.reload();
+                  },
+                ),
+              if (_loading && _error == null)
+                const Center(child: CircularProgressIndicator(color: _webviewPurple)),
+            ],
+          ),
+        ),
       ),
     );
   }
