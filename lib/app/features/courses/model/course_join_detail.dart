@@ -468,17 +468,25 @@ class LearningEvent {
   }
 }
 
-/// The earliest still-upcoming Virtual Class (typeCode '3') session across
+/// The earliest not-yet-started Virtual Class (typeCode '3') session across
 /// the course's classes - and nothing else. Scoped to Virtual Class only:
 /// other content types (video/PDF/article/...) can also carry a
 /// `learning_events` array in the API response, and picking up a date from
 /// one of those produced a bogus countdown on courses with no real session
 /// at all.
+///
+/// Deliberately uses [_earliestNotYetStartedEventOf] rather than
+/// [_earliestUpcomingEventOf] (the "still open through end" version used for
+/// registration/attendance) - a countdown only makes sense toward a session
+/// that hasn't started. If a course has one session already in progress and
+/// another still ahead, the "still open" version would pick the in-progress
+/// one (its start, being in the past, sorts earliest), freezing the
+/// countdown at 00:00:00:00 instead of counting down to the next one.
 LearningEvent? _earliestUpcomingVirtualClassEvent(List<CourseStructureItem> structures) {
   LearningEvent? earliest;
   for (final item in structures) {
     if (item.typeCode != '3') continue;
-    final candidate = _earliestUpcomingEventOf(item.learningEvents);
+    final candidate = _earliestNotYetStartedEventOf(item.learningEvents);
     if (candidate == null) continue;
     if (earliest == null || candidate.startDateTime!.isBefore(earliest.startDateTime!)) {
       earliest = candidate;
@@ -501,6 +509,21 @@ LearningEvent? _earliestUpcomingEventOf(List<LearningEvent> events) {
     final end = event.endDateTime;
     final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
     if (!stillOpen) continue;
+    if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
+  }
+  return earliest;
+}
+
+/// Strictly hasn't-started-yet - unlike [_earliestUpcomingEventOf], an
+/// already-in-progress session (start passed, end not yet) doesn't count.
+/// Only meaningful for a countdown, which should show time remaining
+/// *until* something starts, not freeze at zero once it has.
+LearningEvent? _earliestNotYetStartedEventOf(List<LearningEvent> events) {
+  final now = DateTime.now();
+  LearningEvent? earliest;
+  for (final event in events) {
+    final start = event.startDateTime;
+    if (start == null || !start.isAfter(now)) continue;
     if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
   }
   return earliest;
