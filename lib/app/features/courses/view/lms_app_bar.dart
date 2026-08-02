@@ -139,7 +139,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                     LmsAppBarButton(
                       icon: Icons.arrow_back_ios_new_rounded,
                       onTap: onBack ?? () => Navigator.pop(context),
-                      iconSize: 26,
+                      iconSize: 18,
                     ),
                     const SizedBox(width: 2),
                   ],
