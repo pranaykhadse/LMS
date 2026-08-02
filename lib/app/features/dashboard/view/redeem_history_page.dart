@@ -22,6 +22,7 @@ class RedeemHistoryPage extends ConsumerWidget {
 
     return AppScaffold(
       backgroundColor: _rhBg,
+      onRefresh: () => ref.read(RedeemHistoryViewModel.provider.notifier).fetch(),
       body: switch (state.state) {
         DataProviderState.idle ||
         DataProviderState.loading =>

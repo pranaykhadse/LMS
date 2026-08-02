@@ -118,6 +118,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       backgroundColor: _bg,
       title: 'Dashboard',
       selectedLabel: 'Dashboard',
+      onRefresh: () => ref.read(DashboardViewModel.provider.notifier).fetch(),
       body: _redirectingUnauthorized
           ? const Center(child: CircularProgressIndicator(color: _purple))
           : _DashboardBody(auth: auth, state: state, ref: ref),

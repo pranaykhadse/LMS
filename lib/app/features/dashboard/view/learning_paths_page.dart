@@ -66,6 +66,11 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
       backgroundColor: _bg,
       title: 'Learning Paths',
       selectedLabel: 'Learning Paths',
+      onRefresh: () => notifier.fetch(
+        name: _searchController.text.trim().isEmpty
+            ? null
+            : _searchController.text.trim(),
+      ),
       body: Column(
         children: [
           _SearchBar(

@@ -34,6 +34,7 @@ class AccountSettingsPage extends ConsumerWidget {
 
     return AppScaffold(
       backgroundColor: _asBg,
+      onRefresh: () => ref.read(AccountSettingsViewModel.provider.notifier).fetch(),
       body: switch (state.state) {
         DataProviderState.idle ||
         DataProviderState.loading =>

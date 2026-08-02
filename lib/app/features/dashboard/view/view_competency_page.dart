@@ -36,6 +36,8 @@ class ViewCompetencyPage extends ConsumerWidget {
     return AppScaffold(
       backgroundColor: _vcBg,
       title: competency,
+      onRefresh: () =>
+          ref.read(ViewCompetencyViewModel.provider(args).notifier).fetch(),
       body: switch (state.state) {
         DataProviderState.idle ||
         DataProviderState.loading =>

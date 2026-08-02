@@ -60,6 +60,7 @@ class _MyCoursesPageState extends ConsumerState<MyCoursesPage> {
       backgroundColor: _bg,
       title: 'My Courses',
       selectedLabel: 'My Courses',
+      onRefresh: () => ref.read(MyCoursesViewModel.provider.notifier).fetch(),
       body: switch (state.state) {
         DataProviderState.idle ||
         DataProviderState.loading =>

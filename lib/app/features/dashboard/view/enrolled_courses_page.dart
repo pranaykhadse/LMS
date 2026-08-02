@@ -38,6 +38,7 @@ class EnrolledCoursesPage extends ConsumerWidget {
       backgroundColor: _bg,
       title: 'My Enrolled Courses',
       selectedSubLabel: 'My Enrolled Courses',
+      onRefresh: () => notifier.fetch(page: state.page),
       body: isEffectivelyOffline(ref)
           ? const OfflineCoursesSection(
               matches: _isEnrolledNotComplete,

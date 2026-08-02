@@ -29,6 +29,7 @@ class LearningProgressPage extends ConsumerWidget {
     return AppScaffold(
       backgroundColor: _lpBg,
       title: 'My Learning Progress',
+      onRefresh: () => ref.read(LearningProgressViewModel.provider.notifier).fetch(),
       body: _buildBody(context, ref, state, firstName),
     );
   }

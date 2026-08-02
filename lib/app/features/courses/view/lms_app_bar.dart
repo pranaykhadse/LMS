@@ -46,6 +46,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.onBack,
     this.title,
     this.centerTitle = false,
+    this.onRefresh,
   });
 
   /// Responsive wide-screen layout (catalog page only).
@@ -64,6 +65,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   /// Whether [title] is centered. Ignored when [title] is null.
   final bool centerTitle;
+
+  /// If provided, shows a refresh button that re-runs whichever fetch this
+  /// screen's data provider already uses.
+  final VoidCallback? onRefresh;
 
   @override
   Size get preferredSize => Size.fromHeight(
@@ -135,6 +140,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             ),
       actions: [
         if (isWide) ...[const _DatePill(), const SizedBox(width: 8)],
+        if (onRefresh != null) ...[
+          LmsAppBarButton(icon: Icons.refresh_rounded, onTap: onRefresh!),
+          SizedBox(width: isWide ? 8 : 12),
+        ],
         LmsOfflineToggle(
           isOffline: isOffline,
           onChanged: (val) {

@@ -20,6 +20,7 @@ class AppScaffold extends StatelessWidget {
     this.bottom,
     this.backgroundColor,
     this.maxContentWidth = 1100,
+    this.onRefresh,
   });
 
   final Widget body;
@@ -28,6 +29,12 @@ class AppScaffold extends StatelessWidget {
   final String? selectedLabel;
   final String? selectedSubLabel;
   final VoidCallback? onBack;
+
+  /// If provided, shows a refresh button in the app bar that re-runs
+  /// whichever fetch this screen's data provider already uses (same API
+  /// call it made last time), for a manual reload without a pull-to-refresh
+  /// gesture (e.g. on desktop with a mouse).
+  final VoidCallback? onRefresh;
 
   /// Optional app-bar bottom widget (e.g. a nav-tab bar or calendar toolbar).
   final PreferredSizeWidget? bottom;
@@ -65,6 +72,7 @@ class AppScaffold extends StatelessWidget {
           centerTitle: centerTitle,
           onBack: onBack,
           bottom: bottom,
+          onRefresh: onRefresh,
         ),
         body: content,
       );
@@ -78,6 +86,7 @@ class AppScaffold extends StatelessWidget {
         onBack: onBack,
         bottom: bottom,
         isWide: true,
+        onRefresh: onRefresh,
       ),
       body: Row(
         children: [

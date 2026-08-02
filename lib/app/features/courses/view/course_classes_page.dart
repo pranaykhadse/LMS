@@ -68,6 +68,8 @@ class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
       backgroundColor: _detailBackground,
       selectedLabel: 'Course Catalog',
       onBack: () => _goBackToCatalog(context),
+      onRefresh: () =>
+          ref.read(CourseJoinDetailViewModel.provider(courseId).notifier).fetch(),
       body: _DetailBody(courseId: courseId, state: state),
     );
   }

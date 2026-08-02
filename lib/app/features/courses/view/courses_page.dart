@@ -113,6 +113,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
       backgroundColor: _catalogBackground,
       title: Responsive.isTablet(context) ? 'Course Catalog' : null,
       selectedLabel: 'Course Catalog',
+      onRefresh: () => ref.read(CourseCatalogViewModel.provider.notifier).fetch(),
       body: RefreshIndicator(
         onRefresh: () async {
           if (effectivelyOffline) return;

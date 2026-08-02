@@ -36,6 +36,7 @@ class CompletedCoursesPage extends ConsumerWidget {
       backgroundColor: _bg,
       title: 'My Completed Courses',
       selectedSubLabel: 'My Completed Courses',
+      onRefresh: () => notifier.fetch(page: state.page),
       body: isEffectivelyOffline(ref)
           ? const OfflineCoursesSection(
               matches: _isComplete,

@@ -25,6 +25,7 @@ class BadgesPage extends ConsumerWidget {
       backgroundColor: _bg,
       title: 'Badges',
       selectedSubLabel: 'Badges',
+      onRefresh: notifier.fetch,
       body: _Body(state: state, onRetry: notifier.fetch),
     );
   }

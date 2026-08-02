@@ -77,6 +77,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
       backgroundColor: _calBg,
       title: 'Course Calendar',
       centerTitle: true,
+      onRefresh: () => ref.read(CalendarViewModel.provider.notifier).fetch(),
       bottom: PreferredSize(
           preferredSize: const Size.fromHeight(44),
           child: Container(

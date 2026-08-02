@@ -33,6 +33,7 @@ class DevelopmentPlanPage extends ConsumerWidget {
       backgroundColor: _bg,
       title: 'My Development Plan',
       selectedSubLabel: 'My Development Plan',
+      onRefresh: () => notifier.fetch(page: state.page),
       body: _Body(state: state, notifier: notifier),
     );
   }
