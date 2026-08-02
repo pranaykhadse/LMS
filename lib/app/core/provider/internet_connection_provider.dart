@@ -34,8 +34,25 @@ class InternetConnectionProvider {
     // to pass, meaning a staging outage would make the app look offline.
     enableStrictCheck: false,
   );
-  Future<void> intialize() async {
-    // connection.
+  Future<void>? _initializing;
+
+  /// Called from several places (this provider's own constructor, app
+  /// startup, and every single AuthGate-wrapped route mount) so it must be
+  /// idempotent - it used to re-run its full body every call, which
+  /// subscribed a brand new `onStatusChange` listener on every navigation
+  /// throughout the app. With dozens of duplicate listeners piling up, each
+  /// running its own independent `hasInternetAccess` probe, it only took one
+  /// of them observing a transient timing blip to register as a "real"
+  /// disconnect/reconnect - which fires refreshAllOnReconnect and silently
+  /// wipes out things like an applied Course Catalog search filter on an
+  /// otherwise perfectly stable connection. Now the actual check + listener
+  /// subscription runs exactly once; later callers just await that same
+  /// in-flight/completed future.
+  Future<void> intialize() {
+    return _initializing ??= _doInitialize();
+  }
+
+  Future<void> _doInitialize() async {
     final value = await connection.hasInternetAccess;
     _onConnectionChange(value);
     connection.onStatusChange.listen((event) async {

@@ -19,6 +19,7 @@ import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
+import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
@@ -67,7 +68,7 @@ class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
     return AppScaffold(
       backgroundColor: _detailBackground,
       selectedLabel: 'Course Catalog',
-      onBack: () => _goBackToCatalog(context),
+      onBack: () => _goBackToCatalog(context, ref),
       onRefresh: () =>
           ref.read(CourseJoinDetailViewModel.provider(courseId).notifier).fetch(),
       body: _DetailBody(courseId: courseId, state: state),
@@ -176,7 +177,21 @@ class _DetailBody extends ConsumerWidget {
   }
 }
 
-void _goBackToCatalog(BuildContext context) {
+void _goBackToCatalog(BuildContext context, WidgetRef ref) {
+  // Belt-and-suspenders: if the catalog already has a search/skill/behavior
+  // filter applied, re-fetch it now rather than trusting whatever is
+  // already cached in CourseCatalogViewModel.provider - it's a kept-alive
+  // provider (see course_catalog_view_model.dart) so this is normally a
+  // no-op, but guarantees the filtered results are what's shown instead of
+  // whatever got left behind if something else invalidated it while this
+  // detail page was open.
+  final catalog = ref.read(CourseCatalogViewModel.provider);
+  final hasFilter = catalog.search.isNotEmpty ||
+      catalog.skillId != null ||
+      catalog.behaviorId != null;
+  if (hasFilter) {
+    ref.read(CourseCatalogViewModel.provider.notifier).fetch();
+  }
   final navigator = Navigator.of(context);
   if (navigator.canPop()) {
     navigator.pop();
