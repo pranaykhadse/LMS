@@ -89,53 +89,83 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       backgroundColor: _appPurple,
       foregroundColor: Colors.white,
       elevation: 2,
-      centerTitle: title != null && centerTitle,
+      // Narrow mode always keeps the hamburger/back + title group pinned to
+      // the left (see `title` below, which embeds them together) -
+      // centering only applies on wide screens, where the title has no
+      // leading icon riding along with it.
+      centerTitle: isWide && title != null && centerTitle,
       titleSpacing: 0,
-      leadingWidth: isWide
-          ? (showBack ? 46 : 0)
-          : (showBack ? 92 : 56),
-      leading: isWide && !showBack
+      // On phones, the hamburger/back button and the title are kept
+      // together as a single left-hand group (via `title` below, not
+      // `leading`) so they read as one cluster, with the action icons as a
+      // separate cluster hugging the right edge - rather than the built-in
+      // AppBar leading/title split, which left an ambiguous, similarly
+      // sized gap on both sides of the title instead of grouping it with
+      // the menu button next to it.
+      leadingWidth: isWide ? (showBack ? 46 : 0) : 0,
+      leading: (!isWide || !showBack)
           ? null
           : Padding(
-              padding: EdgeInsets.only(left: isWide ? 8 : 8),
+              padding: const EdgeInsets.only(left: 8),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (showBack) ...[
-                      LmsAppBarButton(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        onTap: onBack ?? () => Navigator.pop(context),
-                        iconSize: isWide ? 21 : 26,
-                      ),
-                      if (!isWide) const SizedBox(width: 2),
-                    ],
-                    // The sidebar is always visible on wide screens, so
-                    // there's nothing for a hamburger button to open.
-                    if (!isWide)
-                      Builder(
-                        builder: (ctx) => LmsAppBarButton(
-                          icon: Icons.menu_rounded,
-                          onTap: () => Scaffold.of(ctx).openDrawer(),
-                        ),
-                      ),
-                  ],
+                child: LmsAppBarButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  onTap: onBack ?? () => Navigator.pop(context),
+                  iconSize: 21,
                 ),
               ),
             ),
-      title: title == null
-          ? const SizedBox.shrink()
+      title: isWide
+          ? (title == null
+              ? const SizedBox.shrink()
+              : Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Text(
+                    title!,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                ))
           : Padding(
-              padding: EdgeInsets.only(right: isWide ? 12 : 4),
-              child: Text(
-                title!,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: isWide ? 18 : 16,
-                ),
+              padding: const EdgeInsets.only(left: 4, right: 4),
+              child: Row(
+                children: [
+                  if (showBack) ...[
+                    LmsAppBarButton(
+                      icon: Icons.arrow_back_ios_new_rounded,
+                      onTap: onBack ?? () => Navigator.pop(context),
+                      iconSize: 26,
+                    ),
+                    const SizedBox(width: 2),
+                  ],
+                  // The sidebar is always visible on wide screens, so
+                  // there's nothing for a hamburger button to open there.
+                  Builder(
+                    builder: (ctx) => LmsAppBarButton(
+                      icon: Icons.menu_rounded,
+                      onTap: () => Scaffold.of(ctx).openDrawer(),
+                    ),
+                  ),
+                  if (title != null) ...[
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        title!,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
       actions: [
