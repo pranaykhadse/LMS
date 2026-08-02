@@ -322,23 +322,28 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   Widget build(BuildContext context) {
     final detail = widget.detail;
     final launchDate = detail.launchDate;
+    // Left signed rather than clamped to zero once the target time passes -
+    // the session is still open (this is only ever sourced from a still-open,
+    // start-through-end session; see nextVirtualClassEvent), so time elapsed
+    // since it started is meaningful to show, not just a flat 00:00:00:00.
     Duration? remaining;
     if (launchDate != null) {
-      final diff = launchDate.difference(DateTime.now());
-      remaining = diff.isNegative ? Duration.zero : diff;
+      remaining = launchDate.difference(DateTime.now());
     }
+    final isPast = (remaining?.isNegative ?? false);
+    final remainingAbs = remaining?.abs();
 
     return _InfoCard(
       margin: const EdgeInsets.fromLTRB(22, 0, 22, 28),
       child: Column(
         children: [
           // Only show the countdown once the learner is actually enrolled -
-          // showing a countdown (even at 00:00:00:00) toward a session they
-          // haven't registered for is misleading.
+          // showing a countdown toward a session they haven't registered
+          // for is misleading.
           if (launchDate != null && detail.isEnrolled) ...[
-            const Text(
-              'LAUNCHES IN',
-              style: TextStyle(
+            Text(
+              isPast ? 'STARTED' : 'LAUNCHES IN',
+              style: const TextStyle(
                 color: _detailMuted,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
@@ -348,10 +353,10 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
             const SizedBox(height: 14),
             Row(
               children: [
-                _timeEntry(remaining?.inDays ?? 0, 'DAYS'),
-                _timeEntry((remaining?.inHours ?? 0) % 24, 'HRS'),
-                _timeEntry((remaining?.inMinutes ?? 0) % 60, 'MIN'),
-                _timeEntry((remaining?.inSeconds ?? 0) % 60, 'SEC'),
+                _timeEntry(remainingAbs?.inDays ?? 0, 'DAYS'),
+                _timeEntry((remainingAbs?.inHours ?? 0) % 24, 'HRS'),
+                _timeEntry((remainingAbs?.inMinutes ?? 0) % 60, 'MIN'),
+                _timeEntry((remainingAbs?.inSeconds ?? 0) % 60, 'SEC'),
               ],
             ),
             const SizedBox(height: 26),
@@ -794,16 +799,6 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            if (item.nextSessionEnd != null && item.nextSessionEnd!.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                'Ends: ${item.nextSessionEnd}',
-                style: const TextStyle(
-                  color: _detailMuted,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
             const SizedBox(height: 12),
           ],
           if (item.status.isNotEmpty) ...[
