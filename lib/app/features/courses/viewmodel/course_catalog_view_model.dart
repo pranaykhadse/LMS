@@ -60,7 +60,12 @@ class CourseCatalogViewModel extends StateNotifier<CourseCatalogState> {
     fetch();
   }
 
-  static final provider = StateNotifierProvider.autoDispose<
+  // Not autoDispose: the applied search/skill/behavior filters and fetched
+  // results are user session state that should survive navigating away to
+  // a course's detail page and back, not just while CoursesPage happens to
+  // be the current route - autoDispose was tearing this down and refetching
+  // unfiltered as soon as the widget briefly had no listeners.
+  static final provider = StateNotifierProvider<
     CourseCatalogViewModel,
     CourseCatalogState
   >((ref) {

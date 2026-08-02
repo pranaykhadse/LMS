@@ -56,6 +56,19 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   static const _bottomSpacer = SliverToBoxAdapter(child: SizedBox(height: 32));
 
   @override
+  void initState() {
+    super.initState();
+    // The provider (now kept alive, not autoDispose - see
+    // course_catalog_view_model.dart) already holds whatever filters were
+    // last applied, e.g. after coming back from a course detail page. Seed
+    // the search box / skill dropdown from it so the UI matches the
+    // already-filtered results being shown, instead of appearing reset.
+    final applied = ref.read(CourseCatalogViewModel.provider);
+    _searchController.text = applied.search;
+    _selectedSkillId = applied.skillId ?? applied.behaviorId;
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
