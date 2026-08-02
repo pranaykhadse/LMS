@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -139,6 +141,7 @@ class CourseCatalogViewModel extends StateNotifier<CourseCatalogState> {
     String? skillId,
     String? behaviorId,
   }) async {
+    _searchDebounce?.cancel();
     final searchText = search.trim();
     state = state.copyWith(
       search: searchText,
@@ -155,8 +158,32 @@ class CourseCatalogViewModel extends StateNotifier<CourseCatalogState> {
   }
 
   Future<void> reset() async {
+    _searchDebounce?.cancel();
     state = CourseCatalogState.initial();
     await fetch();
+  }
+
+  Timer? _searchDebounce;
+
+  /// Debounced version of [applyFilters]'s search box, owned by this
+  /// notifier rather than the CoursesPage widget - a Timer living on the
+  /// widget got silently cancelled by its dispose() whenever the user
+  /// typed a term and tapped into a course before the debounce fired,
+  /// leaving the just-typed filter never actually applied. This provider
+  /// is kept alive for the app's lifetime (see the non-autoDispose
+  /// provider below), so the pending search still lands ~500ms later even
+  /// if the page that queued it has since been navigated away from.
+  void queueSearch(String search) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 500), () {
+      applyFilters(search: search, skillId: state.skillId, behaviorId: state.behaviorId);
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    super.dispose();
   }
 }
 
