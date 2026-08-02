@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/responsive.dart';
@@ -50,6 +52,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   final _searchController = TextEditingController();
   bool _redirectingUnauthorized = false;
   String? _selectedSkillId;
+  Timer? _searchDebounce;
 
   // Extra breathing room below the last card so it isn't flush against the
   // screen edge / home indicator.
@@ -66,10 +69,24 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
     final applied = ref.read(CourseCatalogViewModel.provider);
     _searchController.text = applied.search;
     _selectedSkillId = applied.skillId ?? applied.behaviorId;
+    // Auto-commit the search text a moment after typing stops, instead of
+    // only on the explicit Search button/Enter key - otherwise a term
+    // typed but never submitted just sits in the box looking like an
+    // applied filter while the results underneath stay unfiltered, which
+    // is especially confusing if the user taps into a course and back
+    // before ever pressing Search.
+    _searchController.addListener(_onSearchTextChanged);
+  }
+
+  void _onSearchTextChanged() {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 500), _applyCatalogFilters);
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.removeListener(_onSearchTextChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -84,6 +101,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   }
 
   void _applyCatalogFilters() {
+    _searchDebounce?.cancel();
     final options = ref.read(CourseCatalogViewModel.provider).filterOptions;
     final selected = _selectedSkill(options, _selectedSkillId);
     ref
@@ -148,10 +166,13 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                   skills: catalogState.filterOptions,
                   selectedSkillId: _selectedSkillId,
                   offline: effectivelyOffline,
-                  onSkillChanged:
-                      (value) => setState(() => _selectedSkillId = value),
+                  onSkillChanged: (value) {
+                    setState(() => _selectedSkillId = value);
+                    _applyCatalogFilters();
+                  },
                   onApply: _applyCatalogFilters,
                   onReset: () {
+                    _searchDebounce?.cancel();
                     _searchController.clear();
                     setState(() => _selectedSkillId = null);
                     ref.read(CourseCatalogViewModel.provider.notifier).reset();
