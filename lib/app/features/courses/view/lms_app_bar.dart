@@ -93,11 +93,11 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       titleSpacing: 0,
       leadingWidth: isWide
           ? (showBack ? 46 : 0)
-          : (showBack ? 106 : 68),
+          : (showBack ? 92 : 56),
       leading: isWide && !showBack
           ? null
           : Padding(
-              padding: EdgeInsets.only(left: isWide ? 8 : 14),
+              padding: EdgeInsets.only(left: isWide ? 8 : 8),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Row(
@@ -107,9 +107,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       LmsAppBarButton(
                         icon: Icons.arrow_back_ios_new_rounded,
                         onTap: onBack ?? () => Navigator.pop(context),
-                        iconSize: isWide ? 21 : 31,
+                        iconSize: isWide ? 21 : 26,
                       ),
-                      if (!isWide) const SizedBox(width: 6),
+                      if (!isWide) const SizedBox(width: 2),
                     ],
                     // The sidebar is always visible on wide screens, so
                     // there's nothing for a hamburger button to open.
@@ -127,14 +127,14 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       title: title == null
           ? const SizedBox.shrink()
           : Padding(
-              padding: const EdgeInsets.only(right: 12),
+              padding: EdgeInsets.only(right: isWide ? 12 : 4),
               child: Text(
                 title!,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
-                  fontSize: 18,
+                  fontSize: isWide ? 18 : 16,
                 ),
               ),
             ),
@@ -142,7 +142,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         if (isWide) ...[const _DatePill(), const SizedBox(width: 8)],
         if (onRefresh != null) ...[
           LmsAppBarButton(icon: Icons.refresh_rounded, onTap: onRefresh!),
-          SizedBox(width: isWide ? 8 : 12),
+          SizedBox(width: isWide ? 8 : 2),
         ],
         LmsOfflineToggle(
           isOffline: isOffline,
@@ -169,7 +169,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
           ],
         ),
-        SizedBox(width: isWide ? 8 : 12),
+        SizedBox(width: isWide ? 8 : 2),
         // Avatar with profile popup menu
         PopupMenuButton<String>(
           offset: Offset(0, isWide ? 38 : 54),
@@ -216,16 +216,16 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
             ),
           ],
-          child: LmsAvatar(profile: profile, radius: isWide ? 19 : 21),
+          child: LmsAvatar(profile: profile, radius: isWide ? 19 : 18),
         ),
-        SizedBox(width: isWide ? 7 : 8),
+        SizedBox(width: isWide ? 7 : 2),
         LmsAppBarButton(
           icon: Icons.play_arrow_rounded,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const LearningProgressPage()),
           ),
         ),
-        SizedBox(width: isWide ? 10 : 12),
+        SizedBox(width: isWide ? 10 : 6),
       ],
       bottom: bottom,
     );
@@ -252,7 +252,7 @@ class LmsAppBarButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final size = isWide ? 38.0 : 42.0;
+    final size = isWide ? 38.0 : 36.0;
     return Center(
       child: SizedBox.square(
         dimension: size,
@@ -265,7 +265,7 @@ class LmsAppBarButton extends StatelessWidget {
             child: Icon(
               icon,
               color: Colors.white,
-              size: iconSize ?? (isWide ? 24 : 27),
+              size: iconSize ?? (isWide ? 24 : 23),
             ),
           ),
         ),
@@ -287,16 +287,17 @@ class LmsOfflineToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= 760;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
-          size: 22,
+          size: isWide ? 22 : 18,
           color: isOffline ? Colors.amber.shade600 : Colors.white70,
         ),
         Transform.scale(
-          scale: 0.85,
+          scale: isWide ? 0.85 : 0.72,
           child: Switch(
             value: isOffline,
             onChanged: onChanged,
