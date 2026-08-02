@@ -32,7 +32,12 @@ import 'package:lms/app/features/dashboard/viewmodel/view_competency_view_model.
 /// Riverpod invalidates every currently-active instance of that family when
 /// you do this, without needing to know which keys are in use.
 void refreshAllOnReconnect(Ref ref) {
-  ref.invalidate(CourseCatalogViewModel.provider);
+  // Refetch rather than invalidate for the catalog - it's a kept-alive
+  // provider holding whatever search/skill/behavior filter is currently
+  // applied, and invalidate() would throw that away and rebuild it
+  // unfiltered. fetch() reuses whatever's already in state.search/skillId/
+  // behaviorId instead.
+  ref.read(CourseCatalogViewModel.provider.notifier).fetch();
   ref.invalidate(MyCoursesViewModel.provider);
   ref.invalidate(EnrolledCoursesViewModel.provider);
   ref.invalidate(CompletedCoursesViewModel.provider);

@@ -138,7 +138,14 @@ class CourseJoinDetailViewModel
   /// to them; ones that aren't currently alive just fetch fresh next time
   /// they're created anyway.
   void _refreshRelatedScreens() {
-    ref.invalidate(CourseCatalogViewModel.provider);
+    // Refetch rather than invalidate for the catalog specifically - it's a
+    // kept-alive provider holding whatever search/skill/behavior filter is
+    // currently applied (see course_catalog_view_model.dart), and
+    // invalidate() would throw that state away and rebuild it from scratch
+    // unfiltered. fetch() reuses whatever's already in state.search/skillId/
+    // behaviorId, so the enrollment-status refresh doesn't also silently
+    // clear the user's filter.
+    ref.read(CourseCatalogViewModel.provider.notifier).fetch();
     ref.invalidate(MyCoursesViewModel.provider);
     ref.invalidate(EnrolledCoursesViewModel.provider);
     ref.invalidate(CompletedCoursesViewModel.provider);
