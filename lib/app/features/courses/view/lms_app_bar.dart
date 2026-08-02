@@ -93,11 +93,11 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       titleSpacing: 0,
       leadingWidth: isWide
           ? (showBack ? 46 : 0)
-          : (showBack ? 92 : 56),
+          : (showBack ? 76 : 44),
       leading: isWide && !showBack
           ? null
           : Padding(
-              padding: EdgeInsets.only(left: isWide ? 8 : 8),
+              padding: EdgeInsets.only(left: isWide ? 8 : 4),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Row(
@@ -107,9 +107,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       LmsAppBarButton(
                         icon: Icons.arrow_back_ios_new_rounded,
                         onTap: onBack ?? () => Navigator.pop(context),
-                        iconSize: isWide ? 21 : 26,
+                        iconSize: isWide ? 21 : 21,
                       ),
-                      if (!isWide) const SizedBox(width: 2),
+                      if (!isWide) const SizedBox(width: 0),
                     ],
                     // The sidebar is always visible on wide screens, so
                     // there's nothing for a hamburger button to open.
@@ -172,6 +172,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         SizedBox(width: isWide ? 8 : 2),
         // Avatar with profile popup menu
         PopupMenuButton<String>(
+          // PopupMenuButton pads its child by 8 on every side by default -
+          // on phones that alone was adding 16px of otherwise-invisible
+          // width around the avatar.
+          padding: EdgeInsets.zero,
           offset: Offset(0, isWide ? 38 : 54),
           constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
           shape:
@@ -216,16 +220,16 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
             ),
           ],
-          child: LmsAvatar(profile: profile, radius: isWide ? 19 : 18),
+          child: LmsAvatar(profile: profile, radius: isWide ? 19 : 14),
         ),
-        SizedBox(width: isWide ? 7 : 2),
+        SizedBox(width: isWide ? 7 : 0),
         LmsAppBarButton(
           icon: Icons.play_arrow_rounded,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const LearningProgressPage()),
           ),
         ),
-        SizedBox(width: isWide ? 10 : 6),
+        SizedBox(width: isWide ? 10 : 4),
       ],
       bottom: bottom,
     );
@@ -252,7 +256,7 @@ class LmsAppBarButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final size = isWide ? 38.0 : 36.0;
+    final size = isWide ? 38.0 : 30.0;
     return Center(
       child: SizedBox.square(
         dimension: size,
@@ -265,7 +269,7 @@ class LmsAppBarButton extends StatelessWidget {
             child: Icon(
               icon,
               color: Colors.white,
-              size: iconSize ?? (isWide ? 24 : 23),
+              size: iconSize ?? (isWide ? 24 : 19),
             ),
           ),
         ),
@@ -288,24 +292,34 @@ class LmsOfflineToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
+    // Transform.scale only paints smaller, it doesn't shrink the space the
+    // Switch actually occupies in the Row - wrapping it in a fixed-size
+    // SizedBox + FittedBox instead so the real layout footprint on phones
+    // is as small as it visually looks, not just the default Switch size
+    // with extra transparent padding around it.
+    final switchSize = isWide ? const Size(34, 20) : const Size(26, 16);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
-          size: isWide ? 22 : 18,
+          size: isWide ? 22 : 16,
           color: isOffline ? Colors.amber.shade600 : Colors.white70,
         ),
-        Transform.scale(
-          scale: isWide ? 0.85 : 0.72,
-          child: Switch(
-            value: isOffline,
-            onChanged: onChanged,
-            activeThumbColor: Colors.amber.shade600,
-            activeTrackColor: Colors.amber.shade200,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Colors.white30,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        SizedBox(
+          width: switchSize.width,
+          height: switchSize.height,
+          child: FittedBox(
+            fit: BoxFit.fill,
+            child: Switch(
+              value: isOffline,
+              onChanged: onChanged,
+              activeThumbColor: Colors.amber.shade600,
+              activeTrackColor: Colors.amber.shade200,
+              inactiveThumbColor: Colors.white,
+              inactiveTrackColor: Colors.white30,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
           ),
         ),
       ],
