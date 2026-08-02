@@ -794,14 +794,26 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     // string baked once at the last fetch - that field only advances when
     // the API is refetched, so it kept showing an already-ended session's
     // date/time until the user manually refreshed.
+    //
+    // "Next Session" specifically means a session that hasn't started yet -
+    // once its start time passes it's no longer "next", so this uses a
+    // strictly-future selector rather than the still-open-through-end one
+    // Register/Attend use below.
+    final upcomingEvent = item.learningEvents.isNotEmpty
+        ? _earliestNotYetStartedEvent(item.learningEvents)
+        : null;
+    final liveNextSession = item.learningEvents.isNotEmpty
+        ? (upcomingEvent?.startDateTime != null
+            ? _formatFriendlyMoment(upcomingEvent!.startDateTime!)
+            : null)
+        : (item.nextSession.isNotEmpty ? item.nextSession : null);
+    // Registration/attendance stays open for a session's whole duration -
+    // from start through end, not just before it starts - matching the
+    // website, so this uses the still-open selector rather than
+    // upcomingEvent above.
     final liveEvent = item.learningEvents.isNotEmpty
         ? _earliestUpcomingEvent(item.learningEvents)
         : null;
-    final liveNextSession = item.learningEvents.isNotEmpty
-        ? (liveEvent?.startDateTime != null
-            ? _formatFriendlyMoment(liveEvent!.startDateTime!)
-            : null)
-        : (item.nextSession.isNotEmpty ? item.nextSession : null);
     // A class with learning_events but none still open has nothing left to
     // register for - hide the Register action instead of leaving it
     // clickable only to fail with a toast.
@@ -1292,6 +1304,21 @@ LearningEvent? _earliestUpcomingEvent(List<LearningEvent> events) {
     // through end - not just before it starts, matching the website.
     final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
     if (!stillOpen) continue;
+    if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
+  }
+  return earliest;
+}
+
+/// The earliest event that hasn't started yet - unlike [_earliestUpcomingEvent]
+/// (which stays "open" through a session's end for Register/Attend), a
+/// session already in progress or finished is no longer "next", so it's
+/// excluded here even though it may still be registerable/attendable.
+LearningEvent? _earliestNotYetStartedEvent(List<LearningEvent> events) {
+  final now = DateTime.now();
+  LearningEvent? earliest;
+  for (final event in events) {
+    final start = event.startDateTime;
+    if (start == null || !start.isAfter(now)) continue;
     if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
   }
   return earliest;
