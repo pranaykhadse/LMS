@@ -354,7 +354,20 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
             ),
             const SizedBox(height: 14),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                if (isPast)
+                  const Padding(
+                    padding: EdgeInsets.only(right: 2),
+                    child: Text(
+                      '-',
+                      style: TextStyle(
+                        color: _detailInk,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
                 _timeEntry(remainingAbs?.inDays ?? 0, 'DAYS'),
                 _timeEntry((remainingAbs?.inHours ?? 0) % 24, 'HRS'),
                 _timeEntry((remainingAbs?.inMinutes ?? 0) % 60, 'MIN'),
@@ -676,6 +689,27 @@ class _StructureItemCard extends ConsumerStatefulWidget {
 
 class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
   bool _cancelling = false;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ticks so "Next Session" and the per-class Register action re-evaluate
+    // against the current time without needing a manual refresh - a session
+    // that ends while this screen is open should disappear/disable itself
+    // live, not just the next time the API is refetched.
+    if (widget.item.learningEvents.isNotEmpty) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   Future<void> _cancelClass() async {
     if (_cancelling) return;
@@ -755,6 +789,24 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     final isEnrolled = widget.isEnrolled;
     final courseObjective = widget.courseObjective;
     final courseTitle = widget.courseTitle;
+    // Recomputed against DateTime.now() on every rebuild (see the ticking
+    // _timer above) rather than read from item.nextSession, which is a
+    // string baked once at the last fetch - that field only advances when
+    // the API is refetched, so it kept showing an already-ended session's
+    // date/time until the user manually refreshed.
+    final liveEvent = item.learningEvents.isNotEmpty
+        ? _earliestUpcomingEvent(item.learningEvents)
+        : null;
+    final liveNextSession = item.learningEvents.isNotEmpty
+        ? (liveEvent?.startDateTime != null
+            ? _formatFriendlyMoment(liveEvent!.startDateTime!)
+            : null)
+        : (item.nextSession.isNotEmpty ? item.nextSession : null);
+    // A class with learning_events but none still open has nothing left to
+    // register for - hide the Register action instead of leaving it
+    // clickable only to fail with a toast.
+    final hasRegisterableSession =
+        item.learningEvents.isEmpty || liveEvent != null;
     return Container(
       padding: const EdgeInsets.fromLTRB(17, 16, 17, 20),
       decoration: BoxDecoration(
@@ -793,9 +845,9 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           // Only show a session date once the learner is actually enrolled -
           // showing one for a class they haven't registered for implies a
           // commitment that hasn't been made yet.
-          if (item.nextSession.isNotEmpty && isEnrolled) ...[
+          if (liveNextSession != null && isEnrolled) ...[
             Text(
-              'Next Session: ${item.nextSession}',
+              'Next Session: $liveNextSession',
               style: const TextStyle(
                 color: _detailMuted,
                 fontWeight: FontWeight.w700,
@@ -876,7 +928,10 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 ),
             ] else ...[
               if (item.showDetails && item.showAction) const SizedBox(height: 15),
-              if (item.showAction)
+              // A Virtual Class with no live open session left has nothing
+              // to register for anymore - hide Register instead of leaving
+              // a dead button (see hasRegisterableSession above).
+              if (item.showAction && (item.typeCode != '3' || hasRegisterableSession))
                 item.typeCode == '3' && isEnrolled
                     ? _OnlineActionButton(
                         icon: _actionIcon(item.icon),
@@ -2227,6 +2282,25 @@ String _formatEventMoment(DateTime? dateTime, String rawTime) {
   final amPm = hour >= 12 ? 'PM' : 'AM';
   final hour12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
   return '$month ${dateTime.day}\n$hour12:$minute $amPm';
+}
+
+// "02 Aug 2026 03:40 PM" - used for the "Next Session" line, which (unlike
+// _formatEventMoment's compact two-line schedule-card format) needs the
+// full date on one line since it's read out of context of a specific card.
+String _formatFriendlyMoment(DateTime dateTime) {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  final day = dateTime.day.toString().padLeft(2, '0');
+  final month = months[dateTime.month - 1];
+  final hour = dateTime.hour;
+  final minute = dateTime.minute.toString().padLeft(2, '0');
+  final amPm = hour >= 12 ? 'PM' : 'AM';
+  final hour12 = (hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour))
+      .toString()
+      .padLeft(2, '0');
+  return '$day $month ${dateTime.year} $hour12:$minute $amPm';
 }
 
 String _formatTime(String time) {
