@@ -880,6 +880,20 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 fontWeight: FontWeight.w700,
               ),
             ),
+            // upcomingEvent can be null here even though liveNextSession
+            // isn't - the raw item.nextSession fallback (classes with no
+            // learning_events array) has a date string but no structured
+            // DateTime to count down to.
+            if (upcomingEvent != null) ...[
+              const SizedBox(height: 10),
+              // Ticks in step with liveNextSession above (same
+              // upcomingEvent, same ticking _timer) and disappears the same
+              // way - once the session starts, upcomingEvent goes null,
+              // liveNextSession goes null, and this comes down with it
+              // rather than freezing or going negative like the
+              // course-level LAUNCHES IN panel does.
+              _ClassLaunchCountdown(target: upcomingEvent.startDateTime!),
+            ],
             const SizedBox(height: 12),
           ],
           if (item.status.isNotEmpty) ...[
@@ -1149,6 +1163,85 @@ class _SectionTitle extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Compact "LAUNCHES IN" countdown for a single class card - a smaller
+/// sibling of _LaunchPanel's course-level countdown, used wherever
+/// "Next Session" is shown. Always counts down to a future [target]; the
+/// caller only renders this while there's a not-yet-started session to
+/// count down to (see upcomingEvent in _StructureItemCardState.build), so
+/// unlike the course-level panel this never needs to handle a negative/
+/// already-started state - it just gets removed from the tree instead.
+class _ClassLaunchCountdown extends StatelessWidget {
+  const _ClassLaunchCountdown({required this.target});
+  final DateTime target;
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = target.difference(DateTime.now());
+    if (remaining.isNegative) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'LAUNCHES IN',
+          style: TextStyle(
+            color: _detailMuted,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: .3,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            _miniTimeEntry(remaining.inDays, 'D'),
+            const SizedBox(width: 6),
+            _miniTimeEntry(remaining.inHours % 24, 'H'),
+            const SizedBox(width: 6),
+            _miniTimeEntry(remaining.inMinutes % 60, 'M'),
+            const SizedBox(width: 6),
+            _miniTimeEntry(remaining.inSeconds % 60, 'S'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _miniTimeEntry(int value, String label) {
+    return Container(
+      width: 38,
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAF9FF),
+        border: Border.all(color: const Color(0xFFE5DFFF)),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: value.toString().padLeft(2, '0'),
+              style: const TextStyle(
+                color: _detailPurple,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            TextSpan(
+              text: label,
+              style: const TextStyle(
+                color: _detailMuted,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
