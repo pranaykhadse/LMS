@@ -1,42 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lms/app/core/design/responsive.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
-import 'package:lms/app/core/provider/internet_connection_provider.dart';
-import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
+import 'package:lms/app/features/courses/model/calendar_event.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
-import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
+import 'package:lms/app/features/courses/viewmodel/calendar_view_model.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
+import 'package:lms/app/features/dashboard/viewmodel/completed_courses_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/enrolled_courses_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/required_courses_view_model.dart';
 import 'package:lms/app_module.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-const _purple = Color(0xFF5756C9);
-const _purple2 = Color(0xFF775FE8);
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
-const _sectionTitle = Color(0xFFB0006D);
+const _purple = FigmaTokens.primaryPurple;
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
+const _border = FigmaTokens.cardBorders;
 
 bool _anyCourse(Course course) => true;
-
-bool _watchIsOnline(WidgetRef ref) {
-  final isManualOffline = ref.watch(OfflineModeNotifier.provider);
-  final connectionVM = ref.watch(InternetConnectionProvider.provider);
-  ref.watch(SyncViewModel.provider);
-  return !isManualOffline && connectionVM.isConnected;
-}
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -54,6 +46,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         v.contains('invalid credentials') ||
         v.contains('status code of 401') ||
         v.contains(' 401');
+  }
+
+  void _refetchAll() {
+    ref.read(DashboardViewModel.provider.notifier).fetch();
+    ref.read(EnrolledCoursesViewModel.provider.notifier).fetch();
+    ref.read(RequiredCoursesViewModel.provider.notifier).fetch();
+    ref.read(CompletedCoursesViewModel.provider.notifier).fetch();
+    ref.read(CalendarViewModel.provider.notifier).fetch();
   }
 
   @override
@@ -118,28 +118,28 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       backgroundColor: _bg,
       title: 'Dashboard',
       selectedLabel: 'Dashboard',
-      onRefresh: () => ref.read(DashboardViewModel.provider.notifier).fetch(),
+      onRefresh: _refetchAll,
       body: _redirectingUnauthorized
           ? const Center(child: CircularProgressIndicator(color: _purple))
-          : _DashboardBody(auth: auth, state: state, ref: ref),
+          : _DashboardBody(auth: auth, state: state, onRefetchAll: _refetchAll),
     );
   }
 }
 
 // ─── Body ─────────────────────────────────────────────────────────────────────
 
-class _DashboardBody extends StatelessWidget {
+class _DashboardBody extends ConsumerWidget {
   const _DashboardBody({
     required this.auth,
     required this.state,
-    required this.ref,
+    required this.onRefetchAll,
   });
   final AuthState? auth;
   final DataState<DashboardResponse> state;
-  final WidgetRef ref;
+  final VoidCallback onRefetchAll;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     switch (state.state) {
       case DataProviderState.loading:
       case DataProviderState.idle:
@@ -147,48 +147,104 @@ class _DashboardBody extends StatelessWidget {
       case DataProviderState.error:
         return _ErrorView(
           message: state.error ?? 'Unable to load dashboard.',
-          onRetry: () => ref.read(DashboardViewModel.provider.notifier).fetch(),
+          onRetry: onRefetchAll,
         );
       case DataProviderState.data:
         final data = state.data;
         if (data == null) {
           return const _ErrorView(message: 'No dashboard data found.');
         }
+        final enrolled = ref.watch(EnrolledCoursesViewModel.provider);
+        final required = ref.watch(RequiredCoursesViewModel.provider);
+        final completed = ref.watch(CompletedCoursesViewModel.provider);
+        final calendar = ref.watch(CalendarViewModel.provider);
+
         return RefreshIndicator(
           color: _purple,
-          onRefresh:
-              () => ref.read(DashboardViewModel.provider.notifier).fetch(),
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              _BannerSection(auth: auth),
-              const SizedBox(height: 28),
-              _SectionHeader(
-                title: 'My Courses',
-                actionLabel: 'View All My Courses',
-                onAction:
-                    () => Modular.to.pushNamed(
-                      CoursesModule.construct(CoursesModule.myCourses),
+          onRefresh: () async => onRefetchAll(),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 900;
+              return ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _BannerSection(auth: auth),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(20, 20, 20, 4),
+                    child: Text(
+                      "Welcome back! Here's what's happening with your courses.",
+                      style: TextStyle(color: _muted, fontSize: 14),
                     ),
-              ),
-              const SizedBox(height: 12),
-              data.ongoingCourses.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        'No courses!',
-                        style: TextStyle(color: _ink, fontSize: 14),
-                      ),
-                    )
-                  : _CourseCarousel(courses: data.ongoingCourses),
-              if (data.resources.isNotEmpty) ...[
-                const SizedBox(height: 28),
-                const _SectionHeader(title: 'Resources'),
-                const SizedBox(height: 12),
-                _ResourceCarousel(resources: data.resources),
-              ],
-              const AppFooter(),
-            ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    child: _StatRow(
+                      isWide: isWide,
+                      enrolled: enrolled.totalCourses,
+                      required: required.total,
+                      completed: completed.total,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    child: isWide
+                        ? IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: _ContinueLearningCard(
+                                    courses: data.ongoingCourses,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _UpcomingSessionsCard(calendar: calendar),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              _ContinueLearningCard(courses: data.ongoingCourses),
+                              const SizedBox(height: 16),
+                              _UpcomingSessionsCard(calendar: calendar),
+                            ],
+                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    child: isWide
+                        ? IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: _CourseProgressCard(enrolled: enrolled),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _OverallProgressCard(enrolled: enrolled),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              _CourseProgressCard(enrolled: enrolled),
+                              const SizedBox(height: 16),
+                              _OverallProgressCard(enrolled: enrolled),
+                            ],
+                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    child: _RequiredForYouCard(required: required),
+                  ),
+                  const AppFooter(),
+                ],
+              );
+            },
           ),
         );
     }
@@ -220,14 +276,12 @@ class _BannerSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1A1255), _purple2],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      decoration: BoxDecoration(
+        gradient: FigmaTokens.heroGradient,
+        borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 36, 24, 36),
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -267,123 +321,277 @@ class _BannerSection extends StatelessWidget {
   }
 }
 
-// ─── Section header ───────────────────────────────────────────────────────────
+// ─── Stat cards ───────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, this.actionLabel, this.onAction});
+class _StatRow extends StatelessWidget {
+  const _StatRow({
+    required this.isWide,
+    required this.enrolled,
+    required this.required,
+    required this.completed,
+  });
+  final bool isWide;
+  final int enrolled;
+  final int required;
+  final int completed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            icon: Icons.menu_book_rounded,
+            iconColor: _purple,
+            label: 'ENROLLED',
+            value: enrolled,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.error_outline_rounded,
+            iconColor: const Color(0xFFF59E0B),
+            label: 'REQUIRED',
+            value: required,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.check_circle_outline_rounded,
+            iconColor: const Color(0xFF16A34A),
+            label: 'COMPLETED',
+            value: completed,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+  });
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        color: FigmaTokens.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _muted,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: .3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$value',
+            style: const TextStyle(
+              color: _ink,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Shared card chrome ─────────────────────────────────────────────────────
+
+class _DashCard extends StatelessWidget {
+  const _DashCard({required this.child, this.padding});
+  final Widget child;
+  final EdgeInsets? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: padding ?? const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: FigmaTokens.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _CardHeader extends StatelessWidget {
+  const _CardHeader({required this.title, this.actionLabel, this.onAction});
   final String title;
   final String? actionLabel;
   final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              color: _ink,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        if (actionLabel != null && onAction != null)
+          GestureDetector(
+            onTap: onAction,
             child: Text(
-              title,
+              actionLabel!,
               style: const TextStyle(
-                color: _sectionTitle,
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
+                color: _purple,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          if (actionLabel != null && onAction != null)
-            GestureDetector(
-              onTap: onAction,
-              child: Text(
-                actionLabel!,
-                style: const TextStyle(
-                  color: _purple,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  decoration: TextDecoration.underline,
-                  decorationColor: _purple,
-                ),
+      ],
+    );
+  }
+}
+
+// ─── Continue Learning ────────────────────────────────────────────────────────
+
+class _ContinueLearningCard extends StatefulWidget {
+  const _ContinueLearningCard({required this.courses});
+  final List<DashboardCourse> courses;
+
+  @override
+  State<_ContinueLearningCard> createState() => _ContinueLearningCardState();
+}
+
+class _ContinueLearningCardState extends State<_ContinueLearningCard> {
+  final _controller = PageController();
+  int _index = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _DashCard(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            title: 'Continue Learning',
+            actionLabel: widget.courses.isEmpty ? null : 'View All',
+            onAction: widget.courses.isEmpty
+                ? null
+                : () => Modular.to.pushNamed(
+                      CoursesModule.construct(CoursesModule.myCourses),
+                    ),
+          ),
+          const SizedBox(height: 14),
+          if (widget.courses.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text('No courses in progress.', style: TextStyle(color: _muted)),
+            )
+          else ...[
+            SizedBox(
+              height: 300,
+              child: PageView.builder(
+                controller: _controller,
+                onPageChanged: (i) => setState(() => _index = i),
+                itemCount: widget.courses.length,
+                itemBuilder: (context, i) =>
+                    _ContinueLearningItem(course: widget.courses[i]),
               ),
             ),
+            if (widget.courses.length > 1) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(widget.courses.length, (i) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: i == _index ? 16 : 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: i == _index ? _purple : _border,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  );
+                }),
+              ),
+            ],
+            const SizedBox(height: 10),
+          ],
         ],
       ),
     );
   }
 }
 
-// ─── Course carousel ──────────────────────────────────────────────────────────
-
-class _CourseCarousel extends StatelessWidget {
-  const _CourseCarousel({required this.courses});
-  final List<DashboardCourse> courses;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: Responsive.columns(
-            context,
-            phone: 2,
-            tablet: 3,
-            desktop: 4,
-          ),
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          childAspectRatio: 0.62,
-          mainAxisExtent: Responsive.isTablet(context) ? 290 : null,
-        ),
-        itemCount: courses.length,
-        itemBuilder: (context, index) => _CourseCard(course: courses[index]),
-      ),
-    );
-  }
-}
-
-class _CourseCard extends ConsumerWidget {
-  const _CourseCard({required this.course});
+class _ContinueLearningItem extends ConsumerWidget {
+  const _ContinueLearningItem({required this.course});
   final DashboardCourse course;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image
-          SizedBox(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(
+            width: 110,
             height: 110,
-            width: double.infinity,
             child: Stack(
               fit: StackFit.expand,
               children: [
                 course.logo != null
                     ? Image.network(
-                      course.logo!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const _ImgFallback(),
-                    )
+                        course.logo!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const _ImgFallback(),
+                      )
                     : const _ImgFallback(),
                 Positioned(
-                  top: 6,
-                  left: 6,
+                  top: 4,
+                  left: 4,
                   child: OfflineCourseButton(
                     course: Course(
                       id: course.id,
@@ -398,327 +606,444 @@ class _CourseCard extends ConsumerWidget {
               ],
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    course.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _ink,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  if (course.displayRating) ...[
-                    _StarRow(
-                      rating: course.averageRating,
-                      count: course.ratingCount,
-                    ),
-                    const SizedBox(height: 6),
-                  ] else
-                    const SizedBox(height: 2),
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed:
-                          viewDisabled
-                              ? null
-                              : () => Modular.to.pushNamed(
-                                CoursesModule.construct(
-                                  '${CoursesModule.detail}/${course.id}',
-                                ),
-                              ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _purple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        minimumSize: const Size.fromHeight(32),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
-                      child: const Text('View Course'),
-                    ),
-                  ),
-                ],
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                course.name,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _ink,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  height: 1.3,
+                ),
               ),
-            ),
+              const SizedBox(height: 6),
+              if (course.progress > 0)
+                Text(
+                  '${course.progress}% complete',
+                  style: const TextStyle(color: _muted, fontSize: 12),
+                ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: viewDisabled
+                      ? null
+                      : () => Modular.to.pushNamed(
+                            CoursesModule.construct(
+                              '${CoursesModule.detail}/${course.id}',
+                            ),
+                          ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _purple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size.fromHeight(38),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                  child: const Text('Resume'),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-// ─── Resource carousel ────────────────────────────────────────────────────────
-//
-// A single-item pager (matching the website: one resource card at a time,
-// with left/right arrows to page through) rather than a multi-column grid.
+// ─── Upcoming Sessions ────────────────────────────────────────────────────────
 
-class _ResourceCarousel extends StatefulWidget {
-  const _ResourceCarousel({required this.resources});
-  final List<DashboardResource> resources;
-
-  @override
-  State<_ResourceCarousel> createState() => _ResourceCarouselState();
-}
-
-class _ResourceCarouselState extends State<_ResourceCarousel> {
-  final _controller = PageController();
-  int _index = 0;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _go(int delta) {
-    final next = (_index + delta).clamp(0, widget.resources.length - 1);
-    _controller.animateToPage(
-      next,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-    );
-  }
+class _UpcomingSessionsCard extends StatelessWidget {
+  const _UpcomingSessionsCard({required this.calendar});
+  final DataState<CalendarViewResult> calendar;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SizedBox(
-        height: 460,
-        child: PageView.builder(
-          controller: _controller,
-          onPageChanged: (i) => setState(() => _index = i),
-          itemCount: widget.resources.length,
-          itemBuilder: (context, i) => _ResourceCard(
-            key: ValueKey('resource-${widget.resources[i].id}-$i'),
-            resource: widget.resources[i],
-            showPrev: widget.resources.length > 1 && _index > 0,
-            showNext: widget.resources.length > 1 && _index < widget.resources.length - 1,
-            onPrev: () => _go(-1),
-            onNext: () => _go(1),
-          ),
-        ),
-      ),
-    );
-  }
-}
+    final now = DateTime.now();
+    final upcoming = (calendar.data?.events ?? const <CalendarEvent>[])
+        .where((e) => e.startDateTime.isAfter(now))
+        .toList()
+      ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+    final shown = upcoming.take(4).toList();
 
-class _NavArrow extends StatelessWidget {
-  const _NavArrow({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: _purple.withValues(alpha: onTap == null ? 0.06 : 0.14),
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 32,
-          height: 32,
-          child: Icon(icon, size: 20, color: onTap == null ? _muted : _purple),
-        ),
-      ),
-    );
-  }
-}
-
-class _ResourceCard extends ConsumerWidget {
-  const _ResourceCard({
-    super.key,
-    required this.resource,
-    required this.showPrev,
-    required this.showNext,
-    required this.onPrev,
-    required this.onNext,
-  });
-  final DashboardResource resource;
-  final bool showPrev;
-  final bool showNext;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-
-  Future<void> _openLink(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isOnline = _watchIsOnline(ref);
-    final needsInternet = resource.actionType == 'link';
-    final hasAction = resource.actionType != 'none' && (!needsInternet || isOnline);
-    final label =
-        resource.actionType == 'link'
-            ? (isOnline ? 'View' : 'Internet required')
-            : resource.actionType == 'resource'
-            ? 'View'
-            : 'No Content';
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0F000000), blurRadius: 20, offset: Offset(0, 8)),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
+    return _DashCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity,
-            color: const Color(0xFFEFEDFB),
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            child: Text(
-              resource.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: _purple,
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-              ),
-            ),
-          ),
-          SizedBox(
-            height: 180,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                resource.logo != null
-                    ? Image.network(
-                        resource.logo!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImgFallback(),
-                      )
-                    : const _ImgFallback(),
-                if (showPrev || showNext)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        showPrev
-                            ? _NavArrow(icon: Icons.chevron_left_rounded, onTap: onPrev)
-                            : const SizedBox(width: 32),
-                        showNext
-                            ? _NavArrow(icon: Icons.chevron_right_rounded, onTap: onNext)
-                            : const SizedBox(width: 32),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (resource.subtitle?.isNotEmpty == true)
-                    Text(
-                      resource.subtitle!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: _muted, fontSize: 13, height: 1.4),
-                    ),
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: hasAction
-                          ? () {
-                              if (resource.actionType == 'link' &&
-                                  resource.actionUrl != null) {
-                                _openLink(resource.actionUrl!);
-                              }
-                            }
-                          : null,
-                      icon: const Icon(Icons.remove_red_eye_outlined, size: 18),
-                      label: Text(label),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _purple,
-                        disabledBackgroundColor: const Color(0xFFDDE2EA),
-                        foregroundColor: Colors.white,
-                        disabledForegroundColor: _muted,
-                        elevation: 0,
-                        minimumSize: const Size.fromHeight(46),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          const _CardHeader(title: 'Upcoming Virtual Classes'),
+          const SizedBox(height: 14),
+          if (calendar.state == DataProviderState.loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator(color: _purple)),
+            )
+          else if (shown.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text('No upcoming sessions.', style: TextStyle(color: _muted)),
+            )
+          else
+            for (var i = 0; i < shown.length; i++) ...[
+              if (i > 0) const Divider(height: 24, color: _border),
+              _SessionRow(event: shown[i]),
+            ],
         ],
       ),
     );
   }
 }
 
-// ─── Star rating ──────────────────────────────────────────────────────────────
+class _SessionRow extends StatelessWidget {
+  const _SessionRow({required this.event});
+  final CalendarEvent event;
 
-class _StarRow extends StatelessWidget {
-  const _StarRow({required this.rating, required this.count});
-  final double rating;
-  final int count;
+  String _formatDate(DateTime dt) {
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final weekday = weekdays[dt.weekday - 1];
+    final month = months[dt.month - 1];
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$weekday, $month ${dt.day}, ${dt.year} • $hour:$minute $ampm';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ...List.generate(5, (i) {
-          if (i < rating.floor()) {
-            return const Icon(Icons.star_rounded, color: Color(0xFFFFC107), size: 15);
-          }
-          if (i < rating) {
-            return const Icon(
-              Icons.star_half_rounded,
-              color: Color(0xFFFFC107),
-              size: 15,
-            );
-          }
-          return const Icon(
-            Icons.star_border_rounded,
-            color: Color(0xFFFFC107),
-            size: 15,
-          );
-        }),
-        const SizedBox(width: 4),
-        Text(
-          '${rating.toStringAsFixed(1)} ($count)',
-          style: const TextStyle(color: _muted, fontSize: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    event.courseName.isNotEmpty ? event.courseName : event.title,
+                    style: const TextStyle(
+                      color: _ink,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                  if (event.className.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: FigmaTokens.badgeBackground,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        event.className,
+                        style: const TextStyle(
+                          color: _purple,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _formatDate(event.startDateTime),
+                style: const TextStyle(color: _muted, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        ElevatedButton(
+          onPressed: () => Modular.to.pushNamed(
+            CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _purple,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            minimumSize: const Size(64, 34),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+          ),
+          child: const Text('Join'),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Course Progress ────────────────────────────────────────────────────────
+
+class _CourseProgressCard extends StatelessWidget {
+  const _CourseProgressCard({required this.enrolled});
+  final EnrolledState enrolled;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = enrolled.courses.take(4).toList();
+    return _DashCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            title: 'Course Progress',
+            actionLabel: shown.isEmpty ? null : 'View All',
+            onAction: shown.isEmpty
+                ? null
+                : () => Modular.to.pushNamed(
+                      CoursesModule.construct(CoursesModule.enrolledCourses),
+                    ),
+          ),
+          const SizedBox(height: 14),
+          if (enrolled.providerState == DataProviderState.loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator(color: _purple)),
+            )
+          else if (shown.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text('No enrolled courses yet.', style: TextStyle(color: _muted)),
+            )
+          else
+            for (var i = 0; i < shown.length; i++) ...[
+              if (i > 0) const SizedBox(height: 16),
+              _CourseProgressRow(course: shown[i]),
+            ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CourseProgressRow extends StatelessWidget {
+  const _CourseProgressRow({required this.course});
+  final DashboardCourse course;
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (course.progress.clamp(0, 100)) / 100;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.menu_book_rounded, size: 15, color: _purple),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                course.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ),
+            Text(
+              '${course.progress}%',
+              style: const TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: pct,
+            minHeight: 6,
+            backgroundColor: const Color(0xFFE8E7F8),
+            valueColor: const AlwaysStoppedAnimation<Color>(_purple),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Overall Learning Progress ────────────────────────────────────────────────
+
+class _OverallProgressCard extends StatelessWidget {
+  const _OverallProgressCard({required this.enrolled});
+  final EnrolledState enrolled;
+
+  @override
+  Widget build(BuildContext context) {
+    final progresses = enrolled.courses.map((c) => c.progress).toList();
+    final overall = progresses.isEmpty
+        ? 0
+        : (progresses.reduce((a, b) => a + b) / progresses.length).round();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: FigmaTokens.heroGradient,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.star_border_rounded, color: Colors.white, size: 16),
+              SizedBox(width: 6),
+              Text(
+                'OVERALL LEARNING PROGRESS',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: .4,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '$overall%',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 36,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: overall / 100,
+              minHeight: 8,
+              backgroundColor: Colors.white24,
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Required For You ────────────────────────────────────────────────────────
+
+class _RequiredForYouCard extends StatelessWidget {
+  const _RequiredForYouCard({required this.required});
+  final RequiredCoursesState required;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = required.courses.take(5).toList();
+    return _DashCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Required For You',
+            style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 14),
+          if (required.providerState == DataProviderState.loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator(color: _purple)),
+            )
+          else if (shown.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text('No required courses.', style: TextStyle(color: _muted)),
+            )
+          else ...[
+            for (var i = 0; i < shown.length; i++) ...[
+              if (i > 0) const Divider(height: 22, color: _border),
+              _RequiredRow(index: i + 1, course: shown[i]),
+            ],
+            const SizedBox(height: 18),
+            Center(
+              child: ElevatedButton(
+                onPressed: () => Modular.to.pushNamed(
+                  CoursesModule.construct(CoursesModule.requiredCourses),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _purple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                ),
+                child: const Text('View All Required Courses'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RequiredRow extends ConsumerWidget {
+  const _RequiredRow({required this.index, required this.course});
+  final int index;
+  final DashboardCourse course;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewDisabled = isViewCourseDisabled(ref, course.id);
+    return Row(
+      children: [
+        SizedBox(
+          width: 22,
+          child: Text(
+            '$index',
+            style: const TextStyle(color: _muted, fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            course.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: _ink, fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
+        OutlinedButton(
+          onPressed: viewDisabled
+              ? null
+              : () => Modular.to.pushNamed(
+                    CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+                  ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _purple,
+            side: const BorderSide(color: _purple),
+            minimumSize: const Size(64, 32),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+          ),
+          child: const Text('View'),
         ),
       ],
     );
@@ -733,9 +1058,9 @@ class _ImgFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF0ECFF),
+      color: FigmaTokens.badgeBackground,
       alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, color: _purple, size: 54),
+      child: const Icon(Icons.school_outlined, color: _purple, size: 40),
     );
   }
 }
@@ -775,4 +1100,3 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
-
