@@ -256,8 +256,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 const SizedBox(width: 10),
                 LmsAppBarButton(
                   icon: Icons.play_arrow_rounded,
-                  iconSize: 42,
-                  boxSize: 48,
+                  iconSize: 35,
+                  boxSize: 42,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const LearningProgressPage()),
                   ),
