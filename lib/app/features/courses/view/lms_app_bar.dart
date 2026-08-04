@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/contact_links.dart';
@@ -612,7 +613,7 @@ class _NavItem extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: TextStyle(
+              style: GoogleFonts.roboto(
                 color: color,
                 fontSize: 16,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
@@ -687,7 +688,7 @@ class _NavDropdown extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: TextStyle(
+              style: GoogleFonts.roboto(
                 color: color,
                 fontSize: 16,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
@@ -1187,7 +1188,7 @@ class _DatePillState extends State<_DatePill> {
   Widget build(BuildContext context) {
     return Text(
       _formatDatePill(_now),
-      style: const TextStyle(
+      style: GoogleFonts.roboto(
         color: Colors.white,
         fontSize: 14,
         fontWeight: FontWeight.w500,
