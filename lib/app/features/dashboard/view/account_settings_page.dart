@@ -6,6 +6,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/dashboard/model/user_profile_detail.dart';
 import 'package:lms/app/features/dashboard/viewmodel/account_settings_view_model.dart';
@@ -16,12 +17,29 @@ const _asMuted = Color(0xFF7C879D);
 const _asBg = Color(0xFFF5F7FC);
 const _asFieldBg = Color(0xFFF4F6FA);
 
-class AccountSettingsPage extends ConsumerWidget {
+class AccountSettingsPage extends ConsumerStatefulWidget {
   const AccountSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AccountSettingsPage> createState() => _AccountSettingsPageState();
+}
+
+class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
+  bool _redirectingUnauthorized = false;
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(AccountSettingsViewModel.provider);
+
+    if (!_redirectingUnauthorized &&
+        state.state == DataProviderState.error &&
+        isUnauthorizedError(state.error)) {
+      _redirectingUnauthorized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        redirectToLoginOnSessionExpired(context, ref);
+      });
+    }
 
     return AppScaffold(
       backgroundColor: _asBg,
@@ -30,11 +48,13 @@ class AccountSettingsPage extends ConsumerWidget {
         DataProviderState.idle ||
         DataProviderState.loading =>
           const Center(child: CircularProgressIndicator(color: _asPurple)),
-        DataProviderState.error => _ErrorView(
-            message: state.error ?? 'Unable to load your profile.',
-            onRetry: () =>
-                ref.read(AccountSettingsViewModel.provider.notifier).fetch(),
-          ),
+        DataProviderState.error => _redirectingUnauthorized
+            ? const Center(child: CircularProgressIndicator(color: _asPurple))
+            : _ErrorView(
+                message: state.error ?? 'Unable to load your profile.',
+                onRetry: () =>
+                    ref.read(AccountSettingsViewModel.provider.notifier).fetch(),
+              ),
         DataProviderState.data => state.data == null
             ? const _ErrorView(message: 'No profile data found.')
             : _AccountSettingsBody(detail: state.data!),
@@ -141,6 +161,19 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     setState(() => _isEditing = false);
   }
 
+  /// Shows the error as a toast, unless it indicates the session has
+  /// expired - in that case redirect to login instead (these action
+  /// results carry the raw exception message, not the same "friendly"
+  /// conversion the initial page load's error state goes through, so they
+  /// need their own unauthorized check here).
+  void _showErrorOrRedirect(String error) {
+    if (isUnauthorizedError(error)) {
+      redirectToLoginOnSessionExpired(context, ref);
+      return;
+    }
+    Toast.error(context, error);
+  }
+
   /// Immediate upload (not part of the Edit/Save flow) via
   /// POST user-profile/upload-avatar - picking a photo replaces the avatar
   /// right away rather than staging it until Save is pressed.
@@ -161,7 +194,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     if (!mounted) return;
     setState(() => _isUploadingAvatar = false);
     if (error != null) {
-      Toast.error(context, error);
+      _showErrorOrRedirect(error);
     } else {
       Toast.success(context, 'Avatar updated successfully.');
     }
@@ -187,7 +220,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
       if (error == null) _isEditing = false;
     });
     if (error != null) {
-      Toast.error(context, error);
+      _showErrorOrRedirect(error);
     } else {
       Toast.success(context, 'Profile updated successfully.');
     }
@@ -578,6 +611,12 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
         .changePassword(oldPassword: oldPassword, newPassword: newPassword);
     if (!mounted) return;
     if (error != null) {
+      if (isUnauthorizedError(error)) {
+        // Navigate first, while context is still valid - Modular.to.navigate
+        // replaces the whole nav stack, which dismisses this dialog too.
+        redirectToLoginOnSessionExpired(context, ref);
+        return;
+      }
       setState(() {
         _isSubmitting = false;
         _errorText = error;
