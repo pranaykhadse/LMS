@@ -69,20 +69,6 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     state = sessionData;
   }
 
-  /// Keeps the cached profile - used app-wide, e.g. the app bar avatar -
-  /// in sync with edits made from Account Settings. AccountSettingsViewModel
-  /// has its own separate profile state for that screen; without also
-  /// pushing the update here, everywhere else reading
-  /// AuthStateNotifier.provider (the app bar, etc.) kept showing whatever
-  /// was cached at login until the next full login.
-  Future<void> updateProfile(UserProfile profile) async {
-    final current = state;
-    if (current == null) return;
-    final updated = current.copyWith(userProfile: profile);
-    state = updated;
-    await storage.setString("session_data", updated.toRawJson());
-  }
-
   Future<void> logout() async {
     await storage.setString("session_data", null);
     // Clear any queued offline completions so they don't bleed into the
