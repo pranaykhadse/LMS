@@ -234,7 +234,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      LmsAvatar(profile: profile, radius: 19),
+                      LmsAvatar(profile: profile, radius: 15),
                       const SizedBox(width: 8),
                       Text(
                         _lastFirst(profile),
