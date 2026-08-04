@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -634,7 +633,6 @@ class LmsAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = profile?.avatarUrl?.toString() ?? '';
-    if (kDebugMode) debugPrint('[LmsAvatar] resolved url="$url"');
     return CircleAvatar(
       radius: radius,
       backgroundColor: Colors.white,
@@ -642,11 +640,6 @@ class LmsAvatar extends StatelessWidget {
         radius: radius - 2,
         backgroundColor: const Color(0xFF10121B),
         backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
-        onBackgroundImageError: url.isNotEmpty
-            ? (error, stack) {
-                if (kDebugMode) debugPrint('[LmsAvatar] image load FAILED for "$url": $error');
-              }
-            : null,
         child: url.isEmpty
             ? const Icon(Icons.person, color: Colors.white)
             : null,
