@@ -270,7 +270,15 @@ mixin RepoNetworkHelper {
         CachableRequest(
           path: url,
           params: queryParameters,
-          body: body,
+          // CachableRequest.body is Map<dynamic, dynamic>? - a FormData
+          // body (any multipart request, e.g. a file upload) isn't a Map
+          // and blows up right at this constructor call with "type
+          // 'FormData' is not a subtype of type 'Map<dynamic, dynamic>?'",
+          // even when cacheType is none and the cache is never actually
+          // written. FormData also isn't meaningfully offline-cacheable
+          // (it holds raw file bytes, not JSON), so it's dropped here
+          // rather than cached.
+          body: body is Map ? body : null,
           response: response.data,
         ),
         cacheType,
