@@ -63,7 +63,16 @@ mixin RepoNetworkHelper {
   RepoNetworkConfig get config;
   String get baseUrl => config.baseUrl;
   Map<String, String> get header => config.header;
-  Dio get dio => Dio(BaseOptions(baseUrl: baseUrl, headers: header));
+  // No timeout was ever configured here, so a request that never gets a
+  // response (server hang, dropped connection, etc.) left the UI stuck on
+  // its loading spinner indefinitely instead of surfacing an error.
+  Dio get dio => Dio(BaseOptions(
+        baseUrl: baseUrl,
+        headers: header,
+        connectTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 20),
+        sendTimeout: const Duration(seconds: 30),
+      ));
   bool get isOffline =>
       config.isManualOffline() || config.connectionProvider.isConnected == false;
   @protected
