@@ -82,10 +82,38 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     if (kDebugMode) debugPrint('[AuthStateNotifier.updateProfile] CALLED');
     final current = state;
     if (current == null) return;
+    // UserProfile has no ==/hashCode, so copyWith always produces a "new"
+    // AuthState by identity even when nothing actually changed - and
+    // AccountSettingsViewModel.fetch() calls this on every load, not just
+    // after a real edit. Something downstream (even after switching every
+    // known ref.watch on AuthStateNotifier to ref.read - see
+    // account_settings_view_model.dart) still ends up rebuilding
+    // AccountSettingsViewModel.provider every time this state is replaced,
+    // which calls fetch() again, which calls this again - forever. Skipping
+    // the replacement when the profile is already identical breaks that
+    // cycle at the root regardless of which exact dependency causes the
+    // rebuild.
+    if (_sameProfile(current.userProfile, profile)) {
+      if (kDebugMode) debugPrint('[AuthStateNotifier.updateProfile] SKIPPED - profile unchanged');
+      return;
+    }
     final updated = current.copyWith(userProfile: profile);
     state = updated;
     if (kDebugMode) debugPrint('[AuthStateNotifier.updateProfile] state REPLACED (new AuthState instance)');
     await storage.setString("session_data", updated.toRawJson());
+  }
+
+  bool _sameProfile(UserProfile? a, UserProfile b) {
+    if (a == null) return false;
+    return a.avatarPath == b.avatarPath &&
+        a.avatarBaseUrl == b.avatarBaseUrl &&
+        a.firstname == b.firstname &&
+        a.lastname == b.lastname &&
+        a.location == b.location &&
+        a.website == b.website &&
+        a.linkedIn == b.linkedIn &&
+        a.division == b.division &&
+        a.department == b.department;
   }
 
   Future<void> logout() async {
