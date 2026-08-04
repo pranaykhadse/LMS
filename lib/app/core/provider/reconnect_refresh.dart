@@ -38,21 +38,40 @@ void refreshAllOnReconnect(Ref ref) {
   // unfiltered. fetch() reuses whatever's already in state.search/skillId/
   // behaviorId instead.
   ref.read(CourseCatalogViewModel.provider.notifier).fetch();
-  ref.invalidate(MyCoursesViewModel.provider);
-  ref.invalidate(EnrolledCoursesViewModel.provider);
-  ref.invalidate(CompletedCoursesViewModel.provider);
-  ref.invalidate(RequiredCoursesViewModel.provider);
-  ref.invalidate(DashboardViewModel.provider);
-  ref.invalidate(DevelopmentPlanViewModel.provider);
-  ref.invalidate(CalendarViewModel.provider);
+
+  // Every provider below is autoDispose. invalidate()ing one that's
+  // already fully torn down (no screen currently watching it) is normally
+  // a safe no-op - but if it's mid-teardown right as this fires (e.g. the
+  // screen that was watching it just navigated away, or this whole
+  // function is itself firing repeatedly off a flaky connectivity signal),
+  // invalidate() can rebuild it, kick off its constructor's fetch(), and
+  // then have it disposed again before that fetch resolves - "Bad state:
+  // Tried to use X after `dispose` was called." Only touching providers
+  // ref.exists() confirms are still actually alive avoids resurrecting
+  // ones nobody is looking at, which was firing this crash for screens
+  // completely unrelated to whatever the user was on.
+  for (final provider in [
+    MyCoursesViewModel.provider,
+    EnrolledCoursesViewModel.provider,
+    CompletedCoursesViewModel.provider,
+    RequiredCoursesViewModel.provider,
+    DashboardViewModel.provider,
+    DevelopmentPlanViewModel.provider,
+    CalendarViewModel.provider,
+    ItemInventoryViewModel.provider,
+    LearningPathsViewModel.provider,
+    LearningProgressViewModel.provider,
+    RedeemHistoryViewModel.provider,
+    DevPlanMembershipViewModel.provider,
+    BadgesViewModel.provider,
+    AccountSettingsViewModel.provider,
+  ]) {
+    if (ref.exists(provider)) ref.invalidate(provider);
+  }
+  // Family providers can't share the untyped list above (each key is a
+  // distinct provider instance) - Riverpod's family-wide invalidate still
+  // only affects keys that already exist, so these are already safe as-is.
   ref.invalidate(CourseJoinDetailViewModel.provider);
   ref.invalidate(CourseClassViewModel.provider);
   ref.invalidate(ViewCompetencyViewModel.provider);
-  ref.invalidate(ItemInventoryViewModel.provider);
-  ref.invalidate(LearningPathsViewModel.provider);
-  ref.invalidate(LearningProgressViewModel.provider);
-  ref.invalidate(RedeemHistoryViewModel.provider);
-  ref.invalidate(DevPlanMembershipViewModel.provider);
-  ref.invalidate(BadgesViewModel.provider);
-  ref.invalidate(AccountSettingsViewModel.provider);
 }
