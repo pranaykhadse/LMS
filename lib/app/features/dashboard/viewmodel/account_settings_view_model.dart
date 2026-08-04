@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -9,6 +11,7 @@ class AccountSettingsViewModel
   AccountSettingsViewModel({
     required this.repository,
     required this.userId,
+    required this.ref,
   }) : super(DataState.idle<UserProfileDetail>()) {
     fetch();
   }
@@ -19,11 +22,13 @@ class AccountSettingsViewModel
     return AccountSettingsViewModel(
       repository: ref.watch(AccountSettingsRepository.provider),
       userId: userId,
+      ref: ref,
     );
   });
 
   final AccountSettingsRepository repository;
   final int? userId;
+  final Ref ref;
 
   Future<void> fetch() async {
     if (userId == null) {
@@ -33,8 +38,18 @@ class AccountSettingsViewModel
     state = DataState.loading<UserProfileDetail>();
     try {
       final data = await repository.fetch(userId: userId!);
-      if (!mounted) return;
-      state = DataState.onData(data);
+      if (mounted) state = DataState.onData(data);
+      // This is the authoritative, always-fresh profile straight from the
+      // server - sync it into the app-wide cached profile every time this
+      // screen loads, not just after an explicit edit. Without this, a
+      // change made (and correctly synced) in one app session wouldn't
+      // show up in the app bar on the *next* cold start, since
+      // AuthStateNotifier.initialize() just restores whatever was last
+      // persisted rather than refetching. Kept outside the `mounted` check
+      // above - AuthStateNotifier is a different, kept-alive notifier, so
+      // this sync should still happen even if this screen's own state is
+      // now moot.
+      await ref.read(AuthStateNotifier.provider.notifier).updateProfile(data.profile);
     } catch (e) {
       if (!mounted) return;
       state = DataState.onError(_friendly(e));
@@ -76,24 +91,47 @@ class AccountSettingsViewModel
     if (!result.success) {
       return result.message ?? 'Unable to save your changes. Please try again.';
     }
-    if (!mounted) return null;
-    state = DataState.onData(
-      UserProfileDetail(
-        profile: current.profile.copyWith(
-          firstname: firstname,
-          lastname: lastname,
-          location: location,
-          website: website,
-          linkedIn: linkedIn,
-          division: division,
-          department: department,
-          avatarPath: avatarUrl,
-        ),
-        user: current.user,
-        phoneNumber: phoneNumber ?? current.phoneNumber,
-        enableTextMessages: current.enableTextMessages,
-      ),
+    final updatedProfile = current.profile.copyWith(
+      firstname: firstname,
+      lastname: lastname,
+      location: location,
+      website: website,
+      linkedIn: linkedIn,
+      division: division,
+      department: department,
+      avatarPath: avatarUrl,
     );
+    if (mounted) {
+      state = DataState.onData(
+        UserProfileDetail(
+          profile: updatedProfile,
+          user: current.user,
+          phoneNumber: phoneNumber ?? current.phoneNumber,
+          enableTextMessages: current.enableTextMessages,
+        ),
+      );
+    }
+    // Keep the app-wide cached profile (app bar name/avatar, etc.) in sync
+    // - this screen's own state above isn't visible anywhere else, and
+    // AuthStateNotifier is a different, kept-alive notifier, so this
+    // should still run even if this screen's own state is now moot.
+    await ref.read(AuthStateNotifier.provider.notifier).updateProfile(updatedProfile);
+    return null;
+  }
+
+  /// Uploads a new avatar via POST user-profile/upload-avatar, then
+  /// refetches the full profile rather than guessing at the upload
+  /// response's shape - the plain GET already reliably returns the new
+  /// avatar_path/avatar_base_url pair (fetch() also syncs it into the
+  /// app-wide cached profile). Returns an error message on failure, or
+  /// null on success.
+  Future<String?> uploadAvatar(Uint8List bytes, String filename) async {
+    if (userId == null) return 'Unable to upload avatar — not logged in.';
+    final result = await repository.uploadAvatar(bytes: bytes, filename: filename);
+    if (!result.success) {
+      return result.message ?? 'Unable to upload avatar. Please try again.';
+    }
+    await fetch();
     return null;
   }
 

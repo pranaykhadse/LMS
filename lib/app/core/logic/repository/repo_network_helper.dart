@@ -79,6 +79,23 @@ mixin RepoNetworkHelper {
     return converted;
   }
 
+  /// RepoNetworkConfig.header always bakes in "content-type:
+  /// application/json" at the Dio-instance level, for every request - fine
+  /// for the JSON bodies every endpoint sent until now, but once a body
+  /// becomes FormData (a multipart upload), that stale json content-type
+  /// header survives and Dio's transformer tries to JSON-encode/cast the
+  /// FormData object as a Map, throwing "type 'FormData' is not a subtype
+  /// of type 'Map<dynamic, dynamic>?'" before the request ever reaches the
+  /// network. Per-request Options.contentType (built from the FormData's
+  /// own boundary) takes precedence over that baked-in header and fixes it.
+  @protected
+  Options? optionsFor(dynamic body, Options? options) {
+    if (body is! FormData) return options;
+    return (options ?? Options()).copyWith(
+      contentType: 'multipart/form-data; boundary=${body.boundary}',
+    );
+  }
+
   void prepareFormData(data) {
     if (data is Map) {
       for (var key in data.keys.toList()) {
@@ -243,7 +260,7 @@ mixin RepoNetworkHelper {
         url,
         data: body,
         queryParameters: queryParameters,
-        options: options,
+        options: optionsFor(body, options),
         cancelToken: cancelToken,
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
@@ -252,7 +269,15 @@ mixin RepoNetworkHelper {
         CachableRequest(
           path: url,
           params: queryParameters,
-          body: body,
+          // CachableRequest.body is Map<dynamic, dynamic>? - a FormData
+          // body (any multipart request, e.g. a file upload) isn't a Map
+          // and blows up right at this constructor call with "type
+          // 'FormData' is not a subtype of type 'Map<dynamic, dynamic>?'",
+          // even when cacheType is none and the cache is never actually
+          // written. FormData also isn't meaningfully offline-cacheable
+          // (it holds raw file bytes, not JSON), so it's dropped here
+          // rather than cached.
+          body: body is Map ? body : null,
           response: response.data,
         ),
         cacheType,
@@ -325,7 +350,7 @@ mixin RepoNetworkHelper {
         url,
         data: body,
         queryParameters: queryParameters,
-        options: options,
+        options: optionsFor(body, options),
         cancelToken: cancelToken,
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
@@ -353,7 +378,7 @@ mixin RepoNetworkHelper {
         url,
         data: body,
         queryParameters: queryParameters,
-        options: options,
+        options: optionsFor(body, options),
         cancelToken: cancelToken,
       );
       return response.data;
@@ -380,7 +405,7 @@ mixin RepoNetworkHelper {
         url,
         data: body,
         queryParameters: {}..addAll(queryParameters ?? {}),
-        options: options,
+        options: optionsFor(body, options),
         cancelToken: cancelToken,
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,

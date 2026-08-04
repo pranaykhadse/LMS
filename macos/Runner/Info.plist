@@ -30,5 +30,7 @@
 	<string>NSApplication</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.education</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Leadership Edge Live needs access to your photo library so you can choose a profile avatar.</string>
 </dict>
 </plist>

@@ -91,6 +91,11 @@ dependencies:
   pdfrx: ^1.2.5
   path_provider: ^2.1.5
 
+  # ------------------------------------------------------------------------------
+  # Avatar upload (gallery picker for POST user-profile/upload-avatar)
+  # ------------------------------------------------------------------------------
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
