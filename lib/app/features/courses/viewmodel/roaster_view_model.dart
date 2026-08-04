@@ -94,6 +94,7 @@ class RoasterViewModel extends StateNotifier<PaginatedState<Roaster>> {
         pageInfo: data.pageInfo,
       );
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(data: DataState.onError(e.toString()));
     }
   }

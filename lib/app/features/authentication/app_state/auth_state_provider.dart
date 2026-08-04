@@ -65,6 +65,7 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     );
 
     await storage.setString("session_data", sessionData.toRawJson());
+    if (!mounted) return;
     state = sessionData;
   }
 
@@ -125,6 +126,7 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
           authToken: token.token,
         ),
       ).validateToken(token);
+      if (!mounted) return;
       state = token;
     } catch (e) {
       log("VALidate auth token error: $e");

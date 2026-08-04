@@ -113,6 +113,7 @@ class CourseCatalogViewModel extends StateNotifier<CourseCatalogState> {
                 search: state.search,
                 skillId: state.skillId,
               );
+      if (!mounted) return null;
       state = state.copyWith(
         result: DataState.onData(result),
         groupPages: pages,
@@ -124,7 +125,7 @@ class CourseCatalogViewModel extends StateNotifier<CourseCatalogState> {
       final message = error.toString();
       // On failure, leave the previously shown page/data untouched so the
       // pagination widget keeps highlighting the page that's actually shown.
-      if (!hasData) {
+      if (!hasData && mounted) {
         state = state.copyWith(result: DataState.onError(message));
       }
       return message;

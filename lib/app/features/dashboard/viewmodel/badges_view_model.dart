@@ -58,11 +58,13 @@ class BadgesViewModel extends StateNotifier<BadgesState> {
     state = state.copyWith(providerState: DataProviderState.loading);
     try {
       final result = await repository.fetch(userId: userId!);
+      if (!mounted) return;
       state = state.copyWith(
         providerState: DataProviderState.data,
         result: result,
       );
     } catch (error) {
+      if (!mounted) return;
       state = state.copyWith(
         providerState: DataProviderState.error,
         error: error.toString(),

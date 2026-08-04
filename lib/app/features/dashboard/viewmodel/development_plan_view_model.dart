@@ -86,6 +86,7 @@ class DevelopmentPlanViewModel extends StateNotifier<DevelopmentPlanState> {
         page: page,
         perPage: _perPage,
       );
+      if (!mounted) return null;
       state = state.copyWith(
         providerState: DataProviderState.data,
         courses: result.courses,
@@ -95,7 +96,7 @@ class DevelopmentPlanViewModel extends StateNotifier<DevelopmentPlanState> {
       return null;
     } catch (error) {
       final message = error.toString();
-      if (!hasData) {
+      if (!hasData && mounted) {
         state = state.copyWith(
           providerState: DataProviderState.error,
           error: message,

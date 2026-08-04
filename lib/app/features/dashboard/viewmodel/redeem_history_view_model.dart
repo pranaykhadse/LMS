@@ -33,8 +33,10 @@ class RedeemHistoryViewModel
     state = DataState.loading<RedeemHistoryResult>();
     try {
       final data = await repository.fetch(userId: userId!);
+      if (!mounted) return;
       state = DataState.onData(data);
     } catch (e) {
+      if (!mounted) return;
       state = DataState.onError(_friendly(e));
     }
   }

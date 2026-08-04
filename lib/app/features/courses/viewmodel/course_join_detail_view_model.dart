@@ -55,8 +55,10 @@ class CourseJoinDetailViewModel
         userId: userId!,
         courseId: courseId,
       );
+      if (!mounted) return;
       state = DataState.onData(result);
     } catch (error) {
+      if (!mounted) return;
       state = DataState.onError(_friendlyError(error));
     }
   }
@@ -123,6 +125,7 @@ class CourseJoinDetailViewModel
     if (userId == null) return;
     try {
       final result = await repository.fetch(userId: userId!, courseId: courseId);
+      if (!mounted) return;
       state = DataState.onData(result);
     } catch (_) {
       // Keep showing the previous (now stale) data rather than replacing

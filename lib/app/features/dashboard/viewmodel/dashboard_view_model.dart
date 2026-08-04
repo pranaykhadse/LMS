@@ -33,8 +33,10 @@ class DashboardViewModel extends StateNotifier<DataState<DashboardResponse>> {
     state = DataState.loading<DashboardResponse>();
     try {
       final result = await repository.fetch(userId: userId!);
+      if (!mounted) return;
       state = DataState.onData(result);
     } catch (error) {
+      if (!mounted) return;
       state = DataState.onError(error.toString());
     }
   }

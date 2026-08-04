@@ -58,11 +58,13 @@ class LearningPathsViewModel extends StateNotifier<LearningPathsState> {
     state = state.copyWith(providerState: DataProviderState.loading);
     try {
       final paths = await repository.fetch(userId: userId!, name: name);
+      if (!mounted) return;
       state = state.copyWith(
         providerState: DataProviderState.data,
         paths: paths,
       );
     } catch (error) {
+      if (!mounted) return;
       state = state.copyWith(
         providerState: DataProviderState.error,
         error: error.toString(),

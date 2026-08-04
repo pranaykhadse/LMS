@@ -38,16 +38,20 @@ class AccountSettingsViewModel
     state = DataState.loading<UserProfileDetail>();
     try {
       final data = await repository.fetch(userId: userId!);
-      state = DataState.onData(data);
+      if (mounted) state = DataState.onData(data);
       // This is the authoritative, always-fresh profile straight from the
       // server - sync it into the app-wide cached profile every time this
       // screen loads, not just after an explicit edit. Without this, a
       // change made (and correctly synced) in one app session wouldn't
       // show up in the app bar on the *next* cold start, since
       // AuthStateNotifier.initialize() just restores whatever was last
-      // persisted rather than refetching.
+      // persisted rather than refetching. Kept outside the `mounted` check
+      // above - AuthStateNotifier is a different, kept-alive notifier, so
+      // this sync should still happen even if this screen's own state is
+      // now moot.
       await ref.read(AuthStateNotifier.provider.notifier).updateProfile(data.profile);
     } catch (e) {
+      if (!mounted) return;
       state = DataState.onError(_friendly(e));
     }
   }
@@ -97,16 +101,20 @@ class AccountSettingsViewModel
       department: department,
       avatarPath: avatarUrl,
     );
-    state = DataState.onData(
-      UserProfileDetail(
-        profile: updatedProfile,
-        user: current.user,
-        phoneNumber: phoneNumber ?? current.phoneNumber,
-        enableTextMessages: current.enableTextMessages,
-      ),
-    );
+    if (mounted) {
+      state = DataState.onData(
+        UserProfileDetail(
+          profile: updatedProfile,
+          user: current.user,
+          phoneNumber: phoneNumber ?? current.phoneNumber,
+          enableTextMessages: current.enableTextMessages,
+        ),
+      );
+    }
     // Keep the app-wide cached profile (app bar name/avatar, etc.) in sync
-    // - this screen's own state above isn't visible anywhere else.
+    // - this screen's own state above isn't visible anywhere else, and
+    // AuthStateNotifier is a different, kept-alive notifier, so this
+    // should still run even if this screen's own state is now moot.
     await ref.read(AuthStateNotifier.provider.notifier).updateProfile(updatedProfile);
     return null;
   }
