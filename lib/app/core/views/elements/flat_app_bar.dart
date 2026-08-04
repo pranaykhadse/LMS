@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
+import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 
@@ -44,7 +45,7 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
             // ── Back button OR leading space ────────────────────────────
             if (enableBack)
               IconButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => safePop(context),
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 constraints: const BoxConstraints(),
