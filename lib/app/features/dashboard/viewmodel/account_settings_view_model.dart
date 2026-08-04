@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -39,6 +40,13 @@ class AccountSettingsViewModel
     try {
       final data = await repository.fetch(userId: userId!);
       state = DataState.onData(data);
+      if (kDebugMode) {
+        debugPrint(
+          '[AccountSettingsViewModel.fetch] about to sync into AuthStateNotifier: '
+          'avatarPath=${data.profile.avatarPath} avatarBaseUrl=${data.profile.avatarBaseUrl} '
+          'avatarUrl=${data.profile.avatarUrl}',
+        );
+      }
       // This is the authoritative, always-fresh profile straight from the
       // server - sync it into the app-wide cached profile every time this
       // screen loads, not just after an explicit edit. Without this, a
@@ -47,6 +55,14 @@ class AccountSettingsViewModel
       // AuthStateNotifier.initialize() just restores whatever was last
       // persisted rather than refetching.
       await ref.read(AuthStateNotifier.provider.notifier).updateProfile(data.profile);
+      if (kDebugMode) {
+        final synced = ref.read(AuthStateNotifier.provider)?.userProfile;
+        debugPrint(
+          '[AccountSettingsViewModel.fetch] AuthStateNotifier now has: '
+          'avatarPath=${synced?.avatarPath} avatarBaseUrl=${synced?.avatarBaseUrl} '
+          'avatarUrl=${synced?.avatarUrl}',
+        );
+      }
     } catch (e) {
       state = DataState.onError(_friendly(e));
     }

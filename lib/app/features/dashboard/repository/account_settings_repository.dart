@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -28,7 +29,16 @@ class AccountSettingsRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
     );
     final json = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
-    return UserProfileDetail.fromJson(json);
+    final detail = UserProfileDetail.fromJson(json);
+    if (kDebugMode) {
+      debugPrint(
+        '[AccountSettingsRepository.fetch] userId=$userId '
+        'avatarPath=${detail.profile.avatarPath} '
+        'avatarBaseUrl=${detail.profile.avatarBaseUrl} '
+        'avatarUrl=${detail.profile.avatarUrl}',
+      );
+    }
+    return detail;
   }
 
   Future<AccountSettingsUpdateResult> update({
@@ -75,6 +85,7 @@ class AccountSettingsRepository with RepoNetworkHelper {
         },
         cacheType: RequestCacheType.none,
       );
+      if (kDebugMode) debugPrint('[AccountSettingsRepository.uploadAvatar] raw=$raw');
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
       if (data['status']?.toString() == '0') {

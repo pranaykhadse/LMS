@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/logic/vm_helper/offline_vm_helper.dart';
@@ -76,10 +77,21 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
   /// was cached at login until the next full login.
   Future<void> updateProfile(UserProfile profile) async {
     final current = state;
-    if (current == null) return;
+    if (current == null) {
+      if (kDebugMode) {
+        debugPrint('[AuthStateNotifier.updateProfile] SKIPPED - state is null (not logged in?)');
+      }
+      return;
+    }
     final updated = current.copyWith(userProfile: profile);
     state = updated;
     await storage.setString("session_data", updated.toRawJson());
+    if (kDebugMode) {
+      debugPrint(
+        '[AuthStateNotifier.updateProfile] wrote avatarPath=${profile.avatarPath} '
+        'avatarBaseUrl=${profile.avatarBaseUrl} avatarUrl=${profile.avatarUrl} to state+storage',
+      );
+    }
   }
 
   Future<void> logout() async {
@@ -103,6 +115,14 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     final tokenData = await storage.getString("session_data");
     if (tokenData != null) {
       final token = AuthState.fromRawJson(tokenData);
+      if (kDebugMode) {
+        debugPrint(
+          '[AuthStateNotifier.initialize] restored from storage: '
+          'avatarPath=${token.userProfile?.avatarPath} '
+          'avatarBaseUrl=${token.userProfile?.avatarBaseUrl} '
+          'avatarUrl=${token.userProfile?.avatarUrl}',
+        );
+      }
 
       if (isOnline) {
         await _validateCurrentToken(token);
@@ -110,6 +130,8 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
         state = token;
         fetchWhenConnected(() => _validateCurrentToken(token));
       }
+    } else if (kDebugMode) {
+      debugPrint('[AuthStateNotifier.initialize] no stored session_data found');
     }
 
     _isInitialized = true;
@@ -125,9 +147,22 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
           authToken: token.token,
         ),
       ).validateToken(token);
+      // NOTE: this sets state to the *locally stored* token object, not
+      // anything freshly returned by validateToken() - validateToken only
+      // confirms the token is still valid, it isn't treated as a source of
+      // updated profile data. So whatever avatar was last persisted to
+      // storage (by login() or updateProfile()) is exactly what state ends
+      // up with here.
       state = token;
+      if (kDebugMode) {
+        debugPrint(
+          '[AuthStateNotifier._validateCurrentToken] validated OK, state set to stored token: '
+          'avatarPath=${token.userProfile?.avatarPath} avatarUrl=${token.userProfile?.avatarUrl}',
+        );
+      }
     } catch (e) {
       log("VALidate auth token error: $e");
+      if (kDebugMode) debugPrint('[AuthStateNotifier._validateCurrentToken] FAILED: $e');
     }
   }
 }

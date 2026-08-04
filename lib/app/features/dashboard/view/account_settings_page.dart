@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -498,11 +499,16 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final valid = url.startsWith('http');
+    if (kDebugMode) debugPrint('[_Avatar/AccountSettings] resolved url="$url" valid=$valid');
     return CircleAvatar(
       radius: 44,
       backgroundColor: const Color(0xFF10121B),
       backgroundImage: valid ? NetworkImage(url) : null,
-      onBackgroundImageError: valid ? (_, __) {} : null,
+      onBackgroundImageError: valid
+          ? (error, stack) {
+              if (kDebugMode) debugPrint('[_Avatar/AccountSettings] image load FAILED for "$url": $error');
+            }
+          : null,
       child: valid ? null : const Icon(Icons.person, color: Colors.white, size: 40),
     );
   }
