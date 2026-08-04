@@ -47,7 +47,7 @@ String _lastFirst(dynamic profile) {
   return '$last, $first';
 }
 
-const double _desktopNavBarHeight = 60;
+const double _desktopNavBarHeight = 76;
 
 /// Stacks the desktop nav row under the purple utility row, and below that
 /// (if present) whatever page-specific bottom widget was passed in — e.g.
@@ -126,7 +126,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        (isWide ? 52.0 : 60.0) +
+        (isWide ? 80.0 : 60.0) +
             (isWide ? _desktopNavBarHeight : 0) +
             (bottom?.preferredSize.height ?? 0),
       );
@@ -142,7 +142,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return AppBar(
       automaticallyImplyLeading: false,
-      toolbarHeight: isWide ? 52 : 60,
+      toolbarHeight: isWide ? 80 : 60,
       backgroundColor: _appPurple,
       foregroundColor: Colors.white,
       elevation: 2,
@@ -173,21 +173,11 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
               ),
             ),
+      // No page title in the purple row on desktop — the nav bar below
+      // already highlights the active destination, matching the reference
+      // design's clean utility row.
       title: isWide
-          ? (title == null
-              ? const SizedBox.shrink()
-              : Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Text(
-                    title!,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
-                  ),
-                ))
+          ? const SizedBox.shrink()
           : Padding(
               padding: const EdgeInsets.only(left: 4, right: 4),
               child: Row(
@@ -390,10 +380,12 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFEDEFF3))),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          _NavItem(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _NavItem(
             icon: Icons.dashboard_outlined,
             label: 'Dashboard',
             selected: selectedLabel == 'Dashboard',
@@ -402,7 +394,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.dashboard),
             ),
           ),
-          const SizedBox(width: 36),
+          const SizedBox(width: 40),
           _NavItem(
             icon: Icons.menu_book_outlined,
             label: 'Course Catalog',
@@ -412,7 +404,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.root),
             ),
           ),
-          const SizedBox(width: 36),
+          const SizedBox(width: 40),
           _NavDropdown(
             icon: Icons.library_books_outlined,
             label: 'My Courses',
@@ -452,7 +444,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          const SizedBox(width: 36),
+          const SizedBox(width: 40),
           _NavItem(
             icon: Icons.account_tree_outlined,
             label: 'Learning Paths',
@@ -462,7 +454,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.learningPaths),
             ),
           ),
-          const SizedBox(width: 36),
+          const SizedBox(width: 40),
           _NavDropdown(
             icon: Icons.workspace_premium_outlined,
             label: 'Points & Badges',
@@ -486,7 +478,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          const SizedBox(width: 36),
+          const SizedBox(width: 40),
           _NavDropdown(
             icon: Icons.support_agent_outlined,
             label: 'Contact a Coach',
@@ -505,6 +497,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
             ],
           ),
         ],
+        ),
       ),
     );
   }
@@ -528,17 +521,17 @@ class _NavItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 8),
+            Icon(icon, size: 24, color: color),
+            const SizedBox(width: 10),
             Text(
               label,
               style: TextStyle(
                 color: color,
-                fontSize: 15,
+                fontSize: 17,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
@@ -603,21 +596,22 @@ class _NavDropdown extends StatelessWidget {
           ),
       ],
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 8),
+            Icon(icon, size: 24, color: color),
+            const SizedBox(width: 10),
             Text(
               label,
               style: TextStyle(
                 color: color,
-                fontSize: 15,
+                fontSize: 17,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: color),
+            const SizedBox(width: 4),
+            Icon(Icons.keyboard_arrow_down_rounded, size: 22, color: color),
           ],
         ),
       ),
