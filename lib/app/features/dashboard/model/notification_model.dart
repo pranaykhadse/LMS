@@ -53,4 +53,15 @@ class NotificationItem {
         createdAt: createdAt,
         redirectUrl: redirectUrl,
       );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'message': message,
+        'type': type,
+        'is_read': isRead,
+        'reference_id': referenceId,
+        'created_at': createdAt?.toIso8601String(),
+        'redirect_url': redirectUrl,
+      };
 }

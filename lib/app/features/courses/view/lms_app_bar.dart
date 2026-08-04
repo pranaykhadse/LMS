@@ -171,7 +171,17 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       actions: [
         if (isWide) ...[const _DatePill(), const SizedBox(width: 8)],
         if (onRefresh != null) ...[
-          LmsAppBarButton(icon: Icons.refresh_rounded, onTap: onRefresh!),
+          LmsAppBarButton(
+            icon: Icons.refresh_rounded,
+            // The bell/badge in this same app bar is shared across every
+            // screen, so a manual refresh should always pick up fresh
+            // notifications too, not just whatever this particular page's
+            // own onRefresh re-fetches.
+            onTap: () {
+              onRefresh!();
+              ref.read(NotificationsViewModel.provider.notifier).fetch();
+            },
+          ),
           SizedBox(width: isWide ? 8 : 2),
         ],
         LmsOfflineToggle(
