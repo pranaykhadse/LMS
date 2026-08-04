@@ -66,7 +66,10 @@ PreferredSizeWidget _desktopBottomBar(
     preferredSize: Size.fromHeight(
       _desktopNavBarHeight + extra.preferredSize.height,
     ),
-    child: Column(children: [navBar, extra]),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [navBar, extra],
+    ),
   );
 }
 
@@ -375,6 +378,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
         pointsBadgesChildren.contains(selectedSubLabel);
 
     return Container(
+      width: double.infinity,
       height: _desktopNavBarHeight,
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -517,7 +521,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF37424E);
+    final color = selected ? _appPurple : const Color(0xFF4A4A4A);
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -525,13 +529,13 @@ class _NavItem extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 24, color: color),
-            const SizedBox(width: 10),
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 color: color,
-                fontSize: 17,
+                fontSize: 16,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
@@ -569,7 +573,7 @@ class _NavDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF37424E);
+    final color = selected ? _appPurple : const Color(0xFF4A4A4A);
     return PopupMenuButton<int>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -600,18 +604,18 @@ class _NavDropdown extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 24, color: color),
-            const SizedBox(width: 10),
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 color: color,
-                fontSize: 17,
+                fontSize: 16,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               ),
             ),
-            const SizedBox(width: 4),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 22, color: color),
+            const SizedBox(width: 2),
+            Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: color),
           ],
         ),
       ),
