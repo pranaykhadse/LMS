@@ -14,6 +14,9 @@ class AccountSettingsViewModel
     required this.userId,
     required this.ref,
   }) : super(DataState.idle<UserProfileDetail>()) {
+    if (kDebugMode) {
+      debugPrint('[AccountSettingsViewModel] NEW INSTANCE #${identityHashCode(this)} constructed');
+    }
     fetch();
   }
 
@@ -29,6 +32,10 @@ class AccountSettingsViewModel
     // constructor calls fetch() again, which calls updateProfile() again,
     // forever. Only the values at construction time are needed here, not
     // live updates to either.
+    if (kDebugMode) {
+      final frames = StackTrace.current.toString().split('\n').take(8).join('\n');
+      debugPrint('[AccountSettingsViewModel.provider] building - who triggered this:\n$frames');
+    }
     final userId = ref.read(AuthStateNotifier.provider)?.user?.id;
     return AccountSettingsViewModel(
       repository: ref.read(AccountSettingsRepository.provider),
@@ -42,7 +49,9 @@ class AccountSettingsViewModel
   final Ref ref;
 
   Future<void> fetch() async {
-    if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] CALLED, userId=$userId');
+    if (kDebugMode) {
+      debugPrint('[AccountSettingsViewModel.fetch] CALLED on instance #${identityHashCode(this)}, userId=$userId, mounted=$mounted');
+    }
     if (userId == null) {
       if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] SKIPPED - userId is null');
       state = DataState.onError('User not logged in.');
@@ -179,5 +188,13 @@ class AccountSettingsViewModel
       return 'No internet connection. Please check your network.';
     }
     return 'Unable to load your profile. Please try again.';
+  }
+
+  @override
+  void dispose() {
+    if (kDebugMode) {
+      debugPrint('[AccountSettingsViewModel] instance #${identityHashCode(this)} DISPOSED');
+    }
+    super.dispose();
   }
 }
