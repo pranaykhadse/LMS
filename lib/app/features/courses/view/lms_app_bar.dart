@@ -48,6 +48,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.title,
     this.centerTitle = false,
     this.onRefresh,
+    this.hideBack = false,
   });
 
   /// Responsive wide-screen layout (catalog page only).
@@ -59,6 +60,14 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   /// If provided, a back button is shown that calls this. If null and
   /// `Navigator.canPop` is true, standard pop is used instead.
   final VoidCallback? onBack;
+
+  /// Forces the back button off even if [onBack] is set or
+  /// `Navigator.canPop` is true — for top-level destinations reached via
+  /// a stack-clearing `Modular.to.navigate` (Dashboard, Course Catalog),
+  /// where `canPop` can still read true from routes flutter_modular keeps
+  /// underneath (e.g. the auth/startup redirect), even though there's
+  /// nowhere meaningful to go back to.
+  final bool hideBack;
 
   /// Optional title text (e.g. "Dashboard"). Omitted on pages that render
   /// their own heading in the body (e.g. the course catalog).
@@ -80,7 +89,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final canPop = Navigator.canPop(context);
-    final showBack = onBack != null || (canPop && onBack == null);
+    final showBack =
+        !hideBack && (onBack != null || (canPop && onBack == null));
     final isOffline = ref.watch(OfflineModeNotifier.provider);
     final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
 

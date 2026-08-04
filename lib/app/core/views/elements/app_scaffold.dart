@@ -17,6 +17,7 @@ class AppScaffold extends StatelessWidget {
     this.selectedLabel,
     this.selectedSubLabel,
     this.onBack,
+    this.hideBack = false,
     this.bottom,
     this.backgroundColor,
     this.maxContentWidth = 1100,
@@ -29,6 +30,9 @@ class AppScaffold extends StatelessWidget {
   final String? selectedLabel;
   final String? selectedSubLabel;
   final VoidCallback? onBack;
+
+  /// Forces the back button off — see [LmsAppBar.hideBack].
+  final bool hideBack;
 
   /// If provided, shows a refresh button in the app bar that re-runs
   /// whichever fetch this screen's data provider already uses (same API
@@ -71,6 +75,7 @@ class AppScaffold extends StatelessWidget {
           title: title,
           centerTitle: centerTitle,
           onBack: onBack,
+          hideBack: hideBack,
           bottom: bottom,
           onRefresh: onRefresh,
         ),
@@ -84,6 +89,7 @@ class AppScaffold extends StatelessWidget {
         title: title,
         centerTitle: centerTitle,
         onBack: onBack,
+        hideBack: hideBack,
         bottom: bottom,
         isWide: true,
         onRefresh: onRefresh,
