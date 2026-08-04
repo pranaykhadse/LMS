@@ -57,7 +57,14 @@ class AccountSettingsViewModel
       state = DataState.onError('User not logged in.');
       return;
     }
-    state = DataState.loading<UserProfileDetail>();
+    // Keep whatever's already on screen while refetching instead of
+    // flashing back to a full-screen spinner - only show it on the very
+    // first load, when there's nothing to keep showing yet. Without this,
+    // every refresh (including the one uploadAvatar() triggers right after
+    // a successful upload) briefly blanked the whole screen and popped it
+    // back, even though the data underneath barely changed.
+    final hasData = state.state == DataProviderState.data;
+    if (!hasData) state = DataState.loading<UserProfileDetail>();
     try {
       if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] calling repository.fetch()...');
       final data = await repository.fetch(userId: userId!);
@@ -79,7 +86,10 @@ class AccountSettingsViewModel
     } catch (e) {
       if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] repository.fetch() FAILED: $e');
       if (!mounted) return;
-      state = DataState.onError(_friendly(e));
+      // On a background refresh (data already showing), leave it in place
+      // rather than replacing it with a full-screen error - only show the
+      // error state if there was nothing on screen to begin with.
+      if (!hasData) state = DataState.onError(_friendly(e));
     }
   }
 
