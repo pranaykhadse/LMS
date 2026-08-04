@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -91,6 +93,21 @@ class AccountSettingsViewModel
         enableTextMessages: current.enableTextMessages,
       ),
     );
+    return null;
+  }
+
+  /// Uploads a new avatar via POST user-profile/upload-avatar, then
+  /// refetches the full profile rather than guessing at the upload
+  /// response's shape - the plain GET already reliably returns the new
+  /// avatar_path/avatar_base_url pair. Returns an error message on
+  /// failure, or null on success.
+  Future<String?> uploadAvatar(Uint8List bytes, String filename) async {
+    if (userId == null) return 'Unable to upload avatar — not logged in.';
+    final result = await repository.uploadAvatar(bytes: bytes, filename: filename);
+    if (!result.success) {
+      return result.message ?? 'Unable to upload avatar. Please try again.';
+    }
+    await fetch();
     return null;
   }
 

@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -44,6 +47,40 @@ class AccountSettingsRepository with RepoNetworkHelper {
         return AccountSettingsUpdateResult(
           success: false,
           message: data['message']?.toString(),
+        );
+      }
+      return AccountSettingsUpdateResult(
+        success: true,
+        message: data['message']?.toString(),
+      );
+    } catch (e) {
+      return AccountSettingsUpdateResult(success: false, message: e.toString());
+    }
+  }
+
+  /// POST user-profile/upload-avatar - multipart upload that replaces the
+  /// authenticated user's avatar. No user_id is sent: that query param is
+  /// admin-only (upload on behalf of someone else), which this app has no
+  /// UI for - a normal user's own token is enough to identify whose avatar
+  /// to replace.
+  Future<AccountSettingsUpdateResult> uploadAvatar({
+    required Uint8List bytes,
+    required String filename,
+  }) async {
+    try {
+      final raw = await post(
+        'user-profile/upload-avatar',
+        data: {
+          'avatar': MultipartFile.fromBytes(bytes, filename: filename),
+        },
+        cacheType: RequestCacheType.none,
+      );
+      final data =
+          raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+      if (data['status']?.toString() == '0') {
+        return AccountSettingsUpdateResult(
+          success: false,
+          message: data['message']?.toString() ?? 'Unable to upload avatar.',
         );
       }
       return AccountSettingsUpdateResult(
