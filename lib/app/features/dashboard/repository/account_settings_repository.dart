@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -76,24 +75,19 @@ class AccountSettingsRepository with RepoNetworkHelper {
         },
         cacheType: RequestCacheType.none,
       );
-      if (kDebugMode) debugPrint('uploadAvatar raw response: $raw');
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
       if (data['status']?.toString() == '0') {
         return AccountSettingsUpdateResult(
           success: false,
-          // TEMP: echoing the raw response in the message (not just the
-          // console log) so it shows up in the on-screen Toast for
-          // debugging without needing device console access.
-          message: '${data['message'] ?? 'Unable to upload avatar.'} — raw: $raw',
+          message: data['message']?.toString() ?? 'Unable to upload avatar.',
         );
       }
       return AccountSettingsUpdateResult(
         success: true,
-        message: '${data['message'] ?? 'Uploaded.'} — raw: $raw',
+        message: data['message']?.toString(),
       );
     } catch (e) {
-      if (kDebugMode) debugPrint('uploadAvatar error: $e');
       return AccountSettingsUpdateResult(success: false, message: e.toString());
     }
   }

@@ -16,14 +16,6 @@ const _asMuted = Color(0xFF7C879D);
 const _asBg = Color(0xFFF5F7FC);
 const _asFieldBg = Color(0xFFF4F6FA);
 
-/// Mirrors the same avatar_path/avatar_base_url resolution the profile GET
-/// response uses elsewhere in the app (e.g. LmsAvatar).
-String _resolveAvatarUrl(UserProfile profile) {
-  final base = profile.avatarBaseUrl?.toString() ?? '';
-  final path = profile.avatarPath?.toString() ?? '';
-  return path.startsWith('http') ? path : (base.isNotEmpty && path.isNotEmpty ? '$base$path' : '');
-}
-
 class AccountSettingsPage extends ConsumerWidget {
   const AccountSettingsPage({super.key});
 
@@ -163,20 +155,16 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     if (picked == null || !mounted) return;
     setState(() => _isUploadingAvatar = true);
     final bytes = await picked.readAsBytes();
-    final (success, message) = await ref
+    final error = await ref
         .read(AccountSettingsViewModel.provider.notifier)
         .uploadAvatar(bytes, picked.name);
     if (!mounted) return;
     setState(() => _isUploadingAvatar = false);
-    // TEMP (debugging): always showing the raw response text, on both
-    // success and failure, via the error toast (wraps long text and stays
-    // up longer) so it's visible - and readable long enough to screenshot
-    // - without device console access.
-    Toast.error(
-      context,
-      message ?? (success ? 'Uploaded, but no response body.' : 'Unable to upload avatar.'),
-      title: success ? 'Upload response' : 'Failed',
-    );
+    if (error != null) {
+      Toast.error(context, error);
+    } else {
+      Toast.success(context, 'Avatar updated successfully.');
+    }
   }
 
   Future<void> _save() async {
@@ -439,7 +427,7 @@ class _ProfileHeaderCard extends StatelessWidget {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              _Avatar(url: _resolveAvatarUrl(profile)),
+              _Avatar(url: profile.avatarUrl),
               if (isUploadingAvatar)
                 const Positioned.fill(
                   child: CircleAvatar(

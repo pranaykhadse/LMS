@@ -632,9 +632,7 @@ class LmsAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = profile?.avatarBaseUrl?.toString() ?? '';
-    final path = profile?.avatarPath?.toString() ?? '';
-    final url = path.startsWith('http') ? path : '$base$path';
+    final url = profile?.avatarUrl?.toString() ?? '';
     return CircleAvatar(
       radius: radius,
       backgroundColor: Colors.white,
