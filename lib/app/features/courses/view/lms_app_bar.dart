@@ -201,21 +201,25 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         val ? 'Offline mode enabled' : 'Back to online mode');
                   },
                 ),
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    LmsAppBarButton(
-                      icon: Icons.notifications_rounded,
-                      onTap: () => showLmsNotifications(context),
-                    ),
-                    if (unreadCount > 0)
-                      Positioned(
-                        top: 2,
-                        right: 2,
-                        child: IgnorePointer(
-                            child: LmsNotifBadge(count: unreadCount)),
+                SizedBox(
+                  width: 38,
+                  height: 38,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      LmsAppBarButton(
+                        icon: Icons.notifications_rounded,
+                        onTap: () => showLmsNotifications(context),
                       ),
-                  ],
+                      if (unreadCount > 0)
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: IgnorePointer(
+                              child: LmsNotifBadge(count: unreadCount)),
+                        ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 8),
                 PopupMenuButton<String>(
@@ -237,7 +241,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         style: GoogleFonts.roboto(
                           color: Colors.white,
                           fontSize: 13,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       const Icon(Icons.keyboard_arrow_down_rounded,
@@ -1191,7 +1195,7 @@ class _DatePillState extends State<_DatePill> {
       style: GoogleFonts.roboto(
         color: Colors.white,
         fontSize: 14,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w400,
         height: 1.0,
       ),
     );
