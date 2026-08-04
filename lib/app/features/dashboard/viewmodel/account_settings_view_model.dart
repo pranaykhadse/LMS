@@ -99,16 +99,20 @@ class AccountSettingsViewModel
   /// Uploads a new avatar via POST user-profile/upload-avatar, then
   /// refetches the full profile rather than guessing at the upload
   /// response's shape - the plain GET already reliably returns the new
-  /// avatar_path/avatar_base_url pair. Returns an error message on
-  /// failure, or null on success.
-  Future<String?> uploadAvatar(Uint8List bytes, String filename) async {
-    if (userId == null) return 'Unable to upload avatar — not logged in.';
+  /// avatar_path/avatar_base_url pair.
+  ///
+  /// TEMP (debugging): returns a record of (success, message) rather than
+  /// just an error-or-null, and `message` currently echoes the raw server
+  /// response on both success and failure - the caller is showing it in a
+  /// Toast so it's visible without device console access.
+  Future<(bool, String?)> uploadAvatar(Uint8List bytes, String filename) async {
+    if (userId == null) return (false, 'Unable to upload avatar — not logged in.');
     final result = await repository.uploadAvatar(bytes: bytes, filename: filename);
     if (!result.success) {
-      return result.message ?? 'Unable to upload avatar. Please try again.';
+      return (false, result.message ?? 'Unable to upload avatar. Please try again.');
     }
     await fetch();
-    return null;
+    return (true, result.message);
   }
 
   /// Changes the logged-in user's password. Returns an error message on

@@ -163,16 +163,20 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     if (picked == null || !mounted) return;
     setState(() => _isUploadingAvatar = true);
     final bytes = await picked.readAsBytes();
-    final error = await ref
+    final (success, message) = await ref
         .read(AccountSettingsViewModel.provider.notifier)
         .uploadAvatar(bytes, picked.name);
     if (!mounted) return;
     setState(() => _isUploadingAvatar = false);
-    if (error != null) {
-      Toast.error(context, error);
-    } else {
-      Toast.success(context, 'Avatar updated successfully.');
-    }
+    // TEMP (debugging): always showing the raw response text, on both
+    // success and failure, via the error toast (wraps long text and stays
+    // up longer) so it's visible - and readable long enough to screenshot
+    // - without device console access.
+    Toast.error(
+      context,
+      message ?? (success ? 'Uploaded, but no response body.' : 'Unable to upload avatar.'),
+      title: success ? 'Upload response' : 'Failed',
+    );
   }
 
   Future<void> _save() async {
