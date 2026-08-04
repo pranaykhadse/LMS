@@ -136,6 +136,131 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return isWide ? _buildDesktop(context, ref) : _buildMobile(context, ref);
+  }
+
+  // ── Desktop/tablet ───────────────────────────────────────────────────────
+  //
+  // Built as a plain Column of Containers (matching `_DesktopNavBar`) rather
+  // than through AppBar's leading/title/actions, since AppBar's internal
+  // NavigationToolbar centers the leading/title/actions *slots* as blocks —
+  // mixed-height children within `actions` (a single-line date/time Text
+  // next to full-size icon buttons) weren't sharing one visual baseline.
+  // A single Row with an explicit `crossAxisAlignment: CrossAxisAlignment
+  // .center` gives full, predictable control instead.
+  Widget _buildDesktop(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final canPop = Navigator.canPop(context);
+    final showBack =
+        !hideBack && (onBack != null || (canPop && onBack == null));
+    final isOffline = ref.watch(OfflineModeNotifier.provider);
+    final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
+
+    return Column(
+        children: [
+          Container(
+            width: double.infinity,
+            height: 80,
+            color: _appPurple,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                if (showBack) ...[
+                  LmsAppBarButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    onTap: onBack ?? () => safePop(context),
+                    iconSize: 21,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                const Spacer(),
+                const _DatePill(),
+                const SizedBox(width: 16),
+                if (onRefresh != null) ...[
+                  LmsAppBarButton(
+                    icon: Icons.refresh_rounded,
+                    // The bell/badge in this same header is shared across
+                    // every screen, so a manual refresh should always pick
+                    // up fresh notifications too, not just whatever this
+                    // particular page's own onRefresh re-fetches.
+                    onTap: () {
+                      onRefresh!();
+                      ref.read(NotificationsViewModel.provider.notifier).fetch();
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                LmsOfflineToggle(
+                  isOffline: isOffline,
+                  onChanged: (val) {
+                    ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
+                    if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+                    Toast.info(context,
+                        val ? 'Offline mode enabled' : 'Back to online mode');
+                  },
+                ),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    LmsAppBarButton(
+                      icon: Icons.notifications_rounded,
+                      onTap: () => showLmsNotifications(context),
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        top: 2,
+                        right: 2,
+                        child: IgnorePointer(
+                            child: LmsNotifBadge(count: unreadCount)),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  offset: const Offset(0, 38),
+                  constraints:
+                      const BoxConstraints(minWidth: 290, maxWidth: 390),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18)),
+                  onSelected: (value) => _onProfileMenuSelected(
+                      context, ref, value),
+                  itemBuilder: (context) => _profileMenuItems(profile),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      LmsAvatar(profile: profile, radius: 19),
+                      const SizedBox(width: 8),
+                      Text(
+                        _lastFirst(profile),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Icon(Icons.keyboard_arrow_down_rounded,
+                          color: Colors.white, size: 20),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                LmsAppBarButton(
+                  icon: Icons.play_arrow_rounded,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const LearningProgressPage()),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _desktopBottomBar(selectedLabel, selectedSubLabel, bottom),
+        ],
+      );
+  }
+
+  // ── Phone ────────────────────────────────────────────────────────────────
+  Widget _buildMobile(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final canPop = Navigator.canPop(context);
     final showBack =
@@ -145,81 +270,55 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return AppBar(
       automaticallyImplyLeading: false,
-      toolbarHeight: isWide ? 80 : 60,
+      toolbarHeight: 60,
       backgroundColor: _appPurple,
       foregroundColor: Colors.white,
       elevation: 2,
-      // Narrow mode always keeps the hamburger/back + title group pinned to
-      // the left (see `title` below, which embeds them together) -
-      // centering only applies on wide screens, where the title has no
-      // leading icon riding along with it.
-      centerTitle: isWide && title != null && centerTitle,
       titleSpacing: 0,
-      // On phones, the hamburger/back button and the title are kept
-      // together as a single left-hand group (via `title` below, not
-      // `leading`) so they read as one cluster, with the action icons as a
-      // separate cluster hugging the right edge - rather than the built-in
-      // AppBar leading/title split, which left an ambiguous, similarly
-      // sized gap on both sides of the title instead of grouping it with
-      // the menu button next to it.
-      leadingWidth: isWide ? (showBack ? 46 : 0) : 0,
-      leading: (!isWide || !showBack)
-          ? null
-          : Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: LmsAppBarButton(
-                  icon: Icons.arrow_back_ios_new_rounded,
-                  onTap: onBack ?? () => safePop(context),
-                  iconSize: 21,
+      // The hamburger/back button and the title are kept together as a
+      // single left-hand group (via `title` below, not `leading`) so they
+      // read as one cluster, with the action icons as a separate cluster
+      // hugging the right edge - rather than the built-in AppBar
+      // leading/title split, which left an ambiguous, similarly sized gap
+      // on both sides of the title instead of grouping it with the menu
+      // button next to it.
+      leadingWidth: 0,
+      title: Padding(
+        padding: const EdgeInsets.only(left: 4, right: 4),
+        child: Row(
+          children: [
+            if (showBack) ...[
+              LmsAppBarButton(
+                icon: Icons.arrow_back_ios_new_rounded,
+                onTap: onBack ?? () => safePop(context),
+                iconSize: 18,
+              ),
+              const SizedBox(width: 2),
+            ],
+            Builder(
+              builder: (ctx) => LmsAppBarButton(
+                icon: Icons.menu_rounded,
+                onTap: () => Scaffold.of(ctx).openDrawer(),
+              ),
+            ),
+            if (title != null) ...[
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  title!,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                 ),
               ),
-            ),
-      // No page title in the purple row on desktop — the nav bar below
-      // already highlights the active destination, matching the reference
-      // design's clean utility row.
-      title: isWide
-          ? const SizedBox.shrink()
-          : Padding(
-              padding: const EdgeInsets.only(left: 4, right: 4),
-              child: Row(
-                children: [
-                  if (showBack) ...[
-                    LmsAppBarButton(
-                      icon: Icons.arrow_back_ios_new_rounded,
-                      onTap: onBack ?? () => safePop(context),
-                      iconSize: 18,
-                    ),
-                    const SizedBox(width: 2),
-                  ],
-                  // The sidebar is always visible on wide screens, so
-                  // there's nothing for a hamburger button to open there.
-                  Builder(
-                    builder: (ctx) => LmsAppBarButton(
-                      icon: Icons.menu_rounded,
-                      onTap: () => Scaffold.of(ctx).openDrawer(),
-                    ),
-                  ),
-                  if (title != null) ...[
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        title!,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+            ],
+          ],
+        ),
+      ),
       actions: [
-        if (isWide) ...[const _DatePill(), const SizedBox(width: 8)],
         if (onRefresh != null) ...[
           LmsAppBarButton(
             icon: Icons.refresh_rounded,
@@ -232,7 +331,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ref.read(NotificationsViewModel.provider.notifier).fetch();
             },
           ),
-          SizedBox(width: isWide ? 8 : 2),
+          const SizedBox(width: 2),
         ],
         LmsOfflineToggle(
           isOffline: isOffline,
@@ -243,7 +342,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 context, val ? 'Offline mode enabled' : 'Back to online mode');
           },
         ),
-        // Bell with unread badge
         Stack(
           clipBehavior: Clip.none,
           children: [
@@ -259,87 +357,68 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
           ],
         ),
-        SizedBox(width: isWide ? 8 : 2),
-        // Avatar with profile popup menu
+        const SizedBox(width: 2),
         PopupMenuButton<String>(
-          offset: Offset(0, isWide ? 38 : 54),
+          offset: const Offset(0, 54),
           constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          onSelected: (value) {
-            if (value == 'logout') {
-              ref.read(AuthStateNotifier.provider.notifier).logout();
-              Modular.to.navigate('/');
-            } else if (value == 'settings') {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
-              );
-            } else if (value == 'points') {
-              Modular.to.pushNamed(
-                CoursesModule.construct(CoursesModule.redeemPoints),
-              );
-            }
-          },
-          itemBuilder: (context) => [
-            PopupMenuItem<String>(
-              enabled: false,
-              padding: EdgeInsets.zero,
-              child: _ProfileHeader(profile: profile),
-            ),
-            const PopupMenuItem<String>(
-              value: 'settings',
-              child: _ProfileMenuRow(
-                icon: Icons.settings,
-                label: 'Account Settings',
-              ),
-            ),
-            PopupMenuItem<String>(
-              value: 'points',
-              child: _ProfileMenuRow(
-                icon: Icons.workspace_premium_outlined,
-                label: 'My Points: ${profile?.points ?? 0}',
-              ),
-            ),
-            const PopupMenuDivider(),
-            const PopupMenuItem<String>(
-              value: 'logout',
-              child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
-            ),
-          ],
-          child: isWide
-              ? Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    LmsAvatar(profile: profile, radius: 19),
-                    const SizedBox(width: 8),
-                    Text(
-                      _lastFirst(profile),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: Colors.white, size: 20),
-                  ],
-                )
-              : LmsAvatar(profile: profile, radius: 18),
+          onSelected: (value) => _onProfileMenuSelected(context, ref, value),
+          itemBuilder: (context) => _profileMenuItems(profile),
+          child: LmsAvatar(profile: profile, radius: 18),
         ),
-        SizedBox(width: isWide ? 7 : 2),
+        const SizedBox(width: 2),
         LmsAppBarButton(
           icon: Icons.play_arrow_rounded,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const LearningProgressPage()),
           ),
         ),
-        SizedBox(width: isWide ? 10 : 6),
+        const SizedBox(width: 6),
       ],
-      bottom: isWide
-          ? _desktopBottomBar(selectedLabel, selectedSubLabel, bottom)
-          : bottom,
+      bottom: bottom,
     );
   }
+
+  void _onProfileMenuSelected(BuildContext context, WidgetRef ref, String value) {
+    if (value == 'logout') {
+      ref.read(AuthStateNotifier.provider.notifier).logout();
+      Modular.to.navigate('/');
+    } else if (value == 'settings') {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
+      );
+    } else if (value == 'points') {
+      Modular.to.pushNamed(CoursesModule.construct(CoursesModule.redeemPoints));
+    }
+  }
+
+  List<PopupMenuEntry<String>> _profileMenuItems(dynamic profile) => [
+        PopupMenuItem<String>(
+          enabled: false,
+          padding: EdgeInsets.zero,
+          child: _ProfileHeader(profile: profile),
+        ),
+        const PopupMenuItem<String>(
+          value: 'settings',
+          child: _ProfileMenuRow(
+            icon: Icons.settings,
+            label: 'Account Settings',
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'points',
+          child: _ProfileMenuRow(
+            icon: Icons.workspace_premium_outlined,
+            label: 'My Points: ${profile?.points ?? 0}',
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem<String>(
+          value: 'logout',
+          child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
+        ),
+      ];
 }
 
 // ── Desktop nav bar ──────────────────────────────────────────────────────────
