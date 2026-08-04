@@ -171,7 +171,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   LmsAppBarButton(
                     icon: Icons.arrow_back_ios_new_rounded,
                     onTap: onBack ?? () => safePop(context),
-                    iconSize: 21,
+                    iconSize: 18,
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -181,6 +181,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 if (onRefresh != null) ...[
                   LmsAppBarButton(
                     icon: Icons.refresh_rounded,
+                    iconSize: 16,
                     // The bell/badge in this same header is shared across
                     // every screen, so a manual refresh should always pick
                     // up fresh notifications too, not just whatever this
@@ -194,6 +195,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ],
                 LmsOfflineToggle(
                   isOffline: isOffline,
+                  iconSize: 16,
+                  switchScale: 0.7,
                   onChanged: (val) {
                     ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
                     if (!val) ref.read(SyncViewModel.provider).onManualOnline();
@@ -209,6 +212,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                     children: [
                       LmsAppBarButton(
                         icon: Icons.notifications_rounded,
+                        iconSize: 16,
                         onTap: () => showLmsNotifications(context),
                       ),
                       if (unreadCount > 0)
@@ -245,13 +249,14 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         ),
                       ),
                       const Icon(Icons.keyboard_arrow_down_rounded,
-                          color: Colors.white, size: 20),
+                          color: Colors.white, size: 16),
                     ],
                   ),
                 ),
                 const SizedBox(width: 10),
                 LmsAppBarButton(
                   icon: Icons.play_arrow_rounded,
+                  iconSize: 14,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const LearningProgressPage()),
                   ),
@@ -756,9 +761,16 @@ class LmsOfflineToggle extends StatelessWidget {
     super.key,
     required this.isOffline,
     required this.onChanged,
+    this.iconSize,
+    this.switchScale,
   });
   final bool isOffline;
   final ValueChanged<bool> onChanged;
+
+  /// Overrides the default responsive icon/switch size — used by the
+  /// desktop header to match its smaller, button-less icon styling.
+  final double? iconSize;
+  final double? switchScale;
 
   @override
   Widget build(BuildContext context) {
@@ -768,11 +780,11 @@ class LmsOfflineToggle extends StatelessWidget {
       children: [
         Icon(
           isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
-          size: isWide ? 22 : 18,
+          size: iconSize ?? (isWide ? 22 : 18),
           color: isOffline ? Colors.amber.shade600 : Colors.white70,
         ),
         Transform.scale(
-          scale: isWide ? 0.85 : 0.72,
+          scale: switchScale ?? (isWide ? 0.85 : 0.72),
           child: Switch(
             value: isOffline,
             onChanged: onChanged,
