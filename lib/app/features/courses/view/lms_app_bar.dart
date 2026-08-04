@@ -171,7 +171,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   LmsAppBarButton(
                     icon: Icons.arrow_back_ios_new_rounded,
                     onTap: onBack ?? () => safePop(context),
-                    iconSize: 18,
+                    iconSize: 36,
+                    boxSize: 44,
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -181,7 +182,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 if (onRefresh != null) ...[
                   LmsAppBarButton(
                     icon: Icons.refresh_rounded,
-                    iconSize: 16,
+                    iconSize: 32,
+                    boxSize: 44,
                     // The bell/badge in this same header is shared across
                     // every screen, so a manual refresh should always pick
                     // up fresh notifications too, not just whatever this
@@ -195,8 +197,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ],
                 LmsOfflineToggle(
                   isOffline: isOffline,
-                  iconSize: 16,
-                  switchScale: 0.7,
+                  iconSize: 32,
+                  switchScale: 1.4,
                   onChanged: (val) {
                     ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
                     if (!val) ref.read(SyncViewModel.provider).onManualOnline();
@@ -205,14 +207,15 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   },
                 ),
                 SizedBox(
-                  width: 38,
-                  height: 38,
+                  width: 44,
+                  height: 44,
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
                       LmsAppBarButton(
                         icon: Icons.notifications_rounded,
-                        iconSize: 16,
+                        iconSize: 32,
+                        boxSize: 44,
                         onTap: () => showLmsNotifications(context),
                       ),
                       if (unreadCount > 0)
@@ -249,14 +252,15 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         ),
                       ),
                       const Icon(Icons.keyboard_arrow_down_rounded,
-                          color: Colors.white, size: 16),
+                          color: Colors.white, size: 32),
                     ],
                   ),
                 ),
                 const SizedBox(width: 10),
                 LmsAppBarButton(
                   icon: Icons.play_arrow_rounded,
-                  iconSize: 14,
+                  iconSize: 28,
+                  boxSize: 40,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const LearningProgressPage()),
                   ),
@@ -720,6 +724,7 @@ class LmsAppBarButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.iconSize,
+    this.boxSize,
   });
   final IconData icon;
   final VoidCallback onTap;
@@ -729,10 +734,14 @@ class LmsAppBarButton extends StatelessWidget {
   /// same nominal size).
   final double? iconSize;
 
+  /// Overrides the default responsive tap-target box size — needed
+  /// whenever [iconSize] is pushed past the default box's own size.
+  final double? boxSize;
+
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final size = isWide ? 38.0 : 36.0;
+    final size = boxSize ?? (isWide ? 38.0 : 36.0);
     return Center(
       child: SizedBox.square(
         dimension: size,
