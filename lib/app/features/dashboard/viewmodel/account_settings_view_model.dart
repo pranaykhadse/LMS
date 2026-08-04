@@ -11,6 +11,7 @@ class AccountSettingsViewModel
   AccountSettingsViewModel({
     required this.repository,
     required this.userId,
+    required this.ref,
   }) : super(DataState.idle<UserProfileDetail>()) {
     fetch();
   }
@@ -21,11 +22,13 @@ class AccountSettingsViewModel
     return AccountSettingsViewModel(
       repository: ref.watch(AccountSettingsRepository.provider),
       userId: userId,
+      ref: ref,
     );
   });
 
   final AccountSettingsRepository repository;
   final int? userId;
+  final Ref ref;
 
   Future<void> fetch() async {
     if (userId == null) {
@@ -76,23 +79,27 @@ class AccountSettingsViewModel
     if (!result.success) {
       return result.message ?? 'Unable to save your changes. Please try again.';
     }
+    final updatedProfile = current.profile.copyWith(
+      firstname: firstname,
+      lastname: lastname,
+      location: location,
+      website: website,
+      linkedIn: linkedIn,
+      division: division,
+      department: department,
+      avatarPath: avatarUrl,
+    );
     state = DataState.onData(
       UserProfileDetail(
-        profile: current.profile.copyWith(
-          firstname: firstname,
-          lastname: lastname,
-          location: location,
-          website: website,
-          linkedIn: linkedIn,
-          division: division,
-          department: department,
-          avatarPath: avatarUrl,
-        ),
+        profile: updatedProfile,
         user: current.user,
         phoneNumber: phoneNumber ?? current.phoneNumber,
         enableTextMessages: current.enableTextMessages,
       ),
     );
+    // Keep the app-wide cached profile (app bar name/avatar, etc.) in sync
+    // - this screen's own state above isn't visible anywhere else.
+    await ref.read(AuthStateNotifier.provider.notifier).updateProfile(updatedProfile);
     return null;
   }
 
@@ -108,6 +115,12 @@ class AccountSettingsViewModel
       return result.message ?? 'Unable to upload avatar. Please try again.';
     }
     await fetch();
+    // Keep the app-wide cached profile (app bar avatar, etc.) in sync -
+    // fetch() above only updates this screen's own state.
+    final freshProfile = state.data?.profile;
+    if (freshProfile != null) {
+      await ref.read(AuthStateNotifier.provider.notifier).updateProfile(freshProfile);
+    }
     return null;
   }
 
