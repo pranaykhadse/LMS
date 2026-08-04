@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -19,7 +18,15 @@ class AccountSettingsViewModel
 
   static final provider = StateNotifierProvider.autoDispose<
       AccountSettingsViewModel, DataState<UserProfileDetail>>((ref) {
-    final userId = ref.watch(AuthStateNotifier.provider)?.user?.id;
+    // ref.read, not ref.watch: fetch() below calls
+    // AuthStateNotifier.updateProfile(), which changes AuthStateNotifier's
+    // state. If this provider *watched* AuthStateNotifier, that change
+    // would rebuild this provider too - tearing down and recreating
+    // AccountSettingsViewModel, whose constructor calls fetch() again,
+    // which calls updateProfile() again, forever. Only the userId at
+    // construction time is needed here, not live updates to the rest of
+    // AuthState.
+    final userId = ref.read(AuthStateNotifier.provider)?.user?.id;
     return AccountSettingsViewModel(
       repository: ref.watch(AccountSettingsRepository.provider),
       userId: userId,
@@ -32,17 +39,13 @@ class AccountSettingsViewModel
   final Ref ref;
 
   Future<void> fetch() async {
-    if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] CALLED, userId=$userId');
     if (userId == null) {
-      if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] SKIPPED - userId is null');
       state = DataState.onError('User not logged in.');
       return;
     }
     state = DataState.loading<UserProfileDetail>();
     try {
-      if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] calling repository.fetch()...');
       final data = await repository.fetch(userId: userId!);
-      if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] repository.fetch() SUCCEEDED');
       if (mounted) state = DataState.onData(data);
       // This is the authoritative, always-fresh profile straight from the
       // server - sync it into the app-wide cached profile every time this
@@ -56,7 +59,6 @@ class AccountSettingsViewModel
       // now moot.
       await ref.read(AuthStateNotifier.provider.notifier).updateProfile(data.profile);
     } catch (e) {
-      if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] repository.fetch() FAILED: $e');
       if (!mounted) return;
       state = DataState.onError(_friendly(e));
     }
