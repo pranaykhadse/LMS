@@ -156,19 +156,37 @@ class AccountSettingsViewModel
     return null;
   }
 
-  /// Uploads a new avatar via POST user-profile/upload-avatar, then
-  /// refetches the full profile rather than guessing at the upload
-  /// response's shape - the plain GET already reliably returns the new
-  /// avatar_path/avatar_base_url pair (fetch() also syncs it into the
-  /// app-wide cached profile). Returns an error message on failure, or
-  /// null on success.
+  /// Uploads a new avatar via POST user-profile/upload-avatar, then patches
+  /// just the avatar_path/avatar_base_url the upload response itself
+  /// returns onto the profile already in state - deliberately not a full
+  /// fetch()/replace, which would swap in a brand new UserProfileDetail
+  /// object and risk every other field on screen (name, location, etc.)
+  /// visibly refreshing along with the avatar. Returns an error message on
+  /// failure, or null on success.
   Future<String?> uploadAvatar(Uint8List bytes, String filename) async {
     if (userId == null) return 'Unable to upload avatar — not logged in.';
     final result = await repository.uploadAvatar(bytes: bytes, filename: filename);
     if (!result.success) {
       return result.message ?? 'Unable to upload avatar. Please try again.';
     }
-    await fetch();
+    final current = state.data;
+    if (current != null && result.avatarPath != null) {
+      final patchedProfile = current.profile.copyWith(
+        avatarPath: result.avatarPath,
+        avatarBaseUrl: result.avatarBaseUrl,
+      );
+      if (mounted) {
+        state = DataState.onData(
+          UserProfileDetail(
+            profile: patchedProfile,
+            user: current.user,
+            phoneNumber: current.phoneNumber,
+            enableTextMessages: current.enableTextMessages,
+          ),
+        );
+      }
+      await ref.read(AuthStateNotifier.provider.notifier).updateProfile(patchedProfile);
+    }
     return null;
   }
 
