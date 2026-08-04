@@ -93,12 +93,26 @@ class SyncViewModel extends ChangeNotifier {
     // rebuilds immediately when connectivity changes in either direction.
     notifyListeners();
     if (isConnected) {
-      sync();
-      // The device just came back online (real network reconnect) - every
-      // screen's data provider may be showing whatever it had cached from
-      // before the connection dropped, so refetch them all now instead of
-      // waiting for the user to manually pull-to-refresh each one.
-      refreshAllOnReconnect(ref);
+      // connectionProvider.addListener() (see the constructor) invokes this
+      // listener synchronously with the *current* value the moment it's
+      // registered - and that registration happens inside this
+      // notifier's own constructor, i.e. while SyncViewModel.provider is
+      // still initializing. sync()/refreshAllOnReconnect() both read/modify
+      // other providers, and Riverpod hard-forbids a provider modifying
+      // another provider while it's still mid-initialization ("Providers
+      // are not allowed to modify other providers during their
+      // initialization"). Deferring to a microtask runs this right after
+      // the current synchronous call stack (including this constructor)
+      // finishes, instead of nested inside it.
+      Future.microtask(() {
+        sync();
+        // The device just came back online (real network reconnect) -
+        // every screen's data provider may be showing whatever it had
+        // cached from before the connection dropped, so refetch them all
+        // now instead of waiting for the user to manually pull-to-refresh
+        // each one.
+        refreshAllOnReconnect(ref);
+      });
     }
   }
 
