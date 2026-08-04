@@ -171,8 +171,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   LmsAppBarButton(
                     icon: Icons.arrow_back_ios_new_rounded,
                     onTap: onBack ?? () => safePop(context),
-                    iconSize: 36,
-                    boxSize: 44,
+                    iconSize: 23.4,
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -182,8 +181,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 if (onRefresh != null) ...[
                   LmsAppBarButton(
                     icon: Icons.refresh_rounded,
-                    iconSize: 32,
-                    boxSize: 44,
+                    iconSize: 20.8,
                     // The bell/badge in this same header is shared across
                     // every screen, so a manual refresh should always pick
                     // up fresh notifications too, not just whatever this
@@ -197,8 +195,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ],
                 LmsOfflineToggle(
                   isOffline: isOffline,
-                  iconSize: 32,
-                  switchScale: 1.4,
+                  iconSize: 20.8,
+                  switchScale: 0.91,
                   onChanged: (val) {
                     ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
                     if (!val) ref.read(SyncViewModel.provider).onManualOnline();
@@ -207,15 +205,14 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   },
                 ),
                 SizedBox(
-                  width: 44,
-                  height: 44,
+                  width: 38,
+                  height: 38,
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
                       LmsAppBarButton(
                         icon: Icons.notifications_rounded,
-                        iconSize: 32,
-                        boxSize: 44,
+                        iconSize: 20.8,
                         onTap: () => showLmsNotifications(context),
                       ),
                       if (unreadCount > 0)
@@ -252,15 +249,15 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         ),
                       ),
                       const Icon(Icons.keyboard_arrow_down_rounded,
-                          color: Colors.white, size: 32),
+                          color: Colors.white, size: 20.8),
                     ],
                   ),
                 ),
                 const SizedBox(width: 10),
                 LmsAppBarButton(
                   icon: Icons.play_arrow_rounded,
-                  iconSize: 28,
-                  boxSize: 40,
+                  iconSize: 42,
+                  boxSize: 48,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const LearningProgressPage()),
                   ),
