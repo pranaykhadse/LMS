@@ -4,10 +4,10 @@ import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 
 /// Shared page shell for every top-level screen. On a phone it behaves the
-/// same as before (hamburger + slide-out [AppDrawer]); on a tablet/desktop
-/// window it shows the nav as a persistent sidebar instead and caps the
-/// body's width so content doesn't stretch edge-to-edge on very wide
-/// windows.
+/// same as before (hamburger + slide-out AppDrawer); on a tablet/desktop
+/// window navigation moves into a horizontal nav bar under the top app
+/// bar instead (see LmsAppBar's `isWide` mode), and the body's width is
+/// capped so content doesn't stretch edge-to-edge on very wide windows.
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
     super.key,
@@ -83,6 +83,8 @@ class AppScaffold extends StatelessWidget {
       );
     }
 
+    // Desktop/tablet navigate via LmsAppBar's own horizontal nav bar
+    // (isWide) instead of a persistent sidebar.
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: LmsAppBar(
@@ -93,21 +95,10 @@ class AppScaffold extends StatelessWidget {
         bottom: bottom,
         isWide: true,
         onRefresh: onRefresh,
+        selectedLabel: selectedLabel,
+        selectedSubLabel: selectedSubLabel,
       ),
-      body: Row(
-        children: [
-          SizedBox(
-            width: 280,
-            child: AppDrawer(
-              selectedLabel: selectedLabel,
-              selectedSubLabel: selectedSubLabel,
-              embedded: true,
-            ),
-          ),
-          const VerticalDivider(width: 1, color: Color(0xFFEDEFF3)),
-          Expanded(child: content),
-        ],
-      ),
+      body: content,
     );
   }
 }

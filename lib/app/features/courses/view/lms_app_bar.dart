@@ -5,6 +5,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/views/elements/contact_links.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -37,6 +38,38 @@ bool readIsOnline(WidgetRef ref) {
   return !isManualOffline && connectionVM.isConnected;
 }
 
+/// "Lastname, Firstname" for the desktop header's profile menu trigger.
+String _lastFirst(dynamic profile) {
+  final first = profile?.firstname?.toString() ?? '';
+  final last = profile?.lastname?.toString() ?? '';
+  if (last.isEmpty) return first;
+  if (first.isEmpty) return last;
+  return '$last, $first';
+}
+
+const double _desktopNavBarHeight = 60;
+
+/// Stacks the desktop nav row under the purple utility row, and below that
+/// (if present) whatever page-specific bottom widget was passed in — e.g.
+/// the calendar's own toolbar.
+PreferredSizeWidget _desktopBottomBar(
+  String? selectedLabel,
+  String? selectedSubLabel,
+  PreferredSizeWidget? extra,
+) {
+  final navBar = _DesktopNavBar(
+    selectedLabel: selectedLabel,
+    selectedSubLabel: selectedSubLabel,
+  );
+  if (extra == null) return navBar;
+  return PreferredSize(
+    preferredSize: Size.fromHeight(
+      _desktopNavBarHeight + extra.preferredSize.height,
+    ),
+    child: Column(children: [navBar, extra]),
+  );
+}
+
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
 class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
@@ -49,13 +82,24 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.centerTitle = false,
     this.onRefresh,
     this.hideBack = false,
+    this.selectedLabel,
+    this.selectedSubLabel,
   });
 
   /// Responsive wide-screen layout (catalog page only).
   final bool isWide;
 
-  /// Optional bottom widget (e.g. nav-tab bar) — catalog page only.
+  /// Optional bottom widget (e.g. nav-tab bar) — catalog page only. On a
+  /// wide screen this renders below the desktop nav bar, not in its place.
   final PreferredSizeWidget? bottom;
+
+  /// The top-level nav item to highlight in the desktop nav bar (isWide
+  /// only) — same values as AppDrawer's `selectedLabel`.
+  final String? selectedLabel;
+
+  /// The nav sub-item to highlight within its dropdown (isWide only) —
+  /// same values as AppDrawer's `selectedSubLabel`.
+  final String? selectedSubLabel;
 
   /// If provided, a back button is shown that calls this. If null and
   /// `Navigator.canPop` is true, standard pop is used instead.
@@ -82,7 +126,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        (isWide ? 52.0 : 60.0) + (bottom?.preferredSize.height ?? 0),
+        (isWide ? 52.0 : 60.0) +
+            (isWide ? _desktopNavBarHeight : 0) +
+            (bottom?.preferredSize.height ?? 0),
       );
 
   @override
@@ -267,7 +313,25 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
             ),
           ],
-          child: LmsAvatar(profile: profile, radius: isWide ? 19 : 18),
+          child: isWide
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LmsAvatar(profile: profile, radius: 19),
+                    const SizedBox(width: 8),
+                    Text(
+                      _lastFirst(profile),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Icon(Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white, size: 20),
+                  ],
+                )
+              : LmsAvatar(profile: profile, radius: 18),
         ),
         SizedBox(width: isWide ? 7 : 2),
         LmsAppBarButton(
@@ -278,7 +342,285 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         SizedBox(width: isWide ? 10 : 6),
       ],
-      bottom: bottom,
+      bottom: isWide
+          ? _desktopBottomBar(selectedLabel, selectedSubLabel, bottom)
+          : bottom,
+    );
+  }
+}
+
+// ── Desktop nav bar ──────────────────────────────────────────────────────────
+
+/// The horizontal white nav bar under the purple utility row on desktop/
+/// tablet, replacing the persistent left sidebar. Same destinations as
+/// the mobile AppDrawer (kept in sync by hand — see that file for the
+/// mobile equivalent), styled to sit flush under [LmsAppBar].
+class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
+  const _DesktopNavBar({this.selectedLabel, this.selectedSubLabel});
+
+  final String? selectedLabel;
+  final String? selectedSubLabel;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(_desktopNavBarHeight);
+
+  void _goTo(BuildContext context, String route) {
+    resetToModularRoot(context);
+    Modular.to.navigate(route);
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOnline = watchIsOnline(ref);
+    const myCoursesChildren = [
+      'My Enrolled Courses',
+      'My Completed Courses',
+      'My Development Plan',
+      'My Required Courses',
+    ];
+    const pointsBadgesChildren = ['Redeem your Points', 'Badges'];
+    final myCoursesActive = selectedLabel == 'My Courses' ||
+        myCoursesChildren.contains(selectedSubLabel);
+    final pointsBadgesActive = selectedLabel == 'Points & Badges' ||
+        pointsBadgesChildren.contains(selectedSubLabel);
+
+    return Container(
+      height: _desktopNavBarHeight,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFEDEFF3))),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        children: [
+          _NavItem(
+            icon: Icons.dashboard_outlined,
+            label: 'Dashboard',
+            selected: selectedLabel == 'Dashboard',
+            onTap: () => _goTo(
+              context,
+              CoursesModule.construct(CoursesModule.dashboard),
+            ),
+          ),
+          const SizedBox(width: 36),
+          _NavItem(
+            icon: Icons.menu_book_outlined,
+            label: 'Course Catalog',
+            selected: selectedLabel == 'Course Catalog',
+            onTap: () => _goTo(
+              context,
+              CoursesModule.construct(CoursesModule.root),
+            ),
+          ),
+          const SizedBox(width: 36),
+          _NavDropdown(
+            icon: Icons.library_books_outlined,
+            label: 'My Courses',
+            selected: myCoursesActive,
+            items: [
+              _NavSubItem(
+                label: 'My Enrolled Courses',
+                selected: selectedSubLabel == 'My Enrolled Courses',
+                onTap: () => _goTo(
+                  context,
+                  CoursesModule.construct(CoursesModule.enrolledCourses),
+                ),
+              ),
+              _NavSubItem(
+                label: 'My Completed Courses',
+                selected: selectedSubLabel == 'My Completed Courses',
+                onTap: () => _goTo(
+                  context,
+                  CoursesModule.construct(CoursesModule.completedCourses),
+                ),
+              ),
+              _NavSubItem(
+                label: 'My Development Plan',
+                selected: selectedSubLabel == 'My Development Plan',
+                onTap: () => _goTo(
+                  context,
+                  CoursesModule.construct(CoursesModule.developmentPlan),
+                ),
+              ),
+              _NavSubItem(
+                label: 'My Required Courses',
+                selected: selectedSubLabel == 'My Required Courses',
+                onTap: () => _goTo(
+                  context,
+                  CoursesModule.construct(CoursesModule.requiredCourses),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 36),
+          _NavItem(
+            icon: Icons.account_tree_outlined,
+            label: 'Learning Paths',
+            selected: selectedLabel == 'Learning Paths',
+            onTap: () => _goTo(
+              context,
+              CoursesModule.construct(CoursesModule.learningPaths),
+            ),
+          ),
+          const SizedBox(width: 36),
+          _NavDropdown(
+            icon: Icons.workspace_premium_outlined,
+            label: 'Points & Badges',
+            selected: pointsBadgesActive,
+            items: [
+              _NavSubItem(
+                label: 'Redeem your Points',
+                selected: selectedSubLabel == 'Redeem your Points',
+                onTap: () => _goTo(
+                  context,
+                  CoursesModule.construct(CoursesModule.redeemPoints),
+                ),
+              ),
+              _NavSubItem(
+                label: 'Badges',
+                selected: selectedSubLabel == 'Badges',
+                onTap: () => _goTo(
+                  context,
+                  CoursesModule.construct(CoursesModule.badges),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 36),
+          _NavDropdown(
+            icon: Icons.support_agent_outlined,
+            label: 'Contact a Coach',
+            selected: false,
+            items: [
+              _NavSubItem(
+                label: 'Contact a Development Pro',
+                disabled: !isOnline,
+                onTap: () => launchContactCoachUrl(ref),
+              ),
+              _NavSubItem(
+                label: 'Virtual Development Pro',
+                disabled: !isOnline,
+                onTap: launchVirtualDevUrl,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? _appPurple : const Color(0xFF37424E);
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 15,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavSubItem {
+  const _NavSubItem({
+    required this.label,
+    this.selected = false,
+    this.disabled = false,
+    required this.onTap,
+  });
+  final String label;
+  final bool selected;
+  final bool disabled;
+  final VoidCallback onTap;
+}
+
+class _NavDropdown extends StatelessWidget {
+  const _NavDropdown({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.items,
+  });
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final List<_NavSubItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? _appPurple : const Color(0xFF37424E);
+    return PopupMenuButton<int>(
+      offset: const Offset(0, 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onSelected: (index) {
+        final item = items[index];
+        if (!item.disabled) item.onTap();
+      },
+      itemBuilder: (context) => [
+        for (var i = 0; i < items.length; i++)
+          PopupMenuItem<int>(
+            value: i,
+            enabled: !items[i].disabled,
+            child: Text(
+              items[i].label,
+              style: TextStyle(
+                color: items[i].disabled
+                    ? const Color(0xFF9AA8C0)
+                    : (items[i].selected ? _appPurple : const Color(0xFF23292F)),
+                fontWeight:
+                    items[i].selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 15,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+            Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: color),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -766,21 +1108,13 @@ class _DatePillState extends State<_DatePill> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Container(
-        height: 26,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .12),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Colors.white24),
-        ),
-        child: Text(
-          _formatDatePill(_now),
-          style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, height: 1.0),
-        ),
+    return Text(
+      _formatDatePill(_now),
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        height: 1.0,
       ),
     );
   }
@@ -790,8 +1124,8 @@ const _datePillWeekdays = [
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
 ];
 const _datePillMonths = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
 String _formatDatePill(DateTime dt) {
@@ -800,5 +1134,5 @@ String _formatDatePill(DateTime dt) {
   final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
   final minute = dt.minute.toString().padLeft(2, '0');
   final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-  return '$weekday $month ${dt.day}, ${dt.year}|$hour12:$minute $ampm';
+  return '$weekday $month ${dt.day}, ${dt.year} | $hour12:$minute $ampm';
 }

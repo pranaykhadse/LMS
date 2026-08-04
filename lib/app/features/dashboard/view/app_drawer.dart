@@ -3,10 +3,10 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
-import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
+import 'package:lms/app/core/views/elements/contact_links.dart';
+import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 const _purple = Color(0xFF5756C9);
 const _muted = Color(0xFF7C879D);
@@ -20,12 +20,13 @@ bool _watchIsOnline(WidgetRef ref) {
   return !isManualOffline && connectionVM.isConnected;
 }
 
+/// The phone slide-out navigation drawer. Desktop/tablet use a horizontal
+/// nav bar in LmsAppBar instead (see that file's `_DesktopNavBar`).
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({
     super.key,
     this.selectedLabel,
     this.selectedSubLabel,
-    this.embedded = false,
   });
 
   /// The top-level nav item label that should appear highlighted (e.g.
@@ -40,56 +41,11 @@ class AppDrawer extends ConsumerWidget {
   /// [selectedLabel] for the group.
   final String? selectedSubLabel;
 
-  /// True when rendered as a persistent sidebar (tablet/desktop) instead of
-  /// a slide-out [Drawer] (phone). Suppresses the close button and the
-  /// `Navigator.pop` calls that would otherwise dismiss the slide-out panel.
-  final bool embedded;
+  void _closeIfNeeded(BuildContext context) => Navigator.pop(context);
 
-  Future<void> _launchContactUrl(BuildContext context, WidgetRef ref) async {
-    final user = ref.read(AuthStateNotifier.provider)?.user;
-    final email = Uri.encodeComponent(user?.email ?? '');
-    final authKey = Uri.encodeComponent(user?.authKey ?? '');
-    final uri = Uri.parse(
-      'https://login.leadershipedge.coach/backend/web/sign-in/oauth-login?email=$email&authkey=$authKey',
-    );
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  Future<void> _launchVirtualDev() async {
-    final uri = Uri.parse(
-      'https://staging.trainingpipeline.com/backend/web/chatgpt/virtual-development-pro/index',
-    );
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  void _closeIfNeeded(BuildContext context) {
-    if (!embedded) Navigator.pop(context);
-  }
-
-  // Screens like Account Settings, Notifications, Redeem History and the
-  // Learning Progress viewer are opened with a raw Navigator.push rather
-  // than through Modular's own routing, so they sit on top of Modular's
-  // declarative page stack as extra imperative history entries - swapping
-  // that declarative stack (via Modular.to.navigate/pushNamed) doesn't
-  // remove them, so the sidebar tap silently did nothing while one of
-  // those pages was open. Popping back to the base of the Navigator first
-  // clears any such pages before handing off to Modular.
-  void _resetToModularRoot(BuildContext context) {
-    Navigator.of(context).popUntil((route) => route.isFirst);
-  }
-
-  // Desktop's sidebar is always visible, so switching between its
-  // destinations should replace the stack like the top-level items do
-  // (otherwise routes quietly pile up and the back button starts
-  // reappearing). Phone's slide-out drawer keeps its original push
-  // behavior unchanged.
   void _goTo(BuildContext context, String route) {
-    _resetToModularRoot(context);
-    if (embedded) {
-      Modular.to.navigate(route);
-    } else {
-      Modular.to.pushNamed(route);
-    }
+    resetToModularRoot(context);
+    Modular.to.pushNamed(route);
   }
 
   @override
@@ -113,7 +69,6 @@ class AppDrawer extends ConsumerWidget {
         sel == 'Points & Badges' || pointsBadgesChildren.contains(subSel);
 
     final content = SafeArea(
-      top: !embedded,
       child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -132,14 +87,13 @@ class AppDrawer extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  if (!embedded)
-                    IconButton(
-                      onPressed: () => _closeIfNeeded(context),
-                      icon: const Icon(Icons.close, size: 20, color: _purple),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      splashRadius: 18,
-                    ),
+                  IconButton(
+                    onPressed: () => _closeIfNeeded(context),
+                    icon: const Icon(Icons.close, size: 20, color: _purple),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    splashRadius: 18,
+                  ),
                 ],
               ),
             ),
@@ -155,7 +109,7 @@ class AppDrawer extends ConsumerWidget {
                       selected: sel == 'Dashboard',
                       onTap: () {
                         _closeIfNeeded(context);
-                        _resetToModularRoot(context);
+                        resetToModularRoot(context);
                         if (sel != 'Dashboard') {
                           Modular.to.navigate(
                             CoursesModule.construct(CoursesModule.dashboard),
@@ -169,7 +123,7 @@ class AppDrawer extends ConsumerWidget {
                       selected: sel == 'Course Catalog',
                       onTap: () {
                         _closeIfNeeded(context);
-                        _resetToModularRoot(context);
+                        resetToModularRoot(context);
                         if (sel != 'Course Catalog') {
                           Modular.to.navigate(
                             CoursesModule.construct(CoursesModule.root),
@@ -293,7 +247,7 @@ class AppDrawer extends ConsumerWidget {
                           disabled: !isOnline,
                           onTap: () {
                             _closeIfNeeded(context);
-                            _launchContactUrl(context, ref);
+                            launchContactCoachUrl(ref);
                           },
                         ),
                         _SubItem(
@@ -302,7 +256,7 @@ class AppDrawer extends ConsumerWidget {
                           disabled: !isOnline,
                           onTap: () {
                             _closeIfNeeded(context);
-                            _launchVirtualDev();
+                            launchVirtualDevUrl();
                           },
                         ),
                       ],
@@ -314,10 +268,6 @@ class AppDrawer extends ConsumerWidget {
           ],
         ),
     );
-
-    if (embedded) {
-      return Material(color: Colors.white, child: content);
-    }
 
     return Drawer(
       width: (width * .8).clamp(300, 315).toDouble(),
