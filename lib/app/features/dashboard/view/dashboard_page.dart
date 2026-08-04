@@ -71,6 +71,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         backgroundColor: _bg,
         title: 'Dashboard',
         selectedLabel: 'Dashboard',
+        hideBack: true,
         body: const OfflineCoursesSection(
           matches: _anyCourse,
           emptyMessage:
@@ -118,6 +119,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       backgroundColor: _bg,
       title: 'Dashboard',
       selectedLabel: 'Dashboard',
+      hideBack: true,
       onRefresh: _refetchAll,
       body: _redirectingUnauthorized
           ? const Center(child: CircularProgressIndicator(color: _purple))

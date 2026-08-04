@@ -58,8 +58,10 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final items = await repository.fetch(userId: userId!);
+      if (!mounted) return;
       state = state.copyWith(notifications: items, isLoading: false);
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }

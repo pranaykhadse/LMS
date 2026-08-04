@@ -22,7 +22,7 @@ class OfflineModeNotifier extends StateNotifier<bool> {
 
   Future<void> _load() async {
     final raw = await _storage.getString(_kOfflineModeKey);
-    if (raw == 'true') state = true;
+    if (raw == 'true' && mounted) state = true;
   }
 
   /// Flip the toggle.

@@ -66,12 +66,25 @@ class AppDrawer extends ConsumerWidget {
     if (!embedded) Navigator.pop(context);
   }
 
+  // Screens like Account Settings, Notifications, Redeem History and the
+  // Learning Progress viewer are opened with a raw Navigator.push rather
+  // than through Modular's own routing, so they sit on top of Modular's
+  // declarative page stack as extra imperative history entries - swapping
+  // that declarative stack (via Modular.to.navigate/pushNamed) doesn't
+  // remove them, so the sidebar tap silently did nothing while one of
+  // those pages was open. Popping back to the base of the Navigator first
+  // clears any such pages before handing off to Modular.
+  void _resetToModularRoot(BuildContext context) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   // Desktop's sidebar is always visible, so switching between its
   // destinations should replace the stack like the top-level items do
   // (otherwise routes quietly pile up and the back button starts
   // reappearing). Phone's slide-out drawer keeps its original push
   // behavior unchanged.
-  void _goTo(String route) {
+  void _goTo(BuildContext context, String route) {
+    _resetToModularRoot(context);
     if (embedded) {
       Modular.to.navigate(route);
     } else {
@@ -142,6 +155,7 @@ class AppDrawer extends ConsumerWidget {
                       selected: sel == 'Dashboard',
                       onTap: () {
                         _closeIfNeeded(context);
+                        _resetToModularRoot(context);
                         if (sel != 'Dashboard') {
                           Modular.to.navigate(
                             CoursesModule.construct(CoursesModule.dashboard),
@@ -155,6 +169,7 @@ class AppDrawer extends ConsumerWidget {
                       selected: sel == 'Course Catalog',
                       onTap: () {
                         _closeIfNeeded(context);
+                        _resetToModularRoot(context);
                         if (sel != 'Course Catalog') {
                           Modular.to.navigate(
                             CoursesModule.construct(CoursesModule.root),
@@ -174,6 +189,7 @@ class AppDrawer extends ConsumerWidget {
                           onTap: () {
                             _closeIfNeeded(context);
                             _goTo(
+                              context,
                               CoursesModule.construct(
                                 CoursesModule.enrolledCourses,
                               ),
@@ -187,6 +203,7 @@ class AppDrawer extends ConsumerWidget {
                           onTap: () {
                             _closeIfNeeded(context);
                             _goTo(
+                              context,
                               CoursesModule.construct(
                                 CoursesModule.completedCourses,
                               ),
@@ -200,6 +217,7 @@ class AppDrawer extends ConsumerWidget {
                           onTap: () {
                             _closeIfNeeded(context);
                             _goTo(
+                              context,
                               CoursesModule.construct(
                                 CoursesModule.developmentPlan,
                               ),
@@ -213,6 +231,7 @@ class AppDrawer extends ConsumerWidget {
                           onTap: () {
                             _closeIfNeeded(context);
                             _goTo(
+                              context,
                               CoursesModule.construct(
                                 CoursesModule.requiredCourses,
                               ),
@@ -228,6 +247,7 @@ class AppDrawer extends ConsumerWidget {
                       onTap: () {
                         _closeIfNeeded(context);
                         _goTo(
+                          context,
                           CoursesModule.construct(CoursesModule.learningPaths),
                         );
                       },
@@ -244,6 +264,7 @@ class AppDrawer extends ConsumerWidget {
                           onTap: () {
                             _closeIfNeeded(context);
                             _goTo(
+                              context,
                               CoursesModule.construct(CoursesModule.redeemPoints),
                             );
                           },
@@ -255,6 +276,7 @@ class AppDrawer extends ConsumerWidget {
                           onTap: () {
                             _closeIfNeeded(context);
                             _goTo(
+                              context,
                               CoursesModule.construct(CoursesModule.badges),
                             );
                           },

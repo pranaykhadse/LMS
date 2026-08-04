@@ -27,6 +27,7 @@ abstract class BaseViewModel<T> extends StateNotifier<PaginatedState<T>> {
     }
     try {
       final data = await repository.getData(page, queryParams: queryParams);
+      if (!mounted) return null;
       state = PaginatedState(
         data: DataState.onData(data.data),
         pageInfo: data.pageInfo,
@@ -36,7 +37,7 @@ abstract class BaseViewModel<T> extends StateNotifier<PaginatedState<T>> {
       final message = e.toString();
       // Leave the previously shown page/data untouched on failure so the
       // pagination widget keeps highlighting the page that's actually shown.
-      if (!hasData) {
+      if (!hasData && mounted) {
         state = state.copyWith(data: DataState.onError(message));
       }
       return message;

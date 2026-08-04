@@ -63,7 +63,16 @@ mixin RepoNetworkHelper {
   RepoNetworkConfig get config;
   String get baseUrl => config.baseUrl;
   Map<String, String> get header => config.header;
-  Dio get dio => Dio(BaseOptions(baseUrl: baseUrl, headers: header));
+  // No timeout was ever configured here, so a request that never gets a
+  // response (server hang, dropped connection, etc.) left the UI stuck on
+  // its loading spinner indefinitely instead of surfacing an error.
+  Dio get dio => Dio(BaseOptions(
+        baseUrl: baseUrl,
+        headers: header,
+        connectTimeout: const Duration(seconds: 20),
+        receiveTimeout: const Duration(seconds: 20),
+        sendTimeout: const Duration(seconds: 30),
+      ));
   bool get isOffline =>
       config.isManualOffline() || config.connectionProvider.isConnected == false;
   @protected
@@ -77,6 +86,23 @@ mixin RepoNetworkHelper {
       return FormData.fromMap(converted);
     }
     return converted;
+  }
+
+  /// RepoNetworkConfig.header always bakes in "content-type:
+  /// application/json" at the Dio-instance level, for every request - fine
+  /// for the JSON bodies every endpoint sent until now, but once a body
+  /// becomes FormData (a multipart upload), that stale json content-type
+  /// header survives and Dio's transformer tries to JSON-encode/cast the
+  /// FormData object as a Map, throwing "type 'FormData' is not a subtype
+  /// of type 'Map<dynamic, dynamic>?'" before the request ever reaches the
+  /// network. Per-request Options.contentType (built from the FormData's
+  /// own boundary) takes precedence over that baked-in header and fixes it.
+  @protected
+  Options? optionsFor(dynamic body, Options? options) {
+    if (body is! FormData) return options;
+    return (options ?? Options()).copyWith(
+      contentType: 'multipart/form-data; boundary=${body.boundary}',
+    );
   }
 
   void prepareFormData(data) {
@@ -243,7 +269,7 @@ mixin RepoNetworkHelper {
         url,
         data: body,
         queryParameters: queryParameters,
-        options: options,
+        options: optionsFor(body, options),
         cancelToken: cancelToken,
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
@@ -252,7 +278,15 @@ mixin RepoNetworkHelper {
         CachableRequest(
           path: url,
           params: queryParameters,
-          body: body,
+          // CachableRequest.body is Map<dynamic, dynamic>? - a FormData
+          // body (any multipart request, e.g. a file upload) isn't a Map
+          // and blows up right at this constructor call with "type
+          // 'FormData' is not a subtype of type 'Map<dynamic, dynamic>?'",
+          // even when cacheType is none and the cache is never actually
+          // written. FormData also isn't meaningfully offline-cacheable
+          // (it holds raw file bytes, not JSON), so it's dropped here
+          // rather than cached.
+          body: body is Map ? body : null,
           response: response.data,
         ),
         cacheType,
@@ -325,7 +359,7 @@ mixin RepoNetworkHelper {
         url,
         data: body,
         queryParameters: queryParameters,
-        options: options,
+        options: optionsFor(body, options),
         cancelToken: cancelToken,
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,
@@ -353,7 +387,7 @@ mixin RepoNetworkHelper {
         url,
         data: body,
         queryParameters: queryParameters,
-        options: options,
+        options: optionsFor(body, options),
         cancelToken: cancelToken,
       );
       return response.data;
@@ -380,7 +414,7 @@ mixin RepoNetworkHelper {
         url,
         data: body,
         queryParameters: {}..addAll(queryParameters ?? {}),
-        options: options,
+        options: optionsFor(body, options),
         cancelToken: cancelToken,
         onSendProgress: onSendProgress,
         onReceiveProgress: onReceiveProgress,

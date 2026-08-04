@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/dashboard/model/user_profile_detail.dart';
 import 'package:lms/app/features/dashboard/viewmodel/account_settings_view_model.dart';
@@ -15,22 +17,29 @@ const _asMuted = Color(0xFF7C879D);
 const _asBg = Color(0xFFF5F7FC);
 const _asFieldBg = Color(0xFFF4F6FA);
 
-/// Avatar upload isn't wired up yet (no confirmed upload endpoint), so for
-/// now the avatar is just a plain URL the user can paste in — this mirrors
-/// the same resolution the profile PUT's avatar_path/avatar_base_url pair
-/// would otherwise need.
-String _resolveAvatarUrl(UserProfile profile) {
-  final base = profile.avatarBaseUrl?.toString() ?? '';
-  final path = profile.avatarPath?.toString() ?? '';
-  return path.startsWith('http') ? path : (base.isNotEmpty && path.isNotEmpty ? '$base$path' : '');
-}
-
-class AccountSettingsPage extends ConsumerWidget {
+class AccountSettingsPage extends ConsumerStatefulWidget {
   const AccountSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AccountSettingsPage> createState() => _AccountSettingsPageState();
+}
+
+class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
+  bool _redirectingUnauthorized = false;
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(AccountSettingsViewModel.provider);
+
+    if (!_redirectingUnauthorized &&
+        state.state == DataProviderState.error &&
+        isUnauthorizedError(state.error)) {
+      _redirectingUnauthorized = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        redirectToLoginOnSessionExpired(context, ref);
+      });
+    }
 
     return AppScaffold(
       backgroundColor: _asBg,
@@ -39,11 +48,13 @@ class AccountSettingsPage extends ConsumerWidget {
         DataProviderState.idle ||
         DataProviderState.loading =>
           const Center(child: CircularProgressIndicator(color: _asPurple)),
-        DataProviderState.error => _ErrorView(
-            message: state.error ?? 'Unable to load your profile.',
-            onRetry: () =>
-                ref.read(AccountSettingsViewModel.provider.notifier).fetch(),
-          ),
+        DataProviderState.error => _redirectingUnauthorized
+            ? const Center(child: CircularProgressIndicator(color: _asPurple))
+            : _ErrorView(
+                message: state.error ?? 'Unable to load your profile.',
+                onRetry: () =>
+                    ref.read(AccountSettingsViewModel.provider.notifier).fetch(),
+              ),
         DataProviderState.data => state.data == null
             ? const _ErrorView(message: 'No profile data found.')
             : _AccountSettingsBody(detail: state.data!),
@@ -93,6 +104,7 @@ class _AccountSettingsBody extends ConsumerStatefulWidget {
 class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   bool _isEditing = false;
   bool _isSaving = false;
+  bool _isUploadingAvatar = false;
 
   late final TextEditingController _firstnameCtrl;
   late final TextEditingController _lastnameCtrl;
@@ -101,7 +113,6 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   late final TextEditingController _linkedInCtrl;
   late final TextEditingController _divisionCtrl;
   late final TextEditingController _departmentCtrl;
-  late final TextEditingController _avatarUrlCtrl;
   late final TextEditingController _phoneCtrl;
 
   @override
@@ -115,7 +126,6 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _linkedInCtrl = TextEditingController(text: p.linkedIn?.toString() ?? '');
     _divisionCtrl = TextEditingController(text: p.division ?? '');
     _departmentCtrl = TextEditingController(text: p.department ?? '');
-    _avatarUrlCtrl = TextEditingController(text: _resolveAvatarUrl(p));
     _phoneCtrl = TextEditingController(text: widget.detail.phoneNumber ?? '');
   }
 
@@ -128,7 +138,6 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _linkedInCtrl.dispose();
     _divisionCtrl.dispose();
     _departmentCtrl.dispose();
-    _avatarUrlCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
   }
@@ -142,7 +151,6 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _linkedInCtrl.text = p.linkedIn?.toString() ?? '';
     _divisionCtrl.text = p.division ?? '';
     _departmentCtrl.text = p.department ?? '';
-    _avatarUrlCtrl.text = _resolveAvatarUrl(p);
     _phoneCtrl.text = widget.detail.phoneNumber ?? '';
   }
 
@@ -153,9 +161,47 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     setState(() => _isEditing = false);
   }
 
+  /// Shows the error as a toast, unless it indicates the session has
+  /// expired - in that case redirect to login instead (these action
+  /// results carry the raw exception message, not the same "friendly"
+  /// conversion the initial page load's error state goes through, so they
+  /// need their own unauthorized check here).
+  void _showErrorOrRedirect(String error) {
+    if (isUnauthorizedError(error)) {
+      redirectToLoginOnSessionExpired(context, ref);
+      return;
+    }
+    Toast.error(context, error);
+  }
+
+  /// Immediate upload (not part of the Edit/Save flow) via
+  /// POST user-profile/upload-avatar - picking a photo replaces the avatar
+  /// right away rather than staging it until Save is pressed.
+  Future<void> _pickAndUploadAvatar() async {
+    if (_isUploadingAvatar) return;
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _isUploadingAvatar = true);
+    final bytes = await picked.readAsBytes();
+    final error = await ref
+        .read(AccountSettingsViewModel.provider.notifier)
+        .uploadAvatar(bytes, picked.name);
+    if (!mounted) return;
+    setState(() => _isUploadingAvatar = false);
+    if (error != null) {
+      _showErrorOrRedirect(error);
+    } else {
+      Toast.success(context, 'Avatar updated successfully.');
+    }
+  }
+
   Future<void> _save() async {
     setState(() => _isSaving = true);
-    final avatarUrl = _avatarUrlCtrl.text.trim();
     final error = await ref
         .read(AccountSettingsViewModel.provider.notifier)
         .update(
@@ -166,7 +212,6 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           linkedIn: _linkedInCtrl.text.trim(),
           division: _divisionCtrl.text.trim(),
           department: _departmentCtrl.text.trim(),
-          avatarUrl: avatarUrl.isEmpty ? null : avatarUrl,
           phoneNumber: _phoneCtrl.text.trim(),
         );
     if (!mounted) return;
@@ -175,7 +220,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
       if (error == null) _isEditing = false;
     });
     if (error != null) {
-      Toast.error(context, error);
+      _showErrorOrRedirect(error);
     } else {
       Toast.success(context, 'Profile updated successfully.');
     }
@@ -200,7 +245,8 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           isSaving: _isSaving,
           firstnameController: _firstnameCtrl,
           lastnameController: _lastnameCtrl,
-          avatarUrlController: _avatarUrlCtrl,
+          isUploadingAvatar: _isUploadingAvatar,
+          onPickAvatar: _pickAndUploadAvatar,
           onEdit: _startEditing,
           onCancel: _cancelEditing,
           onSave: _save,
@@ -329,7 +375,8 @@ class _ProfileHeaderCard extends StatelessWidget {
     required this.isSaving,
     required this.firstnameController,
     required this.lastnameController,
-    required this.avatarUrlController,
+    required this.isUploadingAvatar,
+    required this.onPickAvatar,
     required this.onEdit,
     required this.onCancel,
     required this.onSave,
@@ -341,7 +388,8 @@ class _ProfileHeaderCard extends StatelessWidget {
   final bool isSaving;
   final TextEditingController firstnameController;
   final TextEditingController lastnameController;
-  final TextEditingController avatarUrlController;
+  final bool isUploadingAvatar;
+  final VoidCallback onPickAvatar;
   final VoidCallback onEdit;
   final VoidCallback onCancel;
   final VoidCallback onSave;
@@ -409,13 +457,40 @@ class _ProfileHeaderCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-          if (isEditing)
-            ValueListenableBuilder<TextEditingValue>(
-              valueListenable: avatarUrlController,
-              builder: (context, value, _) => _Avatar(url: value.text.trim()),
-            )
-          else
-            _Avatar(url: _resolveAvatarUrl(profile)),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _Avatar(url: profile.avatarUrl),
+              if (isUploadingAvatar)
+                const Positioned.fill(
+                  child: CircleAvatar(
+                    radius: 44,
+                    backgroundColor: Colors.black45,
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    ),
+                  ),
+                ),
+              Positioned(
+                right: -2,
+                bottom: -2,
+                child: Material(
+                  color: _asPurple,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    onTap: isUploadingAvatar ? null : onPickAvatar,
+                    customBorder: const CircleBorder(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(7),
+                      child: Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
           if (isEditing) ...[
             const _FieldLabel('First Name'),
@@ -423,23 +498,6 @@ class _ProfileHeaderCard extends StatelessWidget {
             const SizedBox(height: 10),
             const _FieldLabel('Last Name'),
             _EditableName(controller: lastnameController, hint: 'Last name'),
-            const SizedBox(height: 10),
-            const _FieldLabel('Avatar URL'),
-            TextField(
-              controller: avatarUrlController,
-              style: const TextStyle(color: _asInk, fontSize: 13),
-              decoration: InputDecoration(
-                hintText: 'Avatar image URL',
-                prefixIcon: const Icon(Icons.image_outlined, size: 18, color: _asMuted),
-                filled: true,
-                fillColor: _asFieldBg,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
           ] else
             Text(name, style: const TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 18)),
           const SizedBox(height: 4),
@@ -553,6 +611,12 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
         .changePassword(oldPassword: oldPassword, newPassword: newPassword);
     if (!mounted) return;
     if (error != null) {
+      if (isUnauthorizedError(error)) {
+        // Navigate first, while context is still valid - Modular.to.navigate
+        // replaces the whole nav stack, which dismisses this dialog too.
+        redirectToLoginOnSessionExpired(context, ref);
+        return;
+      }
       setState(() {
         _isSubmitting = false;
         _errorText = error;

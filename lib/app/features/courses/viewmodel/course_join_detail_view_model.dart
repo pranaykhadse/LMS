@@ -55,8 +55,10 @@ class CourseJoinDetailViewModel
         userId: userId!,
         courseId: courseId,
       );
+      if (!mounted) return;
       state = DataState.onData(result);
     } catch (error) {
+      if (!mounted) return;
       state = DataState.onError(_friendlyError(error));
     }
   }
@@ -123,6 +125,7 @@ class CourseJoinDetailViewModel
     if (userId == null) return;
     try {
       final result = await repository.fetch(userId: userId!, courseId: courseId);
+      if (!mounted) return;
       state = DataState.onData(result);
     } catch (_) {
       // Keep showing the previous (now stale) data rather than replacing
@@ -146,13 +149,23 @@ class CourseJoinDetailViewModel
     // behaviorId, so the enrollment-status refresh doesn't also silently
     // clear the user's filter.
     ref.read(CourseCatalogViewModel.provider.notifier).fetch();
-    ref.invalidate(MyCoursesViewModel.provider);
-    ref.invalidate(EnrolledCoursesViewModel.provider);
-    ref.invalidate(CompletedCoursesViewModel.provider);
-    ref.invalidate(RequiredCoursesViewModel.provider);
-    ref.invalidate(DashboardViewModel.provider);
-    ref.invalidate(DevelopmentPlanViewModel.provider);
-    ref.invalidate(CalendarViewModel.provider);
+    // Each of these is autoDispose - only touch ones ref.exists() confirms
+    // are still actually alive. invalidate()ing one nobody is watching can
+    // rebuild it, kick off its constructor's own fetch(), and then have it
+    // disposed again before that fetch resolves once nothing ends up
+    // watching the freshly-rebuilt instance either - "Bad state: Tried to
+    // use X after `dispose` was called."
+    for (final provider in [
+      MyCoursesViewModel.provider,
+      EnrolledCoursesViewModel.provider,
+      CompletedCoursesViewModel.provider,
+      RequiredCoursesViewModel.provider,
+      DashboardViewModel.provider,
+      DevelopmentPlanViewModel.provider,
+      CalendarViewModel.provider,
+    ]) {
+      if (ref.exists(provider)) ref.invalidate(provider);
+    }
   }
 }
 

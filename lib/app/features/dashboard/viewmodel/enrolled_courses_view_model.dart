@@ -86,6 +86,7 @@ class EnrolledCoursesViewModel extends StateNotifier<EnrolledState> {
         page: page,
         perPage: _perPage,
       );
+      if (!mounted) return null;
       state = state.copyWith(
         providerState: DataProviderState.data,
         courses: result.courses,
@@ -97,7 +98,7 @@ class EnrolledCoursesViewModel extends StateNotifier<EnrolledState> {
       final message = error.toString();
       // Leave the previously shown page/data in place on failure so the
       // pagination widget keeps highlighting the page that's actually shown.
-      if (!hasData) {
+      if (!hasData && mounted) {
         state = state.copyWith(
           providerState: DataProviderState.error,
           error: message,

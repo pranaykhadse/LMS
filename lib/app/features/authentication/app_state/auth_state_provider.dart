@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/logic/vm_helper/offline_vm_helper.dart';
@@ -65,7 +66,54 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     );
 
     await storage.setString("session_data", sessionData.toRawJson());
+    if (!mounted) return;
     state = sessionData;
+  }
+
+  /// Keeps the cached profile - used app-wide, e.g. the app bar avatar -
+  /// in sync with edits made from Account Settings. AccountSettingsViewModel
+  /// has its own separate profile state for that screen; without also
+  /// pushing the update here, everywhere else reading
+  /// AuthStateNotifier.provider (the app bar, etc.) kept showing whatever
+  /// was cached at login until the next full login. Persists to storage
+  /// too, so a cold restart restores the updated profile rather than the
+  /// stale one from the last real login.
+  Future<void> updateProfile(UserProfile profile) async {
+    if (kDebugMode) debugPrint('[AuthStateNotifier.updateProfile] CALLED');
+    final current = state;
+    if (current == null) return;
+    // UserProfile has no ==/hashCode, so copyWith always produces a "new"
+    // AuthState by identity even when nothing actually changed - and
+    // AccountSettingsViewModel.fetch() calls this on every load, not just
+    // after a real edit. Something downstream (even after switching every
+    // known ref.watch on AuthStateNotifier to ref.read - see
+    // account_settings_view_model.dart) still ends up rebuilding
+    // AccountSettingsViewModel.provider every time this state is replaced,
+    // which calls fetch() again, which calls this again - forever. Skipping
+    // the replacement when the profile is already identical breaks that
+    // cycle at the root regardless of which exact dependency causes the
+    // rebuild.
+    if (_sameProfile(current.userProfile, profile)) {
+      if (kDebugMode) debugPrint('[AuthStateNotifier.updateProfile] SKIPPED - profile unchanged');
+      return;
+    }
+    final updated = current.copyWith(userProfile: profile);
+    state = updated;
+    if (kDebugMode) debugPrint('[AuthStateNotifier.updateProfile] state REPLACED (new AuthState instance)');
+    await storage.setString("session_data", updated.toRawJson());
+  }
+
+  bool _sameProfile(UserProfile? a, UserProfile b) {
+    if (a == null) return false;
+    return a.avatarPath == b.avatarPath &&
+        a.avatarBaseUrl == b.avatarBaseUrl &&
+        a.firstname == b.firstname &&
+        a.lastname == b.lastname &&
+        a.location == b.location &&
+        a.website == b.website &&
+        a.linkedIn == b.linkedIn &&
+        a.division == b.division &&
+        a.department == b.department;
   }
 
   Future<void> logout() async {
@@ -111,6 +159,7 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
           authToken: token.token,
         ),
       ).validateToken(token);
+      if (!mounted) return;
       state = token;
     } catch (e) {
       log("VALidate auth token error: $e");

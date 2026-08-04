@@ -80,6 +80,7 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
         perPage: _perPage,
         search: query,
       );
+      if (!mounted) return null;
       state = state.copyWith(
         result: result,
         providerState: DataProviderState.data,
@@ -89,7 +90,7 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
       return null;
     } catch (e) {
       final message = e.toString();
-      if (!hasData) {
+      if (!hasData && mounted) {
         state = state.copyWith(
           providerState: DataProviderState.error,
           error: message,
@@ -123,10 +124,11 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
     }
     state = state.copyWith(redeemingId: itemId);
     final result = await _repo.redeem(itemId: itemId, address: address, note: note);
+    if (!mounted) return result;
     if (result.success) {
       await fetch(page: state.page, search: state.query);
     }
-    state = state.copyWith(clearRedeeming: true);
+    if (mounted) state = state.copyWith(clearRedeeming: true);
     return result;
   }
 }

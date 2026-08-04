@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:lms/app/core/views/elements/safe_pop.dart';
 
 const _webviewPurple = Color(0xFF5756C9);
 
@@ -48,7 +49,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () =>
-            Navigator.of(context).pop(),
+            safePop(context),
       },
       child: Focus(
         autofocus: true,
@@ -59,7 +60,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
             title: Text(widget.title ?? 'Virtual Class'),
             leading: IconButton(
               icon: const Icon(Icons.close_rounded),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => safePop(context),
             ),
             actions: [
               IconButton(

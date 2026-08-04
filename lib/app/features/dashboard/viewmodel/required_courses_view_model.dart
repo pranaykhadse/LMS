@@ -86,6 +86,7 @@ class RequiredCoursesViewModel extends StateNotifier<RequiredCoursesState> {
         limit: _limit,
         type: 'required',
       );
+      if (!mounted) return null;
       state = state.copyWith(
         providerState: DataProviderState.data,
         courses: result.courses,
@@ -96,7 +97,7 @@ class RequiredCoursesViewModel extends StateNotifier<RequiredCoursesState> {
       return null;
     } catch (error) {
       final message = error.toString();
-      if (!hasData) {
+      if (!hasData && mounted) {
         state = state.copyWith(
           providerState: DataProviderState.error,
           error: message,

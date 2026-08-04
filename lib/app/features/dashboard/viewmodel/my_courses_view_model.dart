@@ -22,8 +22,10 @@ class MyCoursesViewModel extends StateNotifier<DataState<MyCoursesResult>> {
     state = DataState.loading<MyCoursesResult>();
     try {
       final data = await repository.fetch();
+      if (!mounted) return;
       state = DataState.onData(data);
     } catch (e) {
+      if (!mounted) return;
       state = DataState.onError(_friendly(e));
     }
   }

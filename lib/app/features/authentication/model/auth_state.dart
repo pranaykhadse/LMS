@@ -454,6 +454,22 @@ class UserProfile {
     this.restrictedDate,
   });
 
+  /// Joins avatar_base_url + avatar_path into a full URL, ensuring exactly
+  /// one "/" between them - the API returns avatar_base_url without a
+  /// trailing slash and avatar_path without a leading slash (e.g.
+  /// ".../storage/web/source" + "1/x.jpg"), so naive '$base$path'
+  /// concatenation silently drops the separator, producing
+  /// ".../source1/x.jpg" instead of ".../source/1/x.jpg" and 404ing.
+  String get avatarUrl {
+    final path = avatarPath?.toString() ?? '';
+    if (path.isEmpty) return '';
+    if (path.startsWith('http')) return path;
+    final base = avatarBaseUrl?.toString() ?? '';
+    if (base.isEmpty) return '';
+    final needsSlash = !base.endsWith('/') && !path.startsWith('/');
+    return needsSlash ? '$base/$path' : '$base$path';
+  }
+
   UserProfile copyWith({
     int? userId,
     String? firstname,

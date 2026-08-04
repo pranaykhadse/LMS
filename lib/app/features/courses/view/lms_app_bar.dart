@@ -5,6 +5,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -47,6 +48,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.title,
     this.centerTitle = false,
     this.onRefresh,
+    this.hideBack = false,
   });
 
   /// Responsive wide-screen layout (catalog page only).
@@ -58,6 +60,14 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   /// If provided, a back button is shown that calls this. If null and
   /// `Navigator.canPop` is true, standard pop is used instead.
   final VoidCallback? onBack;
+
+  /// Forces the back button off even if [onBack] is set or
+  /// `Navigator.canPop` is true — for top-level destinations reached via
+  /// a stack-clearing `Modular.to.navigate` (Dashboard, Course Catalog),
+  /// where `canPop` can still read true from routes flutter_modular keeps
+  /// underneath (e.g. the auth/startup redirect), even though there's
+  /// nowhere meaningful to go back to.
+  final bool hideBack;
 
   /// Optional title text (e.g. "Dashboard"). Omitted on pages that render
   /// their own heading in the body (e.g. the course catalog).
@@ -79,7 +89,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final canPop = Navigator.canPop(context);
-    final showBack = onBack != null || (canPop && onBack == null);
+    final showBack =
+        !hideBack && (onBack != null || (canPop && onBack == null));
     final isOffline = ref.watch(OfflineModeNotifier.provider);
     final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
 
@@ -111,7 +122,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 alignment: Alignment.centerLeft,
                 child: LmsAppBarButton(
                   icon: Icons.arrow_back_ios_new_rounded,
-                  onTap: onBack ?? () => Navigator.pop(context),
+                  onTap: onBack ?? () => safePop(context),
                   iconSize: 21,
                 ),
               ),
@@ -138,7 +149,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   if (showBack) ...[
                     LmsAppBarButton(
                       icon: Icons.arrow_back_ios_new_rounded,
-                      onTap: onBack ?? () => Navigator.pop(context),
+                      onTap: onBack ?? () => safePop(context),
                       iconSize: 18,
                     ),
                     const SizedBox(width: 2),
@@ -171,7 +182,17 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       actions: [
         if (isWide) ...[const _DatePill(), const SizedBox(width: 8)],
         if (onRefresh != null) ...[
-          LmsAppBarButton(icon: Icons.refresh_rounded, onTap: onRefresh!),
+          LmsAppBarButton(
+            icon: Icons.refresh_rounded,
+            // The bell/badge in this same app bar is shared across every
+            // screen, so a manual refresh should always pick up fresh
+            // notifications too, not just whatever this particular page's
+            // own onRefresh re-fetches.
+            onTap: () {
+              onRefresh!();
+              ref.read(NotificationsViewModel.provider.notifier).fetch();
+            },
+          ),
           SizedBox(width: isWide ? 8 : 2),
         ],
         LmsOfflineToggle(
@@ -632,9 +653,7 @@ class LmsAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = profile?.avatarBaseUrl?.toString() ?? '';
-    final path = profile?.avatarPath?.toString() ?? '';
-    final url = path.startsWith('http') ? path : '$base$path';
+    final url = profile?.avatarUrl?.toString() ?? '';
     return CircleAvatar(
       radius: radius,
       backgroundColor: Colors.white,

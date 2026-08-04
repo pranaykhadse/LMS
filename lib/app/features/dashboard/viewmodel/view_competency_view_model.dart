@@ -63,8 +63,10 @@ class ViewCompetencyViewModel
         learningPathId: args.learningPathId,
         competency: args.competency,
       );
+      if (!mounted) return;
       state = DataState.onData(data);
     } catch (e) {
+      if (!mounted) return;
       state = DataState.onError(e.toString());
     }
   }
