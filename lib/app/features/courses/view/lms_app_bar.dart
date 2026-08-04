@@ -234,9 +234,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       const SizedBox(width: 8),
                       Text(
                         _lastFirst(profile),
-                        style: const TextStyle(
+                        style: GoogleFonts.roboto(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
