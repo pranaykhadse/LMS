@@ -39,6 +39,14 @@ class AccountSettingsViewModel
     try {
       final data = await repository.fetch(userId: userId!);
       state = DataState.onData(data);
+      // This is the authoritative, always-fresh profile straight from the
+      // server - sync it into the app-wide cached profile every time this
+      // screen loads, not just after an explicit edit. Without this, a
+      // change made (and correctly synced) in one app session wouldn't
+      // show up in the app bar on the *next* cold start, since
+      // AuthStateNotifier.initialize() just restores whatever was last
+      // persisted rather than refetching.
+      await ref.read(AuthStateNotifier.provider.notifier).updateProfile(data.profile);
     } catch (e) {
       state = DataState.onError(_friendly(e));
     }
@@ -106,8 +114,9 @@ class AccountSettingsViewModel
   /// Uploads a new avatar via POST user-profile/upload-avatar, then
   /// refetches the full profile rather than guessing at the upload
   /// response's shape - the plain GET already reliably returns the new
-  /// avatar_path/avatar_base_url pair. Returns an error message on
-  /// failure, or null on success.
+  /// avatar_path/avatar_base_url pair (fetch() also syncs it into the
+  /// app-wide cached profile). Returns an error message on failure, or
+  /// null on success.
   Future<String?> uploadAvatar(Uint8List bytes, String filename) async {
     if (userId == null) return 'Unable to upload avatar — not logged in.';
     final result = await repository.uploadAvatar(bytes: bytes, filename: filename);
@@ -115,12 +124,6 @@ class AccountSettingsViewModel
       return result.message ?? 'Unable to upload avatar. Please try again.';
     }
     await fetch();
-    // Keep the app-wide cached profile (app bar avatar, etc.) in sync -
-    // fetch() above only updates this screen's own state.
-    final freshProfile = state.data?.profile;
-    if (freshProfile != null) {
-      await ref.read(AuthStateNotifier.provider.notifier).updateProfile(freshProfile);
-    }
     return null;
   }
 
