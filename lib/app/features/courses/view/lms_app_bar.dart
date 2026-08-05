@@ -512,9 +512,10 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
       child: Row(
         children: [
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
+            child: Center(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
           children: [
             _NavItem(
             icon: Icons.dashboard_outlined,
@@ -630,6 +631,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
         ],
               ),
             ),
+          ),
           ),
         ],
       ),
