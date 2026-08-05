@@ -80,21 +80,28 @@ class _LinkedInBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: _linkedInBg,
-        shape: BoxShape.circle,
+    return InkWell(
+      customBorder: const CircleBorder(),
+      onTap: () => launchUrl(
+        Uri.parse('https://www.linkedin.com/company/looking-forward-consulting'),
+        mode: LaunchMode.externalApplication,
       ),
-      child: Text(
-        'in',
-        style: GoogleFonts.inter(
-          color: _footerText,
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          height: 1,
+      child: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: _linkedInBg,
+          shape: BoxShape.circle,
+        ),
+        child: Text(
+          'in',
+          style: GoogleFonts.inter(
+            color: _footerText,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            height: 1,
+          ),
         ),
       ),
     );
