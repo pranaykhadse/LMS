@@ -11,6 +11,7 @@ import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
+import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/repository/redirect_login_repository.dart';
@@ -22,6 +23,7 @@ import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -800,6 +802,21 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     );
   }
 
+  /// Marks this Virtual Class as completed (POST
+  /// learning-event/learning-event-completion) as soon as the learner
+  /// watches or downloads its recording - matching the website, which
+  /// doesn't require a separate "mark complete" action for recordings.
+  void _markRecordingWatched() {
+    final classId = widget.item.classId;
+    if (classId == null) return;
+    ref
+        .read(RoasterViewModel.provider(widget.courseId.toString()).notifier)
+        .markAsRead(CourseClass(
+          courseId: widget.courseId.toString(),
+          classId: classId.toString(),
+        ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
@@ -937,12 +954,17 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 ),
                 const SizedBox(height: 10),
               ],
-              // Recordings — Watch (browser) + Download (offline)
+              // Recordings — Watch (browser) + Download (offline). Either
+              // action means the learner has watched the recording, so both
+              // mark the class completed (see _markRecordingWatched).
               for (final recordingUrl in item.recordingUrls) ...[
                 _OnlineActionButton(
                   icon: Icons.play_circle_outline_rounded,
                   label: 'Watch Recording',
-                  onPressed: () => _openUrl(recordingUrl),
+                  onPressed: () {
+                    _openUrl(recordingUrl);
+                    _markRecordingWatched();
+                  },
                 ),
                 const SizedBox(height: 8),
                 DownloadButton(
@@ -951,6 +973,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   icon: Icons.videocam_rounded,
                   courseClass: null,
                   fullWidth: true,
+                  onDownloadStart: _markRecordingWatched,
                   builder: (ctx, file) => VideoContentViewer(file: file),
                 ),
                 const SizedBox(height: 10),
