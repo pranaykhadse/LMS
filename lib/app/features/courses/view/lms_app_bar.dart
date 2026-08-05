@@ -176,7 +176,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             clipBehavior: Clip.none,
             children: [
               LmsAppBarButton(
-                icon: Icons.notifications_rounded,
+                icon: Icons.notifications_none_rounded,
                 iconSize: 18,
                 onTap: () => showLmsNotifications(context),
               ),
@@ -204,10 +204,12 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           onSelected: (value) => _onProfileMenuSelected(context, ref, value),
           itemBuilder: (context) => _profileMenuItems(profile),
-          // Exact Figma spec: pill container, #7D4AAB background, 4px
-          // radius, padding T2/R8/B2/L8, 6px gap between avatar/name/chevron.
+          // Pill container: #7D4AAB background, 4px radius, 6px gap
+          // between avatar/name/chevron - padding widened past the Figma
+          // spec's tight 8/2/8/2 so it actually reads as a chip against
+          // the TopBar's own close-in-tone purple.
           child: Container(
-            padding: const EdgeInsets.fromLTRB(8, 2, 8, 2),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xFF7D4AAB),
               borderRadius: BorderRadius.circular(4),
@@ -386,7 +388,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           clipBehavior: Clip.none,
           children: [
             LmsAppBarButton(
-              icon: Icons.notifications_rounded,
+              icon: Icons.notifications_none_rounded,
               onTap: () => showLmsNotifications(context),
             ),
             if (unreadCount > 0)
@@ -897,18 +899,18 @@ class LmsNotifBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+        constraints: const BoxConstraints(minWidth: 13, minHeight: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
         alignment: Alignment.center,
         decoration: const BoxDecoration(
           color: Colors.red,
-          borderRadius: BorderRadius.all(Radius.circular(8)),
+          borderRadius: BorderRadius.all(Radius.circular(5)),
         ),
         child: Text(
           count > 99 ? '99+' : '$count',
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 9,
+            fontSize: 7,
             fontWeight: FontWeight.w800,
             height: 1.0,
           ),
