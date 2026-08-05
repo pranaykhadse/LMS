@@ -906,12 +906,12 @@ class _NotificationsDialog extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
               child: Row(
                 children: [
-                  const Text(
+                  Text(
                     'Notifications',
-                    style: TextStyle(
-                      fontSize: 17,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: _appInk,
+                      color: const Color(0xFF111827),
                     ),
                   ),
                   const Spacer(),
@@ -921,13 +921,16 @@ class _NotificationsDialog extends ConsumerWidget {
                           .read(NotificationsViewModel.provider.notifier)
                           .markAllAsRead(),
                       style: TextButton.styleFrom(
-                        foregroundColor: _appPurple,
+                        foregroundColor: const Color(0xFF5457C1),
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: const Text(
+                      child: Text(
                         'Mark all as read',
-                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                 ],
@@ -1015,13 +1018,13 @@ class _NotificationsDialog extends ConsumerWidget {
                   borderRadius:
                       BorderRadius.vertical(bottom: Radius.circular(18)),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     'View All Notifications',
-                    style: TextStyle(
-                      color: _appPurple,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF5457C1),
                       fontWeight: FontWeight.w700,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                   ),
                 ),
@@ -1064,13 +1067,13 @@ class _NotifRow extends StatelessWidget {
             Container(
               width: 36,
               height: 36,
-              decoration: BoxDecoration(
-                color: _appPurple.withValues(alpha: 0.1),
+              decoration: const BoxDecoration(
+                color: Color(0x1A5C52D4),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.notifications_rounded,
-                color: _appPurple,
+                color: Color(0xFF5457C1),
                 size: 18,
               ),
             ),
@@ -1081,10 +1084,12 @@ class _NotifRow extends StatelessWidget {
                 children: [
                   Text(
                     item.title,
-                    style: TextStyle(
+                    style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
-                      color: item.isRead ? _appMuted : _appInk,
+                      color: item.isRead
+                          ? _appMuted
+                          : const Color(0xFF1E293B),
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -1092,9 +1097,9 @@ class _NotifRow extends StatelessWidget {
                     item.message,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: _appMuted,
+                      color: const Color(0xFF64748B),
                       height: 1.35,
                     ),
                   ),
@@ -1113,10 +1118,10 @@ class _NotifRow extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 8, top: 4),
                 child: Container(
-                  width: 8,
-                  height: 8,
+                  width: 7,
+                  height: 7,
                   decoration: const BoxDecoration(
-                    color: _appPurple,
+                    color: Color(0xFF5457C1),
                     shape: BoxShape.circle,
                   ),
                 ),
