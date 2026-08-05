@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 
-const _footerText = Color(0xFF667085);
+const _footerText = Color(0xFF6B7280);
 const _footerBorder = Color(0xFFE4E7EC);
+const _linkedInBg = Color(0xFFE2E8F0);
 
 /// Matches the website's global footer (Terms of Use / Your Profile /
 /// Support + LinkedIn) — shown at the bottom of every main screen.
@@ -54,7 +56,7 @@ class _FooterLink extends StatelessWidget {
       onTap: onTap,
       child: Text(
         label,
-        style: const TextStyle(color: _footerText, fontSize: 13, fontWeight: FontWeight.w500),
+        style: GoogleFonts.inter(color: _footerText, fontSize: 14),
       ),
     );
   }
@@ -66,16 +68,16 @@ class _LinkedInBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 32,
-      height: 32,
+      width: 36,
+      height: 36,
       alignment: Alignment.center,
       decoration: const BoxDecoration(
-        color: Color(0xFFF2F4F7),
+        color: _linkedInBg,
         shape: BoxShape.circle,
       ),
-      child: const Text(
+      child: Text(
         'in',
-        style: TextStyle(
+        style: GoogleFonts.inter(
           color: _footerText,
           fontSize: 13,
           fontWeight: FontWeight.w700,
