@@ -52,10 +52,11 @@ String _lastFirst(dynamic profile) {
   return '$last, $first';
 }
 
-// Figma spec is Height Hug 44px, but that clipped the logo mark once it
-// was swapped in - taller than spec so the logo has room to breathe.
+// TopBar's Figma spec is Height Hug 44px, but that clipped the logo mark
+// once it was swapped in - taller than spec so the logo has room to
+// breathe. NavBar matches its own Figma spec exactly (Height Hug 44px).
 const double _desktopTopBarHeight = 64;
-const double _desktopHeaderHeight = 48;
+const double _desktopHeaderHeight = 44;
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
@@ -124,9 +125,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   // ── Desktop/tablet ───────────────────────────────────────────────────────
   //
-  // Two stacked white rows, matching the Figma spec exactly: a 44px "TopBar"
-  // (logo left, date/time + utilities + profile right, space-between) over
-  // a "NavBar" row with the nav destinations. Built as plain Rows with an
+  // Two stacked white rows, matching the Figma spec: a "TopBar" (logo left,
+  // date/time + utilities + profile right, space-between) over a "NavBar"
+  // row with the nav destinations. Built as plain Rows with an
   // explicit `crossAxisAlignment: CrossAxisAlignment.center` rather than
   // through AppBar's leading/title/actions, since AppBar's NavigationToolbar
   // centers those *slots* as blocks, and mixed-height children within one
@@ -507,7 +508,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFEDEFF3))),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: EdgeInsets.zero,
       child: Row(
         children: [
           Expanded(
@@ -524,7 +525,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.dashboard),
             ),
           ),
-          const SizedBox(width: 40),
+          const SizedBox(width: 48),
           _NavItem(
             icon: Icons.menu_book_outlined,
             label: 'Course Catalog',
@@ -534,7 +535,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.root),
             ),
           ),
-          const SizedBox(width: 40),
+          const SizedBox(width: 48),
           _NavDropdown(
             icon: Icons.library_books_outlined,
             label: 'My Courses',
@@ -574,7 +575,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          const SizedBox(width: 40),
+          const SizedBox(width: 48),
           _NavItem(
             icon: Icons.account_tree_outlined,
             label: 'Learning Paths',
@@ -584,7 +585,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.learningPaths),
             ),
           ),
-          const SizedBox(width: 40),
+          const SizedBox(width: 48),
           _NavDropdown(
             icon: Icons.workspace_premium_outlined,
             label: 'Points & Badges',
@@ -608,7 +609,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          const SizedBox(width: 40),
+          const SizedBox(width: 48),
           _NavDropdown(
             icon: Icons.support_agent_outlined,
             label: 'Contact a Coach',
@@ -650,22 +651,22 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF4A4A4A);
+    final color = selected ? _appPurple : const Color(0xFF6A7282);
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 8),
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
             Text(
               label,
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 16,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
@@ -702,7 +703,7 @@ class _NavDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF4A4A4A);
+    final color = selected ? _appPurple : const Color(0xFF6A7282);
     return PopupMenuButton<int>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -729,22 +730,22 @@ class _NavDropdown extends StatelessWidget {
           ),
       ],
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 8),
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 6),
             Text(
               label,
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 16,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
               ),
             ),
             const SizedBox(width: 2),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: color),
+            Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: color),
           ],
         ),
       ),
