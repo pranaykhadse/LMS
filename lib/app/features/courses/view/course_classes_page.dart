@@ -747,7 +747,9 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
   /// flow), then registers just this one class/session via
   /// POST lms-screen/register-course in its single-class mode
   /// (class_id + learning_event_class_id) - not the whole-course enroll.
-  Future<void> _registerForVirtualClass() async {
+  /// Used by both Virtual Class (typeCode '3') and In Person (typeCode '2')
+  /// items - both carry the same learningEvents/session structure.
+  Future<void> _registerForSession() async {
     final classId = widget.item.classId;
     if (classId == null) return;
     final event = _earliestUpcomingEvent(widget.item.learningEvents);
@@ -922,8 +924,10 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   ),
                 ),
               ),
-            // Registered Virtual Class: Attend Class + optional recordings + Cancel
-            if (item.typeCode == '3' && item.isEnrolledInClass) ...[
+            // Registered Virtual Class or In Person class: Attend Class
+            // (Virtual only, via contentUrl) + optional recordings + Cancel
+            if ((item.typeCode == '3' || item.typeCode == '2') &&
+                item.isEnrolledInClass) ...[
               const SizedBox(height: 15),
               if (item.contentUrl != null) ...[
                 _OnlineActionButton(
@@ -969,15 +973,18 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 ),
             ] else ...[
               if (item.showDetails && item.showAction) const SizedBox(height: 15),
-              // A Virtual Class with no live open session left has nothing
-              // to register for anymore - hide Register instead of leaving
-              // a dead button (see hasRegisterableSession above).
-              if (item.showAction && (item.typeCode != '3' || hasRegisterableSession))
-                item.typeCode == '3' && isEnrolled
+              // A Virtual Class or In Person class with no live open session
+              // left has nothing to register for anymore - hide Register
+              // instead of leaving a dead button (see hasRegisterableSession
+              // above).
+              if (item.showAction &&
+                  ((item.typeCode != '3' && item.typeCode != '2') ||
+                      hasRegisterableSession))
+                (item.typeCode == '3' || item.typeCode == '2') && isEnrolled
                     ? _OnlineActionButton(
                         icon: _actionIcon(item.icon),
                         label: item.actionLabel,
-                        onPressed: _registerForVirtualClass,
+                        onPressed: _registerForSession,
                       )
                     : _EnrollActionButton(
                         isEnrolled: isEnrolled,
