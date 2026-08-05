@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
@@ -171,11 +172,14 @@ class _DashboardBody extends ConsumerWidget {
                 padding: EdgeInsets.zero,
                 children: [
                   _BannerSection(auth: auth),
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(20, 20, 20, 4),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
                     child: Text(
                       "Welcome back! Here's what's happening with your courses.",
-                      style: TextStyle(color: _muted, fontSize: 14),
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF4A5565),
+                        fontSize: 15.2,
+                      ),
                     ),
                   ),
                   Padding(
@@ -353,7 +357,7 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             icon: Icons.error_outline_rounded,
-            iconColor: const Color(0xFFF59E0B),
+            iconColor: const Color(0xFFD97706),
             label: 'REQUIRED',
             value: required,
           ),
@@ -404,9 +408,9 @@ class _StatCard extends StatelessWidget {
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _muted,
-                    fontSize: 11,
+                  style: GoogleFonts.inter(
+                    color: iconColor,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: .3,
                   ),
@@ -414,12 +418,12 @@ class _StatCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             '$value',
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: _ink,
-              fontSize: 28,
+              fontSize: 35.2,
               fontWeight: FontWeight.w800,
             ),
           ),
