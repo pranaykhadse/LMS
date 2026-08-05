@@ -1067,9 +1067,9 @@ class _NotifRow extends StatelessWidget {
             Container(
               width: 36,
               height: 36,
-              decoration: const BoxDecoration(
-                color: Color(0x1A5C52D4),
-                shape: BoxShape.circle,
+              decoration: BoxDecoration(
+                color: const Color(0x1A5C52D4),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
                 Icons.notifications_rounded,
