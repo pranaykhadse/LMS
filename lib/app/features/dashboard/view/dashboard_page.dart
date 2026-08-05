@@ -577,6 +577,8 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                       CoursesModule.construct(CoursesModule.myCourses),
                     ),
           ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
           const SizedBox(height: 14),
           if (widget.courses.isEmpty)
             const Padding(
@@ -954,6 +956,8 @@ class _CourseProgressCard extends StatelessWidget {
                       CoursesModule.construct(CoursesModule.enrolledCourses),
                     ),
           ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
           const SizedBox(height: 14),
           if (enrolled.providerState == DataProviderState.loading)
             const Padding(
