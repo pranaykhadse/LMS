@@ -946,6 +946,7 @@ class _CourseProgressCard extends StatelessWidget {
         children: [
           _CardHeader(
             title: 'Course Progress',
+            large: true,
             actionLabel: shown.isEmpty ? null : 'View All',
             onAction: shown.isEmpty
                 ? null
@@ -994,12 +995,20 @@ class _CourseProgressRow extends StatelessWidget {
                 course.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w600),
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF1E2939),
+                  fontSize: 14.4,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Text(
               '${course.progress}%',
-              style: const TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w700),
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6A7282),
+                fontSize: 14.4,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
