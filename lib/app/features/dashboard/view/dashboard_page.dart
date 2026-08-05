@@ -755,34 +755,16 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
         .where((e) => e.startDateTime.isAfter(now))
         .toList()
       ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
-    final shown = upcoming.take(4).toList();
-    final visible = _expanded ? shown : shown.take(1).toList();
+    final shown = upcoming.take(8).toList();
+    const collapsedCount = 3;
+    final visible = _expanded ? shown : shown.take(collapsedCount).toList();
+    final hasMore = shown.length > collapsedCount;
 
     return _DashCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CardHeader(
-            title: 'Upcoming Sessions',
-            large: true,
-            trailing: shown.length > 1
-                ? GestureDetector(
-                    onTap: () => setState(() => _expanded = !_expanded),
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: AnimatedRotation(
-                        turns: _expanded ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 200),
-                        child: const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: Color(0xFF6A7282),
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                  )
-                : null,
-          ),
+          const _CardHeader(title: 'Upcoming Sessions', large: true),
           const SizedBox(height: 12),
           const Divider(height: 1, color: _border),
           const SizedBox(height: 14),
@@ -796,11 +778,30 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Text('No upcoming sessions.', style: TextStyle(color: _muted)),
             )
-          else
+          else ...[
             for (var i = 0; i < visible.length; i++) ...[
               if (i > 0) const SizedBox(height: 10),
               _SessionRow(event: visible[i]),
             ],
+            if (hasMore)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _expanded = !_expanded),
+                    child: AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF6A7282),
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ],
       ),
     );
