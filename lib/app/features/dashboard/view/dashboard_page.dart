@@ -246,6 +246,27 @@ class _DashboardBody extends ConsumerWidget {
                           ),
                   ),
                   Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    child: isWide
+                        ? IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: const [
+                                Expanded(child: _DiscussionBoardsCard()),
+                                SizedBox(width: 16),
+                                Expanded(child: _RewardsPointsCard()),
+                              ],
+                            ),
+                          )
+                        : const Column(
+                            children: [
+                              _DiscussionBoardsCard(),
+                              SizedBox(height: 16),
+                              _RewardsPointsCard(),
+                            ],
+                          ),
+                  ),
+                  Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                     child: _RequiredForYouCard(required: required),
                   ),
@@ -1087,6 +1108,133 @@ class _OverallProgressCard extends StatelessWidget {
               minHeight: 8,
               backgroundColor: Colors.white24,
               valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Discussion Boards ──────────────────────────────────────────────────────
+
+// No discussion-thread API/model exists in the app yet (see class_info.dart's
+// discussionForumLink/discussionGuruLink - those are just external webview
+// links on a course lesson, not a threads-with-replies feature), so this
+// always renders the empty state per the reference's p.empty-state styling.
+class _DiscussionBoardsCard extends StatelessWidget {
+  const _DiscussionBoardsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _DashCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _CardHeader(title: 'Discussion Boards', large: true),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'No discussion threads yet.',
+              style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Rewards & Points ───────────────────────────────────────────────────────
+
+class _RewardsPointsCard extends ConsumerWidget {
+  const _RewardsPointsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final points = profile?.points ?? 0;
+    final firstName = profile?.firstname?.trim();
+
+    return _DashCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            title: 'Rewards & Points',
+            large: true,
+            actionLabel: 'This Month',
+            onAction: () => Modular.to.pushNamed(
+              CoursesModule.construct(CoursesModule.redeemPoints),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: const BoxDecoration(
+                  color: _purple,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '$points',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                    Text(
+                      'pts',
+                      style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Great progress${firstName != null && firstName.isNotEmpty ? ', $firstName' : ''}!',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF1E2939),
+                        fontSize: 15.2,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "You've earned points by completing courses and attending virtual classes.",
+                      style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'No reward points earned this month yet.',
+              style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
             ),
           ),
         ],
