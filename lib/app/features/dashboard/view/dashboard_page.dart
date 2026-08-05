@@ -1042,14 +1042,14 @@ class _OverallProgressCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
-            children: const [
-              Icon(Icons.star_border_rounded, color: Colors.white, size: 16),
-              SizedBox(width: 6),
+            children: [
+              const Icon(Icons.star_border_rounded, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
               Text(
                 'OVERALL LEARNING PROGRESS',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
+                style: GoogleFonts.inter(
+                  color: const Color(0xE6FFFFFF),
+                  fontSize: 12.8,
                   fontWeight: FontWeight.w800,
                   letterSpacing: .4,
                 ),
@@ -1059,13 +1059,14 @@ class _OverallProgressCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             '$overall%',
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
+              fontSize: 51.2,
+              fontWeight: FontWeight.w800,
+              height: 1,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
