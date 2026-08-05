@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
+
 class CalendarViewResult {
   const CalendarViewResult({required this.totalEvents, required this.events});
 
@@ -6,6 +8,13 @@ class CalendarViewResult {
 
   factory CalendarViewResult.fromJson(Map<String, dynamic> json) {
     final rawEvents = json['payload'] is List ? json['payload'] as List : const [];
+    // TEMP: confirms whether "instructor" is really the right raw key for
+    // this endpoint (it's the key LearningEvent already uses for the
+    // course-detail page's own host display) — remove once verified.
+    if (kDebugMode && rawEvents.isNotEmpty) {
+      debugPrint('[CalendarViewResult] first event raw keys: '
+          '${(rawEvents.first as Map).keys.toList()}');
+    }
     return CalendarViewResult(
       totalEvents: _asInt(json['total_events']),
       events: rawEvents
@@ -31,6 +40,7 @@ class CalendarEvent {
     required this.registrationStatus,
     required this.description,
     this.calendarDetailApi,
+    this.instructor,
   });
 
   final int courseId;
@@ -46,6 +56,11 @@ class CalendarEvent {
   final String registrationStatus;
   final String description;
   final String? calendarDetailApi;
+
+  // Same raw key ("instructor") the course-detail page's LearningEvent
+  // model already parses for its own "Hosted by"/INSTRUCTOR display - see
+  // course_join_detail.dart.
+  final String? instructor;
 
   DateTime get startDateTime => _combine(startDate, startTime);
   DateTime? get endDateTime =>
@@ -70,6 +85,7 @@ class CalendarEvent {
       registrationStatus: json['registration_status']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       calendarDetailApi: _nullableString(json['calendar_detail_api']),
+      instructor: _nullableString(json['instructor']),
     );
   }
 }

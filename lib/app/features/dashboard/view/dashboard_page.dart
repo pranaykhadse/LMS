@@ -458,10 +458,20 @@ class _DashCard extends StatelessWidget {
 }
 
 class _CardHeader extends StatelessWidget {
-  const _CardHeader({required this.title, this.actionLabel, this.onAction});
+  const _CardHeader({
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+    this.large = false,
+  });
   final String title;
   final String? actionLabel;
   final VoidCallback? onAction;
+
+  /// h4.section-title-main (16.8px, #1E2939, title case) instead of the
+  /// default h4.section-title-sm (12px, #6A7282, uppercase) - the
+  /// reference site uses the larger style for Upcoming Virtual Classes.
+  final bool large;
 
   @override
   Widget build(BuildContext context) {
@@ -469,12 +479,12 @@ class _CardHeader extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            title.toUpperCase(),
+            large ? title : title.toUpperCase(),
             style: GoogleFonts.inter(
-              color: const Color(0xFF6A7282),
-              fontSize: 12,
+              color: large ? const Color(0xFF1E2939) : const Color(0xFF6A7282),
+              fontSize: large ? 16.8 : 12,
               fontWeight: FontWeight.w700,
-              letterSpacing: .3,
+              letterSpacing: large ? 0 : .3,
             ),
           ),
         ),
@@ -738,7 +748,7 @@ class _UpcomingSessionsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardHeader(title: 'Upcoming Sessions'),
+          const _CardHeader(title: 'Upcoming Sessions', large: true),
           const SizedBox(height: 14),
           if (calendar.state == DataProviderState.loading)
             const Padding(
@@ -795,10 +805,10 @@ class _SessionRow extends StatelessWidget {
                 children: [
                   Text(
                     event.courseName.isNotEmpty ? event.courseName : event.title,
-                    style: const TextStyle(
-                      color: _ink,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF1E293B),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15.2,
                     ),
                   ),
                   if (event.className.isNotEmpty)
@@ -810,8 +820,8 @@ class _SessionRow extends StatelessWidget {
                       ),
                       child: Text(
                         event.className,
-                        style: const TextStyle(
-                          color: _purple,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF64748B),
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
@@ -819,11 +829,32 @@ class _SessionRow extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 2),
               Text(
                 _formatDate(event.startDateTime),
-                style: const TextStyle(color: _muted, fontSize: 12),
+                style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
               ),
+              if (event.instructor != null && event.instructor!.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Hosted by ',
+                        style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
+                      ),
+                      TextSpan(
+                        text: event.instructor,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF1E293B),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12.48,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -836,12 +867,11 @@ class _SessionRow extends StatelessWidget {
             backgroundColor: _purple,
             foregroundColor: Colors.white,
             elevation: 0,
-            minimumSize: const Size(64, 34),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12.8),
           ),
           child: const Text('Join'),
         ),
