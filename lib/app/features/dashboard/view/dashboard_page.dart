@@ -685,7 +685,7 @@ class _UpcomingSessionsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardHeader(title: 'Upcoming Virtual Classes'),
+          const _CardHeader(title: 'Upcoming Sessions'),
           const SizedBox(height: 14),
           if (calendar.state == DataProviderState.loading)
             const Padding(
