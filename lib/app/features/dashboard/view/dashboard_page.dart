@@ -1256,10 +1256,9 @@ class _RequiredForYouCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Required For You',
-            style: TextStyle(color: _ink, fontSize: 15, fontWeight: FontWeight.w800),
-          ),
+          const _CardHeader(title: 'Required For You', large: true),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
           const SizedBox(height: 14),
           if (required.providerState == DataProviderState.loading)
             const Padding(
@@ -1283,14 +1282,14 @@ class _RequiredForYouCard extends StatelessWidget {
                   CoursesModule.construct(CoursesModule.requiredCourses),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _purple,
+                  backgroundColor: const Color(0xFF693D94),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                  textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14.4),
                 ),
                 child: const Text('View All Required Courses'),
               ),
@@ -1316,7 +1315,11 @@ class _RequiredRow extends ConsumerWidget {
           width: 22,
           child: Text(
             '$index',
-            style: const TextStyle(color: _muted, fontSize: 13, fontWeight: FontWeight.w600),
+            style: GoogleFonts.inter(
+              color: const Color(0xFF9CA3AF),
+              fontSize: 14.4,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         Expanded(
@@ -1324,7 +1327,11 @@ class _RequiredRow extends ConsumerWidget {
             course.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: _ink, fontSize: 14, fontWeight: FontWeight.w600),
+            style: GoogleFonts.inter(
+              color: const Color(0xFF1E2939),
+              fontSize: 14.72,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         OutlinedButton(
@@ -1334,12 +1341,11 @@ class _RequiredRow extends ConsumerWidget {
                     CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
                   ),
           style: OutlinedButton.styleFrom(
-            foregroundColor: _purple,
-            side: const BorderSide(color: _purple),
-            minimumSize: const Size(64, 32),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            foregroundColor: const Color(0xFF693D94),
+            side: const BorderSide(color: Color(0xFF693D94)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12),
           ),
           child: const Text('View'),
         ),
