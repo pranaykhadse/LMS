@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const _footerText = Color(0xFF6B7280);
 const _footerBorder = Color(0xFFE4E7EC);
@@ -26,14 +27,26 @@ class AppFooter extends StatelessWidget {
                 spacing: 24,
                 runSpacing: 8,
                 children: [
-                  const _FooterLink(label: 'Terms of Use'),
+                  _FooterLink(
+                    label: 'Terms of Use',
+                    onTap: () => launchUrl(
+                      Uri.parse('https://www.iubenda.com/terms-and-conditions/26898975'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
                   _FooterLink(
                     label: 'Your Profile',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
                     ),
                   ),
-                  const _FooterLink(label: 'Support'),
+                  _FooterLink(
+                    label: 'Support',
+                    // Bare mailto: opens a blank compose window in whichever
+                    // mail app/account the user already has signed in as
+                    // the OS default - not something we can address further.
+                    onTap: () => launchUrl(Uri.parse('mailto:')),
+                  ),
                 ],
               ),
               const _LinkedInBadge(),
