@@ -52,8 +52,9 @@ String _lastFirst(dynamic profile) {
   return '$last, $first';
 }
 
-// Exact Figma spec: TopBar is Height Hug 44px, Padding L16/R16/T10/B10.
-const double _desktopTopBarHeight = 44;
+// Figma spec is Height Hug 44px, but that clipped the logo mark once it
+// was swapped in - taller than spec so the logo has room to breathe.
+const double _desktopTopBarHeight = 64;
 const double _desktopHeaderHeight = 48;
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
@@ -243,8 +244,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     );
 
     // "TopBar": logo left, back button (detail pages only) + utilities
-    // right - exact spec: purple (#693D94) background, 44px height, 16px
-    // left/right padding, 10px top/bottom padding, space-between.
+    // right - purple (#693D94) background, 16px left/right padding, 10px
+    // top/bottom padding, space-between (taller than the Figma spec's
+    // 44px so the logo mark isn't clipped - see _desktopTopBarHeight).
     final topBar = Container(
       width: double.infinity,
       height: _desktopTopBarHeight,
@@ -266,7 +268,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              const _AppWordmark(),
+              const Logo(size: 40),
             ],
           ),
           utilities,
@@ -461,48 +463,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
         ),
       ];
-}
-
-/// The logo mark + "LEADERSHIP EDGE" wordmark shown at the left of the
-/// desktop TopBar row, per the Figma spec.
-class _AppWordmark extends StatelessWidget {
-  const _AppWordmark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Logo(size: 24),
-        const SizedBox(width: 8),
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: 'LEADERSHIP',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: .3,
-                ),
-              ),
-              TextSpan(
-                text: '\nEDGE',
-                style: GoogleFonts.inter(
-                  color: Colors.white70,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: .3,
-                ),
-              ),
-            ],
-          ),
-          textAlign: TextAlign.left,
-        ),
-      ],
-    );
-  }
 }
 
 // ── Desktop nav bar ──────────────────────────────────────────────────────────
