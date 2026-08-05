@@ -463,6 +463,7 @@ class _CardHeader extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.large = false,
+    this.trailing,
   });
   final String title;
   final String? actionLabel;
@@ -472,6 +473,10 @@ class _CardHeader extends StatelessWidget {
   /// default h4.section-title-sm (12px, #6A7282, uppercase) - the
   /// reference site uses the larger style for Upcoming Virtual Classes.
   final bool large;
+
+  /// Optional trailing control (e.g. the Upcoming Sessions expand/collapse
+  /// chevron) shown after the actionLabel, if any.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -500,6 +505,7 @@ class _CardHeader extends StatelessWidget {
               ),
             ),
           ),
+        if (trailing != null) trailing!,
       ],
     );
   }
@@ -731,26 +737,56 @@ class _ContinueLearningItem extends ConsumerWidget {
 
 // ─── Upcoming Sessions ────────────────────────────────────────────────────────
 
-class _UpcomingSessionsCard extends StatelessWidget {
+class _UpcomingSessionsCard extends StatefulWidget {
   const _UpcomingSessionsCard({required this.calendar});
   final DataState<CalendarViewResult> calendar;
 
   @override
+  State<_UpcomingSessionsCard> createState() => _UpcomingSessionsCardState();
+}
+
+class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final upcoming = (calendar.data?.events ?? const <CalendarEvent>[])
+    final upcoming = (widget.calendar.data?.events ?? const <CalendarEvent>[])
         .where((e) => e.startDateTime.isAfter(now))
         .toList()
       ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
     final shown = upcoming.take(4).toList();
+    final visible = _expanded ? shown : shown.take(1).toList();
 
     return _DashCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardHeader(title: 'Upcoming Sessions', large: true),
+          _CardHeader(
+            title: 'Upcoming Sessions',
+            large: true,
+            trailing: shown.length > 1
+                ? GestureDetector(
+                    onTap: () => setState(() => _expanded = !_expanded),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: AnimatedRotation(
+                        turns: _expanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 200),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Color(0xFF6A7282),
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
           const SizedBox(height: 14),
-          if (calendar.state == DataProviderState.loading)
+          if (widget.calendar.state == DataProviderState.loading)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(child: CircularProgressIndicator(color: _purple)),
@@ -761,9 +797,9 @@ class _UpcomingSessionsCard extends StatelessWidget {
               child: Text('No upcoming sessions.', style: TextStyle(color: _muted)),
             )
           else
-            for (var i = 0; i < shown.length; i++) ...[
-              if (i > 0) const Divider(height: 24, color: _border),
-              _SessionRow(event: shown[i]),
+            for (var i = 0; i < visible.length; i++) ...[
+              if (i > 0) const SizedBox(height: 10),
+              _SessionRow(event: visible[i]),
             ],
         ],
       ),
@@ -791,91 +827,105 @@ class _SessionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8,
-                runSpacing: 4,
-                children: [
-                  Text(
-                    event.courseName.isNotEmpty ? event.courseName : event.title,
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF1E293B),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15.2,
-                    ),
-                  ),
-                  if (event.className.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: FigmaTokens.badgeBackground,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        event.className,
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF64748B),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F7FC),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      event.courseName.isNotEmpty ? event.courseName : event.title,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF1E293B),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15.2,
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 2),
-              Text(
-                _formatDate(event.startDateTime),
-                style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
-              ),
-              if (event.instructor != null && event.instructor!.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Hosted by ',
-                        style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
-                      ),
-                      TextSpan(
-                        text: event.instructor,
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF1E293B),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12.48,
+                    if (event.className.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: FigmaTokens.badgeBackground,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          event.className,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF64748B),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xFF6A7282)),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatDate(event.startDateTime),
+                      style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
+                    ),
+                  ],
+                ),
+                if (event.instructor != null && event.instructor!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Hosted by ',
+                          style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
+                        ),
+                        TextSpan(
+                          text: event.instructor,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF1E293B),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.48,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton(
-          onPressed: () => Modular.to.pushNamed(
-            CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _purple,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
             ),
-            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12.8),
           ),
-          child: const Text('Join'),
-        ),
-      ],
+          const SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: () => Modular.to.pushNamed(
+              CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _purple,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12.8),
+            ),
+            child: const Text('Join'),
+          ),
+        ],
+      ),
     );
   }
 }
