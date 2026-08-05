@@ -569,7 +569,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
             )
           else ...[
             SizedBox(
-              height: 300,
+              height: 190,
               child: PageView.builder(
                 controller: _controller,
                 onPageChanged: (i) => setState(() => _index = i),
@@ -583,13 +583,29 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(widget.courses.length, (i) {
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: i == _index ? 16 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: i == _index ? _purple : _border,
-                      borderRadius: BorderRadius.circular(3),
+                  return GestureDetector(
+                    onTap: () {
+                      // A manual jump counts as user intent - restart the
+                      // auto-advance clock from here instead of firing
+                      // mid-interaction.
+                      _startAutoAdvance();
+                      _controller.animateToPage(
+                        i,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: i == _index ? 16 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: i == _index ? _purple : _border,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
                     ),
                   );
                 }),
@@ -617,7 +633,7 @@ class _ContinueLearningItem extends ConsumerWidget {
           borderRadius: BorderRadius.circular(10),
           child: SizedBox(
             width: 130,
-            height: 260,
+            height: 150,
             child: Stack(
               fit: StackFit.expand,
               children: [
