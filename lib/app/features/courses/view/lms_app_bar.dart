@@ -174,21 +174,23 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         SizedBox(
           width: 34,
           height: 34,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              LmsAppBarButton(
-                icon: Icons.notifications_none_rounded,
-                iconSize: 18,
-                onTap: () => showLmsNotifications(context),
-              ),
-              if (unreadCount > 0)
-                Positioned(
-                  top: 2,
-                  right: 2,
-                  child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
+          child: Builder(
+            builder: (bellContext) => Stack(
+              clipBehavior: Clip.none,
+              children: [
+                LmsAppBarButton(
+                  icon: Icons.notifications_none_rounded,
+                  iconSize: 18,
+                  onTap: () => showLmsNotifications(bellContext),
                 ),
-            ],
+                if (unreadCount > 0)
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
+                  ),
+              ],
+            ),
           ),
         ),
         const SizedBox(width: 4),
@@ -387,12 +389,13 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 context, val ? 'Offline mode enabled' : 'Back to online mode');
           },
         ),
-        Stack(
+        Builder(
+          builder: (bellContext) => Stack(
           clipBehavior: Clip.none,
           children: [
             LmsAppBarButton(
               icon: Icons.notifications_none_rounded,
-              onTap: () => showLmsNotifications(context),
+              onTap: () => showLmsNotifications(bellContext),
             ),
             if (unreadCount > 0)
               Positioned(
@@ -401,6 +404,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
               ),
           ],
+          ),
         ),
         const SizedBox(width: 2),
         PopupMenuButton<String>(
@@ -446,6 +450,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         const PopupMenuItem<String>(
           value: 'settings',
+          padding: EdgeInsets.zero,
           child: _ProfileMenuRow(
             icon: Icons.settings,
             label: 'Account Settings',
@@ -453,6 +458,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ),
         PopupMenuItem<String>(
           value: 'points',
+          padding: EdgeInsets.zero,
           child: _ProfileMenuRow(
             icon: Icons.workspace_premium_outlined,
             label: 'My Points: ${profile?.points ?? 0}',
@@ -461,6 +467,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         const PopupMenuDivider(),
         const PopupMenuItem<String>(
           value: 'logout',
+          padding: EdgeInsets.zero,
           child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
         ),
       ];
@@ -878,24 +885,43 @@ class LmsNotifBadge extends StatelessWidget {
 
 // ── Shared notifications dialog ───────────────────────────────────────────────
 
+/// Opens the notifications dropdown anchored just under-and-right of
+/// whichever bell icon triggered it, rather than centered on the whole
+/// screen - [context] must belong to the bell itself (see the `Builder`
+/// wrapping each bell icon) so its on-screen position can be read.
 void showLmsNotifications(BuildContext context) {
+  final renderBox = context.findRenderObject() as RenderBox?;
+  final screenSize = MediaQuery.of(context).size;
+  double topInset = 76;
+  double rightInset = 16;
+  if (renderBox != null && renderBox.attached) {
+    final topLeft = renderBox.localToGlobal(Offset.zero);
+    topInset = topLeft.dy + renderBox.size.height + 8;
+    rightInset =
+        (screenSize.width - (topLeft.dx + renderBox.size.width) - 40)
+            .clamp(8.0, screenSize.width);
+  }
+
   showDialog<void>(
     context: context,
     barrierColor: Colors.black26,
-    builder: (ctx) => const _NotificationsDialog(),
+    builder: (ctx) =>
+        _NotificationsDialog(topInset: topInset, rightInset: rightInset),
   );
 }
 
 class _NotificationsDialog extends ConsumerWidget {
-  const _NotificationsDialog();
+  const _NotificationsDialog({required this.topInset, required this.rightInset});
+  final double topInset;
+  final double rightInset;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifState = ref.watch(NotificationsViewModel.provider);
 
     return Dialog(
-      alignment: Alignment.topCenter,
-      insetPadding: const EdgeInsets.fromLTRB(16, 76, 16, 20),
+      alignment: Alignment.topRight,
+      insetPadding: EdgeInsets.fromLTRB(16, topInset, rightInset, 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 430, maxHeight: 520),
@@ -1223,16 +1249,25 @@ class _ProfileMenuRow extends StatelessWidget {
   final IconData icon;
   final String label;
 
+  // Matches the reference site's a.dropdown-item exactly: #4A5568, Inter
+  // 14px, margin 2/10 + padding 10/15 (combined here into one inset,
+  // since PopupMenuItem has no separate margin concept).
   @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          Icon(icon, size: 21, color: const Color(0xFF9AA8C0)),
-          const SizedBox(width: 13),
-          Text(
-            label,
-            style: const TextStyle(color: Color(0xFF4C586C), fontSize: 15),
-          ),
-        ],
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: const Color(0xFF4A5568)),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF4A5568),
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
       );
 }
 
