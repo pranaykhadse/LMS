@@ -1285,11 +1285,11 @@ class _RequiredForYouCard extends StatelessWidget {
                   backgroundColor: const Color(0xFF693D94),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14.4),
+                  textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14.4),
                 ),
                 child: const Text('View All Required Courses'),
               ),
