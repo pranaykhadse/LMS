@@ -1066,7 +1066,7 @@ class _OverallProgressCard extends StatelessWidget {
         : (progresses.reduce((a, b) => a + b) / progresses.length).round();
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
         gradient: FigmaTokens.heroGradient,
         borderRadius: BorderRadius.circular(12),
@@ -1074,6 +1074,7 @@ class _OverallProgressCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -1090,7 +1091,7 @@ class _OverallProgressCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             '$overall%',
             style: GoogleFonts.inter(
@@ -1100,7 +1101,7 @@ class _OverallProgressCard extends StatelessWidget {
               height: 1,
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
