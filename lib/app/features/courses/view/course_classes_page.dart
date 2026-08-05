@@ -11,6 +11,7 @@ import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
+import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/repository/redirect_login_repository.dart';
@@ -22,6 +23,7 @@ import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -747,7 +749,9 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
   /// flow), then registers just this one class/session via
   /// POST lms-screen/register-course in its single-class mode
   /// (class_id + learning_event_class_id) - not the whole-course enroll.
-  Future<void> _registerForVirtualClass() async {
+  /// Used by both Virtual Class (typeCode '3') and In Person (typeCode '2')
+  /// items - both carry the same learningEvents/session structure.
+  Future<void> _registerForSession() async {
     final classId = widget.item.classId;
     if (classId == null) return;
     final event = _earliestUpcomingEvent(widget.item.learningEvents);
@@ -796,6 +800,21 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
       url: loginLink ?? contentUrl,
       title: title,
     );
+  }
+
+  /// Marks this Virtual Class as completed (POST
+  /// learning-event/learning-event-completion) as soon as the learner
+  /// watches or downloads its recording - matching the website, which
+  /// doesn't require a separate "mark complete" action for recordings.
+  void _markRecordingWatched() {
+    final classId = widget.item.classId;
+    if (classId == null) return;
+    ref
+        .read(RoasterViewModel.provider(widget.courseId.toString()).notifier)
+        .markAsRead(CourseClass(
+          courseId: widget.courseId.toString(),
+          classId: classId.toString(),
+        ));
   }
 
   @override
@@ -922,8 +941,10 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   ),
                 ),
               ),
-            // Registered Virtual Class: Attend Class + optional recordings + Cancel
-            if (item.typeCode == '3' && item.isEnrolledInClass) ...[
+            // Registered Virtual Class or In Person class: Attend Class
+            // (Virtual only, via contentUrl) + optional recordings + Cancel
+            if ((item.typeCode == '3' || item.typeCode == '2') &&
+                item.isEnrolledInClass) ...[
               const SizedBox(height: 15),
               if (item.contentUrl != null) ...[
                 _OnlineActionButton(
@@ -933,12 +954,17 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 ),
                 const SizedBox(height: 10),
               ],
-              // Recordings — Watch (browser) + Download (offline)
+              // Recordings — Watch (browser) + Download (offline). Either
+              // action means the learner has watched the recording, so both
+              // mark the class completed (see _markRecordingWatched).
               for (final recordingUrl in item.recordingUrls) ...[
                 _OnlineActionButton(
                   icon: Icons.play_circle_outline_rounded,
                   label: 'Watch Recording',
-                  onPressed: () => _openUrl(recordingUrl),
+                  onPressed: () {
+                    _openUrl(recordingUrl);
+                    _markRecordingWatched();
+                  },
                 ),
                 const SizedBox(height: 8),
                 DownloadButton(
@@ -947,6 +973,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   icon: Icons.videocam_rounded,
                   courseClass: null,
                   fullWidth: true,
+                  onDownloadStart: _markRecordingWatched,
                   builder: (ctx, file) => VideoContentViewer(file: file),
                 ),
                 const SizedBox(height: 10),
@@ -969,15 +996,18 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 ),
             ] else ...[
               if (item.showDetails && item.showAction) const SizedBox(height: 15),
-              // A Virtual Class with no live open session left has nothing
-              // to register for anymore - hide Register instead of leaving
-              // a dead button (see hasRegisterableSession above).
-              if (item.showAction && (item.typeCode != '3' || hasRegisterableSession))
-                item.typeCode == '3' && isEnrolled
+              // A Virtual Class or In Person class with no live open session
+              // left has nothing to register for anymore - hide Register
+              // instead of leaving a dead button (see hasRegisterableSession
+              // above).
+              if (item.showAction &&
+                  ((item.typeCode != '3' && item.typeCode != '2') ||
+                      hasRegisterableSession))
+                (item.typeCode == '3' || item.typeCode == '2') && isEnrolled
                     ? _OnlineActionButton(
                         icon: _actionIcon(item.icon),
                         label: item.actionLabel,
-                        onPressed: _registerForVirtualClass,
+                        onPressed: _registerForSession,
                       )
                     : _EnrollActionButton(
                         isEnrolled: isEnrolled,

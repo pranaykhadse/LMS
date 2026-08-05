@@ -65,13 +65,14 @@ class OfflineViewModel extends ChangeNotifier {
       final classes = await repository.download(course);
 
       // Then download every lesson's actual content (video/PDF/article/
-      // agreement/recording) too - a "saved offline" course must actually
-      // be usable offline, not just show up in the offline list with
-      // nothing playable inside it.
+      // agreement/peer-coaching/recording) too - a "saved offline" course
+      // must actually be usable offline, not just show up in the offline
+      // list with nothing playable inside it.
       final urls = <String>{};
       for (final c in classes) {
         if (_validUrl(c.classInfo?.videoUploadUrl)) urls.add(c.classInfo!.videoUploadUrl!);
         if (_validUrl(c.classInfo?.articleFile)) urls.add(c.classInfo!.articleFile!);
+        if (_validUrl(c.classInfo?.peerCoachingFile)) urls.add(c.classInfo!.peerCoachingFile!);
         if (_validUrl(c.scannedPdf)) urls.add(c.scannedPdf!);
         urls.addAll(c.recordingUrls.where(_validUrl));
       }
@@ -120,6 +121,9 @@ class OfflineViewModel extends ChangeNotifier {
       }
       if (_validUrl(c.classInfo?.articleFile)) {
         fileVM.delete(c.classInfo!.articleFile!);
+      }
+      if (_validUrl(c.classInfo?.peerCoachingFile)) {
+        fileVM.delete(c.classInfo!.peerCoachingFile!);
       }
       if (_validUrl(c.scannedPdf)) {
         fileVM.delete(c.scannedPdf!);
