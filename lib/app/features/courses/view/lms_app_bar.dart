@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/contact_links.dart';
+import 'package:lms/app/core/views/elements/logo.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -19,7 +20,10 @@ import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const _appPurple = Color(0xFF5756C9);
+// Matches the Figma design system's exact primary purple (#693D94), used
+// throughout the desktop header - see FigmaTokens.primaryPurple, the same
+// value the redesigned Dashboard body already uses.
+const _appPurple = Color(0xFF693D94);
 const _appInk = Color(0xFF172033);
 const _appMuted = Color(0xFF9AA8C0);
 
@@ -48,7 +52,9 @@ String _lastFirst(dynamic profile) {
   return '$last, $first';
 }
 
-const double _desktopHeaderHeight = 64;
+// Exact Figma spec: TopBar is Height Hug 44px, Padding L16/R16/T10/B10.
+const double _desktopTopBarHeight = 44;
+const double _desktopHeaderHeight = 48;
 const Color _navDark = Color(0xFF4A4A4A);
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
@@ -107,7 +113,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        (isWide ? _desktopHeaderHeight : 60.0) +
+        (isWide ? _desktopTopBarHeight + _desktopHeaderHeight : 60.0) +
             (bottom?.preferredSize.height ?? 0),
       );
 
@@ -118,13 +124,13 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   // ── Desktop/tablet ───────────────────────────────────────────────────────
   //
-  // A single white row: nav destinations on the left, utility icons +
-  // profile on the right - matching the reference design's one-row header
-  // (no separate purple utility bar). Built as a plain Row with an explicit
-  // `crossAxisAlignment: CrossAxisAlignment.center` rather than through
-  // AppBar's leading/title/actions, for the same reason as before: AppBar's
-  // NavigationToolbar centers those *slots* as blocks, and mixed-height
-  // children within one slot don't share a visual baseline.
+  // Two stacked white rows, matching the Figma spec exactly: a 44px "TopBar"
+  // (logo left, date/time + utilities + profile right, space-between) over
+  // a "NavBar" row with the nav destinations. Built as plain Rows with an
+  // explicit `crossAxisAlignment: CrossAxisAlignment.center` rather than
+  // through AppBar's leading/title/actions, since AppBar's NavigationToolbar
+  // centers those *slots* as blocks, and mixed-height children within one
+  // slot don't share a visual baseline.
   Widget _buildDesktop(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final canPop = Navigator.canPop(context);
@@ -136,15 +142,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final utilities = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (showBack) ...[
-          LmsAppBarButton(
-            icon: Icons.arrow_back_ios_new_rounded,
-            onTap: onBack ?? () => safePop(context),
-            iconSize: 18,
-            color: _navDark,
-          ),
-          const SizedBox(width: 8),
-        ],
         const _DatePill(),
         const SizedBox(width: 14),
         if (onRefresh != null) ...[
@@ -233,15 +230,58 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ],
     );
 
-    final header = _DesktopNavBar(
+    // "TopBar": logo left, back button (detail pages only) + utilities
+    // right - exact spec: 44px height, 16px left/right padding, 10px
+    // top/bottom padding, space-between.
+    final topBar = Container(
+      width: double.infinity,
+      height: _desktopTopBarHeight,
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (showBack) ...[
+                LmsAppBarButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  onTap: onBack ?? () => safePop(context),
+                  iconSize: 16,
+                  boxSize: 28,
+                  color: _navDark,
+                ),
+                const SizedBox(width: 8),
+              ],
+              const _AppWordmark(),
+            ],
+          ),
+          utilities,
+        ],
+      ),
+    );
+
+    final navBar = _DesktopNavBar(
       selectedLabel: selectedLabel,
       selectedSubLabel: selectedSubLabel,
-      trailing: utilities,
     );
-    if (bottom == null) return header;
+
+    final header = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [topBar, navBar],
+    );
+    final headerHeight = _desktopTopBarHeight + _desktopHeaderHeight;
+    if (bottom == null) {
+      return PreferredSize(
+        preferredSize: Size.fromHeight(headerHeight),
+        child: header,
+      );
+    }
     return PreferredSize(
       preferredSize: Size.fromHeight(
-        _desktopHeaderHeight + bottom!.preferredSize.height,
+        headerHeight + bottom!.preferredSize.height,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -412,21 +452,59 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       ];
 }
 
+/// The logo mark + "LEADERSHIP EDGE" wordmark shown at the left of the
+/// desktop TopBar row, per the Figma spec.
+class _AppWordmark extends StatelessWidget {
+  const _AppWordmark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Logo(size: 24),
+        const SizedBox(width: 8),
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: 'LEADERSHIP',
+                style: GoogleFonts.roboto(
+                  color: _appInk,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: .3,
+                ),
+              ),
+              TextSpan(
+                text: '\nEDGE',
+                style: GoogleFonts.roboto(
+                  color: _appMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: .3,
+                ),
+              ),
+            ],
+          ),
+          textAlign: TextAlign.left,
+        ),
+      ],
+    );
+  }
+}
+
 // ── Desktop nav bar ──────────────────────────────────────────────────────────
 
-/// The horizontal white nav bar under the purple utility row on desktop/
-/// tablet, replacing the persistent left sidebar. Same destinations as
-/// the mobile AppDrawer (kept in sync by hand — see that file for the
-/// mobile equivalent), styled to sit flush under [LmsAppBar].
+/// The horizontal white nav bar under the TopBar row on desktop/tablet,
+/// replacing the persistent left sidebar. Same destinations as the mobile
+/// AppDrawer (kept in sync by hand — see that file for the mobile
+/// equivalent), styled to sit flush under [LmsAppBar]'s TopBar.
 class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
-  const _DesktopNavBar({this.selectedLabel, this.selectedSubLabel, this.trailing});
+  const _DesktopNavBar({this.selectedLabel, this.selectedSubLabel});
 
   final String? selectedLabel;
   final String? selectedSubLabel;
-
-  /// The utility cluster (date/time, bell, avatar, etc.) rendered at the
-  /// right edge of this same row.
-  final Widget? trailing;
 
   @override
   Size get preferredSize => const Size.fromHeight(_desktopHeaderHeight);
@@ -581,7 +659,6 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ),
           ),
-          if (trailing != null) trailing!,
         ],
       ),
     );
