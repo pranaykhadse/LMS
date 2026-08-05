@@ -721,19 +721,27 @@ class _NavDropdown extends StatelessWidget {
         if (!item.disabled) item.onTap();
       },
       itemBuilder: (context) => [
+        // Matches the reference site's #navbarMenu .sub-nav-item a exactly:
+        // 14px, #64748b, 10px/15px padding, 8px radius.
         for (var i = 0; i < items.length; i++)
           PopupMenuItem<int>(
             value: i,
             enabled: !items[i].disabled,
-            child: Text(
-              items[i].label,
-              style: TextStyle(
-                color: items[i].disabled
-                    ? const Color(0xFF9AA8C0)
-                    : (items[i].selected ? _appPurple : const Color(0xFF23292F)),
-                fontWeight:
-                    items[i].selected ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 14,
+            padding: EdgeInsets.zero,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+              child: Text(
+                items[i].label,
+                style: GoogleFonts.inter(
+                  color: items[i].disabled
+                      ? const Color(0xFF9AA8C0)
+                      : (items[i].selected ? _appPurple : const Color(0xFF64748B)),
+                  fontWeight:
+                      items[i].selected ? FontWeight.w700 : FontWeight.w400,
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
