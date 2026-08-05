@@ -1084,7 +1084,7 @@ class _OverallProgressCard extends StatelessWidget {
                 'OVERALL LEARNING PROGRESS',
                 style: GoogleFonts.inter(
                   color: const Color(0xE6FFFFFF),
-                  fontSize: 12.8,
+                  fontSize: 15,
                   fontWeight: FontWeight.w800,
                   letterSpacing: .4,
                 ),
@@ -1096,7 +1096,7 @@ class _OverallProgressCard extends StatelessWidget {
             '$overall%',
             style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 51.2,
+              fontSize: 60,
               fontWeight: FontWeight.w800,
               height: 1,
             ),
