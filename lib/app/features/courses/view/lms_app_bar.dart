@@ -653,7 +653,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF9CA3AF);
+    final color = selected ? _appPurple : const Color(0xFF6A7282);
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -705,7 +705,7 @@ class _NavDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF9CA3AF);
+    final color = selected ? _appPurple : const Color(0xFF6A7282);
     return PopupMenuButton<int>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
