@@ -1287,7 +1287,7 @@ class _RequiredForYouCard extends StatelessWidget {
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(24),
                   ),
                   textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 14.4),
                 ),
