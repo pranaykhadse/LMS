@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 
-const _footerLink = Color(0xFF5756C9);
-const _footerMuted = Color(0xFF98A2B3);
+const _footerText = Color(0xFF667085);
+const _footerBorder = Color(0xFFE4E7EC);
 
 /// Matches the website's global footer (Terms of Use / Your Profile /
 /// Support + LinkedIn) — shown at the bottom of every main screen.
@@ -11,25 +11,34 @@ class AppFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 16,
-        runSpacing: 8,
-        children: [
-          const _FooterLink(label: 'Terms of Use'),
-          _FooterLink(
-            label: 'Your Profile',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
-            ),
+    return Column(
+      children: [
+        const Divider(height: 1, color: _footerBorder),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 24,
+                runSpacing: 8,
+                children: [
+                  const _FooterLink(label: 'Terms of Use'),
+                  _FooterLink(
+                    label: 'Your Profile',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
+                    ),
+                  ),
+                  const _FooterLink(label: 'Support'),
+                ],
+              ),
+              const _LinkedInBadge(),
+            ],
           ),
-          const _FooterLink(label: 'Support'),
-          const _LinkedInBadge(),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -45,13 +54,7 @@ class _FooterLink extends StatelessWidget {
       onTap: onTap,
       child: Text(
         label,
-        style: TextStyle(
-          color: onTap != null ? _footerLink : _footerMuted,
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
-          decoration: onTap != null ? TextDecoration.underline : null,
-          decorationColor: _footerLink,
-        ),
+        style: const TextStyle(color: _footerText, fontSize: 13, fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -63,19 +66,19 @@ class _LinkedInBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 22,
-      height: 22,
+      width: 32,
+      height: 32,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0A66C2),
-        borderRadius: BorderRadius.circular(4),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF2F4F7),
+        shape: BoxShape.circle,
       ),
       child: const Text(
         'in',
         style: TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
+          color: _footerText,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
           height: 1,
         ),
       ),
