@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -467,11 +469,12 @@ class _CardHeader extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            title,
-            style: const TextStyle(
-              color: _ink,
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
+            title.toUpperCase(),
+            style: GoogleFonts.inter(
+              color: const Color(0xFF6A7282),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: .3,
             ),
           ),
         ),
@@ -480,9 +483,9 @@ class _CardHeader extends StatelessWidget {
             onTap: onAction,
             child: Text(
               actionLabel!,
-              style: const TextStyle(
+              style: GoogleFonts.inter(
                 color: _purple,
-                fontSize: 13,
+                fontSize: 13.6,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -505,9 +508,39 @@ class _ContinueLearningCard extends StatefulWidget {
 class _ContinueLearningCardState extends State<_ContinueLearningCard> {
   final _controller = PageController();
   int _index = 0;
+  Timer? _autoAdvanceTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoAdvance();
+  }
+
+  @override
+  void didUpdateWidget(_ContinueLearningCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.courses.length != widget.courses.length) {
+      _startAutoAdvance();
+    }
+  }
+
+  void _startAutoAdvance() {
+    _autoAdvanceTimer?.cancel();
+    if (widget.courses.length <= 1) return;
+    _autoAdvanceTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!mounted || !_controller.hasClients) return;
+      final next = (_index + 1) % widget.courses.length;
+      _controller.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
 
   @override
   void dispose() {
+    _autoAdvanceTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -622,10 +655,10 @@ class _ContinueLearningItem extends ConsumerWidget {
                 course.name,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: GoogleFonts.inter(
                   color: _ink,
                   fontWeight: FontWeight.w800,
-                  fontSize: 15,
+                  fontSize: 20,
                   height: 1.3,
                 ),
               ),
