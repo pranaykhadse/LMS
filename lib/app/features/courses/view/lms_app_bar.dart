@@ -48,31 +48,8 @@ String _lastFirst(dynamic profile) {
   return '$last, $first';
 }
 
-const double _desktopNavBarHeight = 76;
-
-/// Stacks the desktop nav row under the purple utility row, and below that
-/// (if present) whatever page-specific bottom widget was passed in — e.g.
-/// the calendar's own toolbar.
-PreferredSizeWidget _desktopBottomBar(
-  String? selectedLabel,
-  String? selectedSubLabel,
-  PreferredSizeWidget? extra,
-) {
-  final navBar = _DesktopNavBar(
-    selectedLabel: selectedLabel,
-    selectedSubLabel: selectedSubLabel,
-  );
-  if (extra == null) return navBar;
-  return PreferredSize(
-    preferredSize: Size.fromHeight(
-      _desktopNavBarHeight + extra.preferredSize.height,
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [navBar, extra],
-    ),
-  );
-}
+const double _desktopHeaderHeight = 64;
+const Color _navDark = Color(0xFF4A4A4A);
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
@@ -130,8 +107,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        (isWide ? 80.0 : 60.0) +
-            (isWide ? _desktopNavBarHeight : 0) +
+        (isWide ? _desktopHeaderHeight : 60.0) +
             (bottom?.preferredSize.height ?? 0),
       );
 
@@ -142,13 +118,13 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   // ── Desktop/tablet ───────────────────────────────────────────────────────
   //
-  // Built as a plain Column of Containers (matching `_DesktopNavBar`) rather
-  // than through AppBar's leading/title/actions, since AppBar's internal
-  // NavigationToolbar centers the leading/title/actions *slots* as blocks —
-  // mixed-height children within `actions` (a single-line date/time Text
-  // next to full-size icon buttons) weren't sharing one visual baseline.
-  // A single Row with an explicit `crossAxisAlignment: CrossAxisAlignment
-  // .center` gives full, predictable control instead.
+  // A single white row: nav destinations on the left, utility icons +
+  // profile on the right - matching the reference design's one-row header
+  // (no separate purple utility bar). Built as a plain Row with an explicit
+  // `crossAxisAlignment: CrossAxisAlignment.center` rather than through
+  // AppBar's leading/title/actions, for the same reason as before: AppBar's
+  // NavigationToolbar centers those *slots* as blocks, and mixed-height
+  // children within one slot don't share a visual baseline.
   Widget _buildDesktop(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final canPop = Navigator.canPop(context);
@@ -157,117 +133,121 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final isOffline = ref.watch(OfflineModeNotifier.provider);
     final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
 
-    return Column(
-        children: [
-          Container(
-            width: double.infinity,
-            height: 80,
-            color: _appPurple,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (showBack) ...[
-                  LmsAppBarButton(
-                    icon: Icons.arrow_back_ios_new_rounded,
-                    onTap: onBack ?? () => safePop(context),
-                    iconSize: 23.4,
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                const Spacer(),
-                const _DatePill(),
-                const SizedBox(width: 16),
-                if (onRefresh != null) ...[
-                  LmsAppBarButton(
-                    icon: Icons.refresh_rounded,
-                    iconSize: 20.8,
-                    // The bell/badge in this same header is shared across
-                    // every screen, so a manual refresh should always pick
-                    // up fresh notifications too, not just whatever this
-                    // particular page's own onRefresh re-fetches.
-                    onTap: () {
-                      onRefresh!();
-                      ref.read(NotificationsViewModel.provider.notifier).fetch();
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                LmsOfflineToggle(
-                  isOffline: isOffline,
-                  iconSize: 20.8,
-                  switchScale: 0.91,
-                  onChanged: (val) {
-                    ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
-                    if (!val) ref.read(SyncViewModel.provider).onManualOnline();
-                    Toast.info(context,
-                        val ? 'Offline mode enabled' : 'Back to online mode');
-                  },
-                ),
-                SizedBox(
-                  width: 38,
-                  height: 38,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      LmsAppBarButton(
-                        icon: Icons.notifications_rounded,
-                        iconSize: 20.8,
-                        onTap: () => showLmsNotifications(context),
-                      ),
-                      if (unreadCount > 0)
-                        Positioned(
-                          top: 2,
-                          right: 2,
-                          child: IgnorePointer(
-                              child: LmsNotifBadge(count: unreadCount)),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                PopupMenuButton<String>(
-                  offset: const Offset(0, 38),
-                  constraints:
-                      const BoxConstraints(minWidth: 290, maxWidth: 390),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18)),
-                  onSelected: (value) => _onProfileMenuSelected(
-                      context, ref, value),
-                  itemBuilder: (context) => _profileMenuItems(profile),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      LmsAvatar(profile: profile, radius: 15),
-                      const SizedBox(width: 8),
-                      Text(
-                        _lastFirst(profile),
-                        style: GoogleFonts.roboto(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      const Icon(Icons.keyboard_arrow_down_rounded,
-                          color: Colors.white, size: 20.8),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                LmsAppBarButton(
-                  icon: Icons.play_arrow_rounded,
-                  iconSize: 35,
-                  boxSize: 42,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const LearningProgressPage()),
-                  ),
-                ),
-              ],
-            ),
+    final utilities = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showBack) ...[
+          LmsAppBarButton(
+            icon: Icons.arrow_back_ios_new_rounded,
+            onTap: onBack ?? () => safePop(context),
+            iconSize: 18,
+            color: _navDark,
           ),
-          _desktopBottomBar(selectedLabel, selectedSubLabel, bottom),
+          const SizedBox(width: 8),
         ],
-      );
+        const _DatePill(),
+        const SizedBox(width: 14),
+        if (onRefresh != null) ...[
+          LmsAppBarButton(
+            icon: Icons.refresh_rounded,
+            iconSize: 18,
+            color: _navDark,
+            // The bell/badge in this same header is shared across every
+            // screen, so a manual refresh should always pick up fresh
+            // notifications too, not just whatever this particular page's
+            // own onRefresh re-fetches.
+            onTap: () {
+              onRefresh!();
+              ref.read(NotificationsViewModel.provider.notifier).fetch();
+            },
+          ),
+          const SizedBox(width: 4),
+        ],
+        LmsOfflineToggle(
+          isOffline: isOffline,
+          iconSize: 18,
+          switchScale: 0.8,
+          dark: true,
+          onChanged: (val) {
+            ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
+            if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+            Toast.info(context,
+                val ? 'Offline mode enabled' : 'Back to online mode');
+          },
+        ),
+        SizedBox(
+          width: 34,
+          height: 34,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              LmsAppBarButton(
+                icon: Icons.notifications_rounded,
+                iconSize: 18,
+                color: _navDark,
+                onTap: () => showLmsNotifications(context),
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  top: 2,
+                  right: 2,
+                  child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 4),
+        LmsAppBarButton(
+          icon: Icons.play_arrow_rounded,
+          iconSize: 18,
+          color: _navDark,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const LearningProgressPage()),
+          ),
+        ),
+        const SizedBox(width: 6),
+        PopupMenuButton<String>(
+          offset: const Offset(0, 38),
+          constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          onSelected: (value) => _onProfileMenuSelected(context, ref, value),
+          itemBuilder: (context) => _profileMenuItems(profile),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LmsAvatar(profile: profile, radius: 15),
+              const SizedBox(width: 8),
+              Text(
+                _lastFirst(profile),
+                style: GoogleFonts.roboto(
+                  color: _appInk,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const Icon(Icons.keyboard_arrow_down_rounded,
+                  color: _navDark, size: 18),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final header = _DesktopNavBar(
+      selectedLabel: selectedLabel,
+      selectedSubLabel: selectedSubLabel,
+      trailing: utilities,
+    );
+    if (bottom == null) return header;
+    return PreferredSize(
+      preferredSize: Size.fromHeight(
+        _desktopHeaderHeight + bottom!.preferredSize.height,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [header, bottom!],
+      ),
+    );
   }
 
   // ── Phone ────────────────────────────────────────────────────────────────
@@ -439,13 +419,17 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 /// the mobile AppDrawer (kept in sync by hand — see that file for the
 /// mobile equivalent), styled to sit flush under [LmsAppBar].
 class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
-  const _DesktopNavBar({this.selectedLabel, this.selectedSubLabel});
+  const _DesktopNavBar({this.selectedLabel, this.selectedSubLabel, this.trailing});
 
   final String? selectedLabel;
   final String? selectedSubLabel;
 
+  /// The utility cluster (date/time, bell, avatar, etc.) rendered at the
+  /// right edge of this same row.
+  final Widget? trailing;
+
   @override
-  Size get preferredSize => const Size.fromHeight(_desktopNavBarHeight);
+  Size get preferredSize => const Size.fromHeight(_desktopHeaderHeight);
 
   void _goTo(BuildContext context, String route) {
     resetToModularRoot(context);
@@ -469,15 +453,18 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return Container(
       width: double.infinity,
-      height: _desktopNavBarHeight,
+      height: _desktopHeaderHeight,
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: Color(0xFFEDEFF3))),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
           children: [
             _NavItem(
             icon: Icons.dashboard_outlined,
@@ -591,7 +578,11 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
             ],
           ),
         ],
-        ),
+              ),
+            ),
+          ),
+          if (trailing != null) trailing!,
+        ],
       ),
     );
   }
@@ -722,6 +713,7 @@ class LmsAppBarButton extends StatelessWidget {
     required this.onTap,
     this.iconSize,
     this.boxSize,
+    this.color = Colors.white,
   });
   final IconData icon;
   final VoidCallback onTap;
@@ -734,6 +726,11 @@ class LmsAppBarButton extends StatelessWidget {
   /// Overrides the default responsive tap-target box size — needed
   /// whenever [iconSize] is pushed past the default box's own size.
   final double? boxSize;
+
+  /// Icon color — defaults to white (the purple app bar background this
+  /// was originally built for); the desktop header's white background
+  /// passes a dark color instead.
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -750,7 +747,7 @@ class LmsAppBarButton extends StatelessWidget {
             onTap: onTap,
             child: Icon(
               icon,
-              color: Colors.white,
+              color: color,
               size: iconSize ?? (isWide ? 24 : 23),
             ),
           ),
@@ -769,6 +766,7 @@ class LmsOfflineToggle extends StatelessWidget {
     required this.onChanged,
     this.iconSize,
     this.switchScale,
+    this.dark = false,
   });
   final bool isOffline;
   final ValueChanged<bool> onChanged;
@@ -777,6 +775,10 @@ class LmsOfflineToggle extends StatelessWidget {
   /// desktop header to match its smaller, button-less icon styling.
   final double? iconSize;
   final double? switchScale;
+
+  /// True on a light background (the desktop header) — swaps the white-
+  /// on-purple "online" icon/switch colors for dark-on-white equivalents.
+  final bool dark;
 
   @override
   Widget build(BuildContext context) {
@@ -787,7 +789,9 @@ class LmsOfflineToggle extends StatelessWidget {
         Icon(
           isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
           size: iconSize ?? (isWide ? 22 : 18),
-          color: isOffline ? Colors.amber.shade600 : Colors.white70,
+          color: isOffline
+              ? Colors.amber.shade600
+              : (dark ? const Color(0xFF4A4A4A) : Colors.white70),
         ),
         Transform.scale(
           scale: switchScale ?? (isWide ? 0.85 : 0.72),
@@ -796,8 +800,9 @@ class LmsOfflineToggle extends StatelessWidget {
             onChanged: onChanged,
             activeThumbColor: Colors.amber.shade600,
             activeTrackColor: Colors.amber.shade200,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Colors.white30,
+            inactiveThumbColor: dark ? Colors.grey.shade400 : Colors.white,
+            inactiveTrackColor:
+                dark ? Colors.grey.shade300 : Colors.white30,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ),
@@ -1101,7 +1106,7 @@ class LmsAvatar extends StatelessWidget {
       backgroundColor: Colors.white,
       child: CircleAvatar(
         radius: radius - 2,
-        backgroundColor: const Color(0xFF10121B),
+        backgroundColor: _appPurple,
         backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
         child: url.isEmpty
             ? const Icon(Icons.person, color: Colors.white)
@@ -1211,8 +1216,8 @@ class _DatePillState extends State<_DatePill> {
     return Text(
       _formatDatePill(_now),
       style: GoogleFonts.roboto(
-        color: Colors.white,
-        fontSize: 14,
+        color: _navDark,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
         height: 1.0,
       ),
