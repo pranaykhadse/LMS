@@ -615,11 +615,11 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: i == _index ? 32 : 14,
-                        height: 14,
+                        width: i == _index ? 48 : 21,
+                        height: 21,
                         decoration: BoxDecoration(
                           color: i == _index ? _purple : _border,
-                          borderRadius: BorderRadius.circular(7),
+                          borderRadius: BorderRadius.circular(10.5),
                         ),
                       ),
                     ),
