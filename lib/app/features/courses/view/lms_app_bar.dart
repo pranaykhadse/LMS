@@ -204,22 +204,37 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           onSelected: (value) => _onProfileMenuSelected(context, ref, value),
           itemBuilder: (context) => _profileMenuItems(profile),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              LmsAvatar(profile: profile, radius: 15),
-              const SizedBox(width: 8),
-              Text(
-                _lastFirst(profile),
-                style: GoogleFonts.roboto(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
+          // Exact Figma spec: pill container, #7D4AAB background, 4px
+          // radius, padding T2/R8/B2/L8, 6px gap between avatar/name/chevron.
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(8, 2, 8, 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF7D4AAB),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LmsAvatar(
+                  profile: profile,
+                  radius: 10,
+                  fallbackColor: const Color(0xFF6A7282),
                 ),
-              ),
-              const Icon(Icons.keyboard_arrow_down_rounded,
-                  color: Colors.white, size: 18),
-            ],
+                const SizedBox(width: 6),
+                Text(
+                  _lastFirst(profile),
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFFE5E7EB),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    height: 16 / 12,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(Icons.keyboard_arrow_down_rounded,
+                    color: Color(0xFF99A1AF), size: 14),
+              ],
+            ),
           ),
         ),
       ],
@@ -469,7 +484,7 @@ class _AppWordmark extends StatelessWidget {
             children: [
               TextSpan(
                 text: 'LEADERSHIP',
-                style: GoogleFonts.roboto(
+                style: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
@@ -478,7 +493,7 @@ class _AppWordmark extends StatelessWidget {
               ),
               TextSpan(
                 text: '\nEDGE',
-                style: GoogleFonts.roboto(
+                style: GoogleFonts.inter(
                   color: Colors.white70,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -691,7 +706,7 @@ class _NavItem extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: GoogleFonts.roboto(
+              style: GoogleFonts.inter(
                 color: color,
                 fontSize: 16,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
@@ -766,7 +781,7 @@ class _NavDropdown extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: GoogleFonts.roboto(
+              style: GoogleFonts.inter(
                 color: color,
                 fontSize: 16,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
@@ -1157,9 +1172,19 @@ class _NotifRow extends StatelessWidget {
 // ── Shared avatar ─────────────────────────────────────────────────────────────
 
 class LmsAvatar extends StatelessWidget {
-  const LmsAvatar({super.key, required this.profile, required this.radius});
+  const LmsAvatar({
+    super.key,
+    required this.profile,
+    required this.radius,
+    this.fallbackColor = _appPurple,
+  });
   final dynamic profile;
   final double radius;
+
+  /// Background color shown when there's no photo (an initial/icon
+  /// instead) — defaults to the app purple; the desktop header's TopBar
+  /// pill uses the Figma spec's own #6A7282 instead.
+  final Color fallbackColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1169,7 +1194,7 @@ class LmsAvatar extends StatelessWidget {
       backgroundColor: Colors.white,
       child: CircleAvatar(
         radius: radius - 2,
-        backgroundColor: _appPurple,
+        backgroundColor: fallbackColor,
         backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
         child: url.isEmpty
             ? const Icon(Icons.person, color: Colors.white)
@@ -1278,11 +1303,11 @@ class _DatePillState extends State<_DatePill> {
   Widget build(BuildContext context) {
     return Text(
       _formatDatePill(_now),
-      style: GoogleFonts.roboto(
+      style: GoogleFonts.inter(
         color: Colors.white,
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: FontWeight.w400,
-        height: 1.0,
+        height: 16 / 12,
       ),
     );
   }
@@ -1292,8 +1317,8 @@ const _datePillWeekdays = [
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
 ];
 const _datePillMonths = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
 String _formatDatePill(DateTime dt) {
