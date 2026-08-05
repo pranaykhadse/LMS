@@ -473,13 +473,7 @@ class _AppWordmark extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // The logo asset is a solid purple mark - tint it white so it
-        // shows up against the TopBar's own purple background instead of
-        // disappearing into it.
-        const ColorFiltered(
-          colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
-          child: Logo(size: 24),
-        ),
+        const Logo(size: 24),
         const SizedBox(width: 8),
         Text.rich(
           TextSpan(
