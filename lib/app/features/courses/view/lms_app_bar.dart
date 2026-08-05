@@ -269,7 +269,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              const Logo(size: 38),
+              const Logo(size: 36),
             ],
           ),
           utilities,
@@ -653,7 +653,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF6A7282);
+    final color = selected ? _appPurple : const Color(0xFF9CA3AF);
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -705,7 +705,7 @@ class _NavDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF6A7282);
+    final color = selected ? _appPurple : const Color(0xFF9CA3AF);
     return PopupMenuButton<int>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
