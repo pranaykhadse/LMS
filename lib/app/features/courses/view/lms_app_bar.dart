@@ -55,7 +55,6 @@ String _lastFirst(dynamic profile) {
 // Exact Figma spec: TopBar is Height Hug 44px, Padding L16/R16/T10/B10.
 const double _desktopTopBarHeight = 44;
 const double _desktopHeaderHeight = 48;
-const Color _navDark = Color(0xFF4A4A4A);
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
@@ -148,7 +147,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           LmsAppBarButton(
             icon: Icons.refresh_rounded,
             iconSize: 18,
-            color: _navDark,
             // The bell/badge in this same header is shared across every
             // screen, so a manual refresh should always pick up fresh
             // notifications too, not just whatever this particular page's
@@ -164,7 +162,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           isOffline: isOffline,
           iconSize: 18,
           switchScale: 0.8,
-          dark: true,
           onChanged: (val) {
             ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
             if (!val) ref.read(SyncViewModel.provider).onManualOnline();
@@ -181,7 +178,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               LmsAppBarButton(
                 icon: Icons.notifications_rounded,
                 iconSize: 18,
-                color: _navDark,
                 onTap: () => showLmsNotifications(context),
               ),
               if (unreadCount > 0)
@@ -197,7 +193,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         LmsAppBarButton(
           icon: Icons.play_arrow_rounded,
           iconSize: 18,
-          color: _navDark,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const LearningProgressPage()),
           ),
@@ -217,13 +212,13 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               Text(
                 _lastFirst(profile),
                 style: GoogleFonts.roboto(
-                  color: _appInk,
+                  color: Colors.white,
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
                 ),
               ),
               const Icon(Icons.keyboard_arrow_down_rounded,
-                  color: _navDark, size: 18),
+                  color: Colors.white, size: 18),
             ],
           ),
         ),
@@ -231,12 +226,12 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     );
 
     // "TopBar": logo left, back button (detail pages only) + utilities
-    // right - exact spec: 44px height, 16px left/right padding, 10px
-    // top/bottom padding, space-between.
+    // right - exact spec: purple (#693D94) background, 44px height, 16px
+    // left/right padding, 10px top/bottom padding, space-between.
     final topBar = Container(
       width: double.infinity,
       height: _desktopTopBarHeight,
-      color: Colors.white,
+      color: _appPurple,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -251,7 +246,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   onTap: onBack ?? () => safePop(context),
                   iconSize: 16,
                   boxSize: 28,
-                  color: _navDark,
                 ),
                 const SizedBox(width: 8),
               ],
@@ -462,7 +456,13 @@ class _AppWordmark extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Logo(size: 24),
+        // The logo asset is a solid purple mark - tint it white so it
+        // shows up against the TopBar's own purple background instead of
+        // disappearing into it.
+        const ColorFiltered(
+          colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          child: Logo(size: 24),
+        ),
         const SizedBox(width: 8),
         Text.rich(
           TextSpan(
@@ -470,7 +470,7 @@ class _AppWordmark extends StatelessWidget {
               TextSpan(
                 text: 'LEADERSHIP',
                 style: GoogleFonts.roboto(
-                  color: _appInk,
+                  color: Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                   letterSpacing: .3,
@@ -479,7 +479,7 @@ class _AppWordmark extends StatelessWidget {
               TextSpan(
                 text: '\nEDGE',
                 style: GoogleFonts.roboto(
-                  color: _appMuted,
+                  color: Colors.white70,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: .3,
@@ -790,7 +790,6 @@ class LmsAppBarButton extends StatelessWidget {
     required this.onTap,
     this.iconSize,
     this.boxSize,
-    this.color = Colors.white,
   });
   final IconData icon;
   final VoidCallback onTap;
@@ -803,11 +802,6 @@ class LmsAppBarButton extends StatelessWidget {
   /// Overrides the default responsive tap-target box size — needed
   /// whenever [iconSize] is pushed past the default box's own size.
   final double? boxSize;
-
-  /// Icon color — defaults to white (the purple app bar background this
-  /// was originally built for); the desktop header's white background
-  /// passes a dark color instead.
-  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -824,7 +818,7 @@ class LmsAppBarButton extends StatelessWidget {
             onTap: onTap,
             child: Icon(
               icon,
-              color: color,
+              color: Colors.white,
               size: iconSize ?? (isWide ? 24 : 23),
             ),
           ),
@@ -843,7 +837,6 @@ class LmsOfflineToggle extends StatelessWidget {
     required this.onChanged,
     this.iconSize,
     this.switchScale,
-    this.dark = false,
   });
   final bool isOffline;
   final ValueChanged<bool> onChanged;
@@ -852,10 +845,6 @@ class LmsOfflineToggle extends StatelessWidget {
   /// desktop header to match its smaller, button-less icon styling.
   final double? iconSize;
   final double? switchScale;
-
-  /// True on a light background (the desktop header) — swaps the white-
-  /// on-purple "online" icon/switch colors for dark-on-white equivalents.
-  final bool dark;
 
   @override
   Widget build(BuildContext context) {
@@ -866,9 +855,7 @@ class LmsOfflineToggle extends StatelessWidget {
         Icon(
           isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
           size: iconSize ?? (isWide ? 22 : 18),
-          color: isOffline
-              ? Colors.amber.shade600
-              : (dark ? const Color(0xFF4A4A4A) : Colors.white70),
+          color: isOffline ? Colors.amber.shade600 : Colors.white70,
         ),
         Transform.scale(
           scale: switchScale ?? (isWide ? 0.85 : 0.72),
@@ -877,9 +864,8 @@ class LmsOfflineToggle extends StatelessWidget {
             onChanged: onChanged,
             activeThumbColor: Colors.amber.shade600,
             activeTrackColor: Colors.amber.shade200,
-            inactiveThumbColor: dark ? Colors.grey.shade400 : Colors.white,
-            inactiveTrackColor:
-                dark ? Colors.grey.shade300 : Colors.white30,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: Colors.white30,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ),
@@ -1293,7 +1279,7 @@ class _DatePillState extends State<_DatePill> {
     return Text(
       _formatDatePill(_now),
       style: GoogleFonts.roboto(
-        color: _navDark,
+        color: Colors.white,
         fontSize: 13,
         fontWeight: FontWeight.w400,
         height: 1.0,
