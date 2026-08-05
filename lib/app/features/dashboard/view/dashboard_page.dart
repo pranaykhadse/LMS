@@ -527,7 +527,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
   void _startAutoAdvance() {
     _autoAdvanceTimer?.cancel();
     if (widget.courses.length <= 1) return;
-    _autoAdvanceTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _autoAdvanceTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted || !_controller.hasClients) return;
       final next = (_index + 1) % widget.courses.length;
       _controller.animateToPage(
@@ -616,8 +616,8 @@ class _ContinueLearningItem extends ConsumerWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: SizedBox(
-            width: 110,
-            height: 110,
+            width: 130,
+            height: 260,
             child: Stack(
               fit: StackFit.expand,
               children: [
