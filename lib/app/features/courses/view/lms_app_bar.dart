@@ -228,7 +228,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   _lastFirst(profile),
                   style: GoogleFonts.inter(
                     color: const Color(0xFFE5E7EB),
-                    fontSize: 12,
+                    fontSize: 14,
                     fontWeight: FontWeight.w400,
                     height: 16 / 12,
                   ),
@@ -1261,7 +1261,7 @@ class _DatePillState extends State<_DatePill> {
       _formatDatePill(_now),
       style: GoogleFonts.inter(
         color: Colors.white,
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: FontWeight.w400,
         height: 16 / 12,
       ),
