@@ -269,7 +269,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              const Logo(size: 40),
+              const Logo(size: 38),
             ],
           ),
           utilities,
@@ -667,7 +667,7 @@ class _NavItem extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w400,
               ),
             ),
@@ -742,7 +742,7 @@ class _NavDropdown extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: FontWeight.w400,
               ),
             ),
