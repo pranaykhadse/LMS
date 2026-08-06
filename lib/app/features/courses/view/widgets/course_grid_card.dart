@@ -80,7 +80,7 @@ class CourseGridCard extends StatelessWidget {
           ),
           if (infoSection != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+              padding: const EdgeInsets.fromLTRB(14, 18, 14, 16),
               child: infoSection!,
             ),
           Expanded(
