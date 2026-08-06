@@ -671,8 +671,8 @@ class _ContinueLearningItem extends ConsumerWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: SizedBox(
-            width: 130,
-            height: 150,
+            width: 155,
+            height: 175,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -702,7 +702,8 @@ class _ContinueLearningItem extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 14),
-        Expanded(
+        SizedBox(
+          width: 220,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
