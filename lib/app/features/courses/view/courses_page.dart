@@ -1422,7 +1422,7 @@ class _DevPlanButton extends StatelessWidget {
               ? Icons.cloud_off_rounded
               : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
           size: isDisabled ? 15 : 18,
-          color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : _catalogPurple),
+          color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : const Color(0xFF693D94)),
         ),
       ),
     );
