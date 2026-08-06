@@ -6,8 +6,8 @@ import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 /// Shared page shell for every top-level screen. On a phone it behaves the
 /// same as before (hamburger + slide-out AppDrawer); on a tablet/desktop
 /// window navigation moves into a horizontal nav bar under the top app
-/// bar instead (see LmsAppBar's `isWide` mode), and the body's width is
-/// capped so content doesn't stretch edge-to-edge on very wide windows.
+/// bar instead (see LmsAppBar's `isWide` mode). The body spans the full
+/// window width, same as the header above it.
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
     super.key,
@@ -20,7 +20,6 @@ class AppScaffold extends StatelessWidget {
     this.hideBack = false,
     this.bottom,
     this.backgroundColor,
-    this.maxContentWidth = 1100,
     this.onRefresh,
   });
 
@@ -44,10 +43,6 @@ class AppScaffold extends StatelessWidget {
   final PreferredSizeWidget? bottom;
   final Color? backgroundColor;
 
-  /// Body content is centered and capped at this width on tablet/desktop
-  /// so text/cards don't stretch uncomfortably wide.
-  final double maxContentWidth;
-
   @override
   Widget build(BuildContext context) {
     final isTablet = Responsive.isTablet(context);
@@ -55,12 +50,7 @@ class AppScaffold extends StatelessWidget {
     final content = isTablet
         ? Padding(
             padding: const EdgeInsets.only(top: 14),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxContentWidth),
-                child: body,
-              ),
-            ),
+            child: body,
           )
         : body;
 
