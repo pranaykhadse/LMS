@@ -738,7 +738,7 @@ class _SkillDropdownState extends State<_SkillDropdown> {
           : () => widget.inline
               ? (_open ? _removeOverlay() : _openInline(context, unique, selected))
               : _openSheet(unique, selected),
-      borderRadius: BorderRadius.circular(9),
+      borderRadius: BorderRadius.circular(4),
       child: InputDecorator(
         decoration: _fieldDecoration(
           'Skills or Behavior',
@@ -1071,26 +1071,26 @@ InputDecoration _fieldDecoration(
       prefixIcon: showLeadingIcon
           ? const Icon(
               Icons.search_rounded,
-              color: Color(0xFF91A0B8),
-              size: 18,
+              color: Color(0xFF5457C1),
+              size: 20,
             )
           : null,
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: Colors.white,
       isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: Color(0xFFE7E4FF)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: Color(0xFFE7E4FF)),
       ),
       disabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: Color(0xFFE7E4FF)),
       ),
     );
 
