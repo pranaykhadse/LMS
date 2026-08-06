@@ -91,9 +91,13 @@ class CourseGridCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Up to 3 lines before truncating - the grid row height
+                  // (set by each page) is sized generously enough that
+                  // realistic titles fit in full; this is just a safety net
+                  // against an unexpectedly long one overflowing the card.
                   Text(
                     title,
-                    maxLines: 2,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.roboto(
                       color: Colors.white,

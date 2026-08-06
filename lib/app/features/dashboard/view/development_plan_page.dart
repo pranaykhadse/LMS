@@ -76,7 +76,7 @@ class _Body extends StatelessWidget {
                           icon: const Icon(Icons.add_rounded, size: 18),
                           label: const Text('Add Custom Plan Item'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _purple,
+                            backgroundColor: const Color(0xFF693D94),
                             foregroundColor: Colors.white,
                             elevation: 0,
                             minimumSize: const Size(0, 40),
@@ -109,7 +109,7 @@ class _Body extends StatelessWidget {
                           ),
                           crossAxisSpacing: 14,
                           mainAxisSpacing: 14,
-                          mainAxisExtent: Responsive.isTablet(context) ? 320 : 305,
+                          mainAxisExtent: Responsive.isTablet(context) ? 400 : 380,
                         ),
                         itemCount: state.courses.length,
                         itemBuilder: (ctx, i) =>
@@ -414,10 +414,8 @@ class _CourseCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (course.displayRating) ...[
-            _StarRow(rating: course.averageRating, count: course.ratingCount),
-            const SizedBox(height: 6),
-          ],
+          _StarRow(rating: course.averageRating, count: course.ratingCount),
+          const SizedBox(height: 6),
           _ProgressRow(progress: course.progress),
         ],
       ),
