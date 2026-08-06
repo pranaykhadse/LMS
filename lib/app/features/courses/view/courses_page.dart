@@ -1261,32 +1261,39 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                 height: isWide ? 140 : 160,
                 child: _CourseImage(url: widget.course.logo),
               ),
-              if (widget.course.nextSession != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'The next available course begins on',
-                        style: GoogleFonts.roboto(
-                          color: const Color(0xFF767676),
-                          fontSize: 12,
+              // Fixed height regardless of whether a course has a next
+              // session, so every card in a row lines up identically
+              // instead of the footer's position shifting per-card.
+              SizedBox(
+                height: 58,
+                child: widget.course.nextSession == null
+                    ? null
+                    : Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'The next available course begins on',
+                              style: GoogleFonts.roboto(
+                                color: const Color(0xFF767676),
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _formatNextSession(widget.course.nextSession!),
+                              style: GoogleFonts.roboto(
+                                color: const Color(0xFF484848),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _formatNextSession(widget.course.nextSession!),
-                        style: GoogleFonts.roboto(
-                          color: const Color(0xFF484848),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              ),
               Expanded(
                 child: Container(
                   width: double.infinity,
@@ -1294,6 +1301,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                   decoration: const BoxDecoration(color: _catalogPurple),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
