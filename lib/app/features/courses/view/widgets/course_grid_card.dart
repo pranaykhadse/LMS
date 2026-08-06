@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 
@@ -87,7 +88,7 @@ class CourseGridCard extends StatelessWidget {
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-              decoration: const BoxDecoration(color: Color(0xFF603D92)),
+              decoration: const BoxDecoration(gradient: FigmaTokens.heroGradient),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

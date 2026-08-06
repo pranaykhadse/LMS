@@ -2,6 +2,7 @@
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -1299,7 +1300,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                 child: Container(
                   width: double.infinity,
                   padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
-                  decoration: const BoxDecoration(color: Color(0xFF603D92)),
+                  decoration: const BoxDecoration(gradient: FigmaTokens.heroGradient),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
