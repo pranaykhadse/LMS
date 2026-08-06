@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
@@ -501,9 +502,9 @@ class _FilterPanel extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
           ),
-          child: const Text(
+          child: Text(
             'Calendar View',
-            style: TextStyle(fontWeight: FontWeight.w700),
+            style: GoogleFonts.roboto(fontWeight: FontWeight.w700, fontSize: 16),
           ),
         );
 
@@ -626,6 +627,7 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
       controller: _controller,
       enabled: widget.enabled,
       autofocus: widget.autofocus,
+      style: GoogleFonts.roboto(color: const Color(0xFF495057), fontSize: 16),
       onChanged: widget.onChanged,
       onSubmitted: (value) {
         FocusScope.of(context).unfocus();
@@ -719,9 +721,9 @@ class _SkillDropdown extends StatelessWidget {
           selected?.name ?? 'Skills or Behavior',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: selected == null ? _catalogMuted : _catalogInk,
-            fontSize: 13,
+          style: GoogleFonts.roboto(
+            color: selected == null ? const Color(0xFF999999) : const Color(0xFF495057),
+            fontSize: 16,
           ),
         ),
       ),
@@ -879,7 +881,7 @@ InputDecoration _fieldDecoration(
   bool showLeadingIcon = true,
 }) => InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: _catalogMuted, fontSize: 13),
+      hintStyle: GoogleFonts.roboto(color: const Color(0xFF999999), fontSize: 16),
       prefixIcon: showLeadingIcon
           ? const Icon(
               Icons.search_rounded,
@@ -889,9 +891,9 @@ InputDecoration _fieldDecoration(
           : null,
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: Colors.white,
       isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(9),
         borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
