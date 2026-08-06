@@ -964,7 +964,7 @@ class _NotificationsDialog extends ConsumerWidget {
                           .read(NotificationsViewModel.provider.notifier)
                           .markAllAsRead(),
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF5457C1),
+                        foregroundColor: const Color(0xFF693D94),
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -1065,7 +1065,7 @@ class _NotificationsDialog extends ConsumerWidget {
                   child: Text(
                     'View All Notifications',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF5457C1),
+                      color: const Color(0xFF693D94),
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
@@ -1116,7 +1116,7 @@ class _NotifRow extends StatelessWidget {
               ),
               child: const Icon(
                 Icons.notifications_rounded,
-                color: Color(0xFF5457C1),
+                color: Color(0xFF693D94),
                 size: 18,
               ),
             ),
@@ -1164,7 +1164,7 @@ class _NotifRow extends StatelessWidget {
                   width: 7,
                   height: 7,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF5457C1),
+                    color: Color(0xFF693D94),
                     shape: BoxShape.circle,
                   ),
                 ),

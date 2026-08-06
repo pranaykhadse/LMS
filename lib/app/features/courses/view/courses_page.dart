@@ -30,8 +30,8 @@ const _catalogPink = Color(0xFFB0006D);
 const _catalogInk = Color(0xFF172033);
 const _catalogMuted = Color(0xFF7C879D);
 const _catalogBackground = Color(0xFFF4F7F8);
-const _catalogCalendarBlue = Color(0xFF5457C1);
-const _catalogUndoBlue = Color(0xFF5457C1);
+const _catalogCalendarBlue = Color(0xFF693D94);
+const _catalogUndoBlue = Color(0xFF693D94);
 
 int _catalogColumns(double width) {
   if (width >= 900) return 4;
@@ -1071,7 +1071,7 @@ InputDecoration _fieldDecoration(
       prefixIcon: showLeadingIcon
           ? const Icon(
               Icons.search_rounded,
-              color: Color(0xFF5457C1),
+              color: Color(0xFF693D94),
               size: 20,
             )
           : null,
