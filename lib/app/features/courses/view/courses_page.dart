@@ -1298,7 +1298,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(15),
+                  padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
                   decoration: const BoxDecoration(color: Color(0xFF603D92)),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -1317,34 +1317,30 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         ),
                       ),
                       SizedBox(height: isWide ? 26 : 28),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: viewDisabled
-                              ? null
-                              : () => Modular.to.pushNamed(
-                                  CoursesModule.construct(
-                                    '${CoursesModule.detail}/${widget.course.id}',
-                                  ),
-                                  arguments: widget.course.offlineCourse,
+                      OutlinedButton(
+                        onPressed: viewDisabled
+                            ? null
+                            : () => Modular.to.pushNamed(
+                                CoursesModule.construct(
+                                  '${CoursesModule.detail}/${widget.course.id}',
                                 ),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                            backgroundColor: const Color(0xFF433FA0),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(isWide ? 7 : 10),
-                            ),
+                                arguments: widget.course.offlineCourse,
+                              ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(isWide ? 7 : 10),
                           ),
-                          child: Text(
-                            'View Course',
-                            style: GoogleFonts.roboto(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              height: 21 / 16,
-                            ),
+                        ),
+                        child: Text(
+                          'View Course',
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            height: 21 / 16,
                           ),
                         ),
                       ),
