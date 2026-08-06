@@ -702,8 +702,7 @@ class _ContinueLearningItem extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 14),
-        SizedBox(
-          width: 220,
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1093,13 +1092,18 @@ class _OverallProgressCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            '$overall%',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 60,
-              fontWeight: FontWeight.w800,
-              height: 1,
+          SizedBox(
+            width: double.infinity,
+            child: Center(
+              child: Text(
+                '$overall%',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 60,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 12),
