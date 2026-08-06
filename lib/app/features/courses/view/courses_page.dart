@@ -262,7 +262,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     crossAxisCount: columns,
                     crossAxisSpacing: width >= 760 ? 28 : 18,
                     mainAxisSpacing: width >= 760 ? 28 : 34,
-                    mainAxisExtent: width >= 760 ? 335 : 360,
+                    mainAxisExtent: width >= 760 ? 320 : 345,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _CatalogCourseCard(
@@ -409,7 +409,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               crossAxisCount: columns,
               crossAxisSpacing: width >= 760 ? 28 : 18,
               mainAxisSpacing: width >= 760 ? 28 : 34,
-              mainAxisExtent: width >= 760 ? 335 : 360,
+              mainAxisExtent: width >= 760 ? 320 : 345,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) => _CatalogCourseCard(
@@ -1325,7 +1325,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                                 arguments: widget.course.offlineCourse,
                               ),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white),
                           shape: RoundedRectangleBorder(
@@ -1342,6 +1342,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
