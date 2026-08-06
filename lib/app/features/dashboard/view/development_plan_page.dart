@@ -109,7 +109,7 @@ class _Body extends StatelessWidget {
                           ),
                           crossAxisSpacing: 14,
                           mainAxisSpacing: 14,
-                          mainAxisExtent: Responsive.isTablet(context) ? 340 : 320,
+                          mainAxisExtent: Responsive.isTablet(context) ? 320 : 305,
                         ),
                         itemCount: state.courses.length,
                         itemBuilder: (ctx, i) =>
@@ -389,7 +389,6 @@ class _CourseCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled =
         !course.isNonCourse && isViewCourseDisabled(ref, course.id);
-    final hasInfo = course.displayRating || course.progress > 0;
     return CourseGridCard(
       imageUrl: course.logo,
       title: course.name,
@@ -411,19 +410,17 @@ class _CourseCard extends ConsumerWidget {
               ratingCount: course.ratingCount,
               displayRating: course.displayRating ? 1 : 0,
             ),
-      infoSection: hasInfo
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (course.displayRating) ...[
-                  _StarRow(rating: course.averageRating, count: course.ratingCount),
-                  if (course.progress > 0) const SizedBox(height: 6),
-                ],
-                if (course.progress > 0) _ProgressRow(progress: course.progress),
-              ],
-            )
-          : null,
+      infoSection: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (course.displayRating) ...[
+            _StarRow(rating: course.averageRating, count: course.ratingCount),
+            const SizedBox(height: 6),
+          ],
+          _ProgressRow(progress: course.progress),
+        ],
+      ),
     );
   }
 }
