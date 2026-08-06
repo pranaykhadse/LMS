@@ -1325,6 +1325,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                                 arguments: widget.course.offlineCourse,
                               ),
                         style: OutlinedButton.styleFrom(
+                          alignment: Alignment.center,
                           padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white),
@@ -1334,6 +1335,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         ),
                         child: Text(
                           'View Course',
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.roboto(
                             color: Colors.white,
                             fontSize: 16,

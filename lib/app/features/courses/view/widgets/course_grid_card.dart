@@ -110,6 +110,7 @@ class CourseGridCard extends StatelessWidget {
                   OutlinedButton(
                     onPressed: onPressed,
                     style: OutlinedButton.styleFrom(
+                      alignment: Alignment.center,
                       padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: Colors.white),
@@ -119,6 +120,7 @@ class CourseGridCard extends StatelessWidget {
                     ),
                     child: Text(
                       buttonLabel,
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.roboto(
                         color: Colors.white,
                         fontSize: 16,
