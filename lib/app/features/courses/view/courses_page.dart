@@ -1301,7 +1301,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                   decoration: const BoxDecoration(color: _catalogPurple),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -1328,7 +1328,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                                   arguments: widget.course.offlineCourse,
                                 ),
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                             backgroundColor: const Color(0xFF433FA0),
                             foregroundColor: Colors.white,
                             elevation: 0,
