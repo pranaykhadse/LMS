@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/providers/shell_destination_provider.dart';
 import 'package:lms/app/core/views/elements/contact_links.dart';
 import 'package:lms/app/core/views/elements/logo.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
@@ -274,6 +275,11 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
+                  if (ShellMarker.isInShell(context)) {
+                    ref.read(currentShellDestinationProvider.notifier).state =
+                        ShellDestination.dashboard;
+                    return;
+                  }
                   resetToModularRoot(context);
                   Modular.to.navigate(
                     CoursesModule.construct(CoursesModule.dashboard),
@@ -497,7 +503,20 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(_desktopHeaderHeight);
 
-  void _goTo(BuildContext context, String route) {
+  void _goTo(
+    BuildContext context,
+    WidgetRef ref,
+    ShellDestination destination,
+    String route,
+  ) {
+    // Inside the shell, switching tabs is just a provider write - no
+    // Modular navigation, so the header never gets torn down/rebuilt and
+    // the page doesn't slide. Falls back to a real navigation if somehow
+    // reached from outside the shell.
+    if (ShellMarker.isInShell(context)) {
+      ref.read(currentShellDestinationProvider.notifier).state = destination;
+      return;
+    }
     resetToModularRoot(context);
     Modular.to.navigate(route);
   }
@@ -539,6 +558,8 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
             selected: selectedLabel == 'Dashboard',
             onTap: () => _goTo(
               context,
+              ref,
+              ShellDestination.dashboard,
               CoursesModule.construct(CoursesModule.dashboard),
             ),
           ),
@@ -549,6 +570,8 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
             selected: selectedLabel == 'Course Catalog',
             onTap: () => _goTo(
               context,
+              ref,
+              ShellDestination.courseCatalog,
               CoursesModule.construct(CoursesModule.root),
             ),
           ),
@@ -563,6 +586,8 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 selected: selectedSubLabel == 'My Enrolled Courses',
                 onTap: () => _goTo(
                   context,
+                  ref,
+                  ShellDestination.myEnrolledCourses,
                   CoursesModule.construct(CoursesModule.enrolledCourses),
                 ),
               ),
@@ -571,6 +596,8 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 selected: selectedSubLabel == 'My Completed Courses',
                 onTap: () => _goTo(
                   context,
+                  ref,
+                  ShellDestination.myCompletedCourses,
                   CoursesModule.construct(CoursesModule.completedCourses),
                 ),
               ),
@@ -579,6 +606,8 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 selected: selectedSubLabel == 'My Development Plan',
                 onTap: () => _goTo(
                   context,
+                  ref,
+                  ShellDestination.myDevelopmentPlan,
                   CoursesModule.construct(CoursesModule.developmentPlan),
                 ),
               ),
@@ -587,6 +616,8 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 selected: selectedSubLabel == 'My Required Courses',
                 onTap: () => _goTo(
                   context,
+                  ref,
+                  ShellDestination.myRequiredCourses,
                   CoursesModule.construct(CoursesModule.requiredCourses),
                 ),
               ),
@@ -599,6 +630,8 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
             selected: selectedLabel == 'Learning Paths',
             onTap: () => _goTo(
               context,
+              ref,
+              ShellDestination.learningPaths,
               CoursesModule.construct(CoursesModule.learningPaths),
             ),
           ),
@@ -613,6 +646,8 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 selected: selectedSubLabel == 'Redeem your Points',
                 onTap: () => _goTo(
                   context,
+                  ref,
+                  ShellDestination.redeemPoints,
                   CoursesModule.construct(CoursesModule.redeemPoints),
                 ),
               ),
@@ -621,6 +656,8 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 selected: selectedSubLabel == 'Badges',
                 onTap: () => _goTo(
                   context,
+                  ref,
+                  ShellDestination.badges,
                   CoursesModule.construct(CoursesModule.badges),
                 ),
               ),

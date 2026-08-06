@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/responsive.dart';
+import 'package:lms/app/core/providers/shell_destination_provider.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 
@@ -8,7 +10,14 @@ import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 /// window navigation moves into a horizontal nav bar under the top app
 /// bar instead (see LmsAppBar's `isWide` mode). The body spans the full
 /// window width, same as the header above it.
-class AppScaffold extends StatelessWidget {
+///
+/// When hosted inside [MainShell] (the desktop nav bar's top-level
+/// destinations), this skips rendering its own header entirely and just
+/// publishes its params for the shell's single persistent LmsAppBar to use
+/// instead - see ShellMarker/shellHeaderConfigProvider. Pages reached via a
+/// normal push (course detail, notifications, account settings, etc.)
+/// aren't inside that subtree and keep their own full header as before.
+class AppScaffold extends ConsumerWidget {
   const AppScaffold({
     super.key,
     required this.body,
@@ -44,7 +53,7 @@ class AppScaffold extends StatelessWidget {
   final Color? backgroundColor;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isTablet = Responsive.isTablet(context);
 
     final content = isTablet
@@ -71,6 +80,27 @@ class AppScaffold extends StatelessWidget {
         ),
         body: content,
       );
+    }
+
+    if (isTablet && ShellMarker.isInShell(context)) {
+      // Publish this tab's header params for MainShell's single persistent
+      // LmsAppBar to pick up, instead of building our own. Deferred to next
+      // frame since providers can't be written mid-build.
+      final config = ShellHeaderConfig(
+        title: title,
+        centerTitle: centerTitle,
+        selectedLabel: selectedLabel,
+        selectedSubLabel: selectedSubLabel,
+        onBack: onBack,
+        hideBack: hideBack,
+        bottom: bottom,
+        backgroundColor: backgroundColor,
+        onRefresh: onRefresh,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(shellHeaderConfigProvider.notifier).state = config;
+      });
+      return Container(color: backgroundColor, child: content);
     }
 
     // Desktop/tablet navigate via LmsAppBar's own horizontal nav bar
