@@ -1298,8 +1298,8 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               Expanded(
                 child: Container(
                   width: double.infinity,
-                  padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
-                  decoration: const BoxDecoration(color: _catalogPurple),
+                  padding: const EdgeInsets.all(15),
+                  decoration: const BoxDecoration(color: Color(0xFF603D92)),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.start,
