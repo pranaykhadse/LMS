@@ -380,13 +380,13 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
     final title = groupName.trim().isEmpty ? 'Courses' : '$groupName Courses';
     return SliverPadding(
-      padding: EdgeInsets.fromLTRB(isWide ? 48 : 27, 14, isWide ? 48 : 27, 12),
+      padding: EdgeInsets.fromLTRB(isWide ? 48 : 27, 14, isWide ? 48 : 27, 20),
       sliver: SliverToBoxAdapter(
         child: Text(
           title,
-          style: const TextStyle(
-            color: _catalogPink,
-            fontSize: 17,
+          style: GoogleFonts.roboto(
+            color: const Color(0xFFA20067),
+            fontSize: 24,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1291,10 +1291,10 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                     widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: GoogleFonts.roboto(
                       color: Colors.white,
-                      fontSize: isWide ? 13 : 15,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
                       height: 1.2,
                     ),
                   ),
@@ -1311,7 +1311,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                               arguments: widget.course.offlineCourse,
                             ),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: Size.fromHeight(isWide ? 34 : 42),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                         backgroundColor: const Color(0xFF433FA0),
                         foregroundColor: Colors.white,
                         elevation: 0,
@@ -1319,9 +1319,9 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                           borderRadius: BorderRadius.circular(isWide ? 7 : 10),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'View Course',
-                        style: TextStyle(fontWeight: FontWeight.w700),
+                        style: GoogleFonts.roboto(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
