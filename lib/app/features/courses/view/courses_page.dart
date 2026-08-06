@@ -1533,7 +1533,7 @@ class _CourseImage extends StatelessWidget {
     final fallback = Container(
       color: const Color(0xFFF1EFFB),
       alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, size: 58, color: _catalogPurple),
+      child: const Icon(Icons.school_outlined, size: 58, color: Color(0xFF693D94)),
     );
     if (url == null) return fallback;
     return Image.network(
