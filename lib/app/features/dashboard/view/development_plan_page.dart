@@ -74,9 +74,9 @@ class _Body extends StatelessWidget {
                         child: ElevatedButton.icon(
                           onPressed: () => _showAddPlanItemDialog(context, notifier),
                           icon: const Icon(Icons.add_rounded, size: 18),
-                          label: const Transform.translate(
-                            offset: Offset(0, -1),
-                            child: Text('Add Custom Plan Item'),
+                          label: Transform.translate(
+                            offset: const Offset(0, -1),
+                            child: const Text('Add Custom Plan Item'),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF693D94),
