@@ -684,7 +684,7 @@ class _NavItem extends StatelessWidget {
               style: GoogleFonts.inter(
                 color: color,
                 fontSize: 13,
-                fontWeight: FontWeight.w400,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
               ),
             ),
           ],
@@ -767,7 +767,7 @@ class _NavDropdown extends StatelessWidget {
               style: GoogleFonts.inter(
                 color: color,
                 fontSize: 13,
-                fontWeight: FontWeight.w400,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
               ),
             ),
             const SizedBox(width: 2),
