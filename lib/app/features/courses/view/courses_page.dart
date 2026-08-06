@@ -1309,7 +1309,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.roboto(
                           color: Colors.white,
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.w400,
                           height: 27 / 22,
                         ),
