@@ -387,7 +387,8 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
           style: GoogleFonts.roboto(
             color: const Color(0xFFA20067),
             fontSize: 24,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
+            height: 28 / 24,
           ),
         ),
       ),
