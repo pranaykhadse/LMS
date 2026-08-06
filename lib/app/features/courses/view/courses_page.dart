@@ -1311,8 +1311,8 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         style: GoogleFonts.roboto(
                           color: Colors.white,
                           fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          height: 1.2,
+                          fontWeight: FontWeight.w400,
+                          height: 27 / 22,
                         ),
                       ),
                       SizedBox(height: isWide ? 8 : 10),
@@ -1338,7 +1338,12 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                           ),
                           child: Text(
                             'View Course',
-                            style: GoogleFonts.roboto(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                            style: GoogleFonts.roboto(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              height: 21 / 16,
+                            ),
                           ),
                         ),
                       ),
