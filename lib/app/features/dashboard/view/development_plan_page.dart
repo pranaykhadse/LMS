@@ -11,8 +11,8 @@ import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
-import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/development_plan_view_model.dart';
 
@@ -109,8 +109,7 @@ class _Body extends StatelessWidget {
                           ),
                           crossAxisSpacing: 14,
                           mainAxisSpacing: 14,
-                          childAspectRatio: 0.62,
-                          mainAxisExtent: Responsive.isTablet(context) ? 290 : null,
+                          mainAxisExtent: Responsive.isTablet(context) ? 340 : 320,
                         ),
                         itemCount: state.courses.length,
                         itemBuilder: (ctx, i) =>
@@ -390,118 +389,41 @@ class _CourseCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled =
         !course.isNonCourse && isViewCourseDisabled(ref, course.id);
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: 110,
-            width: double.infinity,
-            child: Stack(
-              fit: StackFit.expand,
+    final hasInfo = course.displayRating || course.progress > 0;
+    return CourseGridCard(
+      imageUrl: course.logo,
+      title: course.name,
+      buttonLabel: course.isNonCourse ? 'Update' : 'View Course',
+      onPressed: course.isNonCourse
+          ? () => _showUpdatePlanItemDialog(context, notifier, course)
+          : viewDisabled
+              ? null
+              : () => Modular.to.pushNamed(
+                  CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+                ),
+      offlineCourse: course.isNonCourse
+          ? null
+          : Course(
+              id: course.id,
+              name: course.name,
+              logoLink: course.logo,
+              averageRating: course.averageRating,
+              ratingCount: course.ratingCount,
+              displayRating: course.displayRating ? 1 : 0,
+            ),
+      infoSection: hasInfo
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                course.logo != null
-                    ? Image.network(
-                        course.logo!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImgFallback(),
-                      )
-                    : const _ImgFallback(),
-                if (!course.isNonCourse)
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: OfflineCourseButton(
-                      course: Course(
-                        id: course.id,
-                        name: course.name,
-                        logoLink: course.logo,
-                        averageRating: course.averageRating,
-                        ratingCount: course.ratingCount,
-                        displayRating: course.displayRating ? 1 : 0,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    course.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _ink,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  if (course.displayRating) ...[
-                    _StarRow(
-                      rating: course.averageRating,
-                      count: course.ratingCount,
-                    ),
-                    const SizedBox(height: 6),
-                  ] else
-                    const SizedBox(height: 2),
-                  if (course.progress > 0) ...[
-                    _ProgressRow(progress: course.progress),
-                    const SizedBox(height: 6),
-                  ],
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: course.isNonCourse
-                          ? () => _showUpdatePlanItemDialog(context, notifier, course)
-                          : viewDisabled
-                              ? null
-                              : () => Modular.to.pushNamed(
-                                  CoursesModule.construct(
-                                    '${CoursesModule.detail}/${course.id}',
-                                  ),
-                                ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _purple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        minimumSize: const Size.fromHeight(32),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
-                      child: Text(course.isNonCourse ? 'Update' : 'View Course'),
-                    ),
-                  ),
+                if (course.displayRating) ...[
+                  _StarRow(rating: course.averageRating, count: course.ratingCount),
+                  if (course.progress > 0) const SizedBox(height: 6),
                 ],
-              ),
-            ),
-          ),
-        ],
-      ),
+                if (course.progress > 0) _ProgressRow(progress: course.progress),
+              ],
+            )
+          : null,
     );
   }
 }
@@ -566,20 +488,6 @@ class _StarRow extends StatelessWidget {
   }
 }
 
-// ─── Image fallback ───────────────────────────────────────────────────────────
-
-class _ImgFallback extends StatelessWidget {
-  const _ImgFallback();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF0ECFF),
-      alignment: Alignment.center,
-      child: const Icon(Icons.timeline_outlined, color: _purple, size: 54),
-    );
-  }
-}
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
