@@ -1287,52 +1287,55 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                     ],
                   ),
                 ),
-              Container(
-                padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
-                decoration: const BoxDecoration(color: _catalogPurple),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.roboto(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
+                  decoration: const BoxDecoration(color: _catalogPurple),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.roboto(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: isWide ? 8 : 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: viewDisabled
-                            ? null
-                            : () => Modular.to.pushNamed(
-                                CoursesModule.construct(
-                                  '${CoursesModule.detail}/${widget.course.id}',
+                      SizedBox(height: isWide ? 8 : 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: viewDisabled
+                              ? null
+                              : () => Modular.to.pushNamed(
+                                  CoursesModule.construct(
+                                    '${CoursesModule.detail}/${widget.course.id}',
+                                  ),
+                                  arguments: widget.course.offlineCourse,
                                 ),
-                                arguments: widget.course.offlineCourse,
-                              ),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                          backgroundColor: const Color(0xFF433FA0),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(isWide ? 7 : 10),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                            backgroundColor: const Color(0xFF433FA0),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(isWide ? 7 : 10),
+                            ),
+                          ),
+                          child: Text(
+                            'View Course',
+                            style: GoogleFonts.roboto(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                           ),
                         ),
-                        child: Text(
-                          'View Course',
-                          style: GoogleFonts.roboto(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
-                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
