@@ -1315,7 +1315,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                           height: 27 / 22,
                         ),
                       ),
-                      SizedBox(height: isWide ? 8 : 10),
+                      SizedBox(height: isWide ? 16 : 18),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -1328,7 +1328,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                                   arguments: widget.course.offlineCourse,
                                 ),
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                             backgroundColor: const Color(0xFF433FA0),
                             foregroundColor: Colors.white,
                             elevation: 0,
