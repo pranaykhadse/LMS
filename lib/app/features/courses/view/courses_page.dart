@@ -498,7 +498,7 @@ class _FilterPanel extends StatelessWidget {
             backgroundColor: _catalogCalendarBlue,
             foregroundColor: Colors.white,
             elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
@@ -512,9 +512,9 @@ class _FilterPanel extends StatelessWidget {
         if (wide) {
           return Row(
             children: [
-              SizedBox(width: 320, child: searchField),
+              Expanded(flex: 5, child: searchField),
               const SizedBox(width: 16),
-              Expanded(child: skillDropdown),
+              Expanded(flex: 3, child: skillDropdown),
               const SizedBox(width: 16),
               undoButton,
               const SizedBox(width: 16),
