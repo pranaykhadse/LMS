@@ -1315,7 +1315,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                           height: 27 / 22,
                         ),
                       ),
-                      SizedBox(height: isWide ? 16 : 18),
+                      SizedBox(height: isWide ? 26 : 28),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
