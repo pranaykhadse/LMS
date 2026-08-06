@@ -473,6 +473,7 @@ class _FilterPanel extends StatelessWidget {
           skills: skills,
           value: selectedSkillId,
           onChanged: onSkillChanged,
+          inline: wide,
         );
         final undoButton = SizedBox(
           width: 48,
@@ -656,40 +657,87 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
   }
 }
 
-class _SkillDropdown extends StatelessWidget {
+class _SkillDropdown extends StatefulWidget {
   const _SkillDropdown({
     required this.skills,
     required this.value,
     required this.onChanged,
+    this.inline = false,
   });
   final List<CatalogSkill> skills;
   final String? value;
   final ValueChanged<String?> onChanged;
 
+  /// Desktop reference shows an inline panel opening directly under the
+  /// field (like a web <select2>), rather than a mobile bottom sheet.
+  final bool inline;
+
+  @override
+  State<_SkillDropdown> createState() => _SkillDropdownState();
+}
+
+class _SkillDropdownState extends State<_SkillDropdown> {
+  final _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  bool _open = false;
+
+  @override
+  void dispose() {
+    _removeOverlay();
+    super.dispose();
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (_open && mounted) setState(() => _open = false);
+  }
+
+  void _openInline(BuildContext context, List<CatalogSkill> unique, CatalogSkill? selected) {
+    final box = context.findRenderObject() as RenderBox;
+    _overlayEntry = OverlayEntry(
+      builder: (context) => _SkillDropdownOverlay(
+        link: _layerLink,
+        width: box.size.width,
+        skills: unique,
+        selectedId: selected?.id,
+        onDismiss: _removeOverlay,
+        onSelected: (skill) {
+          widget.onChanged(skill?.id);
+          _removeOverlay();
+        },
+      ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _open = true);
+  }
+
+  Future<void> _openSheet(List<CatalogSkill> unique, CatalogSkill? selected) async {
+    final picked = await showModalBottomSheet<CatalogSkill?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _SkillPickerSheet(
+        skills: unique,
+        selectedId: selected?.id,
+      ),
+    );
+    if (picked != null) widget.onChanged(picked.id);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final unique =
-        <String, CatalogSkill>{
-          for (final skill in skills) skill.id: skill,
-        }.values.toList();
-    final selected = _selectedSkill(unique, value);
-    return InkWell(
-      onTap:
-          unique.isEmpty
-              ? null
-              : () async {
-                final picked = await showModalBottomSheet<CatalogSkill?>(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder:
-                      (context) => _SkillPickerSheet(
-                        skills: unique,
-                        selectedId: selected?.id,
-                      ),
-                );
-                if (picked != null) onChanged(picked.id);
-              },
+    final unique = <String, CatalogSkill>{
+      for (final skill in widget.skills) skill.id: skill,
+    }.values.toList();
+    final selected = _selectedSkill(unique, widget.value);
+
+    final field = InkWell(
+      onTap: unique.isEmpty
+          ? null
+          : () => widget.inline
+              ? (_open ? _removeOverlay() : _openInline(context, unique, selected))
+              : _openSheet(unique, selected),
       borderRadius: BorderRadius.circular(9),
       child: InputDecorator(
         decoration: _fieldDecoration(
@@ -702,15 +750,18 @@ class _SkillDropdown extends StatelessWidget {
               if (selected != null)
                 IconButton(
                   tooltip: 'Clear',
-                  onPressed: () => onChanged(null),
+                  onPressed: () {
+                    widget.onChanged(null);
+                    _removeOverlay();
+                  },
                   icon: const Icon(
                     Icons.close_rounded,
                     color: _catalogMuted,
                     size: 20,
                   ),
                 ),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
+              Icon(
+                _open ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
                 color: _catalogMuted,
               ),
               const SizedBox(width: 8),
@@ -727,6 +778,141 @@ class _SkillDropdown extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    return CompositedTransformTarget(link: _layerLink, child: field);
+  }
+}
+
+class _SkillDropdownOverlay extends StatefulWidget {
+  const _SkillDropdownOverlay({
+    required this.link,
+    required this.width,
+    required this.skills,
+    required this.selectedId,
+    required this.onDismiss,
+    required this.onSelected,
+  });
+  final LayerLink link;
+  final double width;
+  final List<CatalogSkill> skills;
+  final String? selectedId;
+  final VoidCallback onDismiss;
+  final ValueChanged<CatalogSkill?> onSelected;
+
+  @override
+  State<_SkillDropdownOverlay> createState() => _SkillDropdownOverlayState();
+}
+
+class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
+  final _queryController = TextEditingController();
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _queryController.text.trim().toLowerCase();
+    final filtered = widget.skills
+        .where((skill) => skill.name.toLowerCase().contains(query))
+        .toList();
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: widget.onDismiss,
+          ),
+        ),
+        CompositedTransformFollower(
+          link: widget.link,
+          showWhenUnlinked: false,
+          targetAnchor: Alignment.bottomLeft,
+          followerAnchor: Alignment.topLeft,
+          offset: const Offset(0, 4),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 6,
+              borderRadius: BorderRadius.circular(4),
+              child: Container(
+                width: widget.width,
+                constraints: const BoxConstraints(maxHeight: 340),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFE3E8EF)),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: TextField(
+                        controller: _queryController,
+                        autofocus: true,
+                        onChanged: (_) => setState(() {}),
+                        style: GoogleFonts.roboto(fontSize: 15, color: const Color(0xFF495057)),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(2),
+                            borderSide: const BorderSide(color: Colors.black87),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(2),
+                            borderSide: const BorderSide(color: Colors.black87),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(2),
+                            borderSide: const BorderSide(color: Colors.black87, width: 1.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Flexible(
+                      child: filtered.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text('No matching filters found.'),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final skill = filtered[index];
+                                final selected = skill.id == widget.selectedId;
+                                return InkWell(
+                                  onTap: () => widget.onSelected(skill),
+                                  child: Container(
+                                    width: double.infinity,
+                                    color: selected ? const Color(0xFF5B8DEF) : Colors.transparent,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    child: Text(
+                                      skill.name,
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 15,
+                                        color: selected ? Colors.white : const Color(0xFF495057),
+                                        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
