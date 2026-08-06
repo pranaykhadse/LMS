@@ -29,7 +29,8 @@ const _catalogPink = Color(0xFFB0006D);
 const _catalogInk = Color(0xFF172033);
 const _catalogMuted = Color(0xFF7C879D);
 const _catalogBackground = Color(0xFFF4F7F8);
-const _catalogCalendarBlue = Color(0xFF3454D1);
+const _catalogCalendarBlue = Color(0xFF5457C1);
+const _catalogUndoBlue = Color(0xFF5457C1);
 
 int _catalogColumns(double width) {
   if (width >= 900) return 4;
@@ -456,176 +457,88 @@ class _FilterPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0B172033),
-            blurRadius: 20,
-            offset: Offset(0, 7),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 720;
+        final searchField = _CatalogField(
+          controller: searchController,
+          hint: offline ? "You're offline" : 'Search',
+          showClear: true,
+          showLeadingIcon: true,
+          enabled: !offline,
+          onSubmitted: (_) => onApply(),
+        );
+        final skillDropdown = _SkillDropdown(
+          skills: skills,
+          value: selectedSkillId,
+          onChanged: onSkillChanged,
+        );
+        final undoButton = SizedBox(
+          width: 48,
+          height: 42,
+          child: ElevatedButton(
+            onPressed: offline ? null : onReset,
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              backgroundColor: _catalogUndoBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            child: const Icon(Icons.undo_rounded, size: 18),
           ),
-        ],
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth >= 720;
-          final fields = <Widget>[
-            _CatalogField(
-              controller: searchController,
-              hint: offline ? "You're offline" : 'Search Course',
-              showClear: true,
-              showLeadingIcon: false,
-              enabled: !offline,
-              onSubmitted: (_) => onApply(),
+        );
+        final calendarButton = ElevatedButton(
+          onPressed: onCalendarView,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _catalogCalendarBlue,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
             ),
-            _SkillDropdown(
-              skills: skills,
-              value: selectedSkillId,
-              onChanged: onSkillChanged,
-            ),
-          ];
+          ),
+          child: const Text(
+            'Calendar View',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+        );
 
-          if (wide) {
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  SizedBox(width: 230, child: fields[0]),
-                  const SizedBox(width: 12),
-                  SizedBox(width: 240, child: fields[1]),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: 56,
-                    height: 42,
-                    child: OutlinedButton(
-                      onPressed: offline ? null : onReset,
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide.none,
-                        backgroundColor: _catalogBackground,
-                      ),
-                      child: const Icon(Icons.undo_rounded),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: 118,
-                    height: 42,
-                    child: ElevatedButton.icon(
-                      onPressed: offline ? null : onApply,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _catalogPurple,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                      ),
-                      icon: const Icon(Icons.search_rounded, size: 18),
-                      label: const Text(
-                        'Search',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    height: 42,
-                    child: ElevatedButton.icon(
-                      onPressed: onCalendarView,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _catalogCalendarBlue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                      ),
-                      icon: const Icon(Icons.calendar_month_rounded, size: 16),
-                      label: const Text(
-                        'Calendar View',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return Column(
+        if (wide) {
+          return Row(
             children: [
-              fields[0],
-              const SizedBox(height: 14),
-              fields[1],
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: offline ? null : onApply,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    backgroundColor: _catalogPurple,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  icon: const Icon(Icons.search_rounded, size: 20),
-                  label: const Text(
-                    'Search',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  SizedBox(
-                    width: 52,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: offline ? null : onReset,
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        backgroundColor: _catalogPurple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Icon(Icons.undo_rounded),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: onCalendarView,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        backgroundColor: _catalogCalendarBlue,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      icon: const Icon(Icons.calendar_month_rounded, size: 20),
-                      label: const Text(
-                        'Calendar View',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              SizedBox(width: 320, child: searchField),
+              const SizedBox(width: 16),
+              Expanded(child: skillDropdown),
+              const SizedBox(width: 16),
+              undoButton,
+              const SizedBox(width: 16),
+              SizedBox(height: 42, child: calendarButton),
             ],
           );
-        },
-      ),
+        }
+
+        return Column(
+          children: [
+            searchField,
+            const SizedBox(height: 14),
+            skillDropdown,
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                undoButton,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(height: 48, child: calendarButton),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1177,7 +1090,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
             bottom: 0,
             child: Container(
               padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
-              decoration: BoxDecoration(color: _catalogPurple.withValues(alpha: 0.93)),
+              decoration: const BoxDecoration(color: _catalogPurple),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
