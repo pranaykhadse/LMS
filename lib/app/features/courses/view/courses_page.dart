@@ -262,7 +262,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     crossAxisCount: columns,
                     crossAxisSpacing: width >= 760 ? 28 : 18,
                     mainAxisSpacing: width >= 760 ? 28 : 34,
-                    mainAxisExtent: width >= 760 ? 190 : 230,
+                    mainAxisExtent: width >= 760 ? 270 : 310,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _CatalogCourseCard(
@@ -408,7 +408,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               crossAxisCount: columns,
               crossAxisSpacing: width >= 760 ? 28 : 18,
               mainAxisSpacing: width >= 760 ? 28 : 34,
-              mainAxisExtent: width >= 760 ? 190 : 230,
+              mainAxisExtent: width >= 760 ? 320 : 360,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) => _CatalogCourseCard(
@@ -1253,10 +1253,90 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
         ],
       ),
       child: Stack(
-        fit: StackFit.expand,
         children: [
-          // Image fills the whole card
-          _CourseImage(url: widget.course.logo),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: isWide ? 140 : 160,
+                child: _CourseImage(url: widget.course.logo),
+              ),
+              if (widget.course.nextSession != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'The next available course begins on',
+                        style: GoogleFonts.roboto(
+                          color: const Color(0xFF767676),
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatNextSession(widget.course.nextSession!),
+                        style: GoogleFonts.roboto(
+                          color: const Color(0xFF484848),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Container(
+                padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
+                decoration: const BoxDecoration(color: _catalogPurple),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.roboto(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: isWide ? 8 : 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: viewDisabled
+                            ? null
+                            : () => Modular.to.pushNamed(
+                                CoursesModule.construct(
+                                  '${CoursesModule.detail}/${widget.course.id}',
+                                ),
+                                arguments: widget.course.offlineCourse,
+                              ),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                          backgroundColor: const Color(0xFF433FA0),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(isWide ? 7 : 10),
+                          ),
+                        ),
+                        child: Text(
+                          'View Course',
+                          style: GoogleFonts.roboto(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           if (membership.loaded)
             Positioned(
               top: 12,
@@ -1271,76 +1351,32 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
             left: 12,
             child: OfflineCourseButton(course: widget.course.offlineCourse),
           ),
-          // Title + View Course overlaid on the bottom of the image
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
-              decoration: const BoxDecoration(color: _catalogPurple),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // The catalog API has no per-course enrollment flag, and a
-                  // session date shouldn't be shown for a course the
-                  // learner hasn't necessarily enrolled in yet - removed
-                  // rather than risk showing it for an unenrolled course.
-                  Text(
-                    widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.roboto(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      height: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: isWide ? 8 : 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: viewDisabled
-                          ? null
-                          : () => Modular.to.pushNamed(
-                              CoursesModule.construct(
-                                '${CoursesModule.detail}/${widget.course.id}',
-                              ),
-                              arguments: widget.course.offlineCourse,
-                            ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                        backgroundColor: const Color(0xFF433FA0),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(isWide ? 7 : 10),
-                        ),
-                      ),
-                      child: Text(
-                        'View Course',
-                        style: GoogleFonts.roboto(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Overlay covers the full card (image + text area)
+          // Overlay covers the full card
           if (_showOverlay)
-            _DevPlanOverlay(
-              isInPlan: isInPlan,
-              isBusy: _isBusy,
-              onYes: () => _handleDevPlanAction(context, isInPlan),
-              onNo: () => setState(() => _showOverlay = false),
+            Positioned.fill(
+              child: _DevPlanOverlay(
+                isInPlan: isInPlan,
+                isBusy: _isBusy,
+                onYes: () => _handleDevPlanAction(context, isInPlan),
+                onNo: () => setState(() => _showOverlay = false),
+              ),
             ),
         ],
       ),
     );
   }
+}
+
+String _formatNextSession(DateTime dt) {
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final hourStr = hour12.toString().padLeft(2, '0');
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+  return '${months[dt.month - 1]} ${dt.day}, $hourStr:$minute $ampm';
 }
 
 class _DevPlanButton extends StatelessWidget {
