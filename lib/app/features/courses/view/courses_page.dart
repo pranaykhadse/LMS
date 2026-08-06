@@ -691,7 +691,7 @@ class _SkillDropdown extends StatelessWidget {
       borderRadius: BorderRadius.circular(9),
       child: InputDecorator(
         decoration: _fieldDecoration(
-          'Search Skills or Behavior',
+          'Skills or Behavior',
           showLeadingIcon: false,
         ).copyWith(
           suffixIcon: Row(
@@ -716,7 +716,7 @@ class _SkillDropdown extends StatelessWidget {
           ),
         ),
         child: Text(
-          selected?.name ?? 'Search Skills or Behavior',
+          selected?.name ?? 'Skills or Behavior',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
