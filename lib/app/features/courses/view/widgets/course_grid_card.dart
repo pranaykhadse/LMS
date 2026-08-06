@@ -118,14 +118,17 @@ class CourseGridCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(7),
                       ),
                     ),
-                    child: Text(
-                      buttonLabel,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.roboto(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        height: 21 / 16,
+                    child: Transform.translate(
+                      offset: const Offset(0, -1),
+                      child: Text(
+                        buttonLabel,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.roboto(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          height: 21 / 16,
+                        ),
                       ),
                     ),
                   ),
