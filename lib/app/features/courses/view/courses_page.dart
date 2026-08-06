@@ -1301,8 +1301,6 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                   padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
                   decoration: const BoxDecoration(color: Color(0xFF603D92)),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.start,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
@@ -1316,7 +1314,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                           height: 27 / 22,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const Spacer(),
                       OutlinedButton(
                         onPressed: viewDisabled
                             ? null
@@ -1327,7 +1325,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                                 arguments: widget.course.offlineCourse,
                               ),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 8),
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white),
                           shape: RoundedRectangleBorder(
