@@ -262,7 +262,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     crossAxisCount: columns,
                     crossAxisSpacing: width >= 760 ? 28 : 18,
                     mainAxisSpacing: width >= 760 ? 28 : 34,
-                    mainAxisExtent: width >= 760 ? 375 : 410,
+                    mainAxisExtent: width >= 760 ? 335 : 360,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _CatalogCourseCard(
@@ -409,7 +409,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               crossAxisCount: columns,
               crossAxisSpacing: width >= 760 ? 28 : 18,
               mainAxisSpacing: width >= 760 ? 28 : 34,
-              mainAxisExtent: width >= 760 ? 375 : 410,
+              mainAxisExtent: width >= 760 ? 335 : 360,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) => _CatalogCourseCard(
@@ -1316,7 +1316,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                           height: 27 / 22,
                         ),
                       ),
-                      SizedBox(height: isWide ? 26 : 28),
+                      const SizedBox(height: 10),
                       OutlinedButton(
                         onPressed: viewDisabled
                             ? null
@@ -1327,7 +1327,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                                 arguments: widget.course.offlineCourse,
                               ),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white),
                           shape: RoundedRectangleBorder(
