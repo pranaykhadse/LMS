@@ -671,8 +671,8 @@ class _ContinueLearningItem extends ConsumerWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
           child: SizedBox(
-            width: 155,
-            height: 175,
+            width: 190,
+            height: 210,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -1073,8 +1073,6 @@ class _OverallProgressCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
@@ -1091,29 +1089,33 @@ class _OverallProgressCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
+          Expanded(
             child: Center(
-              child: Text(
-                '$overall%',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 60,
-                  fontWeight: FontWeight.w800,
-                  height: 1,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$overall%',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 60,
+                      fontWeight: FontWeight.w800,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: overall / 100,
+                      minHeight: 8,
+                      backgroundColor: Colors.white24,
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: overall / 100,
-              minHeight: 8,
-              backgroundColor: Colors.white24,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ),
         ],
