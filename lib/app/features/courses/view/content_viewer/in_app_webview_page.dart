@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
 
 const _webviewPurple = FigmaTokens.primaryPurple;
@@ -138,10 +139,16 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: onRetry,
-              style: ElevatedButton.styleFrom(backgroundColor: _webviewPurple, foregroundColor: Colors.white),
-              child: const Text('Try Again'),
+            HoverBuilder(
+              builder: (context, hovering) => ElevatedButton(
+                onPressed: onRetry,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      hovering ? FigmaTokens.purpleHover : _webviewPurple,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Try Again'),
+              ),
             ),
           ],
         ),

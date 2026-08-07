@@ -6,6 +6,7 @@ import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
@@ -72,23 +73,26 @@ class _Body extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _showAddPlanItemDialog(context, notifier),
-                          icon: const Icon(Icons.add_rounded, size: 18),
-                          label: Transform.translate(
-                            offset: const Offset(0, -1),
-                            child: const Text('Add Custom Plan Item'),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _purple,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            minimumSize: const Size(0, 40),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                        child: HoverBuilder(
+                          builder: (context, hovering) => ElevatedButton.icon(
+                            onPressed: () => _showAddPlanItemDialog(context, notifier),
+                            icon: const Icon(Icons.add_rounded, size: 18),
+                            label: Transform.translate(
+                              offset: const Offset(0, -1),
+                              child: const Text('Add Custom Plan Item'),
                             ),
-                            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  hovering ? FigmaTokens.purpleHover : _purple,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              minimumSize: const Size(0, 40),
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                            ),
                           ),
                         ),
                       ),
@@ -231,23 +235,26 @@ class _AddPlanItemDialogState extends State<_AddPlanItemDialog> {
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _purple,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  disabledBackgroundColor: _purple.withValues(alpha: 0.6),
-                  minimumSize: const Size(0, 44),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              child: HoverBuilder(
+                builder: (context, hovering) => ElevatedButton(
+                  onPressed: _submitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        hovering ? FigmaTokens.purpleHover : _purple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    disabledBackgroundColor: _purple.withValues(alpha: 0.6),
+                    minimumSize: const Size(0, 44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: _submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Add', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
-                child: _submitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Add', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             ),
           ],
@@ -356,23 +363,26 @@ class _UpdatePlanItemDialogState extends State<_UpdatePlanItemDialog> {
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _purple,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  disabledBackgroundColor: _purple.withValues(alpha: 0.6),
-                  minimumSize: const Size(0, 44),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              child: HoverBuilder(
+                builder: (context, hovering) => ElevatedButton(
+                  onPressed: _submitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        hovering ? FigmaTokens.purpleHover : _purple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    disabledBackgroundColor: _purple.withValues(alpha: 0.6),
+                    minimumSize: const Size(0, 44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: _submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Update', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
-                child: _submitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Update', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             ),
           ],

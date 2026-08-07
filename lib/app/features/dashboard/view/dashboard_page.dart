@@ -8,6 +8,7 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -1418,21 +1419,24 @@ class _RequiredForYouCard extends StatelessWidget {
             ],
             const SizedBox(height: 18),
             Center(
-              child: ElevatedButton(
-                onPressed: () => Modular.to.pushNamed(
-                  CoursesModule.construct(CoursesModule.requiredCourses),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _purple,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+              child: HoverBuilder(
+                builder: (context, hovering) => ElevatedButton(
+                  onPressed: () => Modular.to.pushNamed(
+                    CoursesModule.construct(CoursesModule.requiredCourses),
                   ),
-                  textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14.4),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        hovering ? FigmaTokens.purpleHover : _purple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14.4),
+                  ),
+                  child: const Text('View All Required Courses'),
                 ),
-                child: const Text('View All Required Courses'),
               ),
             ),
           ],

@@ -6,6 +6,7 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/courses/model/calendar_event.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -728,29 +729,32 @@ class _EventDetailsDialog extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: viewDisabled
-                        ? null
-                        : () {
-                            Navigator.pop(context);
-                            Modular.to.pushNamed(
-                              CoursesModule.construct(
-                                '${CoursesModule.detail}/${event.courseId}',
-                              ),
-                            );
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _calPurple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  HoverBuilder(
+                    builder: (context, hovering) => ElevatedButton(
+                      onPressed: viewDisabled
+                          ? null
+                          : () {
+                              Navigator.pop(context);
+                              Modular.to.pushNamed(
+                                CoursesModule.construct(
+                                  '${CoursesModule.detail}/${event.courseId}',
+                                ),
+                              );
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            hovering ? FigmaTokens.purpleHover : _calPurple,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                    ),
-                    child: const Text(
-                      'View Course',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                      child: const Text(
+                        'View Course',
+                        style: TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ],

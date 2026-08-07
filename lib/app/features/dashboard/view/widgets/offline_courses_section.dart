@@ -7,6 +7,7 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
@@ -175,19 +176,22 @@ class _OfflineCourseCard extends StatelessWidget {
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Modular.to.pushNamed(
-                        CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+                    child: HoverBuilder(
+                      builder: (context, hovering) => ElevatedButton(
+                        onPressed: () => Modular.to.pushNamed(
+                          CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              hovering ? FigmaTokens.purpleHover : _offlinePurple,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          minimumSize: const Size.fromHeight(32),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                        ),
+                        child: const Text('View Course'),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _offlinePurple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        minimumSize: const Size.fromHeight(32),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-                      ),
-                      child: const Text('View Course'),
                     ),
                   ),
                 ],

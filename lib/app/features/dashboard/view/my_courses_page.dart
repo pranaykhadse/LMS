@@ -5,6 +5,7 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -448,23 +449,26 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: viewDisabled
-                        ? null
-                        : () => Modular.to.pushNamed(
-                            CoursesModule.construct(
-                              '${CoursesModule.detail}/${course.courseId}',
+                  child: HoverBuilder(
+                    builder: (context, hovering) => ElevatedButton(
+                      onPressed: viewDisabled
+                          ? null
+                          : () => Modular.to.pushNamed(
+                              CoursesModule.construct(
+                                '${CoursesModule.detail}/${course.courseId}',
+                              ),
                             ),
-                          ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _purple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      minimumSize: const Size.fromHeight(44),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            hovering ? FigmaTokens.purpleHover : _purple,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        minimumSize: const Size.fromHeight(44),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                      ),
+                      child: const Text('View Course'),
                     ),
-                    child: const Text('View Course'),
                   ),
                 ),
               ],

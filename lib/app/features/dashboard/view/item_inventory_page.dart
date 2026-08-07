@@ -5,6 +5,7 @@ import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
@@ -135,19 +136,22 @@ class _Body extends ConsumerWidget {
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 36,
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const RedeemHistoryPage()),
-                    ),
-                    icon: const Icon(Icons.history_rounded, size: 16),
-                    label: const Text('Redeem History'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _purple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  child: HoverBuilder(
+                    builder: (context, hovering) => ElevatedButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const RedeemHistoryPage()),
+                      ),
+                      icon: const Icon(Icons.history_rounded, size: 16),
+                      label: const Text('Redeem History'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            hovering ? FigmaTokens.purpleHover : _purple,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                      ),
                     ),
                   ),
                 ),
@@ -183,18 +187,21 @@ class _Body extends ConsumerWidget {
                     SizedBox(
                       width: 44,
                       height: 44,
-                      child: ElevatedButton(
-                        onPressed: offline ? null : onSearch,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _purple,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      child: HoverBuilder(
+                        builder: (context, hovering) => ElevatedButton(
+                          onPressed: offline ? null : onSearch,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                hovering ? FigmaTokens.purpleHover : _purple,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
+                          child: const Icon(Icons.search_rounded, size: 20),
                         ),
-                        child: const Icon(Icons.search_rounded, size: 20),
                       ),
                     ),
                   ],
@@ -469,44 +476,47 @@ class _ItemCard extends StatelessWidget {
                   child: Consumer(
                     builder: (context, ref, _) {
                       final isOnline = watchIsOnline(ref);
-                      return ElevatedButton(
-                        onPressed: item.canRedeem &&
-                                !item.isRedeemed &&
-                                !isRedeeming &&
-                                isOnline
-                            ? onRedeem
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: const Size(0, 32),
-                          backgroundColor: _purple,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: const Color(0xFFB0AFD4),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                      return HoverBuilder(
+                        builder: (context, hovering) => ElevatedButton(
+                          onPressed: item.canRedeem &&
+                                  !item.isRedeemed &&
+                                  !isRedeeming &&
+                                  isOnline
+                              ? onRedeem
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(0, 32),
+                            backgroundColor:
+                                hovering ? FigmaTokens.purpleHover : _purple,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: const Color(0xFFB0AFD4),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
+                          child: isRedeeming
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  item.isRedeemed
+                                      ? 'Redeemed'
+                                      : (!isOnline && item.canRedeem
+                                          ? 'Offline'
+                                          : 'Redeem'),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                         ),
-                        child: isRedeeming
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                item.isRedeemed
-                                    ? 'Redeemed'
-                                    : (!isOnline && item.canRedeem
-                                        ? 'Offline'
-                                        : 'Redeem'),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
                       );
                     },
                   ),
@@ -781,41 +791,44 @@ class _RedeemDialogState extends State<_RedeemDialog> {
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submitting
-                      ? null
-                      : () async {
-                          if (!_formKey.currentState!.validate()) return;
-                          setState(() => _submitting = true);
-                          await widget.onConfirm(
-                            _addressCtrl.text.trim(),
-                            _noteCtrl.text.trim(),
-                          );
-                          if (mounted) setState(() => _submitting = false);
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _purple,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    disabledBackgroundColor: _purple.withValues(alpha: 0.6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                child: HoverBuilder(
+                  builder: (context, hovering) => ElevatedButton(
+                    onPressed: _submitting
+                        ? null
+                        : () async {
+                            if (!_formKey.currentState!.validate()) return;
+                            setState(() => _submitting = true);
+                            await widget.onConfirm(
+                              _addressCtrl.text.trim(),
+                              _noteCtrl.text.trim(),
+                            );
+                            if (mounted) setState(() => _submitting = false);
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          hovering ? FigmaTokens.purpleHover : _purple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      disabledBackgroundColor: _purple.withValues(alpha: 0.6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      minimumSize: const Size(0, 44),
                     ),
-                    minimumSize: const Size(0, 44),
-                  ),
-                  child: _submitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                    child: _submitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Confirm',
+                            style: TextStyle(fontWeight: FontWeight.w700),
                           ),
-                        )
-                      : const Text(
-                          'Confirm',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
+                  ),
                 ),
               ),
             ],

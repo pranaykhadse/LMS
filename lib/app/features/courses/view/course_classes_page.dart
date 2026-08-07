@@ -9,6 +9,7 @@ import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
@@ -482,41 +483,44 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
           const SizedBox(height: 28),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: (_enrolling || _cancelling)
-                  ? null
-                  : () {
-                      if (detail.isEnrolled) {
-                        _showCancelConfirmationDialog(context, onConfirm: _cancel);
-                      } else {
-                        _enroll();
-                      }
-                    },
-              icon: (_enrolling || _cancelling)
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Icon(Icons.app_registration_rounded, size: 18),
-              label: Text(
-                _enrolling
-                    ? 'Enrolling…'
-                    : _cancelling
-                        ? 'Cancelling…'
-                        : detail.primaryAction,
-              ),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(47),
-                backgroundColor: _detailPurple,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+            child: HoverBuilder(
+              builder: (context, hovering) => ElevatedButton.icon(
+                onPressed: (_enrolling || _cancelling)
+                    ? null
+                    : () {
+                        if (detail.isEnrolled) {
+                          _showCancelConfirmationDialog(context, onConfirm: _cancel);
+                        } else {
+                          _enroll();
+                        }
+                      },
+                icon: (_enrolling || _cancelling)
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.app_registration_rounded, size: 18),
+                label: Text(
+                  _enrolling
+                      ? 'Enrolling…'
+                      : _cancelling
+                          ? 'Cancelling…'
+                          : detail.primaryAction,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(47),
+                  backgroundColor:
+                      hovering ? FigmaTokens.purpleHover : _detailPurple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  textStyle: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),
@@ -1105,19 +1109,23 @@ class _OnlineActionButton extends ConsumerWidget {
     final isOnline = _watchIsOnline(ref);
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: isOnline ? onPressed : null,
-        icon: Icon(isOnline ? icon : Icons.cloud_off_rounded, size: 17),
-        label: Text(isOnline ? label : 'Internet required'),
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: isOnline ? _detailPurple : Colors.grey.shade400,
-          disabledBackgroundColor: Colors.grey.shade400,
-          disabledForegroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(39),
-          elevation: 0,
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: HoverBuilder(
+        builder: (context, hovering) => ElevatedButton.icon(
+          onPressed: isOnline ? onPressed : null,
+          icon: Icon(isOnline ? icon : Icons.cloud_off_rounded, size: 17),
+          label: Text(isOnline ? label : 'Internet required'),
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: !isOnline
+                ? Colors.grey.shade400
+                : (hovering ? FigmaTokens.purpleHover : _detailPurple),
+            disabledBackgroundColor: Colors.grey.shade400,
+            disabledForegroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(39),
+            elevation: 0,
+            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
         ),
       ),
     );
@@ -1145,17 +1153,20 @@ class _EnrollActionButton extends ConsumerWidget {
     if (!isEnrolled) {
       return SizedBox(
         width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () => _showNotEnrolledDialog(context),
-          icon: Icon(icon, size: 17),
-          label: Text(label),
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: _detailPurple,
-            minimumSize: const Size.fromHeight(39),
-            elevation: 0,
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: HoverBuilder(
+          builder: (context, hovering) => ElevatedButton.icon(
+            onPressed: () => _showNotEnrolledDialog(context),
+            icon: Icon(icon, size: 17),
+            label: Text(label),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor:
+                  hovering ? FigmaTokens.purpleHover : _detailPurple,
+              minimumSize: const Size.fromHeight(39),
+              elevation: 0,
+              textStyle: const TextStyle(fontWeight: FontWeight.w800),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
           ),
         ),
       );
@@ -1578,16 +1589,19 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
         const SizedBox(height: 18),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => setState(() => _confirming = true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _detailPurple,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              minimumSize: const Size(0, 46),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: HoverBuilder(
+            builder: (context, hovering) => ElevatedButton(
+              onPressed: () => setState(() => _confirming = true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    hovering ? FigmaTokens.purpleHover : _detailPurple,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size(0, 46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Register', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
-            child: const Text('Register', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ),
       ],
@@ -1625,22 +1639,25 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
               child: const Text('Previous', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
             const SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: _submitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _detailPurple,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            HoverBuilder(
+              builder: (context, hovering) => ElevatedButton(
+                onPressed: _submitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      hovering ? FigmaTokens.purpleHover : _detailPurple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: _submitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
-              child: _submitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -1912,18 +1929,21 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
         const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => setState(() => _step = index + 1),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _detailPurple,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              minimumSize: const Size(0, 46),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text(
-              isLastClass ? 'Register' : 'Next',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+          child: HoverBuilder(
+            builder: (context, hovering) => ElevatedButton(
+              onPressed: () => setState(() => _step = index + 1),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    hovering ? FigmaTokens.purpleHover : _detailPurple,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size(0, 46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(
+                isLastClass ? 'Register' : 'Next',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ),
@@ -1984,22 +2004,25 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
               child: const Text('Previous', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
             const SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: _submitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _detailPurple,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            HoverBuilder(
+              builder: (context, hovering) => ElevatedButton(
+                onPressed: _submitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      hovering ? FigmaTokens.purpleHover : _detailPurple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: _submitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
-              child: _submitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -2145,23 +2168,26 @@ void _showCancelConfirmationDialog(
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            onConfirm();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _detailPurple,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+        HoverBuilder(
+          builder: (context, hovering) => ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  hovering ? FigmaTokens.purpleHover : _detailPurple,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-          ),
-          child: const Text(
-            'Yes, Cancel',
-            style: TextStyle(fontWeight: FontWeight.w700),
+            child: const Text(
+              'Yes, Cancel',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ),
       ],

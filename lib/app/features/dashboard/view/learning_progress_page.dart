@@ -5,6 +5,7 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
@@ -63,17 +64,20 @@ class LearningProgressPage extends ConsumerWidget {
                   style: const TextStyle(color: _lpMuted, fontSize: 14),
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () => ref
-                      .read(LearningProgressViewModel.provider.notifier)
-                      .fetch(),
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Retry'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _lpPurple,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                HoverBuilder(
+                  builder: (context, hovering) => ElevatedButton.icon(
+                    onPressed: () => ref
+                        .read(LearningProgressViewModel.provider.notifier)
+                        .fetch(),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          hovering ? FigmaTokens.purpleHover : _lpPurple,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
                   ),
                 ),
               ],
@@ -481,28 +485,31 @@ class _ContinueLearningCard extends StatelessWidget {
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                final courseId = int.tryParse(info.courseId);
-                if (courseId != null) {
-                  Modular.to.pushNamed(
-                    CoursesModule.construct(
-                        '${CoursesModule.detail}/$courseId'),
-                  );
-                }
-              },
-              icon: const Icon(Icons.play_arrow_rounded, size: 18),
-              label: const Text(
-                'Resume Lesson',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _lpPurple,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(44),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
+            child: HoverBuilder(
+              builder: (context, hovering) => ElevatedButton.icon(
+                onPressed: () {
+                  final courseId = int.tryParse(info.courseId);
+                  if (courseId != null) {
+                    Modular.to.pushNamed(
+                      CoursesModule.construct(
+                          '${CoursesModule.detail}/$courseId'),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                label: const Text(
+                  'Resume Lesson',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      hovering ? FigmaTokens.purpleHover : _lpPurple,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(44),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
+                ),
               ),
             ),
           ),
@@ -659,21 +666,24 @@ class _RequiredCoursesCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Modular.to.pushNamed(
-                  CoursesModule.construct(CoursesModule.requiredCourses),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _lpPurple,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(44),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'View All Required Courses',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+              child: HoverBuilder(
+                builder: (context, hovering) => ElevatedButton(
+                  onPressed: () => Modular.to.pushNamed(
+                    CoursesModule.construct(CoursesModule.requiredCourses),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        hovering ? FigmaTokens.purpleHover : _lpPurple,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(44),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'View All Required Courses',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             ),

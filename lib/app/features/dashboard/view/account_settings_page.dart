@@ -5,6 +5,7 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
@@ -417,39 +418,45 @@ class _ProfileHeaderCard extends StatelessWidget {
                   child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 4),
-                ElevatedButton(
-                  onPressed: isSaving ? null : onSave,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _asPurple,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                HoverBuilder(
+                  builder: (context, hovering) => ElevatedButton(
+                    onPressed: isSaving ? null : onSave,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          hovering ? FigmaTokens.purpleHover : _asPurple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Save'),
                   ),
-                  child: isSaving
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Save'),
                 ),
               ] else
-                ElevatedButton.icon(
-                  onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text('Edit'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _asPurple,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                HoverBuilder(
+                  builder: (context, hovering) => ElevatedButton.icon(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: const Text('Edit'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          hovering ? FigmaTokens.purpleHover : _asPurple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
                   ),
                 ),
             ],
@@ -672,22 +679,25 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _asPurple,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    minimumSize: const Size(90, 42),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                HoverBuilder(
+                  builder: (context, hovering) => ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          hovering ? FigmaTokens.purpleHover : _asPurple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(90, 42),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Okay', style: TextStyle(fontWeight: FontWeight.w700)),
                   ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Okay', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
