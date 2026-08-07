@@ -19,6 +19,7 @@ import 'package:lms/app/features/courses/view/content_view_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
+import 'package:lms/app/features/courses/view/widgets/class_status_chip.dart';
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
@@ -920,7 +921,15 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             const SizedBox(height: 12),
           ],
           if (item.status.isNotEmpty) ...[
-            _StatusChip(status: item.status),
+            item.classId != null
+                ? ClassStatusChip(
+                    courseClass: CourseClass(
+                      courseId: widget.courseId.toString(),
+                      classId: item.classId!.toString(),
+                    ),
+                    fallbackStatus: item.status,
+                  )
+                : _StatusChip(status: item.status),
             const SizedBox(height: 12),
           ],
           const SizedBox(height: 1),
