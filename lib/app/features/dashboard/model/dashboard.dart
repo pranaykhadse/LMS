@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
-
 class DashboardResponse {
   const DashboardResponse({
     required this.ongoingCourses,
@@ -14,15 +12,6 @@ class DashboardResponse {
     final payload =
         raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
     final ongoingRaw = payload['ongoing_courses'] as List? ?? [];
-    // TEMP: to check whether a learning-event-type field (class_type/type/
-    // type_name/category etc.) is actually present in this response and
-    // just not being parsed yet, or genuinely isn't returned at all.
-    if (kDebugMode && ongoingRaw.isNotEmpty) {
-      debugPrint('[DashboardResponse] first ongoing_courses entry raw keys: '
-          '${(ongoingRaw.first as Map).keys.toList()}');
-      debugPrint('[DashboardResponse] first ongoing_courses entry raw: '
-          '${ongoingRaw.first}');
-    }
     return DashboardResponse(
       ongoingCourses:
           ongoingRaw

@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
-
 class CalendarViewResult {
   const CalendarViewResult({required this.totalEvents, required this.events});
 
@@ -8,13 +6,6 @@ class CalendarViewResult {
 
   factory CalendarViewResult.fromJson(Map<String, dynamic> json) {
     final rawEvents = json['payload'] is List ? json['payload'] as List : const [];
-    // TEMP: confirms whether "instructor" is really the right raw key for
-    // this endpoint (it's the key LearningEvent already uses for the
-    // course-detail page's own host display) — remove once verified.
-    if (kDebugMode && rawEvents.isNotEmpty) {
-      debugPrint('[CalendarViewResult] first event raw keys: '
-          '${(rawEvents.first as Map).keys.toList()}');
-    }
     return CalendarViewResult(
       totalEvents: _asInt(json['total_events']),
       events: rawEvents

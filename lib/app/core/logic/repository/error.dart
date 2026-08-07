@@ -23,7 +23,6 @@ void handelException(e) {
     }
     throw FetchDataException(e.toString());
   }
-  // log(e.message);
   switch (e.type) {
     case DioExceptionType.connectionTimeout:
       throw AppException(
