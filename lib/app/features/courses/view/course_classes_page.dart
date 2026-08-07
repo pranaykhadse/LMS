@@ -803,9 +803,13 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
   }
 
   /// Marks this Virtual Class as completed (POST
-  /// learning-event/learning-event-completion) as soon as the learner
-  /// watches or downloads its recording - matching the website, which
-  /// doesn't require a separate "mark complete" action for recordings.
+  /// learning-event/learning-event-completion) when the learner opens its
+  /// recording in an external browser - there's no way to track how much
+  /// they actually watch there, so open is the only signal available.
+  /// Downloading no longer marks it complete on its own; when the
+  /// recording is played in the in-app player instead, completion is
+  /// driven by actual watch progress (see VideoContentViewer's 30%
+  /// threshold) rather than this method.
   void _markRecordingWatched() {
     final classId = widget.item.classId;
     if (classId == null) return;
@@ -954,9 +958,12 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 ),
                 const SizedBox(height: 10),
               ],
-              // Recordings — Watch (browser) + Download (offline). Either
-              // action means the learner has watched the recording, so both
-              // mark the class completed (see _markRecordingWatched).
+              // Recordings — Watch (browser) or Download (offline) + play in
+              // the in-app player. Watching in the browser has no way to
+              // track progress, so that still marks the class completed on
+              // open; downloading no longer does - completion for the
+              // in-app player instead fires once 30% of the video has
+              // actually played (see VideoContentViewer).
               for (final recordingUrl in item.recordingUrls) ...[
                 _OnlineActionButton(
                   icon: Icons.play_circle_outline_rounded,
@@ -973,8 +980,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   icon: Icons.videocam_rounded,
                   courseClass: null,
                   fullWidth: true,
-                  onDownloadStart: _markRecordingWatched,
-                  builder: (ctx, file) => VideoContentViewer(file: file),
+                  builder: (ctx, file) => VideoContentViewer(
+                    file: file,
+                    courseId: widget.courseId.toString(),
+                    classId: item.classId?.toString(),
+                  ),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -1029,7 +1039,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   icon: Icons.videocam_rounded,
                   courseClass: null,
                   fullWidth: true,
-                  builder: (ctx, file) => VideoContentViewer(file: file),
+                  builder: (ctx, file) => VideoContentViewer(
+                    file: file,
+                    courseId: widget.courseId.toString(),
+                    classId: item.classId?.toString(),
+                  ),
                 )
               else
                 Align(
