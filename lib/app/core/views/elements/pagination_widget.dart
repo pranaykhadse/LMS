@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 
-const _purple = Color(0xFF693D94);
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
+const _purple = FigmaTokens.primaryPurple;
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
 
 class PaginationWidget extends StatelessWidget {
   const PaginationWidget({
@@ -56,7 +57,7 @@ class PaginationWidget extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     border: isCurrent
                         ? null
-                        : Border.all(color: const Color(0xFFDDE2EA)),
+                        : Border.all(color: FigmaTokens.cardBorders),
                   ),
                   child: Text(
                     '$p',
@@ -116,7 +117,7 @@ class _PagBtn extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: enabled ? const Color(0xFFDDE2EA) : const Color(0xFFEEF1F6),
+            color: enabled ? FigmaTokens.cardBorders : const Color(0xFFEEF1F6),
           ),
         ),
         child: Icon(

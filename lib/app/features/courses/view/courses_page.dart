@@ -10,6 +10,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -470,34 +471,40 @@ class _FilterPanel extends StatelessWidget {
         final undoButton = SizedBox(
           width: 48,
           height: 42,
-          child: ElevatedButton(
-            onPressed: offline ? null : onReset,
+          child: HoverBuilder(
+            builder: (context, hovering) => ElevatedButton(
+              onPressed: offline ? null : onReset,
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                backgroundColor:
+                    hovering ? FigmaTokens.purpleHover : _catalogUndoBlue,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              child: const Icon(Icons.undo_rounded, size: 18),
+            ),
+          ),
+        );
+        final calendarButton = HoverBuilder(
+          builder: (context, hovering) => ElevatedButton(
+            onPressed: onCalendarView,
             style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              backgroundColor: _catalogUndoBlue,
+              backgroundColor:
+                  hovering ? FigmaTokens.purpleHover : _catalogCalendarBlue,
               foregroundColor: Colors.white,
               elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
               ),
             ),
-            child: const Icon(Icons.undo_rounded, size: 18),
-          ),
-        );
-        final calendarButton = ElevatedButton(
-          onPressed: onCalendarView,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _catalogCalendarBlue,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
+            child: Text(
+              'Calendar View',
+              style: GoogleFonts.roboto(fontWeight: FontWeight.w700, fontSize: 16),
             ),
-          ),
-          child: Text(
-            'Calendar View',
-            style: GoogleFonts.roboto(fontWeight: FontWeight.w700, fontSize: 16),
           ),
         );
 
