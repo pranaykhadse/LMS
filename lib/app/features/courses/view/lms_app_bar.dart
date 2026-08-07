@@ -543,7 +543,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
       height: _desktopHeaderHeight,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFEDEFF3))),
+        border: Border(bottom: BorderSide(color: FigmaTokens.cardBorders)),
       ),
       padding: EdgeInsets.zero,
       child: Row(

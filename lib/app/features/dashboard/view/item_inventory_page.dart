@@ -174,11 +174,11 @@ class _Body extends ConsumerWidget {
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
+                            borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
+                            borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                           ),
                         ),
                       ),
@@ -456,7 +456,7 @@ class _ItemCard extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: const Size(0, 32),
-                      side: const BorderSide(color: Color(0xFFD0CFE8)),
+                      side: const BorderSide(color: FigmaTokens.cardBorders),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -633,7 +633,7 @@ class _ItemDetailDialog extends StatelessWidget {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD0CFE8)),
+                  side: const BorderSide(color: FigmaTokens.cardBorders),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -758,11 +758,11 @@ class _RedeemDialogState extends State<_RedeemDialog> {
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                   ),
                 ),
               ),
@@ -780,11 +780,11 @@ class _RedeemDialogState extends State<_RedeemDialog> {
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                   ),
                 ),
               ),

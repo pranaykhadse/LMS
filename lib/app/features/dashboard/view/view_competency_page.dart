@@ -133,7 +133,7 @@ class _Body extends StatelessWidget {
           ),
           SliverList.separated(
             itemCount: courses.length,
-            separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFEFF1F5)),
+            separatorBuilder: (_, __) => const Divider(height: 1, color: FigmaTokens.cardBorders),
             itemBuilder: (context, i) => _CourseRow(index: i + 1, course: courses[i]),
           ),
         ],

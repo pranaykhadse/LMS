@@ -224,11 +224,11 @@ class _AddPlanItemDialogState extends State<_AddPlanItemDialog> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                 ),
               ),
             ),
@@ -352,11 +352,11 @@ class _UpdatePlanItemDialogState extends State<_UpdatePlanItemDialog> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                 ),
               ),
             ),

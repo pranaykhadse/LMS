@@ -307,7 +307,7 @@ class _RedeemedItemDetailDialog extends StatelessWidget {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD0CFE8)),
+                  side: const BorderSide(color: FigmaTokens.cardBorders),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
                 ),

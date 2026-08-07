@@ -835,7 +835,7 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                 constraints: const BoxConstraints(maxHeight: 340),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border.all(color: const Color(0xFFE3E8EF)),
+                  border: Border.all(color: FigmaTokens.cardBorders),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Column(
@@ -1074,15 +1074,15 @@ InputDecoration _fieldDecoration(
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(4),
-        borderSide: const BorderSide(color: Color(0xFFE7E4FF)),
+        borderSide: const BorderSide(color: FigmaTokens.cardBorders),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(4),
-        borderSide: const BorderSide(color: Color(0xFFE7E4FF)),
+        borderSide: const BorderSide(color: FigmaTokens.cardBorders),
       ),
       disabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(4),
-        borderSide: const BorderSide(color: Color(0xFFE7E4FF)),
+        borderSide: const BorderSide(color: FigmaTokens.cardBorders),
       ),
     );
 

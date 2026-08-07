@@ -369,7 +369,7 @@ class _CourseProgressCard extends StatelessWidget {
           return Column(
             children: [
               if (i > 0)
-                const Divider(height: 1, color: Color(0xFFEEF0F5), indent: 16, endIndent: 16),
+                const Divider(height: 1, color: FigmaTokens.cardBorders, indent: 16, endIndent: 16),
               _CourseProgressRow(course: course),
             ],
           );
@@ -551,7 +551,7 @@ class _UpcomingSessionsCard extends StatelessWidget {
                 return Column(
                   children: [
                     if (i > 0)
-                      const Divider(height: 1, color: Color(0xFFEEF0F5)),
+                      const Divider(height: 1, color: FigmaTokens.cardBorders),
                     _SessionRow(session: s),
                   ],
                 );
@@ -656,12 +656,12 @@ class _RequiredCoursesCard extends StatelessWidget {
               children: [
                 if (i > 0)
                   const Divider(
-                      height: 1, color: Color(0xFFEEF0F5), indent: 16, endIndent: 16),
+                      height: 1, color: FigmaTokens.cardBorders, indent: 16, endIndent: 16),
                 _RequiredCourseRow(course: c),
               ],
             );
           }),
-          const Divider(height: 1, color: Color(0xFFEEF0F5)),
+          const Divider(height: 1, color: FigmaTokens.cardBorders),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: SizedBox(

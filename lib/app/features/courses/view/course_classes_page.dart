@@ -399,7 +399,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
               padding: const EdgeInsets.fromLTRB(17, 8, 10, 8),
               decoration: BoxDecoration(
                 color: const Color(0xFFF6F3FF),
-                border: Border.all(color: const Color(0xFFE5DFFF)),
+                border: Border.all(color: FigmaTokens.cardBorders),
                 borderRadius: BorderRadius.circular(30),
               ),
               child: Row(
@@ -565,7 +565,7 @@ class _DescriptionCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 28),
-          const Divider(color: Color(0xFFECEFF4)),
+          const Divider(color: FigmaTokens.cardBorders),
           const SizedBox(height: 16),
           const _SectionTitle('Learning Objectives'),
           if (detail.objective.isNotEmpty) ...[
@@ -636,7 +636,7 @@ class _SkillsCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF6F3FF),
-                            border: Border.all(color: const Color(0xFFE5DFFF)),
+                            border: Border.all(color: FigmaTokens.cardBorders),
                             borderRadius: BorderRadius.circular(22),
                           ),
                           child: Text(
@@ -877,7 +877,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
       padding: const EdgeInsets.fromLTRB(17, 16, 17, 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: const Color(0xFFEAEDEF)),
+        border: Border.all(color: FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(
@@ -906,7 +906,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             ),
           ],
           const SizedBox(height: 14),
-          const Divider(color: Color(0xFFECEFF4)),
+          const Divider(color: FigmaTokens.cardBorders),
           const SizedBox(height: 13),
           // Only show a session date once the learner is actually registered
           // for THIS class - showing one for a class they haven't
@@ -951,7 +951,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             const SizedBox(height: 12),
           ],
           const SizedBox(height: 1),
-          const Divider(color: Color(0xFFECEFF4)),
+          const Divider(color: FigmaTokens.cardBorders),
           if (item.showDetails || item.showAction || item.isEnrolledInClass) ...[
             const SizedBox(height: 18),
             if (item.showDetails)
@@ -963,7 +963,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   label: const Text('Details'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: _detailInk,
-                    side: const BorderSide(color: Color(0xFFDDE2EA)),
+                    side: const BorderSide(color: FigmaTokens.cardBorders),
                     minimumSize: const Size.fromHeight(39),
                     textStyle: const TextStyle(fontWeight: FontWeight.w800),
                     shape: RoundedRectangleBorder(
@@ -1295,7 +1295,7 @@ class _ClassLaunchCountdown extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: const Color(0xFFFAF9FF),
-        border: Border.all(color: const Color(0xFFE5DFFF)),
+        border: Border.all(color: FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text.rich(
@@ -1336,7 +1336,7 @@ class _TimeBox extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: const Color(0xFFFAF9FF),
-        border: Border.all(color: const Color(0xFFE5DFFF)),
+        border: Border.all(color: FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -1632,7 +1632,7 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
               onPressed: _submitting ? null : () => setState(() => _confirming = false),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _detailInk,
-                side: const BorderSide(color: Color(0xFFCBCBCB)),
+                side: const BorderSide(color: FigmaTokens.cardBorders),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               ),
@@ -1670,7 +1670,7 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE5DFFF)),
+        border: Border.all(color: FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -1688,7 +1688,7 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFECEFF4)),
+          const Divider(height: 1, color: FigmaTokens.cardBorders),
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1976,7 +1976,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
               ? Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE5DFFF)),
+                    border: Border.all(color: FigmaTokens.cardBorders),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Text(
@@ -1997,7 +1997,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                   : () => setState(() => _step = widget.classes.length - 1),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _detailInk,
-                side: const BorderSide(color: Color(0xFFCBCBCB)),
+                side: const BorderSide(color: FigmaTokens.cardBorders),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               ),
@@ -2044,7 +2044,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFE5DFFF)),
+          border: Border.all(color: FigmaTokens.cardBorders),
           borderRadius: BorderRadius.circular(10),
         ),
         child: const Text(
@@ -2056,7 +2056,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE5DFFF)),
+        border: Border.all(color: FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -2070,7 +2070,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFECEFF4)),
+          const Divider(height: 1, color: FigmaTokens.cardBorders),
           const SizedBox(height: 12),
           _sessionField('INSTRUCTOR', event.instructor.isEmpty ? '—' : event.instructor),
         ],
@@ -2157,7 +2157,7 @@ void _showCancelConfirmationDialog(
           onPressed: () => Navigator.pop(context),
           style: OutlinedButton.styleFrom(
             foregroundColor: _detailInk,
-            side: const BorderSide(color: Color(0xFFCBCBCB)),
+            side: const BorderSide(color: FigmaTokens.cardBorders),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -2303,7 +2303,7 @@ class _ClassDetailsDialog extends StatelessWidget {
                       style: const TextStyle(color: _detailMuted, height: 1.5),
                     ),
                     const SizedBox(height: 16),
-                    const Divider(color: Color(0xFFECEFF4)),
+                    const Divider(color: FigmaTokens.cardBorders),
                     const SizedBox(height: 16),
                   ],
                   if (item.description.isNotEmpty) ...[
@@ -2317,7 +2317,7 @@ class _ClassDetailsDialog extends StatelessWidget {
                   if (item.learningEvents.isNotEmpty) ...[
                     if (item.description.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      const Divider(color: Color(0xFFECEFF4)),
+                      const Divider(color: FigmaTokens.cardBorders),
                       const SizedBox(height: 16),
                     ],
                     const _DialogLabel('SCHEDULE'),
@@ -2363,7 +2363,7 @@ class _LearningEventCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFECEFF4)),
+        border: Border.all(color: FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -2389,7 +2389,7 @@ class _LearningEventCard extends StatelessWidget {
           ),
           if (event.instructor.isNotEmpty || event.location.isNotEmpty) ...[
             const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFECEFF4)),
+            const Divider(height: 1, color: FigmaTokens.cardBorders),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2415,7 +2415,7 @@ class _LearningEventCard extends StatelessWidget {
           ],
           if (event.instructions.isNotEmpty) ...[
             const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFECEFF4)),
+            const Divider(height: 1, color: FigmaTokens.cardBorders),
             const SizedBox(height: 12),
             _ScheduleField(label: 'INSTRUCTIONS', value: event.instructions),
           ],

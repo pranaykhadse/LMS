@@ -98,7 +98,7 @@ class AppDrawer extends ConsumerWidget {
                 ],
               ),
             ),
-            const Divider(height: 1, thickness: 1, color: Color(0xFFEDEFF3)),
+            const Divider(height: 1, thickness: 1, color: FigmaTokens.cardBorders),
             const SizedBox(height: 6),
             Expanded(
               child: SingleChildScrollView(

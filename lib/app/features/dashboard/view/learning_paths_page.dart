@@ -245,7 +245,7 @@ class _Body extends StatelessWidget {
               child: Column(
                 children: [
                   for (var i = 0; i < state.paths.length; i++) ...[
-                    if (i > 0) const Divider(height: 1, color: Color(0xFFEFF1F5)),
+                    if (i > 0) const Divider(height: 1, color: FigmaTokens.cardBorders),
                     _PathRow(index: i + 1, path: state.paths[i]),
                   ],
                 ],

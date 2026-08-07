@@ -349,7 +349,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                 label: const Text('Reset Password'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _asInk,
-                  side: const BorderSide(color: Color(0xFFE1E5EE)),
+                  side: const BorderSide(color: FigmaTokens.cardBorders),
                   minimumSize: const Size.fromHeight(46),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),

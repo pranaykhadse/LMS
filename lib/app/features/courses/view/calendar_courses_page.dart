@@ -442,7 +442,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
           child: Container(
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFE3E7EF)),
+              border: Border.all(color: FigmaTokens.cardBorders),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -457,8 +457,8 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                                 ? const Color(0xFFFFF6D9)
                                 : const Color(0xFFF7F8FB),
                             border: const Border(
-                              right: BorderSide(color: Color(0xFFE3E7EF)),
-                              bottom: BorderSide(color: Color(0xFFE3E7EF)),
+                              right: BorderSide(color: FigmaTokens.cardBorders),
+                              bottom: BorderSide(color: FigmaTokens.cardBorders),
                             ),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -488,7 +488,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                                   ? const Color(0xFFFFFBEF)
                                   : Colors.white,
                               border: const Border(
-                                right: BorderSide(color: Color(0xFFE3E7EF)),
+                                right: BorderSide(color: FigmaTokens.cardBorders),
                               ),
                             ),
                             padding: const EdgeInsets.all(4),
@@ -566,7 +566,7 @@ class _CalendarEventTile extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: Color(0xFFE9EDF4)),
+        side: const BorderSide(color: FigmaTokens.cardBorders),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -717,7 +717,7 @@ class _EventDetailsDialog extends ConsumerWidget {
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFD0CFE8)),
+                      side: const BorderSide(color: FigmaTokens.cardBorders),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
