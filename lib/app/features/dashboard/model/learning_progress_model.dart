@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
+
 class LearningProgressData {
   const LearningProgressData({
     required this.summary,
@@ -18,6 +20,14 @@ class LearningProgressData {
         json['payload'] is Map
             ? Map<String, dynamic>.from(json['payload'] as Map)
             : json;
+
+    // TEMP: to see the new field(s) the API is now returning here, so they
+    // can be added to this model and shown on the Dashboard - remove once
+    // identified.
+    if (kDebugMode) {
+      debugPrint('[LearningProgressData] raw payload keys: ${payload.keys.toList()}');
+      debugPrint('[LearningProgressData] raw payload: $payload');
+    }
 
     final rawSummary = payload['summary'] is Map ? payload['summary'] as Map : const {};
     final rawContinue = payload['continue_learning'] is Map ? payload['continue_learning'] as Map : null;
