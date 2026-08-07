@@ -418,11 +418,24 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                     SizedBox(
                       width: 36,
                       height: 36,
-                      child: CircularProgressIndicator(
-                        value: detail.progressPercentage,
-                        strokeWidth: 2.5,
-                        color: _detailPurple,
-                        backgroundColor: Colors.white,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: detail.progressPercentage,
+                            strokeWidth: 2.5,
+                            color: _detailPurple,
+                            backgroundColor: Colors.white,
+                          ),
+                          Text(
+                            '${(detail.progressPercentage * 100).round()}%',
+                            style: const TextStyle(
+                              color: _detailPurple,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
