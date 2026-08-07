@@ -9,6 +9,7 @@ import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/providers/shell_destination_provider.dart';
 import 'package:lms/app/core/views/elements/contact_links.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/logo.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
@@ -776,20 +777,29 @@ class _NavDropdown extends StatelessWidget {
             value: i,
             enabled: !items[i].disabled,
             padding: EdgeInsets.zero,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
-              child: Text(
-                items[i].label,
-                style: GoogleFonts.inter(
-                  color: items[i].disabled
-                      ? FigmaTokens.noteBodyText
-                      : (items[i].selected ? _navActive : _navDefault),
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-              ),
+            child: HoverBuilder(
+              builder: (context, hovering) {
+                final highlighted =
+                    !items[i].disabled && (hovering || items[i].selected);
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: highlighted ? FigmaTokens.badgeBackground : null,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    items[i].label,
+                    style: GoogleFonts.inter(
+                      color: items[i].disabled
+                          ? FigmaTokens.noteBodyText
+                          : (highlighted ? _navActive : _navDefault),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
       ],
