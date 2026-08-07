@@ -1,23 +1,46 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
+import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 
-class VideoContentViewer extends StatefulWidget {
-  const VideoContentViewer({super.key, required this.file});
+/// Threshold at which a video counts as "watched" and gets marked complete -
+/// matches the website's own completion rule, rather than requiring the
+/// learner to finish the whole video or take a separate action.
+const double _completionThreshold = 0.30;
+
+class VideoContentViewer extends ConsumerStatefulWidget {
+  const VideoContentViewer({
+    super.key,
+    required this.file,
+    this.courseId,
+    this.classId,
+  });
   final FileCacheState file;
+
+  /// When both are provided, playback position is watched and the class is
+  /// marked completed once 30% of the video has played - not on download
+  /// and not just on open. Omit for content with nothing to mark complete
+  /// against (e.g. a participant guide preview).
+  final String? courseId;
+  final String? classId;
+
   @override
-  State<VideoContentViewer> createState() => _VideoContentViewerState();
+  ConsumerState<VideoContentViewer> createState() => _VideoContentViewerState();
 }
 
-class _VideoContentViewerState extends State<VideoContentViewer> {
+class _VideoContentViewerState extends ConsumerState<VideoContentViewer> {
   late final Player _player;
   late final VideoController _controller;
   StreamSubscription<String>? _errorSub;
+  StreamSubscription<Duration>? _positionSub;
   String? _error;
   bool _mutedFallbackAttempted = false;
+  bool _completionSent = false;
 
   @override
   void initState() {
@@ -25,12 +48,14 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
     _player = Player();
     _controller = VideoController(_player);
     _errorSub = _player.stream.error.listen(_onPlayerError);
+    _positionSub = _player.stream.position.listen(_onPositionChanged);
     _initialize();
   }
 
   @override
   void dispose() {
     _errorSub?.cancel();
+    _positionSub?.cancel();
     _player.dispose();
     super.dispose();
   }
@@ -54,6 +79,33 @@ class _VideoContentViewerState extends State<VideoContentViewer> {
   }
 
   void _onPlayerError(String message) => _handleError(message);
+
+  void _onPositionChanged(Duration position) {
+    if (_completionSent) return;
+    final duration = _player.state.duration;
+    if (duration.inMilliseconds <= 0) return;
+    final watched = position.inMilliseconds / duration.inMilliseconds;
+    if (watched >= _completionThreshold) {
+      _completionSent = true;
+      _markCompleted();
+    }
+  }
+
+  /// Marks the class completed once the watch threshold is crossed. Goes
+  /// through RoasterViewModel.markAsRead, which already queues the
+  /// completion locally and replays it automatically next time the device
+  /// is back online if we're currently offline - no extra handling needed
+  /// here for that case.
+  void _markCompleted() {
+    final courseId = widget.courseId;
+    final classId = widget.classId;
+    if (courseId == null || courseId.isEmpty || classId == null || classId.isEmpty) {
+      return;
+    }
+    ref.read(RoasterViewModel.provider(courseId).notifier).markAsRead(
+          CourseClass(courseId: courseId, classId: classId),
+        );
+  }
 
   void _handleError(String message) {
     // iOS Simulator's virtual audio device fails to initialize (confirmed

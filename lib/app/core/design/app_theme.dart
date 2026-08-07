@@ -109,7 +109,7 @@ class AppTheme {
   static TextTheme getAppTextTheme(
     AppColorScheme colorScheme,
     BuildContext context,
-  ) => GoogleFonts.ralewayTextTheme(
+  ) => GoogleFonts.robotoTextTheme(
     ResponseTextSize.getCorrectSizedTextTheme(context).copyWith(
       headlineSmall: const TextStyle(fontWeight: FontWeight.bold),
       titleLarge: const TextStyle(fontWeight: FontWeight.bold),

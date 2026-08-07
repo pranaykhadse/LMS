@@ -19,6 +19,7 @@ import 'package:lms/app/features/courses/view/content_view_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
+import 'package:lms/app/features/courses/view/widgets/class_status_chip.dart';
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
@@ -417,11 +418,24 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                     SizedBox(
                       width: 36,
                       height: 36,
-                      child: CircularProgressIndicator(
-                        value: detail.progressPercentage,
-                        strokeWidth: 2.5,
-                        color: _detailPurple,
-                        backgroundColor: Colors.white,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: detail.progressPercentage,
+                            strokeWidth: 2.5,
+                            color: _detailPurple,
+                            backgroundColor: Colors.white,
+                          ),
+                          Text(
+                            '${(detail.progressPercentage * 100).round()}%',
+                            style: const TextStyle(
+                              color: _detailPurple,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -803,9 +817,13 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
   }
 
   /// Marks this Virtual Class as completed (POST
-  /// learning-event/learning-event-completion) as soon as the learner
-  /// watches or downloads its recording - matching the website, which
-  /// doesn't require a separate "mark complete" action for recordings.
+  /// learning-event/learning-event-completion) when the learner opens its
+  /// recording in an external browser - there's no way to track how much
+  /// they actually watch there, so open is the only signal available.
+  /// Downloading no longer marks it complete on its own; when the
+  /// recording is played in the in-app player instead, completion is
+  /// driven by actual watch progress (see VideoContentViewer's 30%
+  /// threshold) rather than this method.
   void _markRecordingWatched() {
     final classId = widget.item.classId;
     if (classId == null) return;
@@ -888,10 +906,13 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           const SizedBox(height: 14),
           const Divider(color: Color(0xFFECEFF4)),
           const SizedBox(height: 13),
-          // Only show a session date once the learner is actually enrolled -
-          // showing one for a class they haven't registered for implies a
-          // commitment that hasn't been made yet.
-          if (liveNextSession != null && isEnrolled) ...[
+          // Only show a session date once the learner is actually registered
+          // for THIS class - showing one for a class they haven't
+          // registered for implies a commitment that hasn't been made yet.
+          // (isEnrolled is course-level enrollment, not per-class
+          // registration - a learner can be enrolled in the course but
+          // still unregistered for a given Virtual Class session.)
+          if (liveNextSession != null && item.isEnrolledInClass) ...[
             Text(
               'Next Session: $liveNextSession',
               style: const TextStyle(
@@ -916,7 +937,15 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             const SizedBox(height: 12),
           ],
           if (item.status.isNotEmpty) ...[
-            _StatusChip(status: item.status),
+            item.classId != null
+                ? ClassStatusChip(
+                    courseClass: CourseClass(
+                      courseId: widget.courseId.toString(),
+                      classId: item.classId!.toString(),
+                    ),
+                    fallbackStatus: item.status,
+                  )
+                : _StatusChip(status: item.status),
             const SizedBox(height: 12),
           ],
           const SizedBox(height: 1),
@@ -954,9 +983,12 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 ),
                 const SizedBox(height: 10),
               ],
-              // Recordings — Watch (browser) + Download (offline). Either
-              // action means the learner has watched the recording, so both
-              // mark the class completed (see _markRecordingWatched).
+              // Recordings — Watch (browser) or Download (offline) + play in
+              // the in-app player. Watching in the browser has no way to
+              // track progress, so that still marks the class completed on
+              // open; downloading no longer does - completion for the
+              // in-app player instead fires once 30% of the video has
+              // actually played (see VideoContentViewer).
               for (final recordingUrl in item.recordingUrls) ...[
                 _OnlineActionButton(
                   icon: Icons.play_circle_outline_rounded,
@@ -973,8 +1005,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   icon: Icons.videocam_rounded,
                   courseClass: null,
                   fullWidth: true,
-                  onDownloadStart: _markRecordingWatched,
-                  builder: (ctx, file) => VideoContentViewer(file: file),
+                  builder: (ctx, file) => VideoContentViewer(
+                    file: file,
+                    courseId: widget.courseId.toString(),
+                    classId: item.classId?.toString(),
+                  ),
                 ),
                 const SizedBox(height: 10),
               ],
@@ -1029,7 +1064,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   icon: Icons.videocam_rounded,
                   courseClass: null,
                   fullWidth: true,
-                  builder: (ctx, file) => VideoContentViewer(file: file),
+                  builder: (ctx, file) => VideoContentViewer(
+                    file: file,
+                    courseId: widget.courseId.toString(),
+                    classId: item.classId?.toString(),
+                  ),
                 )
               else
                 Align(

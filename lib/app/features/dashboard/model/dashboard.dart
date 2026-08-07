@@ -11,9 +11,10 @@ class DashboardResponse {
     final raw = json['payload'];
     final payload =
         raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+    final ongoingRaw = payload['ongoing_courses'] as List? ?? [];
     return DashboardResponse(
       ongoingCourses:
-          (payload['ongoing_courses'] as List? ?? [])
+          ongoingRaw
               .whereType<Map>()
               .map(
                 (m) => DashboardCourse.fromJson(Map<String, dynamic>.from(m)),

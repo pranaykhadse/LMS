@@ -31,6 +31,7 @@ class CalendarEvent {
     required this.registrationStatus,
     required this.description,
     this.calendarDetailApi,
+    this.instructor,
   });
 
   final int courseId;
@@ -46,6 +47,11 @@ class CalendarEvent {
   final String registrationStatus;
   final String description;
   final String? calendarDetailApi;
+
+  // Same raw key ("instructor") the course-detail page's LearningEvent
+  // model already parses for its own "Hosted by"/INSTRUCTOR display - see
+  // course_join_detail.dart.
+  final String? instructor;
 
   DateTime get startDateTime => _combine(startDate, startTime);
   DateTime? get endDateTime =>
@@ -70,6 +76,7 @@ class CalendarEvent {
       registrationStatus: json['registration_status']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       calendarDetailApi: _nullableString(json['calendar_detail_api']),
+      instructor: _nullableString(json['instructor']),
     );
   }
 }

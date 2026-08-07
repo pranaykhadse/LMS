@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
@@ -14,9 +13,6 @@ class AccountSettingsViewModel
     required this.userId,
     required this.ref,
   }) : super(DataState.idle<UserProfileDetail>()) {
-    if (kDebugMode) {
-      debugPrint('[AccountSettingsViewModel] NEW INSTANCE #${identityHashCode(this)} constructed');
-    }
     fetch();
   }
 
@@ -32,10 +28,6 @@ class AccountSettingsViewModel
     // constructor calls fetch() again, which calls updateProfile() again,
     // forever. Only the values at construction time are needed here, not
     // live updates to either.
-    if (kDebugMode) {
-      final frames = StackTrace.current.toString().split('\n').take(8).join('\n');
-      debugPrint('[AccountSettingsViewModel.provider] building - who triggered this:\n$frames');
-    }
     final userId = ref.read(AuthStateNotifier.provider)?.user?.id;
     return AccountSettingsViewModel(
       repository: ref.read(AccountSettingsRepository.provider),
@@ -49,11 +41,7 @@ class AccountSettingsViewModel
   final Ref ref;
 
   Future<void> fetch() async {
-    if (kDebugMode) {
-      debugPrint('[AccountSettingsViewModel.fetch] CALLED on instance #${identityHashCode(this)}, userId=$userId, mounted=$mounted');
-    }
     if (userId == null) {
-      if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] SKIPPED - userId is null');
       state = DataState.onError('User not logged in.');
       return;
     }
@@ -66,9 +54,7 @@ class AccountSettingsViewModel
     final hasData = state.state == DataProviderState.data;
     if (!hasData) state = DataState.loading<UserProfileDetail>();
     try {
-      if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] calling repository.fetch()...');
       final data = await repository.fetch(userId: userId!);
-      if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] repository.fetch() SUCCEEDED');
       if (mounted) state = DataState.onData(data);
       // This is the authoritative, always-fresh profile straight from the
       // server - sync it into the app-wide cached profile every time this
@@ -80,11 +66,8 @@ class AccountSettingsViewModel
       // above - AuthStateNotifier is a different, kept-alive notifier, so
       // this sync should still happen even if this screen's own state is
       // now moot.
-      if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] calling updateProfile()...');
       await ref.read(AuthStateNotifier.provider.notifier).updateProfile(data.profile);
-      if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] updateProfile() DONE');
     } catch (e) {
-      if (kDebugMode) debugPrint('[AccountSettingsViewModel.fetch] repository.fetch() FAILED: $e');
       if (!mounted) return;
       // On a background refresh (data already showing), leave it in place
       // rather than replacing it with a full-screen error - only show the
@@ -216,13 +199,5 @@ class AccountSettingsViewModel
       return 'No internet connection. Please check your network.';
     }
     return 'Unable to load your profile. Please try again.';
-  }
-
-  @override
-  void dispose() {
-    if (kDebugMode) {
-      debugPrint('[AccountSettingsViewModel] instance #${identityHashCode(this)} DISPOSED');
-    }
-    super.dispose();
   }
 }

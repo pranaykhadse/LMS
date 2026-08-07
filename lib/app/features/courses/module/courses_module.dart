@@ -1,6 +1,6 @@
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:lms/app/core/views/elements/main_shell.dart';
 import 'package:lms/app/features/authentication/view/auth_gate.dart';
-import 'package:lms/app/features/dashboard/view/dashboard_page.dart';
 import 'package:lms/app/features/dashboard/view/completed_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/development_plan_page.dart';
 import 'package:lms/app/features/dashboard/view/enrolled_courses_page.dart';
@@ -35,7 +35,12 @@ class CoursesModule extends Module {
   void routes(RouteManager r) {
     r.child(
       dashboard,
-      child: (context) => const AuthGate(child: DashboardPage()),
+      // Desktop's persistent shell for all top-level nav destinations -
+      // see main_shell.dart. Mobile still gets DashboardPage's own
+      // AppScaffold/AppDrawer (MainShell only overrides the isTablet
+      // desktop path; AppScaffold falls through to normal behavior below
+      // that width), so this works for both.
+      child: (context) => const AuthGate(child: MainShell()),
     );
     r.child(myCourses, child: (context) => const AuthGate(child: MyCoursesPage()));
     r.child(enrolledCourses, child: (context) => const AuthGate(child: EnrolledCoursesPage()));

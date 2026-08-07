@@ -16,3 +16,14 @@ void safePop(BuildContext context) {
   }
   Modular.to.navigate(CoursesModule.construct(CoursesModule.dashboard));
 }
+
+/// Screens like Account Settings, Notifications, Redeem History and the
+/// Learning Progress viewer are opened with a raw Navigator.push rather
+/// than through Modular's own routing, so they sit on top of Modular's
+/// declarative page stack as extra imperative history entries — swapping
+/// that declarative stack (via Modular.to.navigate/pushNamed) doesn't
+/// remove them, so a nav tap would silently do nothing while one of those
+/// pages was open. Call before any such navigation to clear them first.
+void resetToModularRoot(BuildContext context) {
+  Navigator.of(context).popUntil((route) => route.isFirst);
+}

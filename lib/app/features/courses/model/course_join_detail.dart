@@ -485,24 +485,58 @@ class LearningEvent {
 /// date from one of those produced a bogus countdown on courses with no
 /// real session at all.
 ///
-/// Uses the same [_earliestUpcomingEventOf] selection as the "Next Session"
-/// label and registration/attendance eligibility - a single source of truth
-/// for "which session is this course about right now." The LAUNCHES IN
-/// countdown built from this can go negative once the session has started
-/// (see _LaunchPanelState's build in course_classes_page.dart) rather than
-/// hiding - it only disappears once the session has actually ended, at
-/// which point this returns null the same way Next Session does.
+/// Picks which session across every Virtual Class / In Person class the
+/// learner is actually REGISTERED for (item.isEnrolledInClass) the
+/// course-level LAUNCHES IN countdown should point at:
+///
+///  1. If any session across any registered class hasn't started yet, the
+///     soonest one of those - shown as a positive "LAUNCHES IN" countdown.
+///  2. Otherwise (every registered session has already started), the one
+///     that's currently open longest / ended most recently (an in-progress
+///     session's end time is still in the future, so it naturally wins
+///     over anything already finished) - shown as a negative "STARTED"
+///     countdown, same as before.
+///
+/// A class the learner hasn't registered for isn't something they're
+/// actually launching into, regardless of how soon its session starts, so
+/// it's excluded entirely rather than just being deprioritized.
+///
+/// Previously this only ever picked the earliest still-open session
+/// (started-but-not-ended OR not-yet-started, whichever came first
+/// chronologically) restricted to Virtual Class ('3') items, which could
+/// surface an already-started session while a genuinely upcoming one
+/// existed, ignored In Person ('2') classes entirely, and didn't check
+/// registration at all.
 LearningEvent? _earliestUpcomingVirtualClassEvent(List<CourseStructureItem> structures) {
-  LearningEvent? earliest;
+  final now = DateTime.now();
+  LearningEvent? soonestFuture;
+  LearningEvent? mostRecentlyEnded;
+
   for (final item in structures) {
-    if (item.typeCode != '3') continue;
-    final candidate = _earliestUpcomingEventOf(item.learningEvents);
-    if (candidate == null) continue;
-    if (earliest == null || candidate.startDateTime!.isBefore(earliest.startDateTime!)) {
-      earliest = candidate;
+    if (item.typeCode != '2' && item.typeCode != '3') continue;
+    if (!item.isEnrolledInClass) continue;
+    for (final event in item.learningEvents) {
+      final start = event.startDateTime;
+      if (start == null) continue;
+
+      if (start.isAfter(now)) {
+        if (soonestFuture == null || start.isBefore(soonestFuture.startDateTime!)) {
+          soonestFuture = event;
+        }
+        continue;
+      }
+
+      final end = event.endDateTime ?? start;
+      final currentEnd = mostRecentlyEnded == null
+          ? null
+          : (mostRecentlyEnded.endDateTime ?? mostRecentlyEnded.startDateTime!);
+      if (mostRecentlyEnded == null || end.isAfter(currentEnd!)) {
+        mostRecentlyEnded = event;
+      }
     }
   }
-  return earliest;
+
+  return soonestFuture ?? mostRecentlyEnded;
 }
 
 /// The earliest still-registerable event within a single class's own

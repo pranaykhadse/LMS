@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/responsive.dart';
+import 'package:lms/app/core/providers/shell_destination_provider.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 
 /// Shared page shell for every top-level screen. On a phone it behaves the
-/// same as before (hamburger + slide-out [AppDrawer]); on a tablet/desktop
-/// window it shows the nav as a persistent sidebar instead and caps the
-/// body's width so content doesn't stretch edge-to-edge on very wide
-/// windows.
-class AppScaffold extends StatelessWidget {
+/// same as before (hamburger + slide-out AppDrawer); on a tablet/desktop
+/// window navigation moves into a horizontal nav bar under the top app
+/// bar instead (see LmsAppBar's `isWide` mode). The body spans the full
+/// window width, same as the header above it.
+///
+/// When hosted inside [MainShell] (the desktop nav bar's top-level
+/// destinations), this skips rendering its own header entirely and just
+/// publishes its params for the shell's single persistent LmsAppBar to use
+/// instead - see ShellMarker/shellHeaderConfigProvider. Pages reached via a
+/// normal push (course detail, notifications, account settings, etc.)
+/// aren't inside that subtree and keep their own full header as before.
+class AppScaffold extends ConsumerWidget {
   const AppScaffold({
     super.key,
     required this.body,
@@ -20,7 +29,6 @@ class AppScaffold extends StatelessWidget {
     this.hideBack = false,
     this.bottom,
     this.backgroundColor,
-    this.maxContentWidth = 1100,
     this.onRefresh,
   });
 
@@ -44,23 +52,14 @@ class AppScaffold extends StatelessWidget {
   final PreferredSizeWidget? bottom;
   final Color? backgroundColor;
 
-  /// Body content is centered and capped at this width on tablet/desktop
-  /// so text/cards don't stretch uncomfortably wide.
-  final double maxContentWidth;
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isTablet = Responsive.isTablet(context);
 
     final content = isTablet
         ? Padding(
             padding: const EdgeInsets.only(top: 14),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxContentWidth),
-                child: body,
-              ),
-            ),
+            child: body,
           )
         : body;
 
@@ -83,6 +82,29 @@ class AppScaffold extends StatelessWidget {
       );
     }
 
+    if (isTablet && ShellMarker.isInShell(context)) {
+      // Publish this tab's header params for MainShell's single persistent
+      // LmsAppBar to pick up, instead of building our own. Deferred to next
+      // frame since providers can't be written mid-build.
+      final config = ShellHeaderConfig(
+        title: title,
+        centerTitle: centerTitle,
+        selectedLabel: selectedLabel,
+        selectedSubLabel: selectedSubLabel,
+        onBack: onBack,
+        hideBack: hideBack,
+        bottom: bottom,
+        backgroundColor: backgroundColor,
+        onRefresh: onRefresh,
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(shellHeaderConfigProvider.notifier).state = config;
+      });
+      return Container(color: backgroundColor, child: content);
+    }
+
+    // Desktop/tablet navigate via LmsAppBar's own horizontal nav bar
+    // (isWide) instead of a persistent sidebar.
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: LmsAppBar(
@@ -93,21 +115,10 @@ class AppScaffold extends StatelessWidget {
         bottom: bottom,
         isWide: true,
         onRefresh: onRefresh,
+        selectedLabel: selectedLabel,
+        selectedSubLabel: selectedSubLabel,
       ),
-      body: Row(
-        children: [
-          SizedBox(
-            width: 280,
-            child: AppDrawer(
-              selectedLabel: selectedLabel,
-              selectedSubLabel: selectedSubLabel,
-              embedded: true,
-            ),
-          ),
-          const VerticalDivider(width: 1, color: Color(0xFFEDEFF3)),
-          Expanded(child: content),
-        ],
-      ),
+      body: content,
     );
   }
 }

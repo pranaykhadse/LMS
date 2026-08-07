@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/logic/vm_helper/offline_vm_helper.dart';
@@ -79,7 +77,6 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
   /// too, so a cold restart restores the updated profile rather than the
   /// stale one from the last real login.
   Future<void> updateProfile(UserProfile profile) async {
-    if (kDebugMode) debugPrint('[AuthStateNotifier.updateProfile] CALLED');
     final current = state;
     if (current == null) return;
     // UserProfile has no ==/hashCode, so copyWith always produces a "new"
@@ -94,12 +91,10 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     // cycle at the root regardless of which exact dependency causes the
     // rebuild.
     if (_sameProfile(current.userProfile, profile)) {
-      if (kDebugMode) debugPrint('[AuthStateNotifier.updateProfile] SKIPPED - profile unchanged');
       return;
     }
     final updated = current.copyWith(userProfile: profile);
     state = updated;
-    if (kDebugMode) debugPrint('[AuthStateNotifier.updateProfile] state REPLACED (new AuthState instance)');
     await storage.setString("session_data", updated.toRawJson());
   }
 
@@ -161,8 +156,9 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
       ).validateToken(token);
       if (!mounted) return;
       state = token;
-    } catch (e) {
-      log("VALidate auth token error: $e");
+    } catch (_) {
+      // Leaves the stale token in place - the next authenticated request
+      // will surface the failure through its own error handling.
     }
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const _perPageColor = Color(0xFF5756C9);
+const _perPageColor = Color(0xFF693D94);
 
 /// Small outlined pill showing the per_page value actually used for a
 /// list's fetch request — matches the website's "N Per Page" indicator.

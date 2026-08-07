@@ -1,42 +1,37 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lms/app/core/design/responsive.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
-import 'package:lms/app/core/provider/internet_connection_provider.dart';
-import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
+import 'package:lms/app/features/courses/model/calendar_event.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
-import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
+import 'package:lms/app/features/courses/viewmodel/calendar_view_model.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
+import 'package:lms/app/features/dashboard/viewmodel/completed_courses_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/enrolled_courses_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/required_courses_view_model.dart';
 import 'package:lms/app_module.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-const _purple = Color(0xFF5756C9);
-const _purple2 = Color(0xFF775FE8);
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
-const _sectionTitle = Color(0xFFB0006D);
+const _purple = FigmaTokens.primaryPurple;
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
+const _border = FigmaTokens.cardBorders;
 
 bool _anyCourse(Course course) => true;
-
-bool _watchIsOnline(WidgetRef ref) {
-  final isManualOffline = ref.watch(OfflineModeNotifier.provider);
-  final connectionVM = ref.watch(InternetConnectionProvider.provider);
-  ref.watch(SyncViewModel.provider);
-  return !isManualOffline && connectionVM.isConnected;
-}
 
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
@@ -54,6 +49,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         v.contains('invalid credentials') ||
         v.contains('status code of 401') ||
         v.contains(' 401');
+  }
+
+  void _refetchAll() {
+    ref.read(DashboardViewModel.provider.notifier).fetch();
+    ref.read(EnrolledCoursesViewModel.provider.notifier).fetch();
+    ref.read(RequiredCoursesViewModel.provider.notifier).fetch();
+    ref.read(CompletedCoursesViewModel.provider.notifier).fetch();
+    ref.read(CalendarViewModel.provider.notifier).fetch();
   }
 
   @override
@@ -120,28 +123,28 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       title: 'Dashboard',
       selectedLabel: 'Dashboard',
       hideBack: true,
-      onRefresh: () => ref.read(DashboardViewModel.provider.notifier).fetch(),
+      onRefresh: _refetchAll,
       body: _redirectingUnauthorized
           ? const Center(child: CircularProgressIndicator(color: _purple))
-          : _DashboardBody(auth: auth, state: state, ref: ref),
+          : _DashboardBody(auth: auth, state: state, onRefetchAll: _refetchAll),
     );
   }
 }
 
 // ─── Body ─────────────────────────────────────────────────────────────────────
 
-class _DashboardBody extends StatelessWidget {
+class _DashboardBody extends ConsumerWidget {
   const _DashboardBody({
     required this.auth,
     required this.state,
-    required this.ref,
+    required this.onRefetchAll,
   });
   final AuthState? auth;
   final DataState<DashboardResponse> state;
-  final WidgetRef ref;
+  final VoidCallback onRefetchAll;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     switch (state.state) {
       case DataProviderState.loading:
       case DataProviderState.idle:
@@ -149,48 +152,128 @@ class _DashboardBody extends StatelessWidget {
       case DataProviderState.error:
         return _ErrorView(
           message: state.error ?? 'Unable to load dashboard.',
-          onRetry: () => ref.read(DashboardViewModel.provider.notifier).fetch(),
+          onRetry: onRefetchAll,
         );
       case DataProviderState.data:
         final data = state.data;
         if (data == null) {
           return const _ErrorView(message: 'No dashboard data found.');
         }
+        final enrolled = ref.watch(EnrolledCoursesViewModel.provider);
+        final required = ref.watch(RequiredCoursesViewModel.provider);
+        final completed = ref.watch(CompletedCoursesViewModel.provider);
+        final calendar = ref.watch(CalendarViewModel.provider);
+
         return RefreshIndicator(
           color: _purple,
-          onRefresh:
-              () => ref.read(DashboardViewModel.provider.notifier).fetch(),
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: [
-              _BannerSection(auth: auth),
-              const SizedBox(height: 28),
-              _SectionHeader(
-                title: 'My Courses',
-                actionLabel: 'View All My Courses',
-                onAction:
-                    () => Modular.to.pushNamed(
-                      CoursesModule.construct(CoursesModule.myCourses),
-                    ),
-              ),
-              const SizedBox(height: 12),
-              data.ongoingCourses.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        'No courses!',
-                        style: TextStyle(color: _ink, fontSize: 14),
+          onRefresh: () async => onRefetchAll(),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 900;
+              return ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _BannerSection(auth: auth),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
+                    child: Text(
+                      "Welcome back! Here's what's happening with your courses.",
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF4A5565),
+                        fontSize: 15.2,
                       ),
-                    )
-                  : _CourseCarousel(courses: data.ongoingCourses),
-              if (data.resources.isNotEmpty) ...[
-                const SizedBox(height: 28),
-                const _SectionHeader(title: 'Resources'),
-                const SizedBox(height: 12),
-                _ResourceCarousel(resources: data.resources),
-              ],
-              const AppFooter(),
-            ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    child: _StatRow(
+                      isWide: isWide,
+                      enrolled: enrolled.totalCourses,
+                      required: required.total,
+                      completed: completed.total,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    child: isWide
+                        ? IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: _ContinueLearningCard(
+                                    courses: data.ongoingCourses,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _UpcomingSessionsCard(calendar: calendar),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              _ContinueLearningCard(courses: data.ongoingCourses),
+                              const SizedBox(height: 16),
+                              _UpcomingSessionsCard(calendar: calendar),
+                            ],
+                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    child: isWide
+                        ? IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: _CourseProgressCard(enrolled: enrolled),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _OverallProgressCard(enrolled: enrolled),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              _CourseProgressCard(enrolled: enrolled),
+                              const SizedBox(height: 16),
+                              _OverallProgressCard(enrolled: enrolled),
+                            ],
+                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    child: isWide
+                        ? IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: const [
+                                Expanded(child: _DiscussionBoardsCard()),
+                                SizedBox(width: 16),
+                                Expanded(child: _RewardsPointsCard()),
+                              ],
+                            ),
+                          )
+                        : const Column(
+                            children: [
+                              _DiscussionBoardsCard(),
+                              SizedBox(height: 16),
+                              _RewardsPointsCard(),
+                            ],
+                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    child: _RequiredForYouCard(required: required),
+                  ),
+                  const AppFooter(),
+                ],
+              );
+            },
           ),
         );
     }
@@ -222,14 +305,12 @@ class _BannerSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1A1255), _purple2],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      decoration: BoxDecoration(
+        gradient: FigmaTokens.heroGradient,
+        borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 36, 24, 36),
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -269,123 +350,342 @@ class _BannerSection extends StatelessWidget {
   }
 }
 
-// ─── Section header ───────────────────────────────────────────────────────────
+// ─── Stat cards ───────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, this.actionLabel, this.onAction});
-  final String title;
-  final String? actionLabel;
-  final VoidCallback? onAction;
+class _StatRow extends StatelessWidget {
+  const _StatRow({
+    required this.isWide,
+    required this.enrolled,
+    required this.required,
+    required this.completed,
+  });
+  final bool isWide;
+  final int enrolled;
+  final int required;
+  final int completed;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: _sectionTitle,
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+    return Row(
+      children: [
+        Expanded(
+          child: _StatCard(
+            icon: Icons.menu_book_rounded,
+            iconColor: _purple,
+            label: 'ENROLLED',
+            value: enrolled,
           ),
-          if (actionLabel != null && onAction != null)
-            GestureDetector(
-              onTap: onAction,
-              child: Text(
-                actionLabel!,
-                style: const TextStyle(
-                  color: _purple,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  decoration: TextDecoration.underline,
-                  decorationColor: _purple,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.error_outline_rounded,
+            iconColor: const Color(0xFFD97706),
+            label: 'REQUIRED',
+            value: required,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.check_circle_outline_rounded,
+            iconColor: const Color(0xFF16A34A),
+            label: 'COMPLETED',
+            value: completed,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+  });
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final int value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        color: FigmaTokens.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: iconColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: .3,
+                  ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '$value',
+            style: GoogleFonts.inter(
+              color: _ink,
+              fontSize: 35.2,
+              fontWeight: FontWeight.w800,
             ),
+          ),
         ],
       ),
     );
   }
 }
 
-// ─── Course carousel ──────────────────────────────────────────────────────────
+// ─── Shared card chrome ─────────────────────────────────────────────────────
 
-class _CourseCarousel extends StatelessWidget {
-  const _CourseCarousel({required this.courses});
-  final List<DashboardCourse> courses;
+class _DashCard extends StatelessWidget {
+  const _DashCard({required this.child, this.padding});
+  final Widget child;
+  final EdgeInsets? padding;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: Responsive.columns(
-            context,
-            phone: 2,
-            tablet: 3,
-            desktop: 4,
+    return Container(
+      width: double.infinity,
+      padding: padding ?? const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: FigmaTokens.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _border),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _CardHeader extends StatelessWidget {
+  const _CardHeader({
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+    this.large = false,
+    this.trailing,
+  });
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  /// h4.section-title-main (16.8px, #1E2939, title case) instead of the
+  /// default h4.section-title-sm (12px, #6A7282, uppercase) - the
+  /// reference site uses the larger style for Upcoming Virtual Classes.
+  final bool large;
+
+  /// Optional trailing control (e.g. the Upcoming Sessions expand/collapse
+  /// chevron) shown after the actionLabel, if any.
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            large ? title : title.toUpperCase(),
+            style: GoogleFonts.inter(
+              color: large ? const Color(0xFF1E2939) : const Color(0xFF6A7282),
+              fontSize: large ? 16.8 : 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: large ? 0 : .3,
+            ),
           ),
-          crossAxisSpacing: 14,
-          mainAxisSpacing: 14,
-          childAspectRatio: 0.62,
-          mainAxisExtent: Responsive.isTablet(context) ? 290 : null,
         ),
-        itemCount: courses.length,
-        itemBuilder: (context, index) => _CourseCard(course: courses[index]),
+        if (actionLabel != null && onAction != null)
+          GestureDetector(
+            onTap: onAction,
+            child: Text(
+              actionLabel!,
+              style: GoogleFonts.inter(
+                color: _purple,
+                fontSize: 13.6,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        if (trailing != null) trailing!,
+      ],
+    );
+  }
+}
+
+// ─── Continue Learning ────────────────────────────────────────────────────────
+
+class _ContinueLearningCard extends StatefulWidget {
+  const _ContinueLearningCard({required this.courses});
+  final List<DashboardCourse> courses;
+
+  @override
+  State<_ContinueLearningCard> createState() => _ContinueLearningCardState();
+}
+
+class _ContinueLearningCardState extends State<_ContinueLearningCard> {
+  final _controller = PageController();
+  int _index = 0;
+  Timer? _autoAdvanceTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoAdvance();
+  }
+
+  @override
+  void didUpdateWidget(_ContinueLearningCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.courses.length != widget.courses.length) {
+      _startAutoAdvance();
+    }
+  }
+
+  void _startAutoAdvance() {
+    _autoAdvanceTimer?.cancel();
+    if (widget.courses.length <= 1) return;
+    _autoAdvanceTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted || !_controller.hasClients) return;
+      final next = (_index + 1) % widget.courses.length;
+      _controller.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoAdvanceTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _DashCard(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            title: 'Continue Learning',
+            actionLabel: widget.courses.isEmpty ? null : 'View All',
+            onAction: widget.courses.isEmpty
+                ? null
+                : () => Modular.to.pushNamed(
+                      CoursesModule.construct(CoursesModule.myCourses),
+                    ),
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
+          const SizedBox(height: 14),
+          if (widget.courses.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text('No courses in progress.', style: TextStyle(color: _muted)),
+            )
+          else ...[
+            SizedBox(
+              height: 190,
+              child: PageView.builder(
+                controller: _controller,
+                onPageChanged: (i) => setState(() => _index = i),
+                itemCount: widget.courses.length,
+                itemBuilder: (context, i) =>
+                    _ContinueLearningItem(course: widget.courses[i]),
+              ),
+            ),
+            if (widget.courses.length > 1) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(widget.courses.length, (i) {
+                  return GestureDetector(
+                    onTap: () {
+                      // A manual jump counts as user intent - restart the
+                      // auto-advance clock from here instead of firing
+                      // mid-interaction.
+                      _startAutoAdvance();
+                      _controller.animateToPage(
+                        i,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: i == _index ? 48 : 21,
+                        height: 21,
+                        decoration: BoxDecoration(
+                          color: i == _index ? _purple : _border,
+                          borderRadius: BorderRadius.circular(10.5),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+            const SizedBox(height: 10),
+          ],
+        ],
       ),
     );
   }
 }
 
-class _CourseCard extends ConsumerWidget {
-  const _CourseCard({required this.course});
+class _ContinueLearningItem extends ConsumerWidget {
+  const _ContinueLearningItem({required this.course});
   final DashboardCourse course;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Image
-          SizedBox(
-            height: 110,
-            width: double.infinity,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: SizedBox(
+            width: 190,
+            height: 210,
             child: Stack(
               fit: StackFit.expand,
               children: [
                 course.logo != null
                     ? Image.network(
-                      course.logo!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const _ImgFallback(),
-                    )
+                        course.logo!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const _ImgFallback(),
+                      )
                     : const _ImgFallback(),
                 Positioned(
-                  top: 6,
-                  left: 6,
+                  top: 4,
+                  left: 4,
                   child: OfflineCourseButton(
                     course: Course(
                       id: course.id,
@@ -400,283 +700,418 @@ class _CourseCard extends ConsumerWidget {
               ],
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    course.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _ink,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  if (course.displayRating) ...[
-                    _StarRow(
-                      rating: course.averageRating,
-                      count: course.ratingCount,
-                    ),
-                    const SizedBox(height: 6),
-                  ] else
-                    const SizedBox(height: 2),
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed:
-                          viewDisabled
-                              ? null
-                              : () => Modular.to.pushNamed(
-                                CoursesModule.construct(
-                                  '${CoursesModule.detail}/${course.id}',
-                                ),
-                              ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _purple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        minimumSize: const Size.fromHeight(32),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
-                      child: const Text('View Course'),
-                    ),
-                  ),
-                ],
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                course.name,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: _ink,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  height: 1.3,
+                ),
               ),
-            ),
+              const SizedBox(height: 6),
+              if (course.progress > 0)
+                Text(
+                  '${course.progress}% complete',
+                  style: const TextStyle(color: _muted, fontSize: 12),
+                ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: viewDisabled
+                      ? null
+                      : () => Modular.to.pushNamed(
+                            CoursesModule.construct(
+                              '${CoursesModule.detail}/${course.id}',
+                            ),
+                          ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _purple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    minimumSize: const Size.fromHeight(38),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                  child: const Text('Resume'),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-// ─── Resource carousel ────────────────────────────────────────────────────────
-//
-// A single-item pager (matching the website: one resource card at a time,
-// with left/right arrows to page through) rather than a multi-column grid.
+// ─── Upcoming Sessions ────────────────────────────────────────────────────────
 
-class _ResourceCarousel extends StatefulWidget {
-  const _ResourceCarousel({required this.resources});
-  final List<DashboardResource> resources;
+class _UpcomingSessionsCard extends StatefulWidget {
+  const _UpcomingSessionsCard({required this.calendar});
+  final DataState<CalendarViewResult> calendar;
 
   @override
-  State<_ResourceCarousel> createState() => _ResourceCarouselState();
+  State<_UpcomingSessionsCard> createState() => _UpcomingSessionsCardState();
 }
 
-class _ResourceCarouselState extends State<_ResourceCarousel> {
-  final _controller = PageController();
-  int _index = 0;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _go(int delta) {
-    final next = (_index + delta).clamp(0, widget.resources.length - 1);
-    _controller.animateToPage(
-      next,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-    );
-  }
+class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SizedBox(
-        height: 460,
-        child: PageView.builder(
-          controller: _controller,
-          onPageChanged: (i) => setState(() => _index = i),
-          itemCount: widget.resources.length,
-          itemBuilder: (context, i) => _ResourceCard(
-            key: ValueKey('resource-${widget.resources[i].id}-$i'),
-            resource: widget.resources[i],
-            showPrev: widget.resources.length > 1 && _index > 0,
-            showNext: widget.resources.length > 1 && _index < widget.resources.length - 1,
-            onPrev: () => _go(-1),
-            onNext: () => _go(1),
-          ),
-        ),
-      ),
-    );
-  }
-}
+    final now = DateTime.now();
+    final upcoming = (widget.calendar.data?.events ?? const <CalendarEvent>[])
+        .where((e) => e.startDateTime.isAfter(now))
+        .toList()
+      ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+    final shown = upcoming.take(8).toList();
+    const collapsedCount = 3;
+    final visible = _expanded ? shown : shown.take(collapsedCount).toList();
+    final hasMore = shown.length > collapsedCount;
 
-class _NavArrow extends StatelessWidget {
-  const _NavArrow({required this.icon, required this.onTap});
-  final IconData icon;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: _purple.withValues(alpha: onTap == null ? 0.06 : 0.14),
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 32,
-          height: 32,
-          child: Icon(icon, size: 20, color: onTap == null ? _muted : _purple),
-        ),
-      ),
-    );
-  }
-}
-
-class _ResourceCard extends ConsumerWidget {
-  const _ResourceCard({
-    super.key,
-    required this.resource,
-    required this.showPrev,
-    required this.showNext,
-    required this.onPrev,
-    required this.onNext,
-  });
-  final DashboardResource resource;
-  final bool showPrev;
-  final bool showNext;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-
-  Future<void> _openLink(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isOnline = _watchIsOnline(ref);
-    final needsInternet = resource.actionType == 'link';
-    final hasAction = resource.actionType != 'none' && (!needsInternet || isOnline);
-    final label =
-        resource.actionType == 'link'
-            ? (isOnline ? 'View' : 'Internet required')
-            : resource.actionType == 'resource'
-            ? 'View'
-            : 'No Content';
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(color: Color(0x0F000000), blurRadius: 20, offset: Offset(0, 8)),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
+    return _DashCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity,
-            color: const Color(0xFFEFEDFB),
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            child: Text(
-              resource.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: _purple,
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
+          const _CardHeader(title: 'Upcoming Sessions', large: true),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
+          const SizedBox(height: 14),
+          if (widget.calendar.state == DataProviderState.loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator(color: _purple)),
+            )
+          else if (shown.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text('No upcoming sessions.', style: TextStyle(color: _muted)),
+            )
+          else ...[
+            for (var i = 0; i < visible.length; i++) ...[
+              if (i > 0) const SizedBox(height: 10),
+              _SessionRow(event: visible[i]),
+            ],
+            if (hasMore)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _expanded = !_expanded),
+                    child: AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Color(0xFF6A7282),
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-          SizedBox(
-            height: 180,
-            child: Stack(
-              fit: StackFit.expand,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SessionRow extends StatelessWidget {
+  const _SessionRow({required this.event});
+  final CalendarEvent event;
+
+  String _formatDate(DateTime dt) {
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    final weekday = weekdays[dt.weekday - 1];
+    final month = months[dt.month - 1];
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$weekday, $month ${dt.day}, ${dt.year} • $hour:$minute $ampm';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F7FC),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                resource.logo != null
-                    ? Image.network(
-                        resource.logo!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImgFallback(),
-                      )
-                    : const _ImgFallback(),
-                if (showPrev || showNext)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      event.courseName.isNotEmpty ? event.courseName : event.title,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF1E293B),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15.2,
+                      ),
+                    ),
+                    if (event.className.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: FigmaTokens.badgeBackground,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          event.className,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF64748B),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xFF6A7282)),
+                    const SizedBox(width: 6),
+                    Text(
+                      _formatDate(event.startDateTime),
+                      style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
+                    ),
+                  ],
+                ),
+                if (event.instructor != null && event.instructor!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text.rich(
+                    TextSpan(
                       children: [
-                        showPrev
-                            ? _NavArrow(icon: Icons.chevron_left_rounded, onTap: onPrev)
-                            : const SizedBox(width: 32),
-                        showNext
-                            ? _NavArrow(icon: Icons.chevron_right_rounded, onTap: onNext)
-                            : const SizedBox(width: 32),
+                        TextSpan(
+                          text: 'Hosted by ',
+                          style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
+                        ),
+                        TextSpan(
+                          text: event.instructor,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF1E293B),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.48,
+                          ),
+                        ),
                       ],
                     ),
                   ),
+                ],
               ],
             ),
           ),
+          const SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: () => Modular.to.pushNamed(
+              CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _purple,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12.8),
+            ),
+            child: const Text('Join'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Course Progress ────────────────────────────────────────────────────────
+
+class _CourseProgressCard extends StatelessWidget {
+  const _CourseProgressCard({required this.enrolled});
+  final EnrolledState enrolled;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = enrolled.courses.take(4).toList();
+    return _DashCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            title: 'Course Progress',
+            large: true,
+            actionLabel: shown.isEmpty ? null : 'View All',
+            onAction: shown.isEmpty
+                ? null
+                : () => Modular.to.pushNamed(
+                      CoursesModule.construct(CoursesModule.enrolledCourses),
+                    ),
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
+          const SizedBox(height: 14),
+          if (enrolled.providerState == DataProviderState.loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator(color: _purple)),
+            )
+          else if (shown.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text('No enrolled courses yet.', style: TextStyle(color: _muted)),
+            )
+          else
+            for (var i = 0; i < shown.length; i++) ...[
+              if (i > 0) const SizedBox(height: 16),
+              _CourseProgressRow(course: shown[i]),
+            ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CourseProgressRow extends StatelessWidget {
+  const _CourseProgressRow({required this.course});
+  final DashboardCourse course;
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (course.progress.clamp(0, 100)) / 100;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.menu_book_rounded, size: 15, color: _purple),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                course.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF1E2939),
+                  fontSize: 14.4,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Text(
+              '${course.progress}%',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6A7282),
+                fontSize: 14.4,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: pct,
+            minHeight: 6,
+            backgroundColor: const Color(0xFFE8E7F8),
+            valueColor: const AlwaysStoppedAnimation<Color>(_purple),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Overall Learning Progress ────────────────────────────────────────────────
+
+class _OverallProgressCard extends StatelessWidget {
+  const _OverallProgressCard({required this.enrolled});
+  final EnrolledState enrolled;
+
+  @override
+  Widget build(BuildContext context) {
+    final progresses = enrolled.courses.map((c) => c.progress).toList();
+    final overall = progresses.isEmpty
+        ? 0
+        : (progresses.reduce((a, b) => a + b) / progresses.length).round();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: FigmaTokens.heroGradient,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.star_border_rounded, color: Colors.white, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                'OVERALL LEARNING PROGRESS',
+                style: GoogleFonts.inter(
+                  color: const Color(0xE6FFFFFF),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: .4,
+                ),
+              ),
+            ],
+          ),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Center(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (resource.subtitle?.isNotEmpty == true)
-                    Text(
-                      resource.subtitle!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: _muted, fontSize: 13, height: 1.4),
+                  Text(
+                    '$overall%',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 60,
+                      fontWeight: FontWeight.w800,
+                      height: 1,
                     ),
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: hasAction
-                          ? () {
-                              if (resource.actionType == 'link' &&
-                                  resource.actionUrl != null) {
-                                _openLink(resource.actionUrl!);
-                              }
-                            }
-                          : null,
-                      icon: const Icon(Icons.remove_red_eye_outlined, size: 18),
-                      label: Text(label),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _purple,
-                        disabledBackgroundColor: const Color(0xFFDDE2EA),
-                        foregroundColor: Colors.white,
-                        disabledForegroundColor: _muted,
-                        elevation: 0,
-                        minimumSize: const Size.fromHeight(46),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        textStyle: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                        ),
-                      ),
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: overall / 100,
+                      minHeight: 8,
+                      backgroundColor: Colors.white24,
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   ),
                 ],
@@ -689,38 +1124,238 @@ class _ResourceCard extends ConsumerWidget {
   }
 }
 
-// ─── Star rating ──────────────────────────────────────────────────────────────
+// ─── Discussion Boards ──────────────────────────────────────────────────────
 
-class _StarRow extends StatelessWidget {
-  const _StarRow({required this.rating, required this.count});
-  final double rating;
-  final int count;
+// No discussion-thread API/model exists in the app yet (see class_info.dart's
+// discussionForumLink/discussionGuruLink - those are just external webview
+// links on a course lesson, not a threads-with-replies feature), so this
+// always renders the empty state per the reference's p.empty-state styling.
+class _DiscussionBoardsCard extends StatelessWidget {
+  const _DiscussionBoardsCard();
 
   @override
   Widget build(BuildContext context) {
+    return _DashCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _CardHeader(title: 'Discussion Boards', large: true),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'No discussion threads yet.',
+              style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Rewards & Points ───────────────────────────────────────────────────────
+
+class _RewardsPointsCard extends ConsumerWidget {
+  const _RewardsPointsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final points = profile?.points ?? 0;
+    final firstName = profile?.firstname?.trim();
+
+    return _DashCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _CardHeader(
+            title: 'Rewards & Points',
+            large: true,
+            actionLabel: 'This Month',
+            onAction: () => Modular.to.pushNamed(
+              CoursesModule.construct(CoursesModule.redeemPoints),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: const BoxDecoration(
+                  color: _purple,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '$points',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                    Text(
+                      'pts',
+                      style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Great progress${firstName != null && firstName.isNotEmpty ? ', $firstName' : ''}!',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF1E2939),
+                        fontSize: 15.2,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "You've earned points by completing courses and attending virtual classes.",
+                      style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              'No reward points earned this month yet.',
+              style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Required For You ────────────────────────────────────────────────────────
+
+class _RequiredForYouCard extends StatelessWidget {
+  const _RequiredForYouCard({required this.required});
+  final RequiredCoursesState required;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = required.courses.take(5).toList();
+    return _DashCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _CardHeader(title: 'Required For You', large: true),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: _border),
+          const SizedBox(height: 14),
+          if (required.providerState == DataProviderState.loading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator(color: _purple)),
+            )
+          else if (shown.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text('No required courses.', style: TextStyle(color: _muted)),
+            )
+          else ...[
+            for (var i = 0; i < shown.length; i++) ...[
+              if (i > 0) const Divider(height: 22, color: _border),
+              _RequiredRow(index: i + 1, course: shown[i]),
+            ],
+            const SizedBox(height: 18),
+            Center(
+              child: ElevatedButton(
+                onPressed: () => Modular.to.pushNamed(
+                  CoursesModule.construct(CoursesModule.requiredCourses),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF693D94),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14.4),
+                ),
+                child: const Text('View All Required Courses'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RequiredRow extends ConsumerWidget {
+  const _RequiredRow({required this.index, required this.course});
+  final int index;
+  final DashboardCourse course;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewDisabled = isViewCourseDisabled(ref, course.id);
     return Row(
       children: [
-        ...List.generate(5, (i) {
-          if (i < rating.floor()) {
-            return const Icon(Icons.star_rounded, color: Color(0xFFFFC107), size: 15);
-          }
-          if (i < rating) {
-            return const Icon(
-              Icons.star_half_rounded,
-              color: Color(0xFFFFC107),
-              size: 15,
-            );
-          }
-          return const Icon(
-            Icons.star_border_rounded,
-            color: Color(0xFFFFC107),
-            size: 15,
-          );
-        }),
-        const SizedBox(width: 4),
-        Text(
-          '${rating.toStringAsFixed(1)} ($count)',
-          style: const TextStyle(color: _muted, fontSize: 11),
+        SizedBox(
+          width: 22,
+          child: Text(
+            '$index',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF9CA3AF),
+              fontSize: 14.4,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            course.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF1E2939),
+              fontSize: 14.72,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        OutlinedButton(
+          onPressed: viewDisabled
+              ? null
+              : () => Modular.to.pushNamed(
+                    CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+                  ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF693D94),
+            side: const BorderSide(color: Color(0xFF693D94)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12),
+          ),
+          child: const Text('View'),
         ),
       ],
     );
@@ -735,9 +1370,9 @@ class _ImgFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFF0ECFF),
+      color: FigmaTokens.badgeBackground,
       alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, color: _purple, size: 54),
+      child: const Icon(Icons.school_outlined, color: _purple, size: 40),
     );
   }
 }
@@ -777,4 +1412,3 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
-

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-const _footerLink = Color(0xFF5756C9);
-const _footerMuted = Color(0xFF98A2B3);
+const _footerText = Color(0xFF6B7280);
+const _footerBorder = Color(0xFFE4E7EC);
+const _linkedInBg = Color(0xFFE2E8F0);
 
 /// Matches the website's global footer (Terms of Use / Your Profile /
 /// Support + LinkedIn) — shown at the bottom of every main screen.
@@ -11,25 +14,46 @@ class AppFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 16,
-        runSpacing: 8,
-        children: [
-          const _FooterLink(label: 'Terms of Use'),
-          _FooterLink(
-            label: 'Your Profile',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
-            ),
+    return Column(
+      children: [
+        const Divider(height: 1, color: _footerBorder),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 24,
+                runSpacing: 8,
+                children: [
+                  _FooterLink(
+                    label: 'Terms of Use',
+                    onTap: () => launchUrl(
+                      Uri.parse('https://www.iubenda.com/terms-and-conditions/26898975'),
+                      mode: LaunchMode.externalApplication,
+                    ),
+                  ),
+                  _FooterLink(
+                    label: 'Your Profile',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
+                    ),
+                  ),
+                  _FooterLink(
+                    label: 'Support',
+                    // Bare mailto: opens a blank compose window in whichever
+                    // mail app/account the user already has signed in as
+                    // the OS default - not something we can address further.
+                    onTap: () => launchUrl(Uri.parse('mailto:')),
+                  ),
+                ],
+              ),
+              const _LinkedInBadge(),
+            ],
           ),
-          const _FooterLink(label: 'Support'),
-          const _LinkedInBadge(),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -45,13 +69,7 @@ class _FooterLink extends StatelessWidget {
       onTap: onTap,
       child: Text(
         label,
-        style: TextStyle(
-          color: onTap != null ? _footerLink : _footerMuted,
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
-          decoration: onTap != null ? TextDecoration.underline : null,
-          decorationColor: _footerLink,
-        ),
+        style: GoogleFonts.inter(color: _footerText, fontSize: 14),
       ),
     );
   }
@@ -62,21 +80,28 @@ class _LinkedInBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 22,
-      height: 22,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: const Color(0xFF0A66C2),
-        borderRadius: BorderRadius.circular(4),
+    return InkWell(
+      customBorder: const CircleBorder(),
+      onTap: () => launchUrl(
+        Uri.parse('https://www.linkedin.com/company/looking-forward-consulting'),
+        mode: LaunchMode.externalApplication,
       ),
-      child: const Text(
-        'in',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w800,
-          height: 1,
+      child: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: _linkedInBg,
+          shape: BoxShape.circle,
+        ),
+        child: Text(
+          'in',
+          style: GoogleFonts.inter(
+            color: _footerText,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            height: 1,
+          ),
         ),
       ),
     );

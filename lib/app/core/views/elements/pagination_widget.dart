@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const _purple = Color(0xFF5756C9);
+const _purple = Color(0xFF693D94);
 const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 

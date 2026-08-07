@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -29,7 +31,8 @@ const _catalogPink = Color(0xFFB0006D);
 const _catalogInk = Color(0xFF172033);
 const _catalogMuted = Color(0xFF7C879D);
 const _catalogBackground = Color(0xFFF4F7F8);
-const _catalogCalendarBlue = Color(0xFF3454D1);
+const _catalogCalendarBlue = Color(0xFF693D94);
+const _catalogUndoBlue = Color(0xFF693D94);
 
 int _catalogColumns(double width) {
   if (width >= 900) return 4;
@@ -260,7 +263,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     crossAxisCount: columns,
                     crossAxisSpacing: width >= 760 ? 28 : 18,
                     mainAxisSpacing: width >= 760 ? 28 : 34,
-                    mainAxisExtent: width >= 760 ? 190 : 230,
+                    mainAxisExtent: width >= 760 ? 365 : 390,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _CatalogCourseCard(
@@ -378,14 +381,15 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
     final title = groupName.trim().isEmpty ? 'Courses' : '$groupName Courses';
     return SliverPadding(
-      padding: EdgeInsets.fromLTRB(isWide ? 48 : 27, 14, isWide ? 48 : 27, 12),
+      padding: EdgeInsets.fromLTRB(isWide ? 48 : 27, 14, isWide ? 48 : 27, 20),
       sliver: SliverToBoxAdapter(
         child: Text(
           title,
-          style: const TextStyle(
-            color: _catalogPink,
-            fontSize: 17,
-            fontWeight: FontWeight.w500,
+          style: GoogleFonts.roboto(
+            color: const Color(0xFFA20067),
+            fontSize: 24,
+            fontWeight: FontWeight.w400,
+            height: 28 / 24,
           ),
         ),
       ),
@@ -406,7 +410,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               crossAxisCount: columns,
               crossAxisSpacing: width >= 760 ? 28 : 18,
               mainAxisSpacing: width >= 760 ? 28 : 34,
-              mainAxisExtent: width >= 760 ? 190 : 230,
+              mainAxisExtent: width >= 760 ? 365 : 390,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) => _CatalogCourseCard(
@@ -456,176 +460,89 @@ class _FilterPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0B172033),
-            blurRadius: 20,
-            offset: Offset(0, 7),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 720;
+        final searchField = _CatalogField(
+          controller: searchController,
+          hint: offline ? "You're offline" : 'Search',
+          showClear: true,
+          showLeadingIcon: true,
+          enabled: !offline,
+          onSubmitted: (_) => onApply(),
+        );
+        final skillDropdown = _SkillDropdown(
+          skills: skills,
+          value: selectedSkillId,
+          onChanged: onSkillChanged,
+          inline: wide,
+        );
+        final undoButton = SizedBox(
+          width: 48,
+          height: 42,
+          child: ElevatedButton(
+            onPressed: offline ? null : onReset,
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              backgroundColor: _catalogUndoBlue,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            child: const Icon(Icons.undo_rounded, size: 18),
           ),
-        ],
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final wide = constraints.maxWidth >= 720;
-          final fields = <Widget>[
-            _CatalogField(
-              controller: searchController,
-              hint: offline ? "You're offline" : 'Search Course',
-              showClear: true,
-              showLeadingIcon: false,
-              enabled: !offline,
-              onSubmitted: (_) => onApply(),
+        );
+        final calendarButton = ElevatedButton(
+          onPressed: onCalendarView,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _catalogCalendarBlue,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
             ),
-            _SkillDropdown(
-              skills: skills,
-              value: selectedSkillId,
-              onChanged: onSkillChanged,
-            ),
-          ];
+          ),
+          child: Text(
+            'Calendar View',
+            style: GoogleFonts.roboto(fontWeight: FontWeight.w700, fontSize: 16),
+          ),
+        );
 
-          if (wide) {
-            return SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  SizedBox(width: 230, child: fields[0]),
-                  const SizedBox(width: 12),
-                  SizedBox(width: 240, child: fields[1]),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: 56,
-                    height: 42,
-                    child: OutlinedButton(
-                      onPressed: offline ? null : onReset,
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide.none,
-                        backgroundColor: _catalogBackground,
-                      ),
-                      child: const Icon(Icons.undo_rounded),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    width: 118,
-                    height: 42,
-                    child: ElevatedButton.icon(
-                      onPressed: offline ? null : onApply,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _catalogPurple,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                      ),
-                      icon: const Icon(Icons.search_rounded, size: 18),
-                      label: const Text(
-                        'Search',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  SizedBox(
-                    height: 42,
-                    child: ElevatedButton.icon(
-                      onPressed: onCalendarView,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _catalogCalendarBlue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                      ),
-                      icon: const Icon(Icons.calendar_month_rounded, size: 16),
-                      label: const Text(
-                        'Calendar View',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return Column(
+        if (wide) {
+          return Row(
             children: [
-              fields[0],
-              const SizedBox(height: 14),
-              fields[1],
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: offline ? null : onApply,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    backgroundColor: _catalogPurple,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  icon: const Icon(Icons.search_rounded, size: 20),
-                  label: const Text(
-                    'Search',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  SizedBox(
-                    width: 52,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: offline ? null : onReset,
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        backgroundColor: _catalogPurple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Icon(Icons.undo_rounded),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: onCalendarView,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        backgroundColor: _catalogCalendarBlue,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      icon: const Icon(Icons.calendar_month_rounded, size: 20),
-                      label: const Text(
-                        'Calendar View',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              Expanded(flex: 5, child: searchField),
+              const SizedBox(width: 16),
+              Expanded(flex: 3, child: skillDropdown),
+              const SizedBox(width: 16),
+              undoButton,
+              const SizedBox(width: 16),
+              SizedBox(height: 42, child: calendarButton),
             ],
           );
-        },
-      ),
+        }
+
+        return Column(
+          children: [
+            searchField,
+            const SizedBox(height: 14),
+            skillDropdown,
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                undoButton,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(height: 48, child: calendarButton),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -713,6 +630,7 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
       controller: _controller,
       enabled: widget.enabled,
       autofocus: widget.autofocus,
+      style: GoogleFonts.roboto(color: const Color(0xFF495057), fontSize: 16),
       onChanged: widget.onChanged,
       onSubmitted: (value) {
         FocusScope.of(context).unfocus();
@@ -741,44 +659,91 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
   }
 }
 
-class _SkillDropdown extends StatelessWidget {
+class _SkillDropdown extends StatefulWidget {
   const _SkillDropdown({
     required this.skills,
     required this.value,
     required this.onChanged,
+    this.inline = false,
   });
   final List<CatalogSkill> skills;
   final String? value;
   final ValueChanged<String?> onChanged;
 
+  /// Desktop reference shows an inline panel opening directly under the
+  /// field (like a web <select2>), rather than a mobile bottom sheet.
+  final bool inline;
+
+  @override
+  State<_SkillDropdown> createState() => _SkillDropdownState();
+}
+
+class _SkillDropdownState extends State<_SkillDropdown> {
+  final _layerLink = LayerLink();
+  OverlayEntry? _overlayEntry;
+  bool _open = false;
+
+  @override
+  void dispose() {
+    _removeOverlay();
+    super.dispose();
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+    if (_open && mounted) setState(() => _open = false);
+  }
+
+  void _openInline(BuildContext context, List<CatalogSkill> unique, CatalogSkill? selected) {
+    final box = context.findRenderObject() as RenderBox;
+    _overlayEntry = OverlayEntry(
+      builder: (context) => _SkillDropdownOverlay(
+        link: _layerLink,
+        width: box.size.width,
+        skills: unique,
+        selectedId: selected?.id,
+        onDismiss: _removeOverlay,
+        onSelected: (skill) {
+          widget.onChanged(skill?.id);
+          _removeOverlay();
+        },
+      ),
+    );
+    Overlay.of(context).insert(_overlayEntry!);
+    setState(() => _open = true);
+  }
+
+  Future<void> _openSheet(List<CatalogSkill> unique, CatalogSkill? selected) async {
+    final picked = await showModalBottomSheet<CatalogSkill?>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _SkillPickerSheet(
+        skills: unique,
+        selectedId: selected?.id,
+      ),
+    );
+    if (picked != null) widget.onChanged(picked.id);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final unique =
-        <String, CatalogSkill>{
-          for (final skill in skills) skill.id: skill,
-        }.values.toList();
-    final selected = _selectedSkill(unique, value);
-    return InkWell(
-      onTap:
-          unique.isEmpty
-              ? null
-              : () async {
-                final picked = await showModalBottomSheet<CatalogSkill?>(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder:
-                      (context) => _SkillPickerSheet(
-                        skills: unique,
-                        selectedId: selected?.id,
-                      ),
-                );
-                if (picked != null) onChanged(picked.id);
-              },
-      borderRadius: BorderRadius.circular(9),
+    final unique = <String, CatalogSkill>{
+      for (final skill in widget.skills) skill.id: skill,
+    }.values.toList();
+    final selected = _selectedSkill(unique, widget.value);
+
+    final field = InkWell(
+      onTap: unique.isEmpty
+          ? null
+          : () => widget.inline
+              ? (_open ? _removeOverlay() : _openInline(context, unique, selected))
+              : _openSheet(unique, selected),
+      borderRadius: BorderRadius.circular(4),
       child: InputDecorator(
         decoration: _fieldDecoration(
-          'Search Skills or Behavior',
+          'Skills or Behavior',
           showLeadingIcon: false,
         ).copyWith(
           suffixIcon: Row(
@@ -787,15 +752,18 @@ class _SkillDropdown extends StatelessWidget {
               if (selected != null)
                 IconButton(
                   tooltip: 'Clear',
-                  onPressed: () => onChanged(null),
+                  onPressed: () {
+                    widget.onChanged(null);
+                    _removeOverlay();
+                  },
                   icon: const Icon(
                     Icons.close_rounded,
                     color: _catalogMuted,
                     size: 20,
                   ),
                 ),
-              const Icon(
-                Icons.keyboard_arrow_down_rounded,
+              Icon(
+                _open ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
                 color: _catalogMuted,
               ),
               const SizedBox(width: 8),
@@ -803,15 +771,150 @@ class _SkillDropdown extends StatelessWidget {
           ),
         ),
         child: Text(
-          selected?.name ?? 'Search Skills or Behavior',
+          selected?.name ?? 'Skills or Behavior',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: selected == null ? _catalogMuted : _catalogInk,
-            fontSize: 13,
+          style: GoogleFonts.roboto(
+            color: selected == null ? const Color(0xFF999999) : const Color(0xFF495057),
+            fontSize: 16,
           ),
         ),
       ),
+    );
+
+    return CompositedTransformTarget(link: _layerLink, child: field);
+  }
+}
+
+class _SkillDropdownOverlay extends StatefulWidget {
+  const _SkillDropdownOverlay({
+    required this.link,
+    required this.width,
+    required this.skills,
+    required this.selectedId,
+    required this.onDismiss,
+    required this.onSelected,
+  });
+  final LayerLink link;
+  final double width;
+  final List<CatalogSkill> skills;
+  final String? selectedId;
+  final VoidCallback onDismiss;
+  final ValueChanged<CatalogSkill?> onSelected;
+
+  @override
+  State<_SkillDropdownOverlay> createState() => _SkillDropdownOverlayState();
+}
+
+class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
+  final _queryController = TextEditingController();
+
+  @override
+  void dispose() {
+    _queryController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _queryController.text.trim().toLowerCase();
+    final filtered = widget.skills
+        .where((skill) => skill.name.toLowerCase().contains(query))
+        .toList();
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: widget.onDismiss,
+          ),
+        ),
+        CompositedTransformFollower(
+          link: widget.link,
+          showWhenUnlinked: false,
+          targetAnchor: Alignment.bottomLeft,
+          followerAnchor: Alignment.topLeft,
+          offset: const Offset(0, 4),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 6,
+              borderRadius: BorderRadius.circular(4),
+              child: Container(
+                width: widget.width,
+                constraints: const BoxConstraints(maxHeight: 340),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFE3E8EF)),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: TextField(
+                        controller: _queryController,
+                        autofocus: true,
+                        onChanged: (_) => setState(() {}),
+                        style: GoogleFonts.roboto(fontSize: 15, color: const Color(0xFF495057)),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(2),
+                            borderSide: const BorderSide(color: Colors.black87),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(2),
+                            borderSide: const BorderSide(color: Colors.black87),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(2),
+                            borderSide: const BorderSide(color: Colors.black87, width: 1.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Flexible(
+                      child: filtered.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text('No matching filters found.'),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final skill = filtered[index];
+                                final selected = skill.id == widget.selectedId;
+                                return InkWell(
+                                  onTap: () => widget.onSelected(skill),
+                                  child: Container(
+                                    width: double.infinity,
+                                    color: selected ? const Color(0xFF5B8DEF) : Colors.transparent,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    child: Text(
+                                      skill.name,
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 15,
+                                        color: selected ? Colors.white : const Color(0xFF495057),
+                                        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -966,30 +1069,30 @@ InputDecoration _fieldDecoration(
   bool showLeadingIcon = true,
 }) => InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: _catalogMuted, fontSize: 13),
+      hintStyle: GoogleFonts.roboto(color: const Color(0xFF999999), fontSize: 16),
       prefixIcon: showLeadingIcon
           ? const Icon(
               Icons.search_rounded,
-              color: Color(0xFF91A0B8),
-              size: 18,
+              color: Color(0xFF693D94),
+              size: 20,
             )
           : null,
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: const Color(0xFFF8FAFC),
+      fillColor: Colors.white,
       isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: Color(0xFFE7E4FF)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: Color(0xFFE7E4FF)),
       ),
       disabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(9),
-        borderSide: const BorderSide(color: Color(0xFFE3E8EF)),
+        borderRadius: BorderRadius.circular(4),
+        borderSide: const BorderSide(color: Color(0xFFE7E4FF)),
       ),
     );
 
@@ -1152,10 +1255,106 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
         ],
       ),
       child: Stack(
-        fit: StackFit.expand,
         children: [
-          // Image fills the whole card
-          _CourseImage(url: widget.course.logo),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                height: isWide ? 140 : 160,
+                child: _CourseImage(url: widget.course.logo),
+              ),
+              // Fixed height regardless of whether a course has a next
+              // session, so every card in a row lines up identically
+              // instead of the footer's position shifting per-card.
+              SizedBox(
+                height: 58,
+                child: widget.course.nextSession == null
+                    ? null
+                    : Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'The next available course begins on',
+                              style: GoogleFonts.roboto(
+                                color: const Color(0xFF767676),
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _formatNextSession(widget.course.nextSession!),
+                              style: GoogleFonts.roboto(
+                                color: const Color(0xFF484848),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
+                  decoration: const BoxDecoration(gradient: FigmaTokens.heroGradient),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.roboto(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w400,
+                          height: 27 / 22,
+                        ),
+                      ),
+                      const Spacer(),
+                      OutlinedButton(
+                        onPressed: viewDisabled
+                            ? null
+                            : () => Modular.to.pushNamed(
+                                CoursesModule.construct(
+                                  '${CoursesModule.detail}/${widget.course.id}',
+                                ),
+                                arguments: widget.course.offlineCourse,
+                              ),
+                        style: OutlinedButton.styleFrom(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(isWide ? 7 : 10),
+                          ),
+                        ),
+                        child: Transform.translate(
+                          offset: const Offset(0, -1),
+                          child: Text(
+                            'View Course',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.roboto(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              height: 21 / 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
           if (membership.loaded)
             Positioned(
               top: 12,
@@ -1170,76 +1369,32 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
             left: 12,
             child: OfflineCourseButton(course: widget.course.offlineCourse),
           ),
-          // Title + View Course overlaid on the bottom of the image
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
-              decoration: BoxDecoration(color: _catalogPurple.withValues(alpha: 0.93)),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // The catalog API has no per-course enrollment flag, and a
-                  // session date shouldn't be shown for a course the
-                  // learner hasn't necessarily enrolled in yet - removed
-                  // rather than risk showing it for an unenrolled course.
-                  Text(
-                    widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: isWide ? 13 : 15,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                    ),
-                  ),
-                  SizedBox(height: isWide ? 8 : 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: viewDisabled
-                          ? null
-                          : () => Modular.to.pushNamed(
-                              CoursesModule.construct(
-                                '${CoursesModule.detail}/${widget.course.id}',
-                              ),
-                              arguments: widget.course.offlineCourse,
-                            ),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: Size.fromHeight(isWide ? 34 : 42),
-                        backgroundColor: const Color(0xFF433FA0),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(isWide ? 7 : 10),
-                        ),
-                      ),
-                      child: const Text(
-                        'View Course',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Overlay covers the full card (image + text area)
+          // Overlay covers the full card
           if (_showOverlay)
-            _DevPlanOverlay(
-              isInPlan: isInPlan,
-              isBusy: _isBusy,
-              onYes: () => _handleDevPlanAction(context, isInPlan),
-              onNo: () => setState(() => _showOverlay = false),
+            Positioned.fill(
+              child: _DevPlanOverlay(
+                isInPlan: isInPlan,
+                isBusy: _isBusy,
+                onYes: () => _handleDevPlanAction(context, isInPlan),
+                onNo: () => setState(() => _showOverlay = false),
+              ),
             ),
         ],
       ),
     );
   }
+}
+
+String _formatNextSession(DateTime dt) {
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final hourStr = hour12.toString().padLeft(2, '0');
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+  return '${months[dt.month - 1]} ${dt.day}, $hourStr:$minute $ampm';
 }
 
 class _DevPlanButton extends StatelessWidget {
@@ -1273,7 +1428,7 @@ class _DevPlanButton extends StatelessWidget {
               ? Icons.cloud_off_rounded
               : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
           size: isDisabled ? 15 : 18,
-          color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : _catalogPurple),
+          color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : const Color(0xFF693D94)),
         ),
       ),
     );
@@ -1384,7 +1539,7 @@ class _CourseImage extends StatelessWidget {
     final fallback = Container(
       color: const Color(0xFFF1EFFB),
       alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, size: 58, color: _catalogPurple),
+      child: const Icon(Icons.school_outlined, size: 58, color: Color(0xFF693D94)),
     );
     if (url == null) return fallback;
     return Image.network(

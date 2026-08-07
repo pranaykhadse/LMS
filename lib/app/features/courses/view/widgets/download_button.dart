@@ -28,7 +28,6 @@ class DownloadButton extends ConsumerWidget {
     required this.builder,
     required this.courseClass,
     this.fullWidth = false,
-    this.onDownloadStart,
   });
 
   final String? url;
@@ -38,12 +37,6 @@ class DownloadButton extends ConsumerWidget {
   final CourseClass? courseClass;
   final Widget Function(BuildContext context, FileCacheState file) builder;
   final bool fullWidth;
-
-  /// Called right as the download starts (e.g. to mark the associated
-  /// class/learning-event completed - some content, like Virtual Class
-  /// recordings, counts as "watched" once downloading begins, not only
-  /// once the file is later opened).
-  final VoidCallback? onDownloadStart;
 
   Future<void> _open(BuildContext context, WidgetRef ref, FileCacheState file) async {
     if (courseClass != null) {
@@ -143,10 +136,7 @@ class DownloadButton extends ConsumerWidget {
     // ── ① ONLINE + NOT DOWNLOADED ────────────────────────────────────────
     return _DownloadTriggerButton(
       label: label,
-      onTap: () {
-        fileCacheVM.downloadFile(url!);
-        onDownloadStart?.call();
-      },
+      onTap: () => fileCacheVM.downloadFile(url!),
       fullWidth: fullWidth,
     );
   }
