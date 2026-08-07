@@ -729,8 +729,7 @@ class _RequiredCourseRow extends StatelessWidget {
                 }
               }
 
-              final shape = RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8));
+              const shape = StadiumBorder();
               const textStyle =
                   TextStyle(fontWeight: FontWeight.w700, fontSize: 12);
               return hovering
@@ -752,7 +751,7 @@ class _RequiredCourseRow extends StatelessWidget {
                       onPressed: onPressed,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _lpPurple,
-                        side: BorderSide(color: _lpPurple.withValues(alpha: 0.5)),
+                        side: BorderSide(color: _lpPurple.withValues(alpha: 0.4)),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,

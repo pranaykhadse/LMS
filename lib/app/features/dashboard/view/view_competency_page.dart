@@ -181,7 +181,7 @@ class _CourseRow extends StatelessWidget {
               final onPressed = () => Modular.to.pushNamed(
                     CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
                   );
-              final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(7));
+              const shape = StadiumBorder();
               const textStyle = TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5);
               return hovering
                   ? ElevatedButton.icon(
@@ -205,7 +205,7 @@ class _CourseRow extends StatelessWidget {
                       label: const Text('View'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _vcPurple,
-                        side: BorderSide(color: _vcPurple.withValues(alpha: 0.5)),
+                        side: const BorderSide(color: _vcPurple),
                         minimumSize: const Size(0, 34),
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,

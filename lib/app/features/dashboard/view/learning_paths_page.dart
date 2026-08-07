@@ -497,8 +497,7 @@ class _CompetencyPreviewRow extends StatelessWidget {
                             learningPathId: pathId,
                             competency: competency.name,
                           );
-                      final shape = RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(7));
+                      const shape = StadiumBorder();
                       const textStyle =
                           TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5);
                       return hovering
@@ -524,7 +523,7 @@ class _CompetencyPreviewRow extends StatelessWidget {
                               label: const Text('View'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: _purple,
-                                side: BorderSide(color: _purple.withValues(alpha: 0.5)),
+                                side: const BorderSide(color: _purple),
                                 minimumSize: const Size(0, 30),
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,

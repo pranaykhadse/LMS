@@ -1244,7 +1244,7 @@ class _DiscussionBoardRow extends StatelessWidget {
             final onPressed = () => Modular.to.pushNamed(
                   CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
                 );
-            final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+            const shape = StadiumBorder();
             final textStyle = GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12);
             return hovering
                 ? ElevatedButton(
@@ -1263,7 +1263,7 @@ class _DiscussionBoardRow extends StatelessWidget {
                     onPressed: onPressed,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _purple,
-                      side: BorderSide(color: _purple.withValues(alpha: 0.5)),
+                      side: const BorderSide(color: _purple),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       shape: shape,
                       textStyle: textStyle,
@@ -1514,7 +1514,7 @@ class _RequiredRow extends ConsumerWidget {
                 : () => Modular.to.pushNamed(
                       CoursesModule.construct('${CoursesModule.detail}/$courseId'),
                     );
-            final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+            const shape = StadiumBorder();
             final textStyle = GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12);
             return hovering && !viewDisabled
                 ? ElevatedButton(
@@ -1533,7 +1533,7 @@ class _RequiredRow extends ConsumerWidget {
                     onPressed: onPressed,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _purple,
-                      side: BorderSide(color: _purple.withValues(alpha: 0.5)),
+                      side: const BorderSide(color: _purple),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       shape: shape,
                       textStyle: textStyle,
