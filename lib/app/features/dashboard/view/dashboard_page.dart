@@ -752,7 +752,8 @@ class _ContinueLearningItem extends ConsumerWidget {
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: _BrandButton(
+                  label: 'Resume',
                   onPressed: viewDisabled
                       ? null
                       : () => Modular.to.pushNamed(
@@ -760,24 +761,13 @@ class _ContinueLearningItem extends ConsumerWidget {
                               '${CoursesModule.detail}/${course.id}',
                             ),
                           ),
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.resolveWith(
-                      (states) => states.contains(WidgetState.hovered)
-                          ? FigmaTokens.purpleHover
-                          : _purple,
-                    ),
-                    overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-                    foregroundColor: const WidgetStatePropertyAll(Colors.white),
-                    elevation: const WidgetStatePropertyAll(0),
-                    minimumSize: const WidgetStatePropertyAll(Size.fromHeight(38)),
-                    shape: WidgetStatePropertyAll(
-                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    textStyle: const WidgetStatePropertyAll(
-                      TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
-                    ),
+                  borderRadius: 8,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  textStyle: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
                   ),
-                  child: const Text('Resume'),
                 ),
               ),
             ],
@@ -986,30 +976,18 @@ class _SessionRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          ElevatedButton(
+          _BrandButton(
+            label: 'Join',
             onPressed: () => Modular.to.pushNamed(
               CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
             ),
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.resolveWith(
-                (states) => states.contains(WidgetState.hovered)
-                    ? FigmaTokens.purpleHover
-                    : _purple,
-              ),
-              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-              foregroundColor: const WidgetStatePropertyAll(Colors.white),
-              elevation: const WidgetStatePropertyAll(0),
-              padding: const WidgetStatePropertyAll(
-                EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              ),
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              ),
-              textStyle: WidgetStatePropertyAll(
-                GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12.8),
-              ),
+            borderRadius: 20,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            textStyle: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 12.8,
             ),
-            child: const Text('Join'),
           ),
         ],
       ),
@@ -1521,6 +1499,66 @@ class _RequiredRow extends ConsumerWidget {
           child: const Text('View'),
         ),
       ],
+    );
+  }
+}
+
+// ─── Brand-colored button with an explicit hover state ─────────────────────
+//
+// ElevatedButton's built-in hover handling is driven by InkResponse
+// internally, and didn't reliably repaint the background color when tested
+// on macOS desktop - tracking hover state directly with a MouseRegion
+// guarantees the swap between primaryPurple and purpleHover actually shows.
+
+class _BrandButton extends StatefulWidget {
+  const _BrandButton({
+    required this.label,
+    required this.onPressed,
+    required this.borderRadius,
+    required this.padding,
+    required this.textStyle,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final double borderRadius;
+  final EdgeInsetsGeometry padding;
+  final TextStyle textStyle;
+
+  @override
+  State<_BrandButton> createState() => _BrandButtonState();
+}
+
+class _BrandButtonState extends State<_BrandButton> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onPressed != null;
+    return MouseRegion(
+      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: Material(
+        color: !enabled
+            ? _purple.withOpacity(0.5)
+            : _hovering
+                ? FigmaTokens.purpleHover
+                : _purple,
+        borderRadius: BorderRadius.circular(widget.borderRadius),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          onTap: widget.onPressed,
+          child: Padding(
+            padding: widget.padding,
+            child: Text(
+              widget.label,
+              style: widget.textStyle,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
