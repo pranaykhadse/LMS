@@ -47,12 +47,19 @@ class DashboardCourse {
     required this.averageRating,
     required this.ratingCount,
     this.isNonCourse = false,
+    this.description,
   });
 
   final int id;
   final String name;
   final String? logo;
   final int progress;
+
+  /// Only populated when built from the learning-progress endpoint's
+  /// "continue_learning" list, which is the only place a description is
+  /// actually available - null everywhere else (fromJson below doesn't set
+  /// it, since ongoing_courses never carried one).
+  final String? description;
   final bool displayRating;
   final double averageRating;
   final int ratingCount;

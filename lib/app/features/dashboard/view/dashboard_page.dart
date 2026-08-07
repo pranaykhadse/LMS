@@ -16,13 +16,10 @@ import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
-import 'package:lms/app/features/courses/viewmodel/calendar_view_model.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
-import 'package:lms/app/features/dashboard/viewmodel/completed_courses_view_model.dart';
-import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
-import 'package:lms/app/features/dashboard/viewmodel/enrolled_courses_view_model.dart';
-import 'package:lms/app/features/dashboard/viewmodel/required_courses_view_model.dart';
+import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
 import 'package:lms/app_module.dart';
 
 const _purple = FigmaTokens.primaryPurple;
@@ -52,11 +49,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 
   void _refetchAll() {
-    ref.read(DashboardViewModel.provider.notifier).fetch();
-    ref.read(EnrolledCoursesViewModel.provider.notifier).fetch();
-    ref.read(RequiredCoursesViewModel.provider.notifier).fetch();
-    ref.read(CompletedCoursesViewModel.provider.notifier).fetch();
-    ref.read(CalendarViewModel.provider.notifier).fetch();
+    ref.read(LearningProgressViewModel.provider.notifier).fetch();
   }
 
   @override
@@ -83,7 +76,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       );
     }
 
-    final state = ref.watch(DashboardViewModel.provider);
+    final state = ref.watch(LearningProgressViewModel.provider);
 
     if (!_redirectingUnauthorized &&
         state.state == DataProviderState.error &&
@@ -140,7 +133,7 @@ class _DashboardBody extends ConsumerWidget {
     required this.onRefetchAll,
   });
   final AuthState? auth;
-  final DataState<DashboardResponse> state;
+  final DataState<LearningProgressData> state;
   final VoidCallback onRefetchAll;
 
   @override
@@ -159,10 +152,6 @@ class _DashboardBody extends ConsumerWidget {
         if (data == null) {
           return const _ErrorView(message: 'No dashboard data found.');
         }
-        final enrolled = ref.watch(EnrolledCoursesViewModel.provider);
-        final required = ref.watch(RequiredCoursesViewModel.provider);
-        final completed = ref.watch(CompletedCoursesViewModel.provider);
-        final calendar = ref.watch(CalendarViewModel.provider);
 
         return RefreshIndicator(
           color: _purple,
@@ -188,9 +177,9 @@ class _DashboardBody extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
                     child: _StatRow(
                       isWide: isWide,
-                      enrolled: enrolled.totalCourses,
-                      required: required.total,
-                      completed: completed.total,
+                      enrolled: data.summary.enrolledCourses,
+                      required: data.summary.requiredCourses,
+                      completed: data.summary.completedCourses,
                     ),
                   ),
                   Padding(
@@ -202,21 +191,25 @@ class _DashboardBody extends ConsumerWidget {
                               children: [
                                 Expanded(
                                   child: _ContinueLearningCard(
-                                    courses: data.ongoingCourses,
+                                    courses: _continueLearningCourses(data),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: _UpcomingSessionsCard(calendar: calendar),
+                                  child: _UpcomingSessionsCard(
+                                    sessions: data.upcomingSessions,
+                                  ),
                                 ),
                               ],
                             ),
                           )
                         : Column(
                             children: [
-                              _ContinueLearningCard(courses: data.ongoingCourses),
+                              _ContinueLearningCard(
+                                courses: _continueLearningCourses(data),
+                              ),
                               const SizedBox(height: 16),
-                              _UpcomingSessionsCard(calendar: calendar),
+                              _UpcomingSessionsCard(sessions: data.upcomingSessions),
                             ],
                           ),
                   ),
@@ -228,20 +221,26 @@ class _DashboardBody extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Expanded(
-                                  child: _CourseProgressCard(enrolled: enrolled),
+                                  child: _CourseProgressCard(
+                                    courses: _progressCourses(data),
+                                  ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: _OverallProgressCard(enrolled: enrolled),
+                                  child: _OverallProgressCard(
+                                    overallProgress: data.summary.overallProgress,
+                                  ),
                                 ),
                               ],
                             ),
                           )
                         : Column(
                             children: [
-                              _CourseProgressCard(enrolled: enrolled),
+                              _CourseProgressCard(courses: _progressCourses(data)),
                               const SizedBox(height: 16),
-                              _OverallProgressCard(enrolled: enrolled),
+                              _OverallProgressCard(
+                                overallProgress: data.summary.overallProgress,
+                              ),
                             ],
                           ),
                   ),
@@ -251,24 +250,30 @@ class _DashboardBody extends ConsumerWidget {
                         ? IntrinsicHeight(
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: const [
-                                Expanded(child: _DiscussionBoardsCard()),
-                                SizedBox(width: 16),
-                                Expanded(child: _RewardsPointsCard()),
+                              children: [
+                                Expanded(
+                                  child: _DiscussionBoardsCard(
+                                    boards: data.extras.discussionBoards,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _RewardsPointsCard(rewards: data.extras.rewards),
+                                ),
                               ],
                             ),
                           )
-                        : const Column(
+                        : Column(
                             children: [
-                              _DiscussionBoardsCard(),
-                              SizedBox(height: 16),
-                              _RewardsPointsCard(),
+                              _DiscussionBoardsCard(boards: data.extras.discussionBoards),
+                              const SizedBox(height: 16),
+                              _RewardsPointsCard(rewards: data.extras.rewards),
                             ],
                           ),
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                    child: _RequiredForYouCard(required: required),
+                    child: _RequiredForYouCard(required: data.requiredForYou),
                   ),
                   const AppFooter(),
                 ],
@@ -278,6 +283,49 @@ class _DashboardBody extends ConsumerWidget {
         );
     }
   }
+}
+
+// ─── Adapters ─────────────────────────────────────────────────────────────────
+//
+// The learning-progress endpoint's "dashboard.continue_learning" entries
+// carry description/logo/class info but no numeric progress of their own -
+// cross-referenced against progress_status (keyed by course_id) below,
+// since that's the only place the API actually reports it.
+
+List<DashboardCourse> _continueLearningCourses(LearningProgressData data) {
+  final progressByCourseId = {
+    for (final p in data.progressStatus) p.courseId: p.progress,
+  };
+  return data.extras.continueLearning
+      .map(
+        (item) => DashboardCourse(
+          id: int.tryParse(item.courseId) ?? 0,
+          name: item.courseName,
+          logo: item.logoLink,
+          progress: progressByCourseId[item.courseId] ?? 0,
+          displayRating: false,
+          averageRating: 0,
+          ratingCount: 0,
+          description: item.description.isNotEmpty ? item.description : null,
+        ),
+      )
+      .toList();
+}
+
+List<DashboardCourse> _progressCourses(LearningProgressData data) {
+  return data.progressStatus
+      .map(
+        (item) => DashboardCourse(
+          id: int.tryParse(item.courseId) ?? 0,
+          name: item.courseName,
+          logo: null,
+          progress: item.progress,
+          displayRating: false,
+          averageRating: 0,
+          ratingCount: 0,
+        ),
+      )
+      .toList();
 }
 
 // ─── Banner ───────────────────────────────────────────────────────────────────
@@ -723,6 +771,15 @@ class _ContinueLearningItem extends ConsumerWidget {
                   '${course.progress}% complete',
                   style: const TextStyle(color: _muted, fontSize: 12),
                 ),
+              if (course.description != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  course.description!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: _muted, fontSize: 12.5, height: 1.35),
+                ),
+              ],
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
@@ -760,9 +817,36 @@ class _ContinueLearningItem extends ConsumerWidget {
 
 // ─── Upcoming Sessions ────────────────────────────────────────────────────────
 
+/// Adapts an UpcomingSession into a CalendarEvent so _SessionRow (shared
+/// with the Calendar screen's own styling) can render it unchanged.
+CalendarEvent? _toCalendarEvent(UpcomingSession session) {
+  final rawDate = session.startDate;
+  if (rawDate == null) return null;
+  final startDate = DateTime.tryParse(rawDate);
+  if (startDate == null) return null;
+  // Matches CalendarEvent.fromJson's own parsing exactly (raw date parse,
+  // no .toLocal() here) - CalendarEvent.startDateTime's _combine getter is
+  // what applies the UTC->local conversion, using this startDate + startTime
+  // together. Converting here too would double-apply the offset.
+  return CalendarEvent(
+    courseId: int.tryParse(session.courseId) ?? 0,
+    courseName: session.courseName,
+    classId: int.tryParse(session.classId) ?? 0,
+    className: '',
+    learningEventClassId: int.tryParse(session.classId) ?? 0,
+    title: session.courseName,
+    startDate: startDate,
+    startTime: session.startTime,
+    endTime: session.endTime,
+    registrationStatus: '',
+    description: '',
+    instructor: session.instructor,
+  );
+}
+
 class _UpcomingSessionsCard extends StatefulWidget {
-  const _UpcomingSessionsCard({required this.calendar});
-  final DataState<CalendarViewResult> calendar;
+  const _UpcomingSessionsCard({required this.sessions});
+  final List<UpcomingSession> sessions;
 
   @override
   State<_UpcomingSessionsCard> createState() => _UpcomingSessionsCardState();
@@ -774,7 +858,9 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final upcoming = (widget.calendar.data?.events ?? const <CalendarEvent>[])
+    final upcoming = widget.sessions
+        .map(_toCalendarEvent)
+        .whereType<CalendarEvent>()
         .where((e) => e.startDateTime.isAfter(now))
         .toList()
       ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
@@ -791,12 +877,7 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
           const SizedBox(height: 12),
           const Divider(height: 1, color: _border),
           const SizedBox(height: 14),
-          if (widget.calendar.state == DataProviderState.loading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator(color: _purple)),
-            )
-          else if (shown.isEmpty)
+          if (shown.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Text('No upcoming sessions.', style: TextStyle(color: _muted)),
@@ -957,12 +1038,12 @@ class _SessionRow extends StatelessWidget {
 // ─── Course Progress ────────────────────────────────────────────────────────
 
 class _CourseProgressCard extends StatelessWidget {
-  const _CourseProgressCard({required this.enrolled});
-  final EnrolledState enrolled;
+  const _CourseProgressCard({required this.courses});
+  final List<DashboardCourse> courses;
 
   @override
   Widget build(BuildContext context) {
-    final shown = enrolled.courses.take(4).toList();
+    final shown = courses.take(4).toList();
     return _DashCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -980,12 +1061,7 @@ class _CourseProgressCard extends StatelessWidget {
           const SizedBox(height: 12),
           const Divider(height: 1, color: _border),
           const SizedBox(height: 14),
-          if (enrolled.providerState == DataProviderState.loading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator(color: _purple)),
-            )
-          else if (shown.isEmpty)
+          if (shown.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Text('No enrolled courses yet.', style: TextStyle(color: _muted)),
@@ -1055,15 +1131,17 @@ class _CourseProgressRow extends StatelessWidget {
 // ─── Overall Learning Progress ────────────────────────────────────────────────
 
 class _OverallProgressCard extends StatelessWidget {
-  const _OverallProgressCard({required this.enrolled});
-  final EnrolledState enrolled;
+  const _OverallProgressCard({required this.overallProgress});
+
+  /// Straight from the API's summary.overall_progress now, rather than
+  /// averaged client-side from whatever courses happened to be loaded on
+  /// this screen - more accurate, and matches what the server considers
+  /// authoritative.
+  final int overallProgress;
 
   @override
   Widget build(BuildContext context) {
-    final progresses = enrolled.courses.map((c) => c.progress).toList();
-    final overall = progresses.isEmpty
-        ? 0
-        : (progresses.reduce((a, b) => a + b) / progresses.length).round();
+    final overall = overallProgress;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -1131,10 +1209,12 @@ class _OverallProgressCard extends StatelessWidget {
 // links on a course lesson, not a threads-with-replies feature), so this
 // always renders the empty state per the reference's p.empty-state styling.
 class _DiscussionBoardsCard extends StatelessWidget {
-  const _DiscussionBoardsCard();
+  const _DiscussionBoardsCard({required this.boards});
+  final List<DashboardDiscussionBoardItem> boards;
 
   @override
   Widget build(BuildContext context) {
+    final shown = boards.take(4).toList();
     return _DashCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1142,15 +1222,76 @@ class _DiscussionBoardsCard extends StatelessWidget {
           const _CardHeader(title: 'Discussion Boards', large: true),
           const SizedBox(height: 12),
           const Divider(height: 1, color: _border),
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              'No discussion threads yet.',
-              style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
-            ),
-          ),
+          const SizedBox(height: 14),
+          if (shown.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'No discussion threads yet.',
+                style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+              ),
+            )
+          else
+            for (var i = 0; i < shown.length; i++) ...[
+              if (i > 0) const Divider(height: 24, color: _border),
+              _DiscussionBoardRow(item: shown[i]),
+            ],
         ],
       ),
+    );
+  }
+}
+
+class _DiscussionBoardRow extends StatelessWidget {
+  const _DiscussionBoardRow({required this.item});
+  final DashboardDiscussionBoardItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF1E293B),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13.6,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                [
+                  if (item.lastRepliedBy.isNotEmpty) item.lastRepliedBy,
+                  if (item.lastReply.isNotEmpty) item.lastReply,
+                  '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
+                ].join(' • '),
+                style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 11.2),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        OutlinedButton(
+          onPressed: () => Modular.to.pushNamed(
+            CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
+          ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _purple,
+            side: const BorderSide(color: _purple),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12),
+          ),
+          child: const Text('View'),
+        ),
+      ],
     );
   }
 }
@@ -1158,13 +1299,15 @@ class _DiscussionBoardsCard extends StatelessWidget {
 // ─── Rewards & Points ───────────────────────────────────────────────────────
 
 class _RewardsPointsCard extends ConsumerWidget {
-  const _RewardsPointsCard();
+  const _RewardsPointsCard({required this.rewards});
+  final DashboardRewards? rewards;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
-    final points = profile?.points ?? 0;
+    final points = rewards?.totalPoints ?? profile?.points ?? 0;
     final firstName = profile?.firstname?.trim();
+    final activity = rewards?.activity ?? const <DashboardRewardActivity>[];
 
     return _DashCard(
       child: Column(
@@ -1238,13 +1381,48 @@ class _RewardsPointsCard extends ConsumerWidget {
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              'No reward points earned this month yet.',
-              style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+          if (activity.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'No reward points earned this month yet.',
+                style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final a in activity)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              a.label,
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF1E293B),
+                                fontSize: 13.6,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '+${a.points} pts',
+                            style: GoogleFonts.inter(
+                              color: _purple,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.6,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -1255,11 +1433,11 @@ class _RewardsPointsCard extends ConsumerWidget {
 
 class _RequiredForYouCard extends StatelessWidget {
   const _RequiredForYouCard({required this.required});
-  final RequiredCoursesState required;
+  final List<RequiredCourseItem> required;
 
   @override
   Widget build(BuildContext context) {
-    final shown = required.courses.take(5).toList();
+    final shown = required.take(5).toList();
     return _DashCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1268,12 +1446,7 @@ class _RequiredForYouCard extends StatelessWidget {
           const SizedBox(height: 12),
           const Divider(height: 1, color: _border),
           const SizedBox(height: 14),
-          if (required.providerState == DataProviderState.loading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator(color: _purple)),
-            )
-          else if (shown.isEmpty)
+          if (shown.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
               child: Text('No required courses.', style: TextStyle(color: _muted)),
@@ -1281,7 +1454,7 @@ class _RequiredForYouCard extends StatelessWidget {
           else ...[
             for (var i = 0; i < shown.length; i++) ...[
               if (i > 0) const Divider(height: 22, color: _border),
-              _RequiredRow(index: i + 1, course: shown[i]),
+              _RequiredRow(index: i + 1, item: shown[i]),
             ],
             const SizedBox(height: 18),
             Center(
@@ -1310,13 +1483,14 @@ class _RequiredForYouCard extends StatelessWidget {
 }
 
 class _RequiredRow extends ConsumerWidget {
-  const _RequiredRow({required this.index, required this.course});
+  const _RequiredRow({required this.index, required this.item});
   final int index;
-  final DashboardCourse course;
+  final RequiredCourseItem item;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final viewDisabled = isViewCourseDisabled(ref, course.id);
+    final courseId = int.tryParse(item.courseId) ?? 0;
+    final viewDisabled = isViewCourseDisabled(ref, courseId);
     return Row(
       children: [
         SizedBox(
@@ -1332,7 +1506,7 @@ class _RequiredRow extends ConsumerWidget {
         ),
         Expanded(
           child: Text(
-            course.name,
+            item.courseName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
@@ -1342,11 +1516,18 @@ class _RequiredRow extends ConsumerWidget {
             ),
           ),
         ),
+        if (item.progressLabel != null) ...[
+          Text(
+            item.progressLabel!,
+            style: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 12.8),
+          ),
+          const SizedBox(width: 10),
+        ],
         OutlinedButton(
           onPressed: viewDisabled
               ? null
               : () => Modular.to.pushNamed(
-                    CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+                    CoursesModule.construct('${CoursesModule.detail}/$courseId'),
                   ),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF693D94),
