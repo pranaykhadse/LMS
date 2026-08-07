@@ -1263,7 +1263,7 @@ class _DiscussionBoardRow extends StatelessWidget {
                     onPressed: onPressed,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _purple,
-                      side: const BorderSide(color: _purple),
+                      side: BorderSide(color: _purple.withValues(alpha: 0.5)),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       shape: shape,
                       textStyle: textStyle,
@@ -1533,7 +1533,7 @@ class _RequiredRow extends ConsumerWidget {
                     onPressed: onPressed,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _purple,
-                      side: const BorderSide(color: _purple),
+                      side: BorderSide(color: _purple.withValues(alpha: 0.5)),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       shape: shape,
                       textStyle: textStyle,

@@ -524,7 +524,7 @@ class _CompetencyPreviewRow extends StatelessWidget {
                               label: const Text('View'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: _purple,
-                                side: const BorderSide(color: _purple),
+                                side: BorderSide(color: _purple.withValues(alpha: 0.5)),
                                 minimumSize: const Size(0, 30),
                                 padding: const EdgeInsets.symmetric(horizontal: 12),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,

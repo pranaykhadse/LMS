@@ -752,7 +752,7 @@ class _RequiredCourseRow extends StatelessWidget {
                       onPressed: onPressed,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _lpPurple,
-                        side: BorderSide(color: _lpPurple.withValues(alpha: 0.4)),
+                        side: BorderSide(color: _lpPurple.withValues(alpha: 0.5)),
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,

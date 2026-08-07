@@ -205,7 +205,7 @@ class _CourseRow extends StatelessWidget {
                       label: const Text('View'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _vcPurple,
-                        side: const BorderSide(color: _vcPurple),
+                        side: BorderSide(color: _vcPurple.withValues(alpha: 0.5)),
                         minimumSize: const Size(0, 34),
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
