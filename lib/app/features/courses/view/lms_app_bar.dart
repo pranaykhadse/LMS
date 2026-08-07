@@ -1273,9 +1273,7 @@ class _ProfileHeader extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF7A42C4), Color(0xFFB0006D)],
-        ),
+        gradient: FigmaTokens.heroGradient,
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       child: Row(

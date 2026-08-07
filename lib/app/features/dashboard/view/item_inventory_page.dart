@@ -340,7 +340,7 @@ class _PointsBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF6B5FD6), Color(0xFF4845B0)],
+          colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
