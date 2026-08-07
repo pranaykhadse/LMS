@@ -485,22 +485,28 @@ class LearningEvent {
 /// date from one of those produced a bogus countdown on courses with no
 /// real session at all.
 ///
-/// Picks which session across every Virtual Class / In Person class in the
-/// course the course-level LAUNCHES IN countdown should point at:
+/// Picks which session across every Virtual Class / In Person class the
+/// learner is actually REGISTERED for (item.isEnrolledInClass) the
+/// course-level LAUNCHES IN countdown should point at:
 ///
-///  1. If any session across any class hasn't started yet, the soonest one
-///     of those - shown as a positive "LAUNCHES IN" countdown.
-///  2. Otherwise (every session has already started), the one that's
-///     currently open longest / ended most recently (an in-progress
+///  1. If any session across any registered class hasn't started yet, the
+///     soonest one of those - shown as a positive "LAUNCHES IN" countdown.
+///  2. Otherwise (every registered session has already started), the one
+///     that's currently open longest / ended most recently (an in-progress
 ///     session's end time is still in the future, so it naturally wins
 ///     over anything already finished) - shown as a negative "STARTED"
 ///     countdown, same as before.
+///
+/// A class the learner hasn't registered for isn't something they're
+/// actually launching into, regardless of how soon its session starts, so
+/// it's excluded entirely rather than just being deprioritized.
 ///
 /// Previously this only ever picked the earliest still-open session
 /// (started-but-not-ended OR not-yet-started, whichever came first
 /// chronologically) restricted to Virtual Class ('3') items, which could
 /// surface an already-started session while a genuinely upcoming one
-/// existed, and ignored In Person ('2') classes entirely.
+/// existed, ignored In Person ('2') classes entirely, and didn't check
+/// registration at all.
 LearningEvent? _earliestUpcomingVirtualClassEvent(List<CourseStructureItem> structures) {
   final now = DateTime.now();
   LearningEvent? soonestFuture;
@@ -508,6 +514,7 @@ LearningEvent? _earliestUpcomingVirtualClassEvent(List<CourseStructureItem> stru
 
   for (final item in structures) {
     if (item.typeCode != '2' && item.typeCode != '3') continue;
+    if (!item.isEnrolledInClass) continue;
     for (final event in item.learningEvents) {
       final start = event.startDateTime;
       if (start == null) continue;

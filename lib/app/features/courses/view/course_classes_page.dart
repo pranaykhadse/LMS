@@ -906,10 +906,13 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           const SizedBox(height: 14),
           const Divider(color: Color(0xFFECEFF4)),
           const SizedBox(height: 13),
-          // Only show a session date once the learner is actually enrolled -
-          // showing one for a class they haven't registered for implies a
-          // commitment that hasn't been made yet.
-          if (liveNextSession != null && isEnrolled) ...[
+          // Only show a session date once the learner is actually registered
+          // for THIS class - showing one for a class they haven't
+          // registered for implies a commitment that hasn't been made yet.
+          // (isEnrolled is course-level enrollment, not per-class
+          // registration - a learner can be enrolled in the course but
+          // still unregistered for a given Virtual Class session.)
+          if (liveNextSession != null && item.isEnrolledInClass) ...[
             Text(
               'Next Session: $liveNextSession',
               style: const TextStyle(
