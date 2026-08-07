@@ -11,9 +11,9 @@ import 'package:lms/app/features/dashboard/view/view_competency_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_paths_view_model.dart';
 
 const _purple = FigmaTokens.primaryPurple;
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
 const _sectionTitle = Color(0xFFB0006D);
 
 void _openViewCompetency(

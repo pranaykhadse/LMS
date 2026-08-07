@@ -7,7 +7,7 @@ import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 
 const _purple = FigmaTokens.primaryPurple;
-const _muted = Color(0xFF7C879D);
+const _muted = FigmaTokens.noteBodyText;
 
 /// Bookmark-style button for saving/removing a course's offline copy and
 /// showing its download progress. Reusable on any screen that lists

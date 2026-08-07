@@ -10,8 +10,8 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 
 const _purple = FigmaTokens.primaryPurple;
-const _muted = Color(0xFF7C879D);
-const _navy = Color(0xFF37424E);
+const _muted = FigmaTokens.noteBodyText;
+const _navy = FigmaTokens.cardTitles;
 const _chevron = Color(0xFF98A2B3);
 
 bool _watchIsOnline(WidgetRef ref) {

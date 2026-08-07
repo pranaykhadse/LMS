@@ -38,9 +38,9 @@ bool _watchIsOnline(WidgetRef ref) {
 
 const _detailPurple = FigmaTokens.primaryPurple;
 const _detailPurple2 = FigmaTokens.gradientEnd;
-const _detailInk = Color(0xFF172033);
-const _detailMuted = Color(0xFF6D7587);
-const _detailBackground = Color(0xFFF5F7FC);
+const _detailInk = FigmaTokens.cardTitles;
+const _detailMuted = FigmaTokens.noteBodyText;
+const _detailBackground = FigmaTokens.pageBackground;
 
 class CourseClassesPage extends ConsumerStatefulWidget {
   const CourseClassesPage({super.key, this.courseId});

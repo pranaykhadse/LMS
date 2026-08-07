@@ -9,9 +9,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 const _nPurple = FigmaTokens.primaryPurple;
 const _nPurple2 = FigmaTokens.gradientEnd;
-const _nNavy = Color(0xFF172033);
-const _nMuted = Color(0xFF7C879D);
-const _nBg = Color(0xFFF4F7FC);
+const _nNavy = FigmaTokens.cardTitles;
+const _nMuted = FigmaTokens.noteBodyText;
+const _nBg = FigmaTokens.pageBackground;
 
 class NotificationsPage extends ConsumerWidget {
   const NotificationsPage({super.key});

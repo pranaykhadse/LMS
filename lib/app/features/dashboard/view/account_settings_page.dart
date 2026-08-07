@@ -13,9 +13,9 @@ import 'package:lms/app/features/dashboard/model/user_profile_detail.dart';
 import 'package:lms/app/features/dashboard/viewmodel/account_settings_view_model.dart';
 
 const _asPurple = FigmaTokens.primaryPurple;
-const _asInk = Color(0xFF172033);
-const _asMuted = Color(0xFF7C879D);
-const _asBg = Color(0xFFF5F7FC);
+const _asInk = FigmaTokens.cardTitles;
+const _asMuted = FigmaTokens.noteBodyText;
+const _asBg = FigmaTokens.pageBackground;
 const _asFieldBg = Color(0xFFF4F6FA);
 
 class AccountSettingsPage extends ConsumerStatefulWidget {

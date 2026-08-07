@@ -12,9 +12,9 @@ import 'package:lms/app/features/dashboard/model/view_competency.dart';
 import 'package:lms/app/features/dashboard/viewmodel/view_competency_view_model.dart';
 
 const _vcPurple = FigmaTokens.primaryPurple;
-const _vcInk = Color(0xFF172033);
-const _vcMuted = Color(0xFF7C879D);
-const _vcBg = Color(0xFFF5F7FC);
+const _vcInk = FigmaTokens.cardTitles;
+const _vcMuted = FigmaTokens.noteBodyText;
+const _vcBg = FigmaTokens.pageBackground;
 
 class ViewCompetencyPage extends ConsumerWidget {
   const ViewCompetencyPage({
@@ -110,7 +110,7 @@ class _Body extends StatelessWidget {
         else ...[
           SliverToBoxAdapter(
             child: Container(
-              color: const Color(0xFFF5F7FC),
+              color: FigmaTokens.pageBackground,
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
               child: const Row(
                 children: [

@@ -13,8 +13,8 @@ import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 
 const _offlinePurple = FigmaTokens.primaryPurple;
-const _offlineInk = Color(0xFF172033);
-const _offlineMuted = Color(0xFF7C879D);
+const _offlineInk = FigmaTokens.cardTitles;
+const _offlineMuted = FigmaTokens.noteBodyText;
 const _offlinePink = Color(0xFFB0006D);
 
 /// Whether the app should be showing cached/offline content instead of

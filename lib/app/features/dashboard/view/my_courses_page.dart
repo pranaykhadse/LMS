@@ -19,9 +19,9 @@ import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart'
 
 const _purple = FigmaTokens.primaryPurple;
 const _pink = Color(0xFFB0006D);
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
 const _lavender = Color(0xFFEFEDFB);
 
 enum _StatusFilter { all, inProgress, completed }

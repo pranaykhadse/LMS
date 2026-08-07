@@ -11,9 +11,9 @@ import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
 
 const _lpPurple = FigmaTokens.primaryPurple;
-const _lpNavy = Color(0xFF172033);
-const _lpMuted = Color(0xFF7C879D);
-const _lpBg = Color(0xFFF4F7F8);
+const _lpNavy = FigmaTokens.cardTitles;
+const _lpMuted = FigmaTokens.noteBodyText;
+const _lpBg = FigmaTokens.pageBackground;
 const _lpGreen = Color(0xFF22C55E);
 const _lpOrange = Color(0xFFF59E0B);
 const _lpBlue = Color(0xFF3B82F6);

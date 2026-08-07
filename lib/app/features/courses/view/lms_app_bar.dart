@@ -23,8 +23,8 @@ import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.da
 import 'package:url_launcher/url_launcher.dart';
 
 const _appPurple = FigmaTokens.primaryPurple;
-const _appInk = Color(0xFF172033);
-const _appMuted = Color(0xFF9AA8C0);
+const _appInk = FigmaTokens.cardTitles;
+const _appMuted = FigmaTokens.noteBodyText;
 
 bool watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -780,7 +780,7 @@ class _NavDropdown extends StatelessWidget {
                 items[i].label,
                 style: GoogleFonts.inter(
                   color: items[i].disabled
-                      ? const Color(0xFF9AA8C0)
+                      ? FigmaTokens.noteBodyText
                       : (items[i].selected ? _appPurple : const Color(0xFF64748B)),
                   fontWeight:
                       items[i].selected ? FontWeight.w700 : FontWeight.w400,
@@ -1034,7 +1034,7 @@ class _NotificationsDialog extends ConsumerWidget {
                     Text(
                       "You're all caught up",
                       style: TextStyle(
-                        color: Color(0xFF9AA8C0),
+                        color: FigmaTokens.noteBodyText,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),

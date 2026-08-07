@@ -28,9 +28,9 @@ import 'package:lms/app/features/courses/view/calendar_courses_page.dart';
 
 const _catalogPurple = FigmaTokens.primaryPurple;
 const _catalogPink = Color(0xFFB0006D);
-const _catalogInk = Color(0xFF172033);
-const _catalogMuted = Color(0xFF7C879D);
-const _catalogBackground = Color(0xFFF4F7F8);
+const _catalogInk = FigmaTokens.cardTitles;
+const _catalogMuted = FigmaTokens.noteBodyText;
+const _catalogBackground = FigmaTokens.pageBackground;
 const _catalogCalendarBlue = FigmaTokens.primaryPurple;
 const _catalogUndoBlue = FigmaTokens.primaryPurple;
 

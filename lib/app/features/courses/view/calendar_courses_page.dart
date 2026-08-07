@@ -13,9 +13,9 @@ import 'package:lms/app/features/courses/view/widgets/course_view_availability.d
 import 'package:lms/app/features/courses/viewmodel/calendar_view_model.dart';
 
 const _calPurple = FigmaTokens.primaryPurple;
-const _calNavy = Color(0xFF172033);
-const _calMuted = Color(0xFF7C879D);
-const _calBg = Color(0xFFF4F7F8);
+const _calNavy = FigmaTokens.cardTitles;
+const _calMuted = FigmaTokens.noteBodyText;
+const _calBg = FigmaTokens.pageBackground;
 
 DateTime _dateOnly(DateTime dt) => DateTime(dt.year, dt.month, dt.day);
 

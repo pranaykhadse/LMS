@@ -18,9 +18,9 @@ import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/development_plan_view_model.dart';
 
 const _purple = FigmaTokens.primaryPurple;
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
 
 class DevelopmentPlanPage extends ConsumerWidget {
   const DevelopmentPlanPage({super.key});
