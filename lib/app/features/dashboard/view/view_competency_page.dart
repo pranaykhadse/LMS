@@ -5,6 +5,7 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
@@ -175,21 +176,44 @@ class _CourseRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          OutlinedButton.icon(
-            onPressed: () => Modular.to.pushNamed(
-              CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
-            ),
-            icon: const Icon(Icons.remove_red_eye_outlined, size: 15),
-            label: const Text('View'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _vcPurple,
-              side: const BorderSide(color: _vcPurple),
-              minimumSize: const Size(0, 34),
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-            ),
+          HoverBuilder(
+            builder: (context, hovering) {
+              final onPressed = () => Modular.to.pushNamed(
+                    CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+                  );
+              final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(7));
+              const textStyle = TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5);
+              return hovering
+                  ? ElevatedButton.icon(
+                      onPressed: onPressed,
+                      icon: const Icon(Icons.remove_red_eye_outlined, size: 15, color: Colors.white),
+                      label: const Text('View'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _vcPurple,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        minimumSize: const Size(0, 34),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: shape,
+                        textStyle: textStyle,
+                      ),
+                    )
+                  : OutlinedButton.icon(
+                      onPressed: onPressed,
+                      icon: const Icon(Icons.remove_red_eye_outlined, size: 15),
+                      label: const Text('View'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _vcPurple,
+                        side: const BorderSide(color: _vcPurple),
+                        minimumSize: const Size(0, 34),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: shape,
+                        textStyle: textStyle,
+                      ),
+                    );
+            },
           ),
         ],
       ),

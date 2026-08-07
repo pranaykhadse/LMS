@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
@@ -489,23 +490,49 @@ class _CompetencyPreviewRow extends StatelessWidget {
                 const SizedBox(height: 6),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _openViewCompetency(
-                      context,
-                      learningPathId: pathId,
-                      competency: competency.name,
-                    ),
-                    icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
-                    label: const Text('View'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _purple,
-                      side: const BorderSide(color: _purple),
-                      minimumSize: const Size(0, 30),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5),
-                    ),
+                  child: HoverBuilder(
+                    builder: (context, hovering) {
+                      final onPressed = () => _openViewCompetency(
+                            context,
+                            learningPathId: pathId,
+                            competency: competency.name,
+                          );
+                      final shape = RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(7));
+                      const textStyle =
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5);
+                      return hovering
+                          ? ElevatedButton.icon(
+                              onPressed: onPressed,
+                              icon: const Icon(Icons.remove_red_eye_outlined,
+                                  size: 14, color: Colors.white),
+                              label: const Text('View'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _purple,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                minimumSize: const Size(0, 30),
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: shape,
+                                textStyle: textStyle,
+                              ),
+                            )
+                          : OutlinedButton.icon(
+                              onPressed: onPressed,
+                              icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
+                              label: const Text('View'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _purple,
+                                side: const BorderSide(color: _purple),
+                                minimumSize: const Size(0, 30),
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: shape,
+                                textStyle: textStyle,
+                              ),
+                            );
+                    },
                   ),
                 ),
               ],

@@ -1239,18 +1239,38 @@ class _DiscussionBoardRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        OutlinedButton(
-          onPressed: () => Modular.to.pushNamed(
-            CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
-          ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: _purple,
-            side: const BorderSide(color: _purple),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12),
-          ),
-          child: const Text('View'),
+        HoverBuilder(
+          builder: (context, hovering) {
+            final onPressed = () => Modular.to.pushNamed(
+                  CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
+                );
+            final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+            final textStyle = GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12);
+            return hovering
+                ? ElevatedButton(
+                    onPressed: onPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _purple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      shape: shape,
+                      textStyle: textStyle,
+                    ),
+                    child: const Text('View'),
+                  )
+                : OutlinedButton(
+                    onPressed: onPressed,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _purple,
+                      side: const BorderSide(color: _purple),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      shape: shape,
+                      textStyle: textStyle,
+                    ),
+                    child: const Text('View'),
+                  );
+          },
         ),
       ],
     );
@@ -1487,20 +1507,40 @@ class _RequiredRow extends ConsumerWidget {
           ),
           const SizedBox(width: 10),
         ],
-        OutlinedButton(
-          onPressed: viewDisabled
-              ? null
-              : () => Modular.to.pushNamed(
-                    CoursesModule.construct('${CoursesModule.detail}/$courseId'),
-                  ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: _purple,
-            side: const BorderSide(color: _purple),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12),
-          ),
-          child: const Text('View'),
+        HoverBuilder(
+          builder: (context, hovering) {
+            final onPressed = viewDisabled
+                ? null
+                : () => Modular.to.pushNamed(
+                      CoursesModule.construct('${CoursesModule.detail}/$courseId'),
+                    );
+            final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
+            final textStyle = GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12);
+            return hovering && !viewDisabled
+                ? ElevatedButton(
+                    onPressed: onPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _purple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      shape: shape,
+                      textStyle: textStyle,
+                    ),
+                    child: const Text('View'),
+                  )
+                : OutlinedButton(
+                    onPressed: onPressed,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: _purple,
+                      side: const BorderSide(color: _purple),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      shape: shape,
+                      textStyle: textStyle,
+                    ),
+                    child: const Text('View'),
+                  );
+          },
         ),
       ],
     );

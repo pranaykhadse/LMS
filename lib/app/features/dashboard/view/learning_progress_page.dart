@@ -717,28 +717,51 @@ class _RequiredCourseRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          OutlinedButton(
-            onPressed: () {
-              final courseId = int.tryParse(course.courseId);
-              if (courseId != null) {
-                Modular.to.pushNamed(
-                  CoursesModule.construct(
-                      '${CoursesModule.detail}/$courseId'),
-                );
+          HoverBuilder(
+            builder: (context, hovering) {
+              onPressed() {
+                final courseId = int.tryParse(course.courseId);
+                if (courseId != null) {
+                  Modular.to.pushNamed(
+                    CoursesModule.construct(
+                        '${CoursesModule.detail}/$courseId'),
+                  );
+                }
               }
+
+              final shape = RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8));
+              const textStyle =
+                  TextStyle(fontWeight: FontWeight.w700, fontSize: 12);
+              return hovering
+                  ? ElevatedButton(
+                      onPressed: onPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _lpPurple,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: shape,
+                        textStyle: textStyle,
+                      ),
+                      child: const Text('View'),
+                    )
+                  : OutlinedButton(
+                      onPressed: onPressed,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _lpPurple,
+                        side: BorderSide(color: _lpPurple.withValues(alpha: 0.4)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: shape,
+                        textStyle: textStyle,
+                      ),
+                      child: const Text('View'),
+                    );
             },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _lpPurple,
-              side: BorderSide(color: _lpPurple.withValues(alpha: 0.4)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-              textStyle: const TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 12),
-            ),
-            child: const Text('View'),
           ),
         ],
       ),
