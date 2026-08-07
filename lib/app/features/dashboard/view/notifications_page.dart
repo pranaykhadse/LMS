@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const _nPurple = Color(0xFF5756C9);
-const _nPurple2 = Color(0xFF775FE8);
+const _nPurple = FigmaTokens.primaryPurple;
+const _nPurple2 = FigmaTokens.gradientEnd;
 const _nNavy = Color(0xFF172033);
 const _nMuted = Color(0xFF7C879D);
 const _nBg = Color(0xFFF4F7FC);

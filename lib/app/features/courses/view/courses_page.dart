@@ -26,13 +26,13 @@ import 'package:lms/app/features/dashboard/repository/development_plan_action_re
 import 'package:lms/app/features/dashboard/viewmodel/dev_plan_membership_view_model.dart';
 import 'package:lms/app/features/courses/view/calendar_courses_page.dart';
 
-const _catalogPurple = Color(0xFF5756C9);
+const _catalogPurple = FigmaTokens.primaryPurple;
 const _catalogPink = Color(0xFFB0006D);
 const _catalogInk = Color(0xFF172033);
 const _catalogMuted = Color(0xFF7C879D);
 const _catalogBackground = Color(0xFFF4F7F8);
-const _catalogCalendarBlue = Color(0xFF693D94);
-const _catalogUndoBlue = Color(0xFF693D94);
+const _catalogCalendarBlue = FigmaTokens.primaryPurple;
+const _catalogUndoBlue = FigmaTokens.primaryPurple;
 
 int _catalogColumns(double width) {
   if (width >= 900) return 4;
@@ -1063,7 +1063,7 @@ InputDecoration _fieldDecoration(
       prefixIcon: showLeadingIcon
           ? const Icon(
               Icons.search_rounded,
-              color: Color(0xFF693D94),
+              color: FigmaTokens.primaryPurple,
               size: 20,
             )
           : null,
@@ -1418,7 +1418,7 @@ class _DevPlanButton extends StatelessWidget {
               ? Icons.cloud_off_rounded
               : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
           size: isDisabled ? 15 : 18,
-          color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : const Color(0xFF693D94)),
+          color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : FigmaTokens.primaryPurple),
         ),
       ),
     );
@@ -1529,7 +1529,7 @@ class _CourseImage extends StatelessWidget {
     final fallback = Container(
       color: const Color(0xFFF1EFFB),
       alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, size: 58, color: Color(0xFF693D94)),
+      child: const Icon(Icons.school_outlined, size: 58, color: FigmaTokens.primaryPurple),
     );
     if (url == null) return fallback;
     return Image.network(

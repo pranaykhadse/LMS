@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -11,7 +12,7 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/viewmodel/calendar_view_model.dart';
 
-const _calPurple = Color(0xFF5756C9);
+const _calPurple = FigmaTokens.primaryPurple;
 const _calNavy = Color(0xFF172033);
 const _calMuted = Color(0xFF7C879D);
 const _calBg = Color(0xFFF4F7F8);

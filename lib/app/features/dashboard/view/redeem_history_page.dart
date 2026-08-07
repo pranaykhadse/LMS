@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
@@ -9,7 +10,7 @@ import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/features/dashboard/model/redeem_history_item.dart';
 import 'package:lms/app/features/dashboard/viewmodel/redeem_history_view_model.dart';
 
-const _rhPurple = Color(0xFF5756C9);
+const _rhPurple = FigmaTokens.primaryPurple;
 const _rhInk = Color(0xFF172033);
 const _rhMuted = Color(0xFF7C879D);
 const _rhBg = Color(0xFFF5F7FC);

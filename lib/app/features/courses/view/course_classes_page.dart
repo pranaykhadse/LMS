@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -35,8 +36,8 @@ bool _watchIsOnline(WidgetRef ref) {
   return !isManualOffline && connectionVM.isConnected;
 }
 
-const _detailPurple = Color(0xFF5756C9);
-const _detailPurple2 = Color(0xFF775FE8);
+const _detailPurple = FigmaTokens.primaryPurple;
+const _detailPurple2 = FigmaTokens.gradientEnd;
 const _detailInk = Color(0xFF172033);
 const _detailMuted = Color(0xFF6D7587);
 const _detailBackground = Color(0xFFF5F7FC);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -9,7 +10,7 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
 
-const _lpPurple = Color(0xFF5756C9);
+const _lpPurple = FigmaTokens.primaryPurple;
 const _lpNavy = Color(0xFF172033);
 const _lpMuted = Color(0xFF7C879D);
 const _lpBg = Color(0xFFF4F7F8);
@@ -288,11 +289,7 @@ class _OverallProgressCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF5756C9), Color(0xFF3730A3)],
-        ),
+        gradient: FigmaTokens.heroGradient,
         borderRadius: BorderRadius.circular(16),
         boxShadow: const [
           BoxShadow(

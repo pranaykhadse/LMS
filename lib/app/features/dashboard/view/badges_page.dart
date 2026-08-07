@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
@@ -8,7 +9,7 @@ import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/dashboard/model/badge.dart';
 import 'package:lms/app/features/dashboard/viewmodel/badges_view_model.dart';
 
-const _purple = Color(0xFF5756C9);
+const _purple = FigmaTokens.primaryPurple;
 const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);

@@ -1423,7 +1423,7 @@ class _RequiredForYouCard extends StatelessWidget {
                   CoursesModule.construct(CoursesModule.requiredCourses),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF693D94),
+                  backgroundColor: _purple,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
@@ -1490,8 +1490,8 @@ class _RequiredRow extends ConsumerWidget {
                     CoursesModule.construct('${CoursesModule.detail}/$courseId'),
                   ),
           style: OutlinedButton.styleFrom(
-            foregroundColor: const Color(0xFF693D94),
-            side: const BorderSide(color: Color(0xFF693D94)),
+            foregroundColor: _purple,
+            side: const BorderSide(color: _purple),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12),

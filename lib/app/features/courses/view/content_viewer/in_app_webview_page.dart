@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
 
-const _webviewPurple = Color(0xFF5756C9);
+const _webviewPurple = FigmaTokens.primaryPurple;
 
 /// Opens a URL inside the app itself (a real embedded WebView, not the
 /// system browser or an SFSafariViewController/Custom Tab hand-off) - used

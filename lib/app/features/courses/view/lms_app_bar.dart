@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/providers/shell_destination_provider.dart';
@@ -21,10 +22,7 @@ import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// Matches the Figma design system's exact primary purple (#693D94), used
-// throughout the desktop header - see FigmaTokens.primaryPurple, the same
-// value the redesigned Dashboard body already uses.
-const _appPurple = Color(0xFF693D94);
+const _appPurple = FigmaTokens.primaryPurple;
 const _appInk = Color(0xFF172033);
 const _appMuted = Color(0xFF9AA8C0);
 
@@ -1001,7 +999,7 @@ class _NotificationsDialog extends ConsumerWidget {
                           .read(NotificationsViewModel.provider.notifier)
                           .markAllAsRead(),
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF693D94),
+                        foregroundColor: _appPurple,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -1102,7 +1100,7 @@ class _NotificationsDialog extends ConsumerWidget {
                   child: Text(
                     'View All Notifications',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF693D94),
+                      color: _appPurple,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
@@ -1153,7 +1151,7 @@ class _NotifRow extends StatelessWidget {
               ),
               child: const Icon(
                 Icons.notifications_rounded,
-                color: Color(0xFF693D94),
+                color: _appPurple,
                 size: 18,
               ),
             ),
@@ -1201,7 +1199,7 @@ class _NotifRow extends StatelessWidget {
                   width: 7,
                   height: 7,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF693D94),
+                    color: _appPurple,
                     shape: BoxShape.circle,
                   ),
                 ),

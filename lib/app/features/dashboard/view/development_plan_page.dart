@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
@@ -16,7 +17,7 @@ import 'package:lms/app/features/courses/view/widgets/course_view_availability.d
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/development_plan_view_model.dart';
 
-const _purple = Color(0xFF5756C9);
+const _purple = FigmaTokens.primaryPurple;
 const _ink = Color(0xFF172033);
 const _muted = Color(0xFF7C879D);
 const _bg = Color(0xFFF5F7FC);
@@ -79,7 +80,7 @@ class _Body extends StatelessWidget {
                             child: const Text('Add Custom Plan Item'),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF693D94),
+                            backgroundColor: _purple,
                             foregroundColor: Colors.white,
                             elevation: 0,
                             minimumSize: const Size(0, 40),

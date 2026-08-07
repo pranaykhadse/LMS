@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 
-const _purple = Color(0xFF693D94);
+const _purple = FigmaTokens.primaryPurple;
 const _muted = Color(0xFF7C879D);
 
 /// Bookmark-style button for saving/removing a course's offline copy and

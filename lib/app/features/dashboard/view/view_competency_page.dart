@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -10,7 +11,7 @@ import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/model/view_competency.dart';
 import 'package:lms/app/features/dashboard/viewmodel/view_competency_view_model.dart';
 
-const _vcPurple = Color(0xFF5756C9);
+const _vcPurple = FigmaTokens.primaryPurple;
 const _vcInk = Color(0xFF172033);
 const _vcMuted = Color(0xFF7C879D);
 const _vcBg = Color(0xFFF5F7FC);

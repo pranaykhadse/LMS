@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
@@ -11,7 +12,7 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 
-const _offlinePurple = Color(0xFF5756C9);
+const _offlinePurple = FigmaTokens.primaryPurple;
 const _offlineInk = Color(0xFF172033);
 const _offlineMuted = Color(0xFF7C879D);
 const _offlinePink = Color(0xFFB0006D);

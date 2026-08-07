@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -11,7 +12,7 @@ import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/dashboard/model/user_profile_detail.dart';
 import 'package:lms/app/features/dashboard/viewmodel/account_settings_view_model.dart';
 
-const _asPurple = Color(0xFF5756C9);
+const _asPurple = FigmaTokens.primaryPurple;
 const _asInk = Color(0xFF172033);
 const _asMuted = Color(0xFF7C879D);
 const _asBg = Color(0xFFF5F7FC);
