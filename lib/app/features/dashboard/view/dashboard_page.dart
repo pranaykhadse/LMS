@@ -760,17 +760,21 @@ class _ContinueLearningItem extends ConsumerWidget {
                               '${CoursesModule.detail}/${course.id}',
                             ),
                           ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _purple,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    minimumSize: const Size.fromHeight(38),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.resolveWith(
+                      (states) => states.contains(WidgetState.hovered)
+                          ? FigmaTokens.purpleHover
+                          : _purple,
                     ),
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 13,
+                    overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+                    foregroundColor: const WidgetStatePropertyAll(Colors.white),
+                    elevation: const WidgetStatePropertyAll(0),
+                    minimumSize: const WidgetStatePropertyAll(Size.fromHeight(38)),
+                    shape: WidgetStatePropertyAll(
+                      RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    textStyle: const WidgetStatePropertyAll(
+                      TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
                     ),
                   ),
                   child: const Text('Resume'),
@@ -986,15 +990,24 @@ class _SessionRow extends StatelessWidget {
             onPressed: () => Modular.to.pushNamed(
               CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _purple,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.resolveWith(
+                (states) => states.contains(WidgetState.hovered)
+                    ? FigmaTokens.purpleHover
+                    : _purple,
               ),
-              textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12.8),
+              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+              foregroundColor: const WidgetStatePropertyAll(Colors.white),
+              elevation: const WidgetStatePropertyAll(0),
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              ),
+              shape: WidgetStatePropertyAll(
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              ),
+              textStyle: WidgetStatePropertyAll(
+                GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12.8),
+              ),
             ),
             child: const Text('Join'),
           ),
