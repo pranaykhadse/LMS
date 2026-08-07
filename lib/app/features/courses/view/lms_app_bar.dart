@@ -25,6 +25,10 @@ import 'package:url_launcher/url_launcher.dart';
 const _appPurple = FigmaTokens.primaryPurple;
 const _appInk = FigmaTokens.cardTitles;
 const _appMuted = FigmaTokens.noteBodyText;
+// Matches the reference site's .nav-link exactly - a different purple from
+// the primary brand purple used on buttons.
+const _navActive = Color(0xFF5457C1);
+const _navDefault = FigmaTokens.noteBoldText;
 
 bool watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -704,7 +708,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF6A7282);
+    final color = selected ? _navActive : _navDefault;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -718,8 +722,8 @@ class _NavItem extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -756,7 +760,7 @@ class _NavDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF6A7282);
+    final color = selected ? _navActive : _navDefault;
     return PopupMenuButton<int>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -781,9 +785,8 @@ class _NavDropdown extends StatelessWidget {
                 style: GoogleFonts.inter(
                   color: items[i].disabled
                       ? FigmaTokens.noteBodyText
-                      : (items[i].selected ? _appPurple : const Color(0xFF64748B)),
-                  fontWeight:
-                      items[i].selected ? FontWeight.w700 : FontWeight.w400,
+                      : (items[i].selected ? _navActive : _navDefault),
+                  fontWeight: FontWeight.w500,
                   fontSize: 14,
                 ),
               ),
@@ -801,8 +804,8 @@ class _NavDropdown extends StatelessWidget {
               label,
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(width: 2),

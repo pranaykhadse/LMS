@@ -82,10 +82,7 @@ class _ErrorView extends StatelessWidget {
             Text(message, textAlign: TextAlign.center, style: const TextStyle(color: _asMuted)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(
-                onRetry: onRetry!,
-                style: ElevatedButton.styleFrom(backgroundColor: _asPurple),
-              ),
+              RetryButton(onRetry: onRetry!),
             ],
           ],
         ),

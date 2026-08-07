@@ -327,7 +327,6 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                         RetryButton(
                           onRetry: () =>
                               ref.read(CalendarViewModel.provider.notifier).fetch(),
-                          style: ElevatedButton.styleFrom(backgroundColor: _calPurple),
                         ),
                       ],
                     ),

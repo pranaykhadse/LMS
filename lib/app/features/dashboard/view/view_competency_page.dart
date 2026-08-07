@@ -219,10 +219,7 @@ class _ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(
-                onRetry: onRetry!,
-                style: ElevatedButton.styleFrom(backgroundColor: _vcPurple),
-              ),
+              RetryButton(onRetry: onRetry!),
             ],
           ],
         ),
