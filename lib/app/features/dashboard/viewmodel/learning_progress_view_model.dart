@@ -44,7 +44,11 @@ class LearningProgressViewModel
   String _friendly(Object e) {
     final msg = e.toString();
     if (msg.contains('401') || msg.contains('Unauthorized')) {
-      return 'Session expired. Please log in again.';
+      // Keep the "Unauthorized" prefix intact - isUnauthorizedError() (see
+      // unauthorized_handler.dart) matches on it to trigger the auto
+      // logout-and-redirect flow, which fires before this message would
+      // ever actually be shown to the user.
+      return 'Unauthorized: Session expired. Please log in again.';
     }
     if (msg.contains('SocketException') || msg.contains('connection')) {
       return 'No internet connection. Please check your network.';

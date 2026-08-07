@@ -11,6 +11,7 @@ import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/model/course_catalog.dart';
@@ -23,7 +24,6 @@ import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/dashboard/repository/development_plan_action_repository.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dev_plan_membership_view_model.dart';
-import 'package:lms/app_module.dart';
 import 'package:lms/app/features/courses/view/calendar_courses_page.dart';
 
 const _catalogPurple = Color(0xFF5756C9);
@@ -128,13 +128,11 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
 
     if (!effectivelyOffline &&
         !_redirectingUnauthorized &&
-        _isUnauthorizedError(catalogState.result.error)) {
+        isUnauthorizedError(catalogState.result.error)) {
       _redirectingUnauthorized = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        await ref.read(AuthStateNotifier.provider.notifier).logout();
-        if (!mounted) return;
-        Modular.to.navigate(AppModule.auth);
+        redirectToLoginOnSessionExpired(context, ref);
       });
     }
 
@@ -294,7 +292,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
           ),
         ];
       case DataProviderState.error:
-        if (_isUnauthorizedError(catalogState.result.error)) {
+        if (isUnauthorizedError(catalogState.result.error)) {
           return const [
             SliverFillRemaining(
               hasScrollBody: false,
@@ -423,14 +421,6 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
       ),
     );
   }
-}
-
-bool _isUnauthorizedError(String? error) {
-  final value = error?.toLowerCase() ?? '';
-  return value.startsWith('unauthorized') ||
-      value.contains('invalid credentials') ||
-      value.contains('status code of 401') ||
-      value.contains(' 401');
 }
 
 

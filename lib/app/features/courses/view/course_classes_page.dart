@@ -10,7 +10,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
-import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -26,7 +26,6 @@ import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:lms/app_module.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 bool _watchIsOnline(WidgetRef ref) {
@@ -58,13 +57,11 @@ class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
     final courseId = int.tryParse(widget.courseId ?? '') ?? 0;
     final state = ref.watch(CourseJoinDetailViewModel.provider(courseId));
 
-    if (!_redirectingUnauthorized && _isUnauthorizedError(state.error)) {
+    if (!_redirectingUnauthorized && isUnauthorizedError(state.error)) {
       _redirectingUnauthorized = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        await ref.read(AuthStateNotifier.provider.notifier).logout();
-        if (!mounted) return;
-        Modular.to.navigate(AppModule.auth);
+        redirectToLoginOnSessionExpired(context, ref);
       });
     }
 
@@ -94,7 +91,7 @@ class _DetailBody extends ConsumerWidget {
           child: CircularProgressIndicator(color: _detailPurple),
         );
       case DataProviderState.error:
-        if (_isUnauthorizedError(state.error)) {
+        if (isUnauthorizedError(state.error)) {
           return const Center(
             child: CircularProgressIndicator(color: _detailPurple),
           );
@@ -1452,14 +1449,6 @@ Future<void> _openUrl(String url) async {
   // iOS - Attend Class uses InAppWebViewPage instead, so it stays inside
   // the app rather than switching to Chrome/Safari.
   await launchUrl(uri, mode: LaunchMode.externalApplication);
-}
-
-bool _isUnauthorizedError(String? error) {
-  final value = error?.toLowerCase() ?? '';
-  return value.startsWith('unauthorized') ||
-      value.contains('invalid credentials') ||
-      value.contains('status code of 401') ||
-      value.contains(' 401');
 }
 
 // ─── Virtual Class session lookup ──────────────────────────────────────────

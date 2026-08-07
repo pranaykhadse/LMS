@@ -9,6 +9,7 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/model/calendar_event.dart';
@@ -20,7 +21,6 @@ import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
-import 'package:lms/app_module.dart';
 
 const _purple = FigmaTokens.primaryPurple;
 const _ink = FigmaTokens.cardTitles;
@@ -39,14 +39,6 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   bool _redirectingUnauthorized = false;
-
-  static bool _isUnauthorizedError(String? error) {
-    final v = error?.toLowerCase() ?? '';
-    return v.startsWith('unauthorized') ||
-        v.contains('invalid credentials') ||
-        v.contains('status code of 401') ||
-        v.contains(' 401');
-  }
 
   void _refetchAll() {
     ref.read(LearningProgressViewModel.provider.notifier).fetch();
@@ -80,34 +72,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
     if (!_redirectingUnauthorized &&
         state.state == DataProviderState.error &&
-        _isUnauthorizedError(state.error)) {
+        isUnauthorizedError(state.error)) {
       _redirectingUnauthorized = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Expanded(
-                  child: Text('Your session has expired. Please log in again.'),
-                ),
-                IconButton(
-                  onPressed: messenger.hideCurrentSnackBar,
-                  icon: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.redAccent,
-            duration: const Duration(days: 365),
-          ),
-        );
-        await ref.read(AuthStateNotifier.provider.notifier).logout();
-        if (!mounted) return;
-        messenger.removeCurrentSnackBar();
-        Modular.to.navigate(AppModule.auth);
+        redirectToLoginOnSessionExpired(context, ref);
       });
     }
 
