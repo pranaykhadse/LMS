@@ -26,9 +26,7 @@ import 'package:url_launcher/url_launcher.dart';
 const _appPurple = FigmaTokens.primaryPurple;
 const _appInk = FigmaTokens.cardTitles;
 const _appMuted = FigmaTokens.noteBodyText;
-// Matches the reference site's .nav-link exactly - a different purple from
-// the primary brand purple used on buttons.
-const _navActive = Color(0xFF5457C1);
+const _navActive = FigmaTokens.primaryPurple;
 const _navDefault = FigmaTokens.noteBoldText;
 
 bool watchIsOnline(WidgetRef ref) {
