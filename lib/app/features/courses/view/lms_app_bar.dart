@@ -554,19 +554,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 child: Row(
           children: [
             _NavItem(
-            icon: Icons.dashboard_outlined,
-            label: 'Dashboard',
-            selected: selectedLabel == 'Dashboard',
-            onTap: () => _goTo(
-              context,
-              ref,
-              ShellDestination.dashboard,
-              CoursesModule.construct(CoursesModule.dashboard),
-            ),
-          ),
-          const SizedBox(width: 12),
-          _NavItem(
-            icon: Icons.menu_book_outlined,
+            icon: Icons.local_library_outlined,
             label: 'Course Catalog',
             selected: selectedLabel == 'Course Catalog',
             onTap: () => _goTo(
@@ -578,7 +566,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 12),
           _NavDropdown(
-            icon: Icons.library_books_outlined,
+            icon: Icons.menu_book_outlined,
             label: 'My Courses',
             selected: myCoursesActive,
             items: [
@@ -626,7 +614,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 12),
           _NavItem(
-            icon: Icons.account_tree_outlined,
+            icon: Icons.map_outlined,
             label: 'Learning Paths',
             selected: selectedLabel == 'Learning Paths',
             onTap: () => _goTo(
@@ -666,7 +654,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 12),
           _NavDropdown(
-            icon: Icons.support_agent_outlined,
+            icon: Icons.chat_bubble_outline,
             label: 'Contact a Coach',
             selected: false,
             items: [
