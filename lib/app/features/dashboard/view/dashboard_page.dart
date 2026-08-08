@@ -344,9 +344,10 @@ class _BannerSection extends StatelessWidget {
             'Good ${_greeting()}, ${_userName()}!',
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              height: 1.2,
+              fontSize: 22,
+              fontWeight: FontWeight.w500,
+              height: 36 / 22,
+              letterSpacing: -0.75,
             ),
           ),
           const SizedBox(height: 14),
