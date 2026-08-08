@@ -339,6 +339,7 @@ class _BannerSection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             'Good ${_greeting()}, ${_userName()}!',
