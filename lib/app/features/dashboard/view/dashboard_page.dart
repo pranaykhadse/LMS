@@ -323,12 +323,18 @@ class _BannerSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
+      // Figma: Width Fill(1440), Height Hug(300) - once the background
+      // photo (currently missing, see dashboard_page.dart TODO) is added
+      // its 276px height plus this 16/8 top/bottom padding will hug to
+      // exactly 300 on its own; forced here for now so the banner's
+      // proportions already match ahead of that.
+      constraints: const BoxConstraints(minHeight: 300),
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       decoration: BoxDecoration(
         gradient: FigmaTokens.heroGradient,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
