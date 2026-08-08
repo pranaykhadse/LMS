@@ -239,8 +239,11 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Icon(Icons.keyboard_arrow_down_rounded,
-                    color: Color(0xFF99A1AF), size: 11),
+                Transform.translate(
+                  offset: const Offset(0, 2),
+                  child: const Icon(Icons.keyboard_arrow_down_rounded,
+                      color: Color(0xFF99A1AF), size: 13),
+                ),
               ],
             ),
           ),
@@ -823,7 +826,7 @@ class _NavDropdown extends StatelessWidget {
                 child: Center(
                   child: Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    size: 11,
+                    size: 13,
                     color: color.withValues(alpha: 0.6),
                   ),
                 ),
