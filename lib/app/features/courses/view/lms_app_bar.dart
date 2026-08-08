@@ -183,6 +183,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 LmsAppBarButton(
                   icon: Icons.notifications_none_rounded,
                   iconSize: 18,
+                  boxSize: 34,
                   onTap: () => showLmsNotifications(bellContext),
                 ),
                 if (unreadCount > 0)
@@ -812,17 +813,21 @@ class _NavDropdown extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 2),
-            // Explicitly centered against the label's own 16px line box -
-            // keyboard_arrow_down_rounded's glyph sits slightly off-center
-            // within its reported icon bounds, which Row's implicit
-            // centering alone doesn't correct for.
-            SizedBox(
-              height: 16,
-              child: Center(
-                child: Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 11,
-                  color: color.withValues(alpha: 0.6),
+            // Geometric centering against the label's 16px line box still
+            // reads slightly low - Inter's actual glyph ink sits higher
+            // within its line box than the abstract box center, so nudge
+            // the chevron up to match the label's visual (not geometric)
+            // center.
+            Transform.translate(
+              offset: const Offset(0, -1.5),
+              child: SizedBox(
+                height: 16,
+                child: Center(
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 11,
+                    color: color.withValues(alpha: 0.6),
+                  ),
                 ),
               ),
             ),
