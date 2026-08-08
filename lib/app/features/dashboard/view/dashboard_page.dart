@@ -138,8 +138,10 @@ class _DashboardBody extends ConsumerWidget {
                     child: Text(
                       "Welcome back! Here's what's happening with your courses.",
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF4A5565),
-                        fontSize: 15.2,
+                        color: const Color(0xFF6A7282),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        height: 24 / 16,
                       ),
                     ),
                   ),
@@ -438,10 +440,10 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       decoration: BoxDecoration(
         color: FigmaTokens.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _border),
       ),
       child: Column(
@@ -449,17 +451,18 @@ class _StatCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: iconColor),
+              Icon(icon, size: 13, color: iconColor),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: iconColor,
+                    color: const Color(0xFF99A1AF),
                     fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: .3,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.6,
+                    height: 18 / 12,
                   ),
                 ),
               ),
@@ -470,8 +473,9 @@ class _StatCard extends StatelessWidget {
             '$value',
             style: GoogleFonts.inter(
               color: _ink,
-              fontSize: 35.2,
-              fontWeight: FontWeight.w800,
+              fontSize: 36,
+              fontWeight: FontWeight.w700,
+              height: 40 / 36,
             ),
           ),
         ],
