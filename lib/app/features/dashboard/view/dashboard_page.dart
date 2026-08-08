@@ -349,25 +349,27 @@ class _BannerSection extends StatelessWidget {
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           const Text(
             '"A leader is best when people barely know he exists; '
             'when his work is done, his aim fulfilled, '
             'they will all say: We did it ourselves."',
             style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-              fontStyle: FontStyle.italic,
-              height: 1.65,
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              height: 22 / 16,
             ),
           ),
           const SizedBox(height: 6),
           const Text(
             '— Lao-Tzu',
             style: TextStyle(
-              color: Colors.white54,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.35,
+              height: 20 / 14,
             ),
           ),
         ],
