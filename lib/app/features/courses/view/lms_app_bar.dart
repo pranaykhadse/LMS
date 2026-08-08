@@ -57,7 +57,7 @@ String _lastFirst(dynamic profile) {
 // TopBar's Figma spec is Height Hug 44px, but that clipped the logo mark
 // once it was swapped in - taller than spec so the logo has room to
 // breathe. NavBar matches its own Figma spec exactly (Height Hug 44px).
-const double _desktopTopBarHeight = 64;
+const double _desktopTopBarHeight = 44;
 const double _desktopHeaderHeight = 44;
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
@@ -211,11 +211,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           onSelected: (value) => _onProfileMenuSelected(context, ref, value),
           itemBuilder: (context) => _profileMenuItems(profile),
           // Pill container: #7D4AAB background, 4px radius, 6px gap
-          // between avatar/name/chevron - padding widened past the Figma
-          // spec's tight 8/2/8/2 so it actually reads as a chip against
-          // the TopBar's own close-in-tone purple.
+          // between avatar/name/chevron, 8/2/8/2 padding - matches the
+          // Figma spec exactly.
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: const Color(0xFF7D4AAB),
               borderRadius: BorderRadius.circular(4),
@@ -233,14 +232,14 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   _lastFirst(profile),
                   style: GoogleFonts.inter(
                     color: const Color(0xFFE5E7EB),
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.w400,
                     height: 16 / 12,
                   ),
                 ),
                 const SizedBox(width: 6),
                 const Icon(Icons.keyboard_arrow_down_rounded,
-                    color: Color(0xFF99A1AF), size: 14),
+                    color: Color(0xFF99A1AF), size: 11),
               ],
             ),
           ),
@@ -250,8 +249,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     // "TopBar": logo left, back button (detail pages only) + utilities
     // right - purple (#693D94) background, 16px left/right padding, 10px
-    // top/bottom padding, space-between (taller than the Figma spec's
-    // 44px so the logo mark isn't clipped - see _desktopTopBarHeight).
+    // top/bottom padding, space-between - matches the Figma spec's 44px
+    // exactly; the logo is sized to fit the 24px of padding-free height
+    // that leaves (see the Logo(size: ...) call below).
     final topBar = Container(
       width: double.infinity,
       height: _desktopTopBarHeight,
@@ -286,7 +286,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                     CoursesModule.construct(CoursesModule.dashboard),
                   );
                 },
-                child: const Logo(size: 36),
+                child: const Logo(size: 24),
               ),
             ],
           ),
@@ -564,7 +564,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.dashboard),
             ),
           ),
-          const SizedBox(width: 48),
+          const SizedBox(width: 12),
           _NavItem(
             icon: Icons.menu_book_outlined,
             label: 'Course Catalog',
@@ -576,7 +576,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.root),
             ),
           ),
-          const SizedBox(width: 48),
+          const SizedBox(width: 12),
           _NavDropdown(
             icon: Icons.library_books_outlined,
             label: 'My Courses',
@@ -624,7 +624,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          const SizedBox(width: 48),
+          const SizedBox(width: 12),
           _NavItem(
             icon: Icons.account_tree_outlined,
             label: 'Learning Paths',
@@ -636,7 +636,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.learningPaths),
             ),
           ),
-          const SizedBox(width: 48),
+          const SizedBox(width: 12),
           _NavDropdown(
             icon: Icons.workspace_premium_outlined,
             label: 'Points & Badges',
@@ -664,7 +664,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          const SizedBox(width: 48),
+          const SizedBox(width: 12),
           _NavDropdown(
             icon: Icons.support_agent_outlined,
             label: 'Contact a Coach',
@@ -711,7 +711,7 @@ class _NavItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -802,7 +802,7 @@ class _NavDropdown extends StatelessWidget {
           ),
       ],
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1250,11 +1250,26 @@ class LmsAvatar extends StatelessWidget {
         backgroundColor: fallbackColor,
         backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
         child: url.isEmpty
-            ? const Icon(Icons.person, color: Colors.white)
+            ? Text(
+                _initial(profile),
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: radius * 1.1,
+                ),
+              )
             : null,
       ),
     );
   }
+}
+
+/// First letter of the user's first name (falling back to their username),
+/// shown in the avatar circle when there's no profile photo - matches the
+/// Figma spec's single-initial fallback rather than a generic person icon.
+String _initial(dynamic profile) {
+  final firstname = profile?.firstname?.toString() ?? '';
+  return firstname.isNotEmpty ? firstname[0].toUpperCase() : '?';
 }
 
 // ── Profile popup widgets ─────────────────────────────────────────────────────
@@ -1365,7 +1380,7 @@ class _DatePillState extends State<_DatePill> {
       _formatDatePill(_now),
       style: GoogleFonts.inter(
         color: Colors.white,
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: FontWeight.w400,
         height: 16 / 12,
       ),
