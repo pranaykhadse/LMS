@@ -798,6 +798,7 @@ class _NavDropdown extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Icon(icon, size: 13, color: color),
             const SizedBox(width: 6),
@@ -811,10 +812,19 @@ class _NavDropdown extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 2),
-            Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 11,
-              color: color.withValues(alpha: 0.6),
+            // Explicitly centered against the label's own 16px line box -
+            // keyboard_arrow_down_rounded's glyph sits slightly off-center
+            // within its reported icon bounds, which Row's implicit
+            // centering alone doesn't correct for.
+            SizedBox(
+              height: 16,
+              child: Center(
+                child: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 11,
+                  color: color.withValues(alpha: 0.6),
+                ),
+              ),
             ),
           ],
         ),
