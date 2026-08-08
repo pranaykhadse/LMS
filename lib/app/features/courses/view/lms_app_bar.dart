@@ -719,15 +719,15 @@ class _NavItem extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              // A tight height keeps the glyph box close to the actual ink
-              // bounds - without it, Inter's default leading (~1.4x) makes
-              // this text taller than Figma's own render of the same spec,
-              // clipping descenders against the 44px button height.
+              // Explicit 16/12 line-height matches the Figma spec's own
+              // measured 16px exactly - GoogleFonts.inter's unset default
+              // leading is taller than that, which was clipping descenders
+              // against the 44px button height.
               style: GoogleFonts.inter(
                 color: color,
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                height: 1.0,
+                height: 16 / 12,
               ),
             ),
           ],
@@ -819,7 +819,7 @@ class _NavDropdown extends StatelessWidget {
                 color: color,
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                height: 1.0,
+                height: 16 / 12,
               ),
             ),
             const SizedBox(width: 2),
