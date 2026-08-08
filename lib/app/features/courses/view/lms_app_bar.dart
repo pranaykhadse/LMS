@@ -205,48 +205,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
         ),
         const SizedBox(width: 6),
-        PopupMenuButton<String>(
-          offset: const Offset(0, 38),
-          constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        _ProfileMenuButton(
+          profile: profile,
           onSelected: (value) => _onProfileMenuSelected(context, ref, value),
           itemBuilder: (context) => _profileMenuItems(profile),
-          // Pill container: #7D4AAB background, 4px radius, 6px gap
-          // between avatar/name/chevron, 8/2/8/2 padding - matches the
-          // Figma spec exactly.
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF7D4AAB),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LmsAvatar(
-                  profile: profile,
-                  radius: 10,
-                  fallbackColor: const Color(0xFF6A7282),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _lastFirst(profile),
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFFE5E7EB),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    height: 16 / 12,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Transform.translate(
-                  offset: const Offset(0, 2),
-                  child: const Icon(Icons.keyboard_arrow_down_rounded,
-                      color: Color(0xFF99A1AF), size: 13),
-                ),
-              ],
-            ),
-          ),
         ),
       ],
     );
@@ -742,7 +704,82 @@ class _NavSubItem {
   final VoidCallback onTap;
 }
 
-class _NavDropdown extends StatelessWidget {
+class _ProfileMenuButton extends StatefulWidget {
+  const _ProfileMenuButton({
+    required this.profile,
+    required this.onSelected,
+    required this.itemBuilder,
+  });
+  final dynamic profile;
+  final ValueChanged<String> onSelected;
+  final List<PopupMenuEntry<String>> Function(BuildContext) itemBuilder;
+
+  @override
+  State<_ProfileMenuButton> createState() => _ProfileMenuButtonState();
+}
+
+class _ProfileMenuButtonState extends State<_ProfileMenuButton> {
+  bool _isOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      offset: const Offset(0, 38),
+      constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      onOpened: () => setState(() => _isOpen = true),
+      onCanceled: () => setState(() => _isOpen = false),
+      onSelected: (value) {
+        setState(() => _isOpen = false);
+        widget.onSelected(value);
+      },
+      itemBuilder: widget.itemBuilder,
+      // Pill container: #7D4AAB background, 4px radius, 6px gap
+      // between avatar/name/chevron, 8/2/8/2 padding - matches the
+      // Figma spec exactly.
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFF7D4AAB),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            LmsAvatar(
+              profile: widget.profile,
+              radius: 10,
+              fallbackColor: const Color(0xFF6A7282),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _lastFirst(widget.profile),
+              style: GoogleFonts.inter(
+                color: const Color(0xFFE5E7EB),
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 16 / 12,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Transform.translate(
+              offset: const Offset(0, 1.5),
+              child: Icon(
+                _isOpen
+                    ? Icons.keyboard_arrow_up_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                color: const Color(0xFF99A1AF),
+                size: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavDropdown extends StatefulWidget {
   const _NavDropdown({
     required this.icon,
     required this.label,
@@ -755,12 +792,26 @@ class _NavDropdown extends StatelessWidget {
   final List<_NavSubItem> items;
 
   @override
+  State<_NavDropdown> createState() => _NavDropdownState();
+}
+
+class _NavDropdownState extends State<_NavDropdown> {
+  bool _isOpen = false;
+
+  @override
   Widget build(BuildContext context) {
+    final icon = widget.icon;
+    final label = widget.label;
+    final selected = widget.selected;
+    final items = widget.items;
     final color = selected ? _navActive : _navDefault;
     return PopupMenuButton<int>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onOpened: () => setState(() => _isOpen = true),
+      onCanceled: () => setState(() => _isOpen = false),
       onSelected: (index) {
+        setState(() => _isOpen = false);
         final item = items[index];
         if (!item.disabled) item.onTap();
       },
@@ -820,12 +871,14 @@ class _NavDropdown extends StatelessWidget {
             // geometric) center - see commit history if this needs
             // further adjustment.
             Transform.translate(
-              offset: const Offset(0, 1.5),
+              offset: const Offset(0, 1.0),
               child: SizedBox(
                 height: 16,
                 child: Center(
                   child: Icon(
-                    Icons.keyboard_arrow_down_rounded,
+                    _isOpen
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
                     size: 13,
                     color: color.withValues(alpha: 0.6),
                   ),
