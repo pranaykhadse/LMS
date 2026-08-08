@@ -188,8 +188,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
                 if (unreadCount > 0)
                   Positioned(
-                    top: 2,
-                    right: 2,
+                    top: 0,
+                    right: 0,
                     child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
                   ),
               ],
@@ -416,8 +416,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             ),
             if (unreadCount > 0)
               Positioned(
-                top: 2,
-                right: 2,
+                top: 0,
+                right: 0,
                 child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
               ),
           ],
@@ -813,13 +813,11 @@ class _NavDropdown extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 2),
-            // Geometric centering against the label's 16px line box still
-            // reads slightly low - Inter's actual glyph ink sits higher
-            // within its line box than the abstract box center, so nudge
-            // the chevron up to match the label's visual (not geometric)
-            // center.
+            // Empirically-tuned offset to match the label's visual (not
+            // geometric) center - see commit history if this needs
+            // further adjustment.
             Transform.translate(
-              offset: const Offset(0, -1.5),
+              offset: const Offset(0, 1.5),
               child: SizedBox(
                 height: 16,
                 child: Center(
