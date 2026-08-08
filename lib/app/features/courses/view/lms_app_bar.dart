@@ -27,7 +27,7 @@ const _appPurple = FigmaTokens.primaryPurple;
 const _appInk = FigmaTokens.cardTitles;
 const _appMuted = FigmaTokens.noteBodyText;
 const _navActive = FigmaTokens.primaryPurple;
-const _navDefault = FigmaTokens.noteBoldText;
+const _navDefault = Color(0xFF6A7282);
 
 bool watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -58,7 +58,7 @@ String _lastFirst(dynamic profile) {
 // once it was swapped in - taller than spec so the logo has room to
 // breathe. NavBar matches its own Figma spec exactly (Height Hug 44px).
 const double _desktopTopBarHeight = 44;
-const double _desktopHeaderHeight = 44;
+const double _desktopHeaderHeight = 45;
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
@@ -711,18 +711,23 @@ class _NavItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+        padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
+            Icon(icon, size: 13, color: color),
             const SizedBox(width: 6),
             Text(
               label,
+              // A tight height keeps the glyph box close to the actual ink
+              // bounds - without it, Inter's default leading (~1.4x) makes
+              // this text taller than Figma's own render of the same spec,
+              // clipping descenders against the 44px button height.
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 1.0,
               ),
             ),
           ],
@@ -802,22 +807,27 @@ class _NavDropdown extends StatelessWidget {
           ),
       ],
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+        padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
+            Icon(icon, size: 13, color: color),
             const SizedBox(width: 6),
             Text(
               label,
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 1.0,
               ),
             ),
             const SizedBox(width: 2),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: color),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 11,
+              color: color.withValues(alpha: 0.6),
+            ),
           ],
         ),
       ),
