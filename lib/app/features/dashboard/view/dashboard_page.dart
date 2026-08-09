@@ -712,11 +712,11 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: i == _index ? 48 : 21,
-                        height: 21,
+                        width: i == _index ? 16 : 6,
+                        height: 6,
                         decoration: BoxDecoration(
-                          color: i == _index ? _purple : _border,
-                          borderRadius: BorderRadius.circular(10.5),
+                          color: i == _index ? _purple : const Color(0xFFD1D5DC),
+                          borderRadius: BorderRadius.circular(3),
                         ),
                       ),
                     ),
@@ -861,6 +861,7 @@ class _ContinueLearningItem extends ConsumerWidget {
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
+                  height: 24 / 16,
                 ),
               ),
             ],
