@@ -1017,9 +1017,10 @@ class _SessionRow extends StatelessWidget {
                         child: Text(
                           event.className,
                           style: GoogleFonts.inter(
-                            color: const Color(0xFF64748B),
+                            color: _purple,
                             fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
+                            height: 15.13 / 11,
                           ),
                         ),
                       ),
@@ -1029,11 +1030,16 @@ class _SessionRow extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xFF6A7282)),
+                    const Icon(Icons.calendar_today_rounded, size: 10, color: Color(0xFF99A1AF)),
                     const SizedBox(width: 6),
                     Text(
                       _formatDate(event.startDateTime),
-                      style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF99A1AF),
+                        fontWeight: FontWeight.w400,
+                        fontSize: 12,
+                        height: 18 / 12,
+                      ),
                     ),
                   ],
                 ),
@@ -1044,14 +1050,20 @@ class _SessionRow extends StatelessWidget {
                       children: [
                         TextSpan(
                           text: 'Hosted by ',
-                          style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF99A1AF),
+                            fontWeight: FontWeight.w400,
+                            fontSize: 12,
+                            height: 18 / 12,
+                          ),
                         ),
                         TextSpan(
                           text: event.instructor,
                           style: GoogleFonts.inter(
-                            color: const Color(0xFF1E293B),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12.48,
+                            color: const Color(0xFF4A5565),
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12,
+                            height: 18 / 12,
                           ),
                         ),
                       ],
@@ -1067,12 +1079,13 @@ class _SessionRow extends StatelessWidget {
             onPressed: () => Modular.to.pushNamed(
               CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
             ),
-            borderRadius: 20,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            borderRadius: 14,
+            padding: const EdgeInsets.fromLTRB(10, 4, 10, 4),
             textStyle: GoogleFonts.inter(
               color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 12.8,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              height: 18 / 12,
             ),
           ),
         ],
