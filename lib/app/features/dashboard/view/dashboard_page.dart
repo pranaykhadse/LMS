@@ -325,19 +325,36 @@ class _BannerSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      // Figma: Width Fill(1440), Height Hug(300) - once the background
-      // photo (currently missing, see dashboard_page.dart TODO) is added
-      // its 276px height plus this 16/8 top/bottom padding will hug to
-      // exactly 300 on its own; forced here for now so the banner's
-      // proportions already match ahead of that.
+      // Figma: Width Fill(1440), Height Hug(300) - the background photo's
+      // 276px height plus this 16/8 top/bottom padding hugs to exactly
+      // 300 on its own; forced here as a floor so it still matches at
+      // shorter text content.
       constraints: const BoxConstraints(minHeight: 300),
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      decoration: BoxDecoration(
-        gradient: FigmaTokens.heroGradient,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-      child: Column(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Placeholder background photo - swap for the real Figma asset
+          // once it's exported; login-bg.png is reused here purely so the
+          // gradient-overlay-on-photo layout is already wired up.
+          Image.asset('assets/images/login-bg.png', fit: BoxFit.cover),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  FigmaTokens.primaryPurple.withValues(alpha: 0.85),
+                  FigmaTokens.gradientEnd.withValues(alpha: 0.85),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+            child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -372,6 +389,9 @@ class _BannerSection extends StatelessWidget {
               fontWeight: FontWeight.w500,
               letterSpacing: 0.35,
               height: 20 / 14,
+            ),
+          ),
+              ],
             ),
           ),
         ],
