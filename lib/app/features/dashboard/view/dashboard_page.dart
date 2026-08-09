@@ -541,10 +541,17 @@ class _CardHeader extends StatelessWidget {
     this.onAction,
     this.large = false,
     this.trailing,
+    this.actionLabelStyle,
   });
   final String title;
   final String? actionLabel;
   final VoidCallback? onAction;
+
+  /// Per-card override for the "View All" text style - cards measured so
+  /// far don't share one spec (Continue Learning is 16px/24px, Course
+  /// Progress is 12px/16px), so default to the former and let callers
+  /// override.
+  final TextStyle? actionLabelStyle;
 
   /// h4.section-title-main (16.8px, #1E2939, title case) instead of the
   /// default h4.section-title-sm (12px, #6A7282, uppercase) - the
@@ -576,12 +583,13 @@ class _CardHeader extends StatelessWidget {
             onTap: onAction,
             child: Text(
               actionLabel!,
-              style: GoogleFonts.inter(
-                color: _purple,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                height: 24 / 16,
-              ),
+              style: actionLabelStyle ??
+                  GoogleFonts.inter(
+                    color: _purple,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    height: 24 / 16,
+                  ),
             ),
           ),
         if (trailing != null) trailing!,
@@ -1104,6 +1112,7 @@ class _CourseProgressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final shown = courses.take(4).toList();
     return _DashCard(
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1111,6 +1120,12 @@ class _CourseProgressCard extends StatelessWidget {
             title: 'Course Progress',
             large: true,
             actionLabel: shown.isEmpty ? null : 'View All',
+            actionLabelStyle: GoogleFonts.inter(
+              color: _purple,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              height: 16 / 12,
+            ),
             onAction: shown.isEmpty
                 ? null
                 : () => Modular.to.pushNamed(
@@ -1148,7 +1163,7 @@ class _CourseProgressRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.menu_book_rounded, size: 15, color: _purple),
+            const Icon(Icons.menu_book_rounded, size: 13, color: _purple),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -1156,29 +1171,31 @@ class _CourseProgressRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF1E2939),
-                  fontSize: 14.4,
-                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF4A5565),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  height: 24 / 16,
                 ),
               ),
             ),
             Text(
               '${course.progress}%',
               style: GoogleFonts.inter(
-                color: const Color(0xFF6A7282),
-                fontSize: 14.4,
-                fontWeight: FontWeight.w700,
+                color: const Color(0xFF99A1AF),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                height: 24 / 16,
               ),
             ),
           ],
         ),
         const SizedBox(height: 6),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(3),
           child: LinearProgressIndicator(
             value: pct,
             minHeight: 6,
-            backgroundColor: const Color(0xFFE8E7F8),
+            backgroundColor: const Color(0xFFF3F4F6),
             valueColor: const AlwaysStoppedAnimation<Color>(_purple),
           ),
         ),
