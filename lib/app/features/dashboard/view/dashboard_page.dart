@@ -526,7 +526,7 @@ class _DashCard extends StatelessWidget {
       padding: padding ?? const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: FigmaTokens.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: _border),
       ),
       child: child,
@@ -989,9 +989,10 @@ class _SessionRow extends StatelessWidget {
                     Text(
                       event.courseName.isNotEmpty ? event.courseName : event.title,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF1E293B),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15.2,
+                        color: const Color(0xFF1E2939),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        height: 22 / 16,
                       ),
                     ),
                     if (event.className.isNotEmpty)
