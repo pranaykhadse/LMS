@@ -190,7 +190,7 @@ class _TableHeaderRow extends StatelessWidget {
           SizedBox(width: 24, child: Text('#', style: style)),
           Expanded(child: Text('COURSE / CATEGORY / DUE DATE', style: style)),
           const SizedBox(width: 12),
-          SizedBox(width: 160, child: Text('PROGRESS', style: style, textAlign: TextAlign.right)),
+          SizedBox(width: 140, child: Text('PROGRESS', style: style)),
         ],
       ),
     );
@@ -273,19 +273,20 @@ class _CourseRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           SizedBox(
-            width: 160,
+            width: 140,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '${item.progress}%',
                   style: GoogleFonts.inter(
                     color: _purple,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    height: 16 / 12,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(3),
                   child: LinearProgressIndicator(
