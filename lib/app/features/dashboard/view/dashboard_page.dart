@@ -1663,6 +1663,9 @@ class _RequiredRow extends ConsumerWidget {
                       fontSize: 13,
                       height: 19.5 / 13,
                     ),
+                    textHeightBehavior: const TextHeightBehavior(
+                      leadingDistribution: TextLeadingDistribution.even,
+                    ),
                   ),
                 ),
               ),
@@ -1726,6 +1729,13 @@ class _BrandButtonState extends State<_BrandButton> {
               widget.label,
               style: widget.textStyle,
               textAlign: TextAlign.center,
+              // Without this, the explicit line-height on these styles
+              // puts all the extra leading above the glyphs instead of
+              // splitting it evenly, so the text sits visibly above
+              // vertical-center inside a container that hugs it tightly.
+              textHeightBehavior: const TextHeightBehavior(
+                leadingDistribution: TextLeadingDistribution.even,
+              ),
             ),
           ),
         ),
