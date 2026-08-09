@@ -280,6 +280,7 @@ List<DashboardCourse> _continueLearningCourses(LearningProgressData data) {
           ratingCount: 0,
           description: item.description.isNotEmpty ? item.description : null,
           category: item.className.isNotEmpty ? item.className : null,
+          dueDate: item.formattedDueDate,
         ),
       )
       .toList();
@@ -725,10 +726,10 @@ class _ContinueLearningItem extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(14),
           child: SizedBox(
-            width: 190,
-            height: 210,
+            width: 144,
+            height: 200,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -798,28 +799,48 @@ class _ContinueLearningItem extends ConsumerWidget {
                   course.description!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: _muted, fontSize: 12.5, height: 1.35),
+                  style: const TextStyle(
+                    color: Color(0xFF99A1AF),
+                    fontSize: 16,
+                    height: 26 / 16,
+                  ),
+                ),
+              ],
+              if (course.dueDate != null) ...[
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calendar_today_rounded, size: 14, color: _purple),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Due: ${course.dueDate}',
+                      style: GoogleFonts.inter(
+                        color: _purple,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        height: 24 / 16,
+                      ),
+                    ),
+                  ],
                 ),
               ],
               const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: _BrandButton(
-                  label: 'Resume',
-                  onPressed: viewDisabled
-                      ? null
-                      : () => Modular.to.pushNamed(
-                            CoursesModule.construct(
-                              '${CoursesModule.detail}/${course.id}',
-                            ),
+              _BrandButton(
+                label: 'Resume',
+                onPressed: viewDisabled
+                    ? null
+                    : () => Modular.to.pushNamed(
+                          CoursesModule.construct(
+                            '${CoursesModule.detail}/${course.id}',
                           ),
-                  borderRadius: 8,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  textStyle: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
+                        ),
+                borderRadius: 14,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                textStyle: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
                 ),
               ),
             ],

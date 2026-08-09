@@ -223,6 +223,7 @@ class DashboardContinueLearningItem {
     required this.logoLink,
     required this.classId,
     required this.className,
+    this.dueDate,
   });
 
   final String courseId;
@@ -232,6 +233,19 @@ class DashboardContinueLearningItem {
   final String classId;
   final String className;
 
+  /// Raw "YYYY-MM-DD" from the API - null when the course has no due
+  /// date. Use [formattedDueDate] to display it.
+  final String? dueDate;
+
+  /// "August 1, 2026" - null when [dueDate] is null or unparsable.
+  String? get formattedDueDate {
+    final raw = dueDate;
+    if (raw == null) return null;
+    final date = DateTime.tryParse(raw);
+    if (date == null) return null;
+    return '${_monthNames[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
   factory DashboardContinueLearningItem.fromJson(Map<String, dynamic> json) =>
       DashboardContinueLearningItem(
         courseId: json['course_id']?.toString() ?? '',
@@ -240,8 +254,14 @@ class DashboardContinueLearningItem {
         logoLink: _nullableString(json['logo_link']),
         classId: json['class_id']?.toString() ?? '',
         className: json['class_name']?.toString() ?? '',
+        dueDate: _nullableString(json['due_date']),
       );
 }
+
+const _monthNames = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
 
 class DashboardDiscussionBoardItem {
   const DashboardDiscussionBoardItem({

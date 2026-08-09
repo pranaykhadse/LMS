@@ -49,6 +49,7 @@ class DashboardCourse {
     this.isNonCourse = false,
     this.description,
     this.category,
+    this.dueDate,
   });
 
   final int id;
@@ -66,6 +67,10 @@ class DashboardCourse {
   /// category tag above the title - same "continue_learning"-only
   /// availability as [description].
   final String? category;
+
+  /// Already-formatted ("August 1, 2026") - same "continue_learning"-only
+  /// availability as [description].
+  final String? dueDate;
   final bool displayRating;
   final double averageRating;
   final int ratingCount;
