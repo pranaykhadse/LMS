@@ -57,32 +57,34 @@ class _Body extends StatelessWidget {
         if (state.courses.isEmpty) return const _EmptyState();
         return Column(
           children: [
-            _Header(count: state.totalCourses),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+              child: _Header(count: state.totalCourses),
+            ),
             Expanded(
               child: RefreshIndicator(
                 color: _purple,
                 onRefresh: () async => notifier.fetch(page: state.page),
                 child: ListView(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: FigmaTokens.cardBorders),
-                        ),
-                        child: Column(
-                          children: [
-                            for (var i = 0; i < state.courses.length; i++)
-                              _CourseRow(
-                                index: (state.page - 1) * 10 + i + 1,
-                                item: state.courses[i],
-                                showDivider: i < state.courses.length - 1,
-                              ),
-                          ],
-                        ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: FigmaTokens.cardBorders),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        children: [
+                          const _TableHeaderRow(),
+                          for (var i = 0; i < state.courses.length; i++)
+                            _CourseRow(
+                              index: (state.page - 1) * 10 + i + 1,
+                              item: state.courses[i],
+                              showDivider: i < state.courses.length - 1,
+                            ),
+                        ],
                       ),
                     ),
                     const AppFooter(),
@@ -115,45 +117,82 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () => safePop(context),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.arrow_back, size: 14, color: _purple),
+              const SizedBox(width: 6),
+              Text(
+                'Back',
+                style: GoogleFonts.inter(
+                  color: _purple,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 20 / 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Container(width: 1, height: 16, color: _purple),
+        const SizedBox(width: 12),
+        Text(
+          'Continue Learning',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF1E2939),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            height: 20 / 14,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          '$count courses',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF99A1AF),
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            height: 20 / 14,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Table header row ───────────────────────────────────────────────────────
+
+class _TableHeaderRow extends StatelessWidget {
+  const _TableHeaderRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final style = GoogleFonts.inter(
+      color: const Color(0xFF99A1AF),
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      height: 16.5 / 11,
+      letterSpacing: 0.55,
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF9FAFB),
+        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+      ),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => safePop(context),
-            child: Row(
-              children: [
-                const Icon(Icons.arrow_back, size: 16, color: _muted),
-                const SizedBox(width: 4),
-                Text(
-                  'Back',
-                  style: GoogleFonts.inter(
-                    color: _muted,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            'In-Progress Courses',
-            style: GoogleFonts.inter(
-              color: _ink,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '$count courses',
-            style: GoogleFonts.inter(
-              color: _muted,
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
+          SizedBox(width: 24, child: Text('#', style: style)),
+          Expanded(child: Text('BRIDGEWORK', style: style)),
+          const SizedBox(width: 12),
+          SizedBox(width: 90, child: Text('STATUS', style: style)),
+          const SizedBox(width: 12),
+          SizedBox(width: 80, child: Text('ACTION', style: style)),
         ],
       ),
     );
@@ -230,9 +269,15 @@ class _CourseRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          _StatusPill(status: item.status),
+          SizedBox(
+            width: 90,
+            child: Align(alignment: Alignment.centerLeft, child: _StatusPill(status: item.status)),
+          ),
           const SizedBox(width: 12),
-          _ResumeButton(item: item),
+          SizedBox(
+            width: 80,
+            child: Align(alignment: Alignment.centerLeft, child: _ResumeButton(item: item)),
+          ),
         ],
       ),
     );
