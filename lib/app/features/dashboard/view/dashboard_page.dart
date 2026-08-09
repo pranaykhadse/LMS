@@ -1130,7 +1130,7 @@ class _CourseProgressCard extends StatelessWidget {
             onAction: shown.isEmpty
                 ? null
                 : () => Modular.to.pushNamed(
-                      CoursesModule.construct(CoursesModule.enrolledCourses),
+                      CoursesModule.construct(CoursesModule.allCourseProgress),
                     ),
           ),
           const SizedBox(height: 12),
