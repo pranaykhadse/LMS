@@ -1220,55 +1220,53 @@ class _OverallProgressCard extends StatelessWidget {
     final overall = overallProgress;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: FigmaTokens.heroGradient,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.star_border_rounded, color: Colors.white, size: 16),
-              const SizedBox(width: 6),
+              const Icon(Icons.star_border_rounded, color: Color(0xE6FFFFFF), size: 14),
+              const SizedBox(width: 8),
               Text(
                 'OVERALL LEARNING PROGRESS',
                 style: GoogleFonts.inter(
                   color: const Color(0xE6FFFFFF),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                   letterSpacing: .4,
+                  height: 24 / 16,
                 ),
               ),
             ],
           ),
-          Expanded(
-            child: Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '$overall%',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 60,
-                      fontWeight: FontWeight.w800,
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: overall / 100,
-                      minHeight: 8,
-                      backgroundColor: Colors.white24,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  ),
-                ],
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              '$overall%',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 48,
+                fontWeight: FontWeight.w700,
+                height: 1,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: overall / 100,
+                minHeight: 6,
+                backgroundColor: Colors.white.withValues(alpha: 0.15),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Colors.white.withValues(alpha: 0.5),
+                ),
               ),
             ),
           ),
@@ -1535,6 +1533,7 @@ class _RequiredForYouCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final shown = required.take(5).toList();
     return _DashCard(
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1548,10 +1547,16 @@ class _RequiredForYouCard extends StatelessWidget {
               child: Text('No required courses.', style: TextStyle(color: _muted)),
             )
           else ...[
-            for (var i = 0; i < shown.length; i++) ...[
-              if (i > 0) const Divider(height: 22, color: _border),
-              _RequiredRow(index: i + 1, item: shown[i]),
-            ],
+            for (var i = 0; i < shown.length; i++)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: i < shown.length - 1
+                    ? const BoxDecoration(
+                        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+                      )
+                    : null,
+                child: _RequiredRow(index: i + 1, item: shown[i]),
+              ),
             const SizedBox(height: 18),
             Center(
               child: HoverBuilder(
@@ -1593,16 +1598,19 @@ class _RequiredRow extends ConsumerWidget {
     return Row(
       children: [
         SizedBox(
-          width: 22,
+          width: 16,
           child: Text(
             '$index',
+            textAlign: TextAlign.right,
             style: GoogleFonts.inter(
-              color: const Color(0xFF9CA3AF),
-              fontSize: 14.4,
-              fontWeight: FontWeight.w600,
+              color: const Color(0xFF99A1AF),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              height: 24 / 16,
             ),
           ),
         ),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
             item.courseName,
