@@ -666,7 +666,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
               onAction: widget.courses.isEmpty
                   ? null
                   : () => Modular.to.pushNamed(
-                        CoursesModule.construct(CoursesModule.myCourses),
+                        CoursesModule.construct(CoursesModule.inProgressCourses),
                       ),
             ),
           ),

@@ -1,0 +1,364 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_modular/flutter_modular.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/pagination_widget.dart';
+import 'package:lms/app/core/views/elements/retry_button.dart';
+import 'package:lms/app/core/views/elements/safe_pop.dart';
+import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/dashboard/repository/continue_learning_list_repository.dart';
+import 'package:lms/app/features/dashboard/viewmodel/continue_learning_list_view_model.dart';
+
+const _purple = FigmaTokens.primaryPurple;
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
+
+class InProgressCoursesPage extends ConsumerWidget {
+  const InProgressCoursesPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(ContinueLearningListViewModel.provider);
+    final notifier = ref.read(ContinueLearningListViewModel.provider.notifier);
+
+    return AppScaffold(
+      backgroundColor: _bg,
+      title: 'In-Progress Courses',
+      selectedSubLabel: 'Continue Learning',
+      onRefresh: () => notifier.fetch(page: state.page),
+      body: _Body(state: state, notifier: notifier),
+    );
+  }
+}
+
+class _Body extends StatelessWidget {
+  const _Body({required this.state, required this.notifier});
+  final ContinueLearningListState state;
+  final ContinueLearningListViewModel notifier;
+
+  @override
+  Widget build(BuildContext context) {
+    switch (state.providerState) {
+      case DataProviderState.loading:
+      case DataProviderState.idle:
+        return const Center(child: CircularProgressIndicator(color: _purple));
+      case DataProviderState.error:
+        return _ErrorView(
+          message: state.error ?? 'Unable to load in-progress courses.',
+          onRetry: () => notifier.fetch(),
+        );
+      case DataProviderState.data:
+        if (state.courses.isEmpty) return const _EmptyState();
+        return Column(
+          children: [
+            _Header(count: state.totalCourses),
+            Expanded(
+              child: RefreshIndicator(
+                color: _purple,
+                onRefresh: () async => notifier.fetch(page: state.page),
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: FigmaTokens.cardBorders),
+                        ),
+                        child: Column(
+                          children: [
+                            for (var i = 0; i < state.courses.length; i++)
+                              _CourseRow(
+                                index: (state.page - 1) * 10 + i + 1,
+                                item: state.courses[i],
+                                showDivider: i < state.courses.length - 1,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const AppFooter(),
+                  ],
+                ),
+              ),
+            ),
+            PaginationWidget(
+              page: state.page,
+              pages: state.totalPages,
+              onPage: (page) => _goToPage(context, page),
+            ),
+          ],
+        );
+    }
+  }
+
+  void _goToPage(BuildContext context, int page) {
+    notifier.goToPage(page).then((error) {
+      if (error != null && context.mounted) Toast.error(context, error);
+    });
+  }
+}
+
+// ─── In-page header ─────────────────────────────────────────────────────────
+
+class _Header extends StatelessWidget {
+  const _Header({required this.count});
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => safePop(context),
+            child: Row(
+              children: [
+                const Icon(Icons.arrow_back, size: 16, color: _muted),
+                const SizedBox(width: 4),
+                Text(
+                  'Back',
+                  style: GoogleFonts.inter(
+                    color: _muted,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            'In-Progress Courses',
+            style: GoogleFonts.inter(
+              color: _ink,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '$count courses',
+            style: GoogleFonts.inter(
+              color: _muted,
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Course row ───────────────────────────────────────────────────────────────
+
+class _CourseRow extends StatelessWidget {
+  const _CourseRow({
+    required this.index,
+    required this.item,
+    required this.showDivider,
+  });
+  final int index;
+  final ContinueLearningListItem item;
+  final bool showDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: showDivider
+          ? const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+            )
+          : null,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            child: Text(
+              '$index',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF99A1AF),
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.courseName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: _ink,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    if (item.className.isNotEmpty) ...[
+                      Text(
+                        item.className,
+                        style: GoogleFonts.inter(color: _muted, fontSize: 12),
+                      ),
+                      const Text(' • ', style: TextStyle(color: _muted, fontSize: 12)),
+                    ],
+                    const Icon(Icons.calendar_today_rounded, size: 11, color: _muted),
+                    const SizedBox(width: 4),
+                    Text(
+                      item.date,
+                      style: GoogleFonts.inter(color: _muted, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          _StatusPill(status: item.status),
+          const SizedBox(width: 12),
+          _ResumeButton(item: item),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.status});
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: FigmaTokens.badgeBackground,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status,
+        style: GoogleFonts.inter(
+          color: _purple,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _ResumeButton extends ConsumerWidget {
+  const _ResumeButton({required this.item});
+  final ContinueLearningListItem item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Material(
+      color: _purple,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => Modular.to.pushNamed(
+          CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            item.action,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+            textHeightBehavior: const TextHeightBehavior(
+              leadingDistribution: TextLeadingDistribution.even,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Empty / error states ───────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0ECFF),
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: const Icon(Icons.play_circle_outline, color: _purple, size: 52),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'No In-Progress Courses',
+              style: TextStyle(color: _ink, fontSize: 20, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Courses you start will appear here so you can pick up where you left off.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: _muted, fontSize: 14, height: 1.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.message, this.onRetry});
+  final String message;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: _muted, size: 48),
+            const SizedBox(height: 16),
+            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: _muted)),
+            if (onRetry != null) ...[
+              const SizedBox(height: 16),
+              RetryButton(onRetry: onRetry!),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

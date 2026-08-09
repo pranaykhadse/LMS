@@ -4,6 +4,7 @@ import 'package:lms/app/features/authentication/view/auth_gate.dart';
 import 'package:lms/app/features/dashboard/view/completed_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/development_plan_page.dart';
 import 'package:lms/app/features/dashboard/view/enrolled_courses_page.dart';
+import 'package:lms/app/features/dashboard/view/in_progress_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/badges_page.dart';
 import 'package:lms/app/features/dashboard/view/item_inventory_page.dart';
 import 'package:lms/app/features/dashboard/view/learning_paths_page.dart';
@@ -20,6 +21,7 @@ class CoursesModule extends Module {
   static const detail = "/detail";
   static const myCourses = "/my-courses";
   static const enrolledCourses = "/enrolled-courses";
+  static const inProgressCourses = "/in-progress-courses";
   static const completedCourses = "/completed-courses";
   static const developmentPlan = "/development-plan";
   static const requiredCourses = "/required-courses";
@@ -44,6 +46,7 @@ class CoursesModule extends Module {
     );
     r.child(myCourses, child: (context) => const AuthGate(child: MyCoursesPage()));
     r.child(enrolledCourses, child: (context) => const AuthGate(child: EnrolledCoursesPage()));
+    r.child(inProgressCourses, child: (context) => const AuthGate(child: InProgressCoursesPage()));
     r.child(completedCourses, child: (context) => const AuthGate(child: CompletedCoursesPage()));
     r.child(developmentPlan, child: (context) => const AuthGate(child: DevelopmentPlanPage()));
     r.child(requiredCourses, child: (context) => const AuthGate(child: RequiredCoursesPage()));
