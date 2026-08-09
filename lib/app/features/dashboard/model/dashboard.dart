@@ -48,6 +48,7 @@ class DashboardCourse {
     required this.ratingCount,
     this.isNonCourse = false,
     this.description,
+    this.category,
   });
 
   final int id;
@@ -60,6 +61,11 @@ class DashboardCourse {
   /// actually available - null everywhere else (fromJson below doesn't set
   /// it, since ongoing_courses never carried one).
   final String? description;
+
+  /// The class name (e.g. "Learning Arcade Game") shown as a small
+  /// category tag above the title - same "continue_learning"-only
+  /// availability as [description].
+  final String? category;
   final bool displayRating;
   final double averageRating;
   final int ratingCount;

@@ -279,6 +279,7 @@ List<DashboardCourse> _continueLearningCourses(LearningProgressData data) {
           averageRating: 0,
           ratingCount: 0,
           description: item.description.isNotEmpty ? item.description : null,
+          category: item.className.isNotEmpty ? item.className : null,
         ),
       )
       .toList();
@@ -575,8 +576,9 @@ class _CardHeader extends StatelessWidget {
               actionLabel!,
               style: GoogleFonts.inter(
                 color: _purple,
-                fontSize: 13.6,
-                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                height: 24 / 16,
               ),
             ),
           ),
@@ -760,15 +762,28 @@ class _ContinueLearningItem extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (course.category != null) ...[
+                Text(
+                  course.category!.toUpperCase(),
+                  style: GoogleFonts.inter(
+                    color: _purple,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    height: 19.5 / 13,
+                    letterSpacing: 0.32,
+                  ),
+                ),
+                const SizedBox(height: 2),
+              ],
               Text(
                 course.name,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: _ink,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  height: 22 / 16,
                 ),
               ),
               const SizedBox(height: 6),
