@@ -1557,25 +1557,31 @@ class _RequiredForYouCard extends StatelessWidget {
                     : null,
                 child: _RequiredRow(index: i + 1, item: shown[i]),
               ),
-            const SizedBox(height: 18),
-            Center(
-              child: HoverBuilder(
-                builder: (context, hovering) => ElevatedButton(
-                  onPressed: () => Modular.to.pushNamed(
-                    CoursesModule.construct(CoursesModule.requiredCourses),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        hovering ? FigmaTokens.purpleHover : _purple,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Center(
+                child: HoverBuilder(
+                  builder: (context, hovering) => ElevatedButton(
+                    onPressed: () => Modular.to.pushNamed(
+                      CoursesModule.construct(CoursesModule.requiredCourses),
                     ),
-                    textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14.4),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          hovering ? FigmaTokens.purpleHover : _purple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      textStyle: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        height: 24 / 16,
+                      ),
+                    ),
+                    child: const Text('View All Required Courses'),
                   ),
-                  child: const Text('View All Required Courses'),
                 ),
               ),
             ),
@@ -1617,9 +1623,10 @@ class _RequiredRow extends ConsumerWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              color: const Color(0xFF1E2939),
-              fontSize: 14.72,
-              fontWeight: FontWeight.w600,
+              color: const Color(0xFF364153),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              height: 24 / 16,
             ),
           ),
         ),
@@ -1637,8 +1644,15 @@ class _RequiredRow extends ConsumerWidget {
                 : () => Modular.to.pushNamed(
                       CoursesModule.construct('${CoursesModule.detail}/$courseId'),
                     );
-            const shape = StadiumBorder();
-            final textStyle = GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12);
+            final shape = RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            );
+            final textStyle = GoogleFonts.inter(
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              height: 19.5 / 13,
+            );
+            const buttonPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 4);
             return hovering && !viewDisabled
                 ? ElevatedButton(
                     onPressed: onPressed,
@@ -1646,7 +1660,7 @@ class _RequiredRow extends ConsumerWidget {
                       backgroundColor: _purple,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      padding: buttonPadding,
                       shape: shape,
                       textStyle: textStyle,
                     ),
@@ -1657,7 +1671,7 @@ class _RequiredRow extends ConsumerWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _purple,
                       side: const BorderSide(color: _purple),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      padding: buttonPadding,
                       shape: shape,
                       textStyle: textStyle,
                     ),
