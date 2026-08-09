@@ -1110,7 +1110,7 @@ class _CourseProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shown = courses.take(4).toList();
+    final shown = courses.take(2).toList();
     return _DashCard(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -1142,7 +1142,7 @@ class _CourseProgressCard extends StatelessWidget {
             )
           else
             for (var i = 0; i < shown.length; i++) ...[
-              if (i > 0) const SizedBox(height: 16),
+              if (i > 0) const Divider(height: 24, color: _border),
               _CourseProgressRow(course: shown[i]),
             ],
         ],
