@@ -1560,29 +1560,18 @@ class _RequiredForYouCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(top: 20),
               child: Center(
-                child: HoverBuilder(
-                  builder: (context, hovering) => ElevatedButton(
-                    onPressed: () => Modular.to.pushNamed(
-                      CoursesModule.construct(CoursesModule.requiredCourses),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          hovering ? FigmaTokens.purpleHover : _purple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      textStyle: GoogleFonts.inter(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        height: 24 / 16,
-                      ),
-                    ),
-                    child: const Text('View All Required Courses'),
+                child: _BrandButton(
+                  label: 'View All Required Courses',
+                  onPressed: () => Modular.to.pushNamed(
+                    CoursesModule.construct(CoursesModule.requiredCourses),
+                  ),
+                  borderRadius: 14,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  textStyle: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    height: 24 / 16,
                   ),
                 ),
               ),
@@ -1646,43 +1635,38 @@ class _RequiredRow extends ConsumerWidget {
                 : () => Modular.to.pushNamed(
                       CoursesModule.construct('${CoursesModule.detail}/$courseId'),
                     );
-            final shape = RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            );
-            final textStyle = GoogleFonts.inter(
-              fontWeight: FontWeight.w500,
-              fontSize: 13,
-              height: 19.5 / 13,
-            );
+            final filled = hovering && !viewDisabled;
+            final borderRadius = BorderRadius.circular(4);
             const buttonPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 4);
-            return hovering && !viewDisabled
-                ? ElevatedButton(
-                    onPressed: onPressed,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _purple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: buttonPadding,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: shape,
-                      textStyle: textStyle,
+            // ElevatedButton/OutlinedButton's default minimumSize and
+            // tap-target padding kept overriding this button's measured
+            // 12/4 padding even with minimumSize:Size.zero set, so this uses
+            // the same bare Material+InkWell approach as _BrandButton to
+            // hug the padding+text exactly.
+            return Material(
+              color: filled ? _purple : Colors.transparent,
+              borderRadius: borderRadius,
+              child: InkWell(
+                borderRadius: borderRadius,
+                onTap: onPressed,
+                child: Container(
+                  padding: buttonPadding,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: _purple),
+                    borderRadius: borderRadius,
+                  ),
+                  child: Text(
+                    'View',
+                    style: GoogleFonts.inter(
+                      color: filled ? Colors.white : _purple,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 13,
+                      height: 19.5 / 13,
                     ),
-                    child: const Text('View'),
-                  )
-                : OutlinedButton(
-                    onPressed: onPressed,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _purple,
-                      side: const BorderSide(color: _purple),
-                      padding: buttonPadding,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: shape,
-                      textStyle: textStyle,
-                    ),
-                    child: const Text('View'),
-                  );
+                  ),
+                ),
+              ),
+            );
           },
         ),
       ],
