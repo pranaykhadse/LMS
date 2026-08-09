@@ -859,7 +859,7 @@ class _ContinueLearningItem extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 textStyle: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   fontSize: 16,
                   height: 24 / 16,
                 ),
