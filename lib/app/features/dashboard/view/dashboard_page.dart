@@ -563,10 +563,11 @@ class _CardHeader extends StatelessWidget {
           child: Text(
             large ? title : title.toUpperCase(),
             style: GoogleFonts.inter(
-              color: large ? const Color(0xFF1E2939) : const Color(0xFF6A7282),
-              fontSize: large ? 16.8 : 12,
-              fontWeight: FontWeight.w700,
+              color: large ? const Color(0xFF364153) : const Color(0xFF6A7282),
+              fontSize: large ? 16 : 12,
+              fontWeight: large ? FontWeight.w600 : FontWeight.w700,
               letterSpacing: large ? 0 : .3,
+              height: large ? 24 / 16 : null,
             ),
           ),
         ),
@@ -642,22 +643,30 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
   @override
   Widget build(BuildContext context) {
     return _DashCard(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CardHeader(
-            title: 'Continue Learning',
-            actionLabel: widget.courses.isEmpty ? null : 'View All',
-            onAction: widget.courses.isEmpty
-                ? null
-                : () => Modular.to.pushNamed(
-                      CoursesModule.construct(CoursesModule.myCourses),
-                    ),
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+            ),
+            child: _CardHeader(
+              title: 'Continue Learning',
+              actionLabel: widget.courses.isEmpty ? null : 'View All',
+              onAction: widget.courses.isEmpty
+                  ? null
+                  : () => Modular.to.pushNamed(
+                        CoursesModule.construct(CoursesModule.myCourses),
+                      ),
+            ),
           ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: _border),
-          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
           if (widget.courses.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
@@ -709,6 +718,9 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
             ],
             const SizedBox(height: 10),
           ],
+              ],
+            ),
+          ),
         ],
       ),
     );
