@@ -1352,38 +1352,10 @@ class _DiscussionBoardRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        HoverBuilder(
-          builder: (context, hovering) {
-            final onPressed = () => Modular.to.pushNamed(
-                  CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
-                );
-            const shape = StadiumBorder();
-            final textStyle = GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12);
-            return hovering
-                ? ElevatedButton(
-                    onPressed: onPressed,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _purple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      shape: shape,
-                      textStyle: textStyle,
-                    ),
-                    child: const Text('View'),
-                  )
-                : OutlinedButton(
-                    onPressed: onPressed,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _purple,
-                      side: const BorderSide(color: _purple),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      shape: shape,
-                      textStyle: textStyle,
-                    ),
-                    child: const Text('View'),
-                  );
-          },
+        _ViewButton(
+          onPressed: () => Modular.to.pushNamed(
+            CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
+          ),
         ),
       ],
     );
@@ -1628,51 +1600,60 @@ class _RequiredRow extends ConsumerWidget {
           ),
           const SizedBox(width: 10),
         ],
-        HoverBuilder(
-          builder: (context, hovering) {
-            final onPressed = viewDisabled
-                ? null
-                : () => Modular.to.pushNamed(
-                      CoursesModule.construct('${CoursesModule.detail}/$courseId'),
-                    );
-            final filled = hovering && !viewDisabled;
-            final borderRadius = BorderRadius.circular(4);
-            const buttonPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 4);
-            // ElevatedButton/OutlinedButton's default minimumSize and
-            // tap-target padding kept overriding this button's measured
-            // 12/4 padding even with minimumSize:Size.zero set, so this uses
-            // the same bare Material+InkWell approach as _BrandButton to
-            // hug the padding+text exactly.
-            return Material(
-              color: filled ? _purple : Colors.transparent,
-              borderRadius: borderRadius,
-              child: InkWell(
-                borderRadius: borderRadius,
-                onTap: onPressed,
-                child: Container(
-                  padding: buttonPadding,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: _purple),
-                    borderRadius: borderRadius,
+        _ViewButton(
+          onPressed: viewDisabled
+              ? null
+              : () => Modular.to.pushNamed(
+                    CoursesModule.construct('${CoursesModule.detail}/$courseId'),
                   ),
-                  child: Text(
-                    'View',
-                    style: GoogleFonts.inter(
-                      color: filled ? Colors.white : _purple,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 13,
-                      height: 19.5 / 13,
-                    ),
-                    textHeightBehavior: const TextHeightBehavior(
-                      leadingDistribution: TextLeadingDistribution.even,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
         ),
       ],
+    );
+  }
+}
+
+// Shared by Required For You and Discussion Boards - a bare Material+InkWell
+// button (same pattern as _BrandButton) since ElevatedButton/OutlinedButton's
+// default minimumSize/tap-target padding kept overriding the measured 12/4
+// padding even with minimumSize:Size.zero set.
+class _ViewButton extends StatelessWidget {
+  const _ViewButton({required this.onPressed});
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return HoverBuilder(
+      builder: (context, hovering) {
+        final filled = hovering && onPressed != null;
+        final borderRadius = BorderRadius.circular(4);
+        return Material(
+          color: filled ? _purple : Colors.transparent,
+          borderRadius: borderRadius,
+          child: InkWell(
+            borderRadius: borderRadius,
+            onTap: onPressed,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: _purple),
+                borderRadius: borderRadius,
+              ),
+              child: Text(
+                'View',
+                style: GoogleFonts.inter(
+                  color: filled ? Colors.white : _purple,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                  height: 19.5 / 13,
+                ),
+                textHeightBehavior: const TextHeightBehavior(
+                  leadingDistribution: TextLeadingDistribution.even,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
