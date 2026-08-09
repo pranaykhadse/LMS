@@ -325,11 +325,13 @@ class _BannerSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      // Figma: Width Fill(1440), Height Hug(300) - the background photo's
-      // 276px height plus this 16/8 top/bottom padding hugs to exactly
-      // 300 on its own; forced here as a floor so it still matches at
-      // shorter text content.
-      constraints: const BoxConstraints(minHeight: 300),
+      // Figma: Width Fill(1440), Height Hug(300). A fixed (not just
+      // minimum) height, since Stack's fit: StackFit.expand below needs a
+      // genuinely bounded constraint to expand into - it's inside a
+      // ListView, so a minHeight-only constraint leaves maxHeight
+      // unbounded and crashes the render ("RenderBox was given unbounded
+      // height").
+      height: 300,
       margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
