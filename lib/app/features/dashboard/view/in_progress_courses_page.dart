@@ -214,7 +214,7 @@ class _CourseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: showDivider
           ? const BoxDecoration(
               border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
@@ -229,7 +229,8 @@ class _CourseRow extends StatelessWidget {
               style: GoogleFonts.inter(
                 color: const Color(0xFF99A1AF),
                 fontSize: 14,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w500,
+                height: 20 / 14,
               ),
             ),
           ),
@@ -242,26 +243,40 @@ class _CourseRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: _ink,
+                    color: const Color(0xFF1E2939),
                     fontSize: 14,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
+                    height: 19.25 / 14,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     if (item.className.isNotEmpty) ...[
                       Text(
                         item.className,
-                        style: GoogleFonts.inter(color: _muted, fontSize: 12),
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF99A1AF),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          height: 16 / 12,
+                        ),
                       ),
-                      const Text(' • ', style: TextStyle(color: _muted, fontSize: 12)),
+                      Text(
+                        ' • ',
+                        style: GoogleFonts.inter(color: const Color(0xFF99A1AF), fontSize: 12),
+                      ),
                     ],
-                    const Icon(Icons.calendar_today_rounded, size: 11, color: _muted),
+                    const Icon(Icons.calendar_today_rounded, size: 10, color: _purple),
                     const SizedBox(width: 4),
                     Text(
                       item.date,
-                      style: GoogleFonts.inter(color: _muted, fontSize: 12),
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF6A7282),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        height: 16 / 12,
+                      ),
                     ),
                   ],
                 ),
@@ -291,7 +306,7 @@ class _StatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: FigmaTokens.badgeBackground,
         borderRadius: BorderRadius.circular(20),
@@ -300,8 +315,9 @@ class _StatusPill extends StatelessWidget {
         status,
         style: GoogleFonts.inter(
           color: _purple,
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: FontWeight.w600,
+          height: 12.5 / 10,
         ),
       ),
     );
@@ -323,13 +339,15 @@ class _ResumeButton extends ConsumerWidget {
           CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           child: Text(
             item.action,
+            textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               color: Colors.white,
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              height: 16.5 / 11,
             ),
             textHeightBehavior: const TextHeightBehavior(
               leadingDistribution: TextLeadingDistribution.even,
