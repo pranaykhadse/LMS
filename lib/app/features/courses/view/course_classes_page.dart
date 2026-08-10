@@ -10,6 +10,7 @@ import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
+import 'package:lms/app/core/views/elements/inline_back_header.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
@@ -134,6 +135,11 @@ class _DetailBody extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        InlineBackHeader(
+                          title: detail.title,
+                          onBack: () => _goBackToCatalog(context, ref),
+                        ),
+                        const SizedBox(height: 16),
                         _CourseHero(detail: detail),
                         Transform.translate(
                           offset: const Offset(0, -18),

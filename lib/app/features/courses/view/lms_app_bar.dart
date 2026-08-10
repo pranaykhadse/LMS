@@ -135,9 +135,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   // slot don't share a visual baseline.
   Widget _buildDesktop(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
-    final canPop = Navigator.canPop(context);
-    final showBack =
-        !hideBack && (onBack != null || (canPop && onBack == null));
     final isOffline = ref.watch(OfflineModeNotifier.provider);
     final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
 
@@ -229,15 +226,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (showBack) ...[
-                LmsAppBarButton(
-                  icon: Icons.arrow_back_ios_new_rounded,
-                  onTap: onBack ?? () => safePop(context),
-                  iconSize: 16,
-                  boxSize: 28,
-                ),
-                const SizedBox(width: 8),
-              ],
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
