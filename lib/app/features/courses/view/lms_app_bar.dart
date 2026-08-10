@@ -292,13 +292,13 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   // ── Phone ────────────────────────────────────────────────────────────────
   Widget _buildMobile(BuildContext context, WidgetRef ref) {
-    final canPop = Navigator.canPop(context);
-    final showBack = !hideBack && (onBack != null || (canPop && onBack == null));
+    // Back navigation is always handled inline in the page body header
+    // (← Back | Page Title) — the AppBar always shows "Menu" + hamburger.
 
     // Figma mobile app bar spec:
     // Container: horizontal, space-between, padding top 8 / right 16 / bottom 8 / left 16
     // "Menu" label: Inter SemiBold 600, 14px, line-height 20px, color #364153
-    // Hamburger icon: 20×20px, color #6A7282 (#SA7282 in Figma)
+    // Hamburger icon: 20×20px, color #6A7282
     // Background: white
     return AppBar(
       automaticallyImplyLeading: false,
@@ -315,65 +315,35 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Left side: back button (if applicable) + "Menu" label
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (showBack) ...[
-                  GestureDetector(
-                    onTap: onBack ?? () => safePop(context),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      size: 18,
-                      color: FigmaTokens.modalLabels,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                if (!showBack)
-                  const Text(
-                    'Menu',
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 20 / 14,
-                      letterSpacing: 0,
-                      color: FigmaTokens.modalLabels,
-                    ),
-                  ),
-                if (showBack && title != null)
-                  Text(
-                    title!,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 20 / 14,
-                      color: FigmaTokens.modalLabels,
-                    ),
-                  ),
-              ],
+            // Left: always "Menu" label
+            const Text(
+              'Menu',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                height: 20 / 14,
+                letterSpacing: 0,
+                color: FigmaTokens.modalLabels,
+              ),
             ),
-            // Right side: hamburger toggle (or nothing when back button shown)
-            if (!showBack)
-              Builder(
-                builder: (ctx) => GestureDetector(
-                  onTap: () => Scaffold.of(ctx).openDrawer(),
-                  child: SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: Center(
-                      child: Icon(
-                        Icons.menu_rounded,
-                        size: 20,
-                        color: FigmaTokens.noteBodyText,
-                      ),
+            // Right: always hamburger icon
+            Builder(
+              builder: (ctx) => GestureDetector(
+                onTap: () => Scaffold.of(ctx).openDrawer(),
+                child: SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Center(
+                    child: Icon(
+                      Icons.menu_rounded,
+                      size: 20,
+                      color: FigmaTokens.noteBodyText,
                     ),
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),
