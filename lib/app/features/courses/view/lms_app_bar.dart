@@ -21,7 +21,7 @@ import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
 import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 
 const _appPurple = FigmaTokens.primaryPurple;
 const _appMuted = FigmaTokens.noteBodyText;
@@ -605,12 +605,12 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               _NavSubItem(
                 label: 'Contact a Development Pro',
                 disabled: !isOnline,
-                onTap: () => launchContactCoachUrl(ref),
+                onTap: () => launchContactCoachUrl(ref, context),
               ),
               _NavSubItem(
                 label: 'Virtual Development Pro',
                 disabled: !isOnline,
-                onTap: launchVirtualDevUrl,
+                onTap: () => launchVirtualDevUrl(context),
               ),
             ],
           ),
@@ -1124,8 +1124,8 @@ class _NotificationsDialog extends ConsumerWidget {
                           }
                           final uri = Uri.tryParse(url);
                           if (uri != null) {
-                            launchUrl(uri,
-                                mode: LaunchMode.externalApplication);
+                            InAppWebViewPage.show(context,
+                                url: url, title: 'Notification');
                           }
                         }
                       },

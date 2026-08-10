@@ -248,7 +248,7 @@ class AppDrawer extends ConsumerWidget {
                           disabled: !isOnline,
                           onTap: () {
                             _closeIfNeeded(context);
-                            launchContactCoachUrl(ref);
+                            launchContactCoachUrl(ref, context);
                           },
                         ),
                         _SubItem(
@@ -257,7 +257,7 @@ class AppDrawer extends ConsumerWidget {
                           disabled: !isOnline,
                           onTap: () {
                             _closeIfNeeded(context);
-                            launchVirtualDevUrl();
+                            launchVirtualDevUrl(context);
                           },
                         ),
                       ],

@@ -248,7 +248,7 @@ class TabletNavBar extends ConsumerWidget {
             disabled: !isOnline,
             onTap: () {
               Navigator.pop(ctx);
-              launchContactCoachUrl(ref);
+              launchContactCoachUrl(ref, context);
             },
           ),
           _SheetItem(
@@ -257,7 +257,7 @@ class TabletNavBar extends ConsumerWidget {
             disabled: !isOnline,
             onTap: () {
               Navigator.pop(ctx);
-              launchVirtualDevUrl();
+              launchVirtualDevUrl(context);
             },
           ),
         ],

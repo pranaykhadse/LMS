@@ -5,7 +5,7 @@ import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 
 const _nPurple = FigmaTokens.primaryPurple;
 const _nPurple2 = FigmaTokens.gradientEnd;
@@ -285,7 +285,7 @@ class _NotifCard extends StatelessWidget {
             }
             final uri = Uri.tryParse(url);
             if (uri != null) {
-              launchUrl(uri, mode: LaunchMode.externalApplication);
+              InAppWebViewPage.show(context, url: url, title: 'Notification');
             }
           }
         },

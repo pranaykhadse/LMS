@@ -2,13 +2,12 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatf
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
-import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class LinkButton extends ConsumerWidget {
   const LinkButton({
@@ -80,14 +79,8 @@ class LinkButton extends ConsumerWidget {
             .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
             .markAsRead(courseClass!);
       }
-      final uri = Uri.tryParse(url!);
-      if (uri != null && await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          Toast.error(context, 'Could not open link.');
-        }
-      }
+      if (!context.mounted) return;
+      await InAppWebViewPage.show(context, url: url!, title: label);
     };
 
     if (isMacOS) {

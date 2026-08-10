@@ -28,7 +28,7 @@ import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 
 bool _watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -996,7 +996,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   icon: Icons.play_circle_outline_rounded,
                   label: 'Watch Recording',
                   onPressed: () {
-                    _openUrl(recordingUrl);
+                    _openUrl(context, recordingUrl, title: 'Recording');
                     _markRecordingWatched();
                   },
                 ),
@@ -1029,7 +1029,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 _OnlineActionButton(
                   icon: Icons.play_circle_outline_rounded,
                   label: 'Watch Video',
-                  onPressed: () => _openUrl(item.contentUrl!),
+                  onPressed: () => _openUrl(context, item.contentUrl!),
                 ),
             ] else ...[
               if (item.showDetails && item.showAction) const SizedBox(height: 15),
@@ -1440,7 +1440,7 @@ void _handleClassAction(BuildContext context, CourseStructureItem item) {
       );
       break;
     default:
-      if (url != null) _openUrl(url);
+      if (url != null) _openUrl(context, url);
   }
 }
 
@@ -1454,13 +1454,8 @@ String _downloadLabel(String typeCode) {
   }
 }
 
-Future<void> _openUrl(String url) async {
-  final uri = Uri.tryParse(url);
-  if (uri == null) return;
-  // Video/recordings need the system browser for HLS/VP9 codec support on
-  // iOS - Attend Class uses InAppWebViewPage instead, so it stays inside
-  // the app rather than switching to Chrome/Safari.
-  await launchUrl(uri, mode: LaunchMode.externalApplication);
+Future<void> _openUrl(BuildContext context, String url, {String? title}) async {
+  await InAppWebViewPage.show(context, url: url, title: title);
 }
 
 // ─── Virtual Class session lookup ──────────────────────────────────────────

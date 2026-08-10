@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -29,9 +30,10 @@ class AppFooter extends StatelessWidget {
                 children: [
                   _FooterLink(
                     label: 'Terms of Use',
-                    onTap: () => launchUrl(
-                      Uri.parse('https://www.iubenda.com/terms-and-conditions/26898975'),
-                      mode: LaunchMode.externalApplication,
+                    onTap: () => InAppWebViewPage.show(
+                      context,
+                      url: 'https://www.iubenda.com/terms-and-conditions/26898975',
+                      title: 'Terms of Use',
                     ),
                   ),
                   _FooterLink(
