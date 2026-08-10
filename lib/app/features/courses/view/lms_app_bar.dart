@@ -293,8 +293,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   // ── Phone ────────────────────────────────────────────────────────────────
   Widget _buildMobile(BuildContext context, WidgetRef ref) {
     final canPop = Navigator.canPop(context);
-    final showBack =
-        !hideBack && (onBack != null || (canPop && onBack == null));
+    final showBack = !hideBack && (onBack != null || (canPop && onBack == null));
 
     // Figma mobile app bar spec:
     // Container: horizontal, space-between, padding top 8 / right 16 / bottom 8 / left 16

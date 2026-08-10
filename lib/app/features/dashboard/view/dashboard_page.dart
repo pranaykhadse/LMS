@@ -452,12 +452,13 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Design ref: bg-white rounded-lg border border-gray-200 px-5 py-4
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: FigmaTokens.cardBackground,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _border),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,7 +472,7 @@ class _StatCard extends StatelessWidget {
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF99A1AF),
+                    color: const Color(0xFF9CA3AF), // gray-400
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.6,
@@ -481,14 +482,14 @@ class _StatCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             '$value',
             style: GoogleFonts.inter(
-              color: _ink,
+              color: const Color(0xFF1F2937), // gray-800
               fontSize: 36,
               fontWeight: FontWeight.w700,
-              height: 40 / 36,
+              height: 1.1,
             ),
           ),
         ],
@@ -636,59 +637,133 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
     super.dispose();
   }
 
+  bool _isOverdue(DashboardCourse course) {
+    if (course.dueDate == null) return false;
+    final parsed = DateTime.tryParse(course.dueDate!);
+    if (parsed == null) return false;
+    return parsed.isBefore(DateTime.now());
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _DashCard(
-      padding: EdgeInsets.zero,
+    final current = widget.courses.isEmpty ? null : widget.courses[_index];
+    final overdue = current != null && _isOverdue(current);
+    final accentColor = overdue ? const Color(0xFFDC2626) : _purple;
+    final borderColor = overdue ? const Color(0xFFFECACA) : const Color(0xFFE5E7EB);
+    final headerBg = overdue ? const Color(0xFFFEF2F2) : Colors.white;
+    final headerBorder = overdue ? const Color(0xFFFEE2E2) : const Color(0xFFF3F4F6);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Header ──────────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+            decoration: BoxDecoration(
+              color: headerBg,
+              border: Border(bottom: BorderSide(color: headerBorder)),
             ),
-            child: _CardHeader(
-              title: 'Continue Learning',
-              actionLabel: widget.courses.isEmpty ? null : 'View All',
-              onAction: widget.courses.isEmpty
-                  ? null
-                  : () => Modular.to.pushNamed(
-                        CoursesModule.construct(CoursesModule.inProgressCourses),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        'CONTINUE LEARNING',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF6B7280),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
                       ),
+                      if (overdue) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEF4444),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'OVERDUE',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                if (widget.courses.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => Modular.to.pushNamed(
+                      CoursesModule.construct(CoursesModule.inProgressCourses),
+                    ),
+                    child: Text(
+                      'View All',
+                      style: GoogleFonts.inter(
+                        color: _purple,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+
+          // ── Course card (PageView) ───────────────────────────────────
           if (widget.courses.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('No courses in progress.', style: TextStyle(color: _muted)),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'No courses in progress.',
+                style: GoogleFonts.inter(color: const Color(0xFF6B7280), fontSize: 14),
+              ),
             )
-          else ...[
+          else
             SizedBox(
+              // Thumbnail 144px wide, content needs ~190px height
               height: 190,
               child: PageView.builder(
                 controller: _controller,
                 onPageChanged: (i) => setState(() => _index = i),
                 itemCount: widget.courses.length,
-                itemBuilder: (context, i) =>
-                    _ContinueLearningItem(course: widget.courses[i]),
+                itemBuilder: (context, i) => _ContinueLearningItem(
+                  course: widget.courses[i],
+                  accentColor: accentColor,
+                ),
               ),
             ),
-            if (widget.courses.length > 1) ...[
-              const SizedBox(height: 8),
-              Row(
+
+          // ── Dot indicators ───────────────────────────────────────────
+          if (widget.courses.length > 1)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Color(0xFFF3F4F6))),
+              ),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(widget.courses.length, (i) {
+                  final dotOverdue = _isOverdue(widget.courses[i]);
+                  final dotColor = dotOverdue
+                      ? const Color(0xFFEF4444)
+                      : _purple;
                   return GestureDetector(
                     onTap: () {
-                      // A manual jump counts as user intent - restart the
-                      // auto-advance clock from here instead of firing
-                      // mid-interaction.
                       _startAutoAdvance();
                       _controller.animateToPage(
                         i,
@@ -696,27 +771,20 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                         curve: Curves.easeInOut,
                       );
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: i == _index ? 16 : 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: i == _index ? _purple : const Color(0xFFD1D5DC),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: i == _index ? 16 : 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: i == _index ? dotColor : const Color(0xFFD1D5DB),
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                   );
                 }),
               ),
-            ],
-            const SizedBox(height: 10),
-          ],
-              ],
             ),
-          ),
         ],
       ),
     );
@@ -724,135 +792,147 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
 }
 
 class _ContinueLearningItem extends ConsumerWidget {
-  const _ContinueLearningItem({required this.course});
+  const _ContinueLearningItem({
+    required this.course,
+    required this.accentColor,
+  });
   final DashboardCourse course;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
+
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: SizedBox(
-            width: 144,
-            height: 200,
-            child: Stack(
-              fit: StackFit.expand,
+        // ── Thumbnail (left) ───────────────────────────────────────────
+        SizedBox(
+          width: 144,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              course.logo != null
+                  ? Image.network(
+                      course.logo!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const _ImgFallback(),
+                    )
+                  : const _ImgFallback(),
+              Positioned(
+                top: 4,
+                left: 4,
+                child: OfflineCourseButton(
+                  course: Course(
+                    id: course.id,
+                    name: course.name,
+                    logoLink: course.logo,
+                    averageRating: course.averageRating,
+                    ratingCount: course.ratingCount,
+                    displayRating: course.displayRating ? 1 : 0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Text content (right) ──────────────────────────────────────
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                course.logo != null
-                    ? Image.network(
-                        course.logo!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImgFallback(),
-                      )
-                    : const _ImgFallback(),
-                Positioned(
-                  top: 4,
-                  left: 4,
-                  child: OfflineCourseButton(
-                    course: Course(
-                      id: course.id,
-                      name: course.name,
-                      logoLink: course.logo,
-                      averageRating: course.averageRating,
-                      ratingCount: course.ratingCount,
-                      displayRating: course.displayRating ? 1 : 0,
+                // Category label
+                if (course.category != null)
+                  Text(
+                    course.category!.toUpperCase(),
+                    style: GoogleFonts.inter(
+                      color: accentColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                      height: 1.4,
                     ),
+                  ),
+                const SizedBox(height: 2),
+
+                // Course title
+                Text(
+                  course.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF1F2937),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    height: 1.4,
+                  ),
+                ),
+
+                // Description
+                if (course.description != null) ...[
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: Text(
+                      course.description!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF9CA3AF),
+                        fontSize: 13,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ] else
+                  const Spacer(),
+
+                // Due date
+                if (course.dueDate != null) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_rounded,
+                          size: 12, color: accentColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${accentColor == const Color(0xFFDC2626) ? "Overdue: " : "Due: "}${course.dueDate}',
+                        style: GoogleFonts.inter(
+                          color: accentColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 10),
+
+                // Resume button
+                _BrandButton(
+                  label: 'Resume Lesson →',
+                  onPressed: viewDisabled
+                      ? null
+                      : () => Modular.to.pushNamed(
+                            CoursesModule.construct(
+                              '${CoursesModule.detail}/${course.id}',
+                            ),
+                          ),
+                  borderRadius: 6,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  textStyle: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
                   ),
                 ),
               ],
             ),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (course.category != null) ...[
-                Text(
-                  course.category!.toUpperCase(),
-                  style: GoogleFonts.inter(
-                    color: _purple,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    height: 19.5 / 13,
-                    letterSpacing: 0.32,
-                  ),
-                ),
-                const SizedBox(height: 2),
-              ],
-              Text(
-                course.name,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: _ink,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  height: 22 / 16,
-                ),
-              ),
-              const SizedBox(height: 6),
-              if (course.progress > 0)
-                Text(
-                  '${course.progress}% complete',
-                  style: const TextStyle(color: _muted, fontSize: 12),
-                ),
-              if (course.description != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  course.description!,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF99A1AF),
-                    fontSize: 16,
-                    height: 26 / 16,
-                  ),
-                ),
-              ],
-              if (course.dueDate != null) ...[
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.calendar_today_rounded, size: 14, color: _purple),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Due: ${course.dueDate}',
-                      style: GoogleFonts.inter(
-                        color: _purple,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                        height: 24 / 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 12),
-              _BrandButton(
-                label: 'Resume',
-                onPressed: viewDisabled
-                    ? null
-                    : () => Modular.to.pushNamed(
-                          CoursesModule.construct(
-                            '${CoursesModule.detail}/${course.id}',
-                          ),
-                        ),
-                borderRadius: 14,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                textStyle: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                  height: 24 / 16,
-                ),
-              ),
-            ],
           ),
         ),
       ],
@@ -862,17 +942,11 @@ class _ContinueLearningItem extends ConsumerWidget {
 
 // ─── Upcoming Sessions ────────────────────────────────────────────────────────
 
-/// Adapts an UpcomingSession into a CalendarEvent so _SessionRow (shared
-/// with the Calendar screen's own styling) can render it unchanged.
 CalendarEvent? _toCalendarEvent(UpcomingSession session) {
   final rawDate = session.startDate;
   if (rawDate == null) return null;
   final startDate = DateTime.tryParse(rawDate);
   if (startDate == null) return null;
-  // Matches CalendarEvent.fromJson's own parsing exactly (raw date parse,
-  // no .toLocal() here) - CalendarEvent.startDateTime's _combine getter is
-  // what applies the UTC->local conversion, using this startDate + startTime
-  // together. Converting here too would double-apply the offset.
   return CalendarEvent(
     courseId: int.tryParse(session.courseId) ?? 0,
     courseName: session.courseName,
@@ -914,22 +988,37 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
     final visible = _expanded ? shown : shown.take(collapsedCount).toList();
     final hasMore = shown.length > collapsedCount;
 
-    return _DashCard(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardHeader(title: 'Upcoming Sessions', large: true),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: _border),
-          const SizedBox(height: 14),
+          // Header — "Upcoming Sessions" plain title, no action
+          Text(
+            'Upcoming Sessions',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF374151), // gray-700
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
           if (shown.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('No upcoming sessions.', style: TextStyle(color: _muted)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'No upcoming sessions.',
+                style: GoogleFonts.inter(color: const Color(0xFF6B7280), fontSize: 14),
+              ),
             )
           else ...[
             for (var i = 0; i < visible.length; i++) ...[
-              if (i > 0) const SizedBox(height: 10),
+              if (i > 0) const SizedBox(height: 12),
               _SessionRow(event: visible[i]),
             ],
             if (hasMore)
@@ -943,7 +1032,7 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
                       duration: const Duration(milliseconds: 200),
                       child: const Icon(
                         Icons.keyboard_arrow_down_rounded,
-                        color: Color(0xFF6A7282),
+                        color: Color(0xFF6B7280),
                         size: 22,
                       ),
                     ),
@@ -964,127 +1053,144 @@ class _SessionRow extends StatelessWidget {
   String _formatDate(DateTime dt) {
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan','Feb','Mar','Apr','May','Jun',
+      'Jul','Aug','Sep','Oct','Nov','Dec',
     ];
     final weekday = weekdays[dt.weekday - 1];
     final month = months[dt.month - 1];
+    return '$weekday, $month ${dt.day}, ${dt.year}';
+  }
+
+  String _formatTime(DateTime dt) {
     final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
     final minute = dt.minute.toString().padLeft(2, '0');
     final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-    return '$weekday, $month ${dt.day}, ${dt.year} • $hour:$minute $ampm';
+    return '$hour:$minute $ampm';
   }
 
   @override
   Widget build(BuildContext context) {
+    // Design ref: rounded-lg border border-gray-100 bg-gray-50 p-3
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F7FC),
-        borderRadius: BorderRadius.circular(10),
+        color: const Color(0xFFF9FAFB), // gray-50
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFF3F4F6)), // gray-100
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    Text(
-                      event.courseName.isNotEmpty ? event.courseName : event.title,
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF1E2939),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        height: 22 / 16,
-                      ),
-                    ),
-                    if (event.className.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: FigmaTokens.badgeBackground,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          event.className,
-                          style: GoogleFonts.inter(
-                            color: _purple,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            height: 15.13 / 11,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.calendar_today_rounded, size: 10, color: Color(0xFF99A1AF)),
-                    const SizedBox(width: 6),
-                    Text(
-                      _formatDate(event.startDateTime),
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF99A1AF),
-                        fontWeight: FontWeight.w400,
-                        fontSize: 12,
-                        height: 18 / 12,
-                      ),
-                    ),
-                  ],
-                ),
-                if (event.instructor != null && event.instructor!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Hosted by ',
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF99A1AF),
-                            fontWeight: FontWeight.w400,
-                            fontSize: 12,
-                            height: 18 / 12,
-                          ),
-                        ),
-                        TextSpan(
-                          text: event.instructor,
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF4A5565),
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
-                            height: 18 / 12,
-                          ),
-                        ),
-                      ],
-                    ),
+          // Title + Join button row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  event.courseName.isNotEmpty ? event.courseName : event.title,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF1F2937),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
                   ),
-                ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Join button with live pulse dot
+              GestureDetector(
+                onTap: () => Modular.to.pushNamed(
+                  CoursesModule.construct(
+                      '${CoursesModule.detail}/${event.courseId}'),
+                ),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _purple,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Pulse dot (static red dot — Flutter has no CSS
+                      // animate-pulse; a simple dot conveys the same intent)
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF87171), // red-400
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Join',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Date • time
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_rounded,
+                  size: 10, color: _purple),
+              const SizedBox(width: 4),
+              Text(
+                _formatDate(event.startDateTime),
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF),
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+              if (event.startTime != null && event.startTime!.isNotEmpty) ...[
+                Text(
+                  ' • ',
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFFD1D5DB), fontSize: 12),
+                ),
+                Text(
+                  _formatTime(event.startDateTime),
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF9CA3AF),
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
-          const SizedBox(width: 12),
-          _BrandButton(
-            label: 'Join',
-            onPressed: () => Modular.to.pushNamed(
-              CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
+          // Hosted by
+          if (event.instructor != null && event.instructor!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text.rich(
+              TextSpan(children: [
+                TextSpan(
+                  text: 'Hosted by ',
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFF9CA3AF), fontSize: 12),
+                ),
+                TextSpan(
+                  text: event.instructor,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF4B5563),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ]),
             ),
-            borderRadius: 14,
-            padding: const EdgeInsets.fromLTRB(10, 4, 10, 4),
-            textStyle: GoogleFonts.inter(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              height: 18 / 12,
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -1100,38 +1206,57 @@ class _CourseProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shown = courses.take(2).toList();
-    return _DashCard(
+    return Container(
       padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CardHeader(
-            title: 'Course Progress',
-            large: true,
-            actionLabel: shown.isEmpty ? null : 'View All',
-            actionLabelStyle: GoogleFonts.inter(
-              color: _purple,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              height: 16 / 12,
-            ),
-            onAction: shown.isEmpty
-                ? null
-                : () => Modular.to.pushNamed(
-                      CoursesModule.construct(CoursesModule.allCourseProgress),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Course Progress',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF374151), // gray-700
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (shown.isNotEmpty)
+                GestureDetector(
+                  onTap: () => Modular.to.pushNamed(
+                    CoursesModule.construct(CoursesModule.allCourseProgress),
+                  ),
+                  child: Text(
+                    'View All',
+                    style: GoogleFonts.inter(
+                      color: _purple,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: _border),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           if (shown.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('No enrolled courses yet.', style: TextStyle(color: _muted)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'No enrolled courses yet.',
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280), fontSize: 14),
+              ),
             )
           else
             for (var i = 0; i < shown.length; i++) ...[
-              if (i > 0) const Divider(height: 24, color: _border),
+              if (i > 0) const SizedBox(height: 16),
               _CourseProgressRow(course: shown[i]),
             ],
         ],
@@ -1152,6 +1277,7 @@ class _CourseProgressRow extends StatelessWidget {
       children: [
         Row(
           children: [
+            // BookOpen icon matching design ref
             const Icon(Icons.menu_book_rounded, size: 13, color: _purple),
             const SizedBox(width: 8),
             Expanded(
@@ -1160,25 +1286,26 @@ class _CourseProgressRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF4A5565),
-                  fontSize: 16,
+                  color: const Color(0xFF4B5563), // gray-600
+                  fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  height: 24 / 16,
+                  height: 1.4,
                 ),
               ),
             ),
+            const SizedBox(width: 8),
             Text(
               '${course.progress}%',
               style: GoogleFonts.inter(
-                color: const Color(0xFF99A1AF),
-                fontSize: 16,
+                color: const Color(0xFF9CA3AF), // gray-400
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
-                height: 24 / 16,
               ),
             ),
           ],
         ),
         const SizedBox(height: 6),
+        // Design ref: h-1.5 rounded-full bg-gray-100 → fill bg-[#5b5bd6]
         ClipRRect(
           borderRadius: BorderRadius.circular(3),
           child: LinearProgressIndicator(
@@ -1197,66 +1324,63 @@ class _CourseProgressRow extends StatelessWidget {
 
 class _OverallProgressCard extends StatelessWidget {
   const _OverallProgressCard({required this.overallProgress});
-
-  /// Straight from the API's summary.overall_progress now, rather than
-  /// averaged client-side from whatever courses happened to be loaded on
-  /// this screen - more accurate, and matches what the server considers
-  /// authoritative.
   final int overallProgress;
 
   @override
   Widget build(BuildContext context) {
-    final overall = overallProgress;
+    // Design ref: gradient from #5865f2 → #7c3aed, rounded-xl p-5
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: FigmaTokens.heroGradient,
-        borderRadius: BorderRadius.circular(14),
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFF5865F2), Color(0xFF7C3AED)],
+        ),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Label row: star icon + "OVERALL LEARNING PROGRESS"
           Row(
             children: [
-              const Icon(Icons.star_border_rounded, color: Color(0xE6FFFFFF), size: 14),
+              const Icon(Icons.star_border_rounded,
+                  color: Colors.white, size: 14),
               const SizedBox(width: 8),
               Text(
                 'OVERALL LEARNING PROGRESS',
                 style: GoogleFonts.inter(
-                  color: const Color(0xE6FFFFFF),
-                  fontSize: 16,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: .4,
-                  height: 24 / 16,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Text(
-              '$overall%',
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 48,
-                fontWeight: FontWeight.w700,
-                height: 1,
-              ),
+          const SizedBox(height: 12),
+          // Big percentage number
+          Text(
+            '$overallProgress%',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 48,
+              fontWeight: FontWeight.w700,
+              height: 1,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(3),
-              child: LinearProgressIndicator(
-                value: overall / 100,
-                minHeight: 6,
-                backgroundColor: Colors.white.withValues(alpha: 0.15),
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Colors.white.withValues(alpha: 0.5),
-                ),
-              ),
+          const SizedBox(height: 16),
+          // Progress bar: white semi-transparent track + fill
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: overallProgress / 100,
+              minHeight: 6,
+              backgroundColor: Colors.white.withValues(alpha: 0.15),
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(Colors.white.withValues(alpha: 0.5)),
             ),
           ),
         ],
@@ -1493,47 +1617,59 @@ class _RequiredForYouCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shown = required.take(5).toList();
-    return _DashCard(
+    return Container(
       padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardHeader(title: 'Required For You', large: true),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: _border),
-          const SizedBox(height: 14),
+          Text(
+            'Required For You',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF374151),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
           if (shown.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('No required courses.', style: TextStyle(color: _muted)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'No required courses.',
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280), fontSize: 14),
+              ),
             )
           else ...[
-            for (var i = 0; i < shown.length; i++)
-              Container(
+            // Numbered list with dividers
+            for (var i = 0; i < shown.length; i++) ...[
+              if (i > 0)
+                const Divider(height: 1, color: Color(0xFFF3F4F6)),
+              Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: i < shown.length - 1
-                    ? const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
-                      )
-                    : null,
                 child: _RequiredRow(index: i + 1, item: shown[i]),
               ),
-            Padding(
-              padding: const EdgeInsets.only(top: 20),
-              child: Center(
-                child: _BrandButton(
-                  label: 'View All Required Courses',
-                  onPressed: () => Modular.to.pushNamed(
-                    CoursesModule.construct(CoursesModule.requiredCourses),
-                  ),
-                  borderRadius: 14,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                  textStyle: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    height: 24 / 16,
-                  ),
+            ],
+            const SizedBox(height: 20),
+            // "View All Required Courses" centered purple button
+            Center(
+              child: _BrandButton(
+                label: 'View All Required Courses',
+                onPressed: () => Modular.to.pushNamed(
+                  CoursesModule.construct(CoursesModule.requiredCourses),
+                ),
+                borderRadius: 6,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 10),
+                textStyle: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -1555,45 +1691,41 @@ class _RequiredRow extends ConsumerWidget {
     final viewDisabled = isViewCourseDisabled(ref, courseId);
     return Row(
       children: [
+        // Number
         SizedBox(
-          width: 16,
+          width: 20,
           child: Text(
             '$index',
             textAlign: TextAlign.right,
             style: GoogleFonts.inter(
-              color: const Color(0xFF99A1AF),
-              fontSize: 16,
+              color: const Color(0xFF9CA3AF),
+              fontSize: 14,
               fontWeight: FontWeight.w400,
-              height: 24 / 16,
             ),
           ),
         ),
         const SizedBox(width: 12),
+        // Course name
         Expanded(
           child: Text(
             item.courseName,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              color: const Color(0xFF364153),
-              fontSize: 16,
+              color: const Color(0xFF374151),
+              fontSize: 14,
               fontWeight: FontWeight.w400,
-              height: 24 / 16,
             ),
           ),
         ),
-        if (item.progressLabel != null) ...[
-          Text(
-            item.progressLabel!,
-            style: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 12.8),
-          ),
-          const SizedBox(width: 10),
-        ],
+        const SizedBox(width: 12),
+        // View button — outlined purple, fills on hover
         _ViewButton(
           onPressed: viewDisabled
               ? null
               : () => Modular.to.pushNamed(
-                    CoursesModule.construct('${CoursesModule.detail}/$courseId'),
+                    CoursesModule.construct(
+                        '${CoursesModule.detail}/$courseId'),
                   ),
         ),
       ],
@@ -1601,10 +1733,8 @@ class _RequiredRow extends ConsumerWidget {
   }
 }
 
-// Shared by Required For You and Discussion Boards - a bare Material+InkWell
-// button (same pattern as _BrandButton) since ElevatedButton/OutlinedButton's
-// default minimumSize/tap-target padding kept overriding the measured 12/4
-// padding even with minimumSize:Size.zero set.
+// Outlined purple "View" button — fills solid on hover, matching design ref:
+// border border-[#5b5bd6] text-[#5b5bd6] hover:bg-[#5b5bd6] hover:text-white
 class _ViewButton extends StatelessWidget {
   const _ViewButton({required this.onPressed});
   final VoidCallback? onPressed;
@@ -1614,7 +1744,7 @@ class _ViewButton extends StatelessWidget {
     return HoverBuilder(
       builder: (context, hovering) {
         final filled = hovering && onPressed != null;
-        final borderRadius = BorderRadius.circular(4);
+        const borderRadius = BorderRadius.all(Radius.circular(4));
         return Material(
           color: filled ? _purple : Colors.transparent,
           borderRadius: borderRadius,
@@ -1631,12 +1761,8 @@ class _ViewButton extends StatelessWidget {
                 'View',
                 style: GoogleFonts.inter(
                   color: filled ? Colors.white : _purple,
-                  fontWeight: FontWeight.w500,
                   fontSize: 13,
-                  height: 19.5 / 13,
-                ),
-                textHeightBehavior: const TextHeightBehavior(
-                  leadingDistribution: TextLeadingDistribution.even,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -1646,7 +1772,6 @@ class _ViewButton extends StatelessWidget {
     );
   }
 }
-
 // ─── Brand-colored button with an explicit hover state ─────────────────────
 //
 // ElevatedButton's built-in hover handling is driven by InkResponse
