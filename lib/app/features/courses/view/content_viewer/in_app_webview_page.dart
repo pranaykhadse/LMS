@@ -83,7 +83,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
           appBar: AppBar(
             backgroundColor: _webviewPurple,
             foregroundColor: Colors.white,
-            title: Text(widget.title ?? 'Virtual Class'),
+            title: Text(widget.title ?? 'Loading…'),
             leading: IconButton(
               icon: const Icon(Icons.close_rounded),
               onPressed: () => safePop(context),

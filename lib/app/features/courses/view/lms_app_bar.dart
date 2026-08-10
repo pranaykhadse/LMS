@@ -1125,7 +1125,8 @@ class _NotificationsDialog extends ConsumerWidget {
                           final uri = Uri.tryParse(url);
                           if (uri != null) {
                             InAppWebViewPage.showWithAuth(context, ref,
-                                url: url, title: 'Notification');
+                                url: url,
+                                title: item.title.isNotEmpty ? item.title : 'Notification');
                           }
                         }
                       },

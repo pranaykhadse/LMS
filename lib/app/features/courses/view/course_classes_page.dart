@@ -996,7 +996,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   icon: Icons.play_circle_outline_rounded,
                   label: 'Watch Recording',
                   onPressed: () {
-                    _openUrl(context, ref, recordingUrl, title: 'Recording');
+                    _openUrl(context, ref, recordingUrl, title: 'Watch Recording');
                     _markRecordingWatched();
                   },
                 ),
@@ -1029,7 +1029,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 _OnlineActionButton(
                   icon: Icons.play_circle_outline_rounded,
                   label: 'Watch Video',
-                  onPressed: () => _openUrl(context, ref, item.contentUrl!),
+                  onPressed: () => _openUrl(context, ref, item.contentUrl!, title: item.title),
                 ),
             ] else ...[
               if (item.showDetails && item.showAction) const SizedBox(height: 15),
@@ -1440,7 +1440,7 @@ void _handleClassAction(BuildContext context, WidgetRef ref, CourseStructureItem
       );
       break;
     default:
-      if (url != null) _openUrl(context, ref, url);
+      if (url != null) _openUrl(context, ref, url, title: item.title);
   }
 }
 
