@@ -487,10 +487,10 @@ class _StatCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            '$value',
+          _AnimatedCounter(
+            value: value,
             style: GoogleFonts.inter(
-              color: const Color(0xFF1F2937), // gray-800
+              color: const Color(0xFF1F2937),
               fontSize: 36,
               fontWeight: FontWeight.w700,
               height: 1.1,
@@ -1300,10 +1300,11 @@ class _CourseProgressRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              '${course.progress}%',
+            _AnimatedCounter(
+              value: course.progress,
+              suffix: '%',
               style: GoogleFonts.inter(
-                color: const Color(0xFF9CA3AF), // gray-400
+                color: const Color(0xFF9CA3AF),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -1367,9 +1368,10 @@ class _OverallProgressCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Big percentage number
-          Text(
-            '$overallProgress%',
+          // Big percentage number — animates up from 0
+          _AnimatedCounter(
+            value: overallProgress,
+            suffix: '%',
             style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 48,
@@ -1563,8 +1565,8 @@ class _RewardsPointsCard extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      '$points',
+                    _AnimatedCounter(
+                      value: points,
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 16,
@@ -1902,6 +1904,80 @@ class _ImgFallback extends StatelessWidget {
       color: FigmaTokens.badgeBackground,
       alignment: Alignment.center,
       child: const Icon(Icons.school_outlined, color: _purple, size: 40),
+    );
+  }
+}
+
+// ─── Animated counter ─────────────────────────────────────────────────────────
+//
+// Counts up from 0 to [value] over [duration] using a curved animation,
+// triggered whenever the widget is first built or [value] changes.
+
+class _AnimatedCounter extends StatefulWidget {
+  const _AnimatedCounter({
+    required this.value,
+    required this.style,
+    this.suffix = '',
+    this.duration = const Duration(milliseconds: 900),
+  });
+
+  final int value;
+  final TextStyle style;
+  final String suffix;
+  final Duration duration;
+
+  @override
+  State<_AnimatedCounter> createState() => _AnimatedCounterState();
+}
+
+class _AnimatedCounterState extends State<_AnimatedCounter>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  int _from = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: widget.duration);
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+    _controller.forward();
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedCounter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value) {
+      // Animate from the currently displayed value to the new one.
+      _from = _displayValue;
+      _controller.reset();
+      _controller.forward();
+    }
+  }
+
+  int get _displayValue {
+    return (_from + (_animation.value * (widget.value - _from))).round();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, _) {
+        return Text(
+          '${_displayValue}${widget.suffix}',
+          style: widget.style,
+        );
+      },
     );
   }
 }
