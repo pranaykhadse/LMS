@@ -1918,7 +1918,7 @@ class _AnimatedCounter extends StatefulWidget {
     required this.value,
     required this.style,
     this.suffix = '',
-    this.duration = const Duration(milliseconds: 900),
+    this.duration = const Duration(milliseconds: 1400),
   });
 
   final int value;
