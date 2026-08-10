@@ -658,6 +658,8 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
     final headerBorder = overdue ? const Color(0xFFFEE2E2) : const Color(0xFFF3F4F6);
 
     return Container(
+      // Fixed total card height: header(~52) + course content(180) + dots(~28) = 260
+      height: 280,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -669,7 +671,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
         children: [
           // ── Header ──────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
             decoration: BoxDecoration(
               color: headerBg,
               border: Border(bottom: BorderSide(color: headerBorder)),
@@ -728,7 +730,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
             ),
           ),
 
-          // ── Course card (PageView) ───────────────────────────────────
+          // ── Course card (PageView) fills remaining space ─────────────
           if (widget.courses.isEmpty)
             Padding(
               padding: const EdgeInsets.all(24),
@@ -738,10 +740,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
               ),
             )
           else
-            SizedBox(
-              // Thumbnail 144px wide; content needs ~220px for title +
-              // description + due date + Resume button comfortably.
-              height: 220,
+            Expanded(
               child: PageView.builder(
                 controller: _controller,
                 onPageChanged: (i) => setState(() => _index = i),
@@ -809,39 +808,36 @@ class _ContinueLearningItem extends ConsumerWidget {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Thumbnail (left) ───────────────────────────────────────────
-        ClipRect(
-          child: SizedBox(
-            width: 120,
-            height: 220,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                course.logo != null
-                    ? Image.network(
-                        course.logo!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImgFallback(),
-                      )
-                    : const _ImgFallback(),
-                Positioned(
-                  top: 4,
-                  left: 4,
-                  child: OfflineCourseButton(
-                    course: Course(
-                      id: course.id,
-                      name: course.name,
-                      logoLink: course.logo,
-                      averageRating: course.averageRating,
-                      ratingCount: course.ratingCount,
-                      displayRating: course.displayRating ? 1 : 0,
-                    ),
+        // ── Thumbnail (left, fills full card height) ───────────────────
+        SizedBox(
+          width: 120,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              course.logo != null
+                  ? Image.network(
+                      course.logo!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const _ImgFallback(),
+                    )
+                  : const _ImgFallback(),
+              Positioned(
+                top: 4,
+                left: 4,
+                child: OfflineCourseButton(
+                  course: Course(
+                    id: course.id,
+                    name: course.name,
+                    logoLink: course.logo,
+                    averageRating: course.averageRating,
+                    ratingCount: course.ratingCount,
+                    displayRating: course.displayRating ? 1 : 0,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
 
@@ -879,7 +875,7 @@ class _ContinueLearningItem extends ConsumerWidget {
                   ),
                 ),
 
-                // Description (2 lines max, no Expanded)
+                // Description (2 lines max)
                 if (course.description != null) ...[
                   const SizedBox(height: 4),
                   Text(
