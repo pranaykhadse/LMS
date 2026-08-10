@@ -282,7 +282,9 @@ class _CourseRow extends StatelessWidget {
                     Text(
                       item.date.isNotEmpty ? item.date : 'No Due Date',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF6B7280),
+                        color: item.date.isNotEmpty
+                            ? const Color(0xFF6B7280)
+                            : const Color(0xFF9CA3AF),
                         fontSize: 12,
                       ),
                     ),
@@ -292,28 +294,30 @@ class _CourseRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // STATUS pill
+          // STATUS pill — width fits content, not fixed
           SizedBox(
             width: 110,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEBEBFF),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'In Progress',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF5B5BD6),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEBEBFF),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'In Progress',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF5B5BD6),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          // ACTION: Resume button
+          // ACTION: Resume button — pill-shaped like mobile
           SizedBox(
             width: 90,
             child: _ResumeButton(item: item),
@@ -332,16 +336,16 @@ class _ResumeButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Material(
       color: _purple,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(20), // pill shape matching mobile
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
         onTap: () => Modular.to.pushNamed(
           CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Text(
-            'Resume',
+            item.action.isNotEmpty ? item.action : 'Resume',
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               color: Colors.white,
