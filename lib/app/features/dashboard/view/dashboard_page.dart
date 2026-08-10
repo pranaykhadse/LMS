@@ -809,45 +809,49 @@ class _ContinueLearningItem extends ConsumerWidget {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Thumbnail (left) ───────────────────────────────────────────
-        SizedBox(
-          width: 144,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              course.logo != null
-                  ? Image.network(
-                      course.logo!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const _ImgFallback(),
-                    )
-                  : const _ImgFallback(),
-              Positioned(
-                top: 4,
-                left: 4,
-                child: OfflineCourseButton(
-                  course: Course(
-                    id: course.id,
-                    name: course.name,
-                    logoLink: course.logo,
-                    averageRating: course.averageRating,
-                    ratingCount: course.ratingCount,
-                    displayRating: course.displayRating ? 1 : 0,
+        ClipRect(
+          child: SizedBox(
+            width: 120,
+            height: 220,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                course.logo != null
+                    ? Image.network(
+                        course.logo!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const _ImgFallback(),
+                      )
+                    : const _ImgFallback(),
+                Positioned(
+                  top: 4,
+                  left: 4,
+                  child: OfflineCourseButton(
+                    course: Course(
+                      id: course.id,
+                      name: course.name,
+                      logoLink: course.logo,
+                      averageRating: course.averageRating,
+                      ratingCount: course.ratingCount,
+                      displayRating: course.displayRating ? 1 : 0,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
 
         // ── Text content (right) ──────────────────────────────────────
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Category label
                 if (course.category != null)
@@ -855,13 +859,12 @@ class _ContinueLearningItem extends ConsumerWidget {
                     course.category!.toUpperCase(),
                     style: GoogleFonts.inter(
                       color: accentColor,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
-                      height: 1.4,
                     ),
                   ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
 
                 // Course title
                 Text(
@@ -870,51 +873,49 @@ class _ContinueLearningItem extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: const Color(0xFF1F2937),
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    height: 1.4,
+                    height: 1.35,
                   ),
                 ),
 
-                // Description
+                // Description (2 lines max, no Expanded)
                 if (course.description != null) ...[
                   const SizedBox(height: 4),
-                  Expanded(
-                    child: Text(
-                      course.description!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF9CA3AF),
-                        fontSize: 13,
-                        height: 1.5,
-                      ),
+                  Text(
+                    course.description!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF9CA3AF),
+                      fontSize: 12,
+                      height: 1.4,
                     ),
                   ),
-                ] else
-                  const Spacer(),
+                ],
 
                 // Due date
                 if (course.dueDate != null) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Icon(Icons.calendar_today_rounded,
-                          size: 12, color: accentColor),
+                          size: 11, color: accentColor),
                       const SizedBox(width: 4),
-                      Text(
-                        '${accentColor == const Color(0xFFDC2626) ? "Overdue: " : "Due: "}${course.dueDate}',
-                        style: GoogleFonts.inter(
-                          color: accentColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          height: 1.4,
+                      Flexible(
+                        child: Text(
+                          '${accentColor == const Color(0xFFDC2626) ? "Overdue: " : "Due: "}${course.dueDate}',
+                          style: GoogleFonts.inter(
+                            color: accentColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ],
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
                 // Resume button
                 _BrandButton(
@@ -927,13 +928,11 @@ class _ContinueLearningItem extends ConsumerWidget {
                             ),
                           ),
                   borderRadius: 6,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   textStyle: GoogleFonts.inter(
                     color: Colors.white,
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    height: 1.4,
                   ),
                 ),
               ],
