@@ -996,7 +996,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   icon: Icons.play_circle_outline_rounded,
                   label: 'Watch Recording',
                   onPressed: () {
-                    _openUrl(context, recordingUrl, title: 'Recording');
+                    _openUrl(context, ref, recordingUrl, title: 'Recording');
                     _markRecordingWatched();
                   },
                 ),
@@ -1029,7 +1029,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 _OnlineActionButton(
                   icon: Icons.play_circle_outline_rounded,
                   label: 'Watch Video',
-                  onPressed: () => _openUrl(context, item.contentUrl!),
+                  onPressed: () => _openUrl(context, ref, item.contentUrl!),
                 ),
             ] else ...[
               if (item.showDetails && item.showAction) const SizedBox(height: 15),
@@ -1174,7 +1174,7 @@ class _EnrollActionButton extends ConsumerWidget {
     return _OnlineActionButton(
       icon: icon,
       label: label,
-      onPressed: () => _handleClassAction(context, item),
+      onPressed: () => _handleClassAction(context, ref, item),
     );
   }
 }
@@ -1423,7 +1423,7 @@ IconData _actionIcon(CourseStructureIcon icon) {
   }
 }
 
-void _handleClassAction(BuildContext context, CourseStructureItem item) {
+void _handleClassAction(BuildContext context, WidgetRef ref, CourseStructureItem item) {
   final url = item.contentUrl;
   switch (item.typeCode) {
     case '4':
@@ -1440,7 +1440,7 @@ void _handleClassAction(BuildContext context, CourseStructureItem item) {
       );
       break;
     default:
-      if (url != null) _openUrl(context, url);
+      if (url != null) _openUrl(context, ref, url);
   }
 }
 
@@ -1454,8 +1454,9 @@ String _downloadLabel(String typeCode) {
   }
 }
 
-Future<void> _openUrl(BuildContext context, String url, {String? title}) async {
-  await InAppWebViewPage.show(context, url: url, title: title);
+Future<void> _openUrl(BuildContext context, WidgetRef ref, String url,
+    {String? title}) async {
+  await InAppWebViewPage.showWithAuth(context, ref, url: url, title: title);
 }
 
 // ─── Virtual Class session lookup ──────────────────────────────────────────

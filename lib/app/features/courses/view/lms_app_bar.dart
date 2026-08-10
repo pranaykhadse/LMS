@@ -610,7 +610,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               _NavSubItem(
                 label: 'Virtual Development Pro',
                 disabled: !isOnline,
-                onTap: () => launchVirtualDevUrl(context),
+                onTap: () => launchVirtualDevUrl(context, ref),
               ),
             ],
           ),
@@ -1124,7 +1124,7 @@ class _NotificationsDialog extends ConsumerWidget {
                           }
                           final uri = Uri.tryParse(url);
                           if (uri != null) {
-                            InAppWebViewPage.show(context,
+                            InAppWebViewPage.showWithAuth(context, ref,
                                 url: url, title: 'Notification');
                           }
                         }

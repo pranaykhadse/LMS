@@ -285,7 +285,8 @@ class _NotifCard extends StatelessWidget {
             }
             final uri = Uri.tryParse(url);
             if (uri != null) {
-              InAppWebViewPage.show(context, url: url, title: 'Notification');
+              InAppWebViewPage.showWithAuth(context, ref,
+                  url: url, title: 'Notification');
             }
           }
         },

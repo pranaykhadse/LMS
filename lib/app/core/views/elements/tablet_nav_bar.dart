@@ -257,7 +257,7 @@ class TabletNavBar extends ConsumerWidget {
             disabled: !isOnline,
             onTap: () {
               Navigator.pop(ctx);
-              launchVirtualDevUrl(context);
+              launchVirtualDevUrl(context, ref);
             },
           ),
         ],

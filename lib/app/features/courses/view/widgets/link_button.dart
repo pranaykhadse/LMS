@@ -80,7 +80,8 @@ class LinkButton extends ConsumerWidget {
             .markAsRead(courseClass!);
       }
       if (!context.mounted) return;
-      await InAppWebViewPage.show(context, url: url!, title: label);
+      await InAppWebViewPage.showWithAuth(context, ref,
+          url: url!, title: label);
     };
 
     if (isMacOS) {

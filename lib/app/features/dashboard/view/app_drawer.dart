@@ -257,7 +257,7 @@ class AppDrawer extends ConsumerWidget {
                           disabled: !isOnline,
                           onTap: () {
                             _closeIfNeeded(context);
-                            launchVirtualDevUrl(context);
+                            launchVirtualDevUrl(context, ref);
                           },
                         ),
                       ],
