@@ -66,7 +66,7 @@ class _Body extends StatelessWidget {
                 color: _purple,
                 onRefresh: () async => notifier.fetch(page: state.page),
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
                   children: [
                     Container(
                       decoration: BoxDecoration(
@@ -119,23 +119,26 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        GestureDetector(
-          onTap: () => safePop(context),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.arrow_back, size: 14, color: _purple),
-              const SizedBox(width: 6),
-              Text(
-                'Back',
-                style: GoogleFonts.inter(
-                  color: _purple,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  height: 20 / 14,
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => safePop(context),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.arrow_back, size: 14, color: _purple),
+                const SizedBox(width: 6),
+                Text(
+                  'Back',
+                  style: GoogleFonts.inter(
+                    color: _purple,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 20 / 14,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         const SizedBox(width: 12),

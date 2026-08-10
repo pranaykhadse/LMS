@@ -239,20 +239,23 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  if (ShellMarker.isInShell(context)) {
-                    ref.read(currentShellDestinationProvider.notifier).state =
-                        ShellDestination.dashboard;
-                    return;
-                  }
-                  resetToModularRoot(context);
-                  Modular.to.navigate(
-                    CoursesModule.construct(CoursesModule.dashboard),
-                  );
-                },
-                child: const Logo(size: 24),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    if (ShellMarker.isInShell(context)) {
+                      ref.read(currentShellDestinationProvider.notifier).state =
+                          ShellDestination.dashboard;
+                      return;
+                    }
+                    resetToModularRoot(context);
+                    Modular.to.navigate(
+                      CoursesModule.construct(CoursesModule.dashboard),
+                    );
+                  },
+                  child: const Logo(size: 24),
+                ),
               ),
             ],
           ),

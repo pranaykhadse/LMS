@@ -579,17 +579,20 @@ class _CardHeader extends StatelessWidget {
           ),
         ),
         if (actionLabel != null && onAction != null)
-          GestureDetector(
-            onTap: onAction,
-            child: Text(
-              actionLabel!,
-              style: actionLabelStyle ??
-                  GoogleFonts.inter(
-                    color: _purple,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    height: 24 / 16,
-                  ),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: onAction,
+              child: Text(
+                actionLabel!,
+                style: actionLabelStyle ??
+                    GoogleFonts.inter(
+                      color: _purple,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      height: 24 / 16,
+                    ),
+              ),
             ),
           ),
         if (trailing != null) trailing!,
