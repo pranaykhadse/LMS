@@ -1336,7 +1336,7 @@ class _OverallProgressCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFF5865F2), Color(0xFF7C3AED)],
+          colors: [Color(0xFF9650B4), Color(0xFF4A439F)],
         ),
         borderRadius: BorderRadius.circular(12),
       ),
