@@ -197,7 +197,7 @@ class _TableHeaderRow extends StatelessWidget {
           const SizedBox(width: 12),
           SizedBox(width: 140, child: Text('CATEGORY', style: style)),
           const SizedBox(width: 12),
-          SizedBox(width: 140, child: Text('DUE DATE', style: style)),
+          SizedBox(width: 140, child: Text('PROGRESS', style: style)),
         ],
       ),
     );
@@ -276,20 +276,29 @@ class _CourseRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Due Date — API doesn't return due date for this endpoint;
-          // show progress % instead as a meaningful substitute
+          // PROGRESS — percentage + thin progress bar
           SizedBox(
             width: 140,
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.calendar_today_rounded,
-                    size: 12, color: _purple),
-                const SizedBox(width: 6),
                 Text(
-                  '${item.progress}% complete',
+                  '${item.progress}%',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF4B5563),
-                    fontSize: 13,
+                    color: _purple,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: LinearProgressIndicator(
+                    value: (item.progress.clamp(0, 100)) / 100,
+                    minHeight: 6,
+                    backgroundColor: const Color(0xFFF3F4F6),
+                    valueColor: const AlwaysStoppedAnimation<Color>(_purple),
                   ),
                 ),
               ],
