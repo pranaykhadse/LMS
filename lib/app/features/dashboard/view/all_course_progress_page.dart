@@ -66,13 +66,13 @@ class _Body extends StatelessWidget {
                 color: _purple,
                 onRefresh: () async => notifier.fetch(page: state.page),
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                   children: [
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: FigmaTokens.cardBorders),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE5E7EB)),
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: Column(
@@ -134,7 +134,6 @@ class _Header extends StatelessWidget {
                     color: _purple,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    height: 20 / 14,
                   ),
                 ),
               ],
@@ -142,25 +141,29 @@ class _Header extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Container(width: 1, height: 16, color: _purple),
+        Container(width: 1, height: 16, color: const Color(0xFFD1D5DB)),
         const SizedBox(width: 12),
         Text(
-          'Course Progress',
+          'All Course Progress',
           style: GoogleFonts.inter(
-            color: const Color(0xFF1E2939),
-            fontSize: 14,
+            color: const Color(0xFF1F2937),
+            fontSize: 18,
             fontWeight: FontWeight.w600,
-            height: 20 / 14,
           ),
         ),
-        const SizedBox(width: 12),
-        Text(
-          '$count courses',
-          style: GoogleFonts.inter(
-            color: const Color(0xFF99A1AF),
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            height: 20 / 14,
+        const SizedBox(width: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '$count courses',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF9CA3AF),
+              fontSize: 12,
+            ),
           ),
         ),
       ],
@@ -176,24 +179,25 @@ class _TableHeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = GoogleFonts.inter(
-      color: const Color(0xFF99A1AF),
-      fontSize: 11,
+      color: const Color(0xFF9CA3AF),
+      fontSize: 12,
       fontWeight: FontWeight.w600,
-      height: 16.5 / 11,
-      letterSpacing: 0.55,
+      letterSpacing: 0.5,
     );
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: const BoxDecoration(
         color: Color(0xFFF9FAFB),
         border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
       ),
       child: Row(
         children: [
-          SizedBox(width: 24, child: Text('#', style: style)),
-          Expanded(child: Text('COURSE / CATEGORY / DUE DATE', style: style)),
+          SizedBox(width: 36, child: Text('#', style: style)),
+          Expanded(child: Text('COURSE', style: style)),
           const SizedBox(width: 12),
-          SizedBox(width: 140, child: Text('PROGRESS', style: style)),
+          SizedBox(width: 140, child: Text('CATEGORY', style: style)),
+          const SizedBox(width: 12),
+          SizedBox(width: 140, child: Text('DUE DATE', style: style)),
         ],
       ),
     );
@@ -214,9 +218,8 @@ class _CourseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pct = (item.progress.clamp(0, 100)) / 100;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: showDivider
           ? const BoxDecoration(
               border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
@@ -225,81 +228,68 @@ class _CourseRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // #
           SizedBox(
-            width: 24,
+            width: 36,
             child: Text(
               '$index',
               style: GoogleFonts.inter(
-                color: const Color(0xFF99A1AF),
+                color: const Color(0xFF9CA3AF),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                height: 20 / 14,
               ),
             ),
           ),
+          // Course name
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => Modular.to.pushNamed(
-                      CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
-                    ),
-                    child: Text(
-                      item.courseName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF1E2939),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        height: 19.25 / 14,
-                      ),
-                    ),
-                  ),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () => Modular.to.pushNamed(
+                  CoursesModule.construct(
+                      '${CoursesModule.detail}/${item.courseId}'),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  // The all-course-progress API only returns course_id/
-                  // course_name/progress - no category or due date - so
-                  // only the (always-present) category label is shown here
-                  // rather than fabricating a due date the API never sent.
-                  'General',
+                child: Text(
+                  item.courseName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF99A1AF),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    height: 16 / 12,
+                    color: const Color(0xFF1F2937),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
                   ),
                 ),
-              ],
+              ),
             ),
           ),
           const SizedBox(width: 12),
+          // Category
           SizedBox(
             width: 140,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Text(
+              'General',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Due Date — API doesn't return due date for this endpoint;
+          // show progress % instead as a meaningful substitute
+          SizedBox(
+            width: 140,
+            child: Row(
               children: [
+                const Icon(Icons.calendar_today_rounded,
+                    size: 12, color: _purple),
+                const SizedBox(width: 6),
                 Text(
-                  '${item.progress}%',
+                  '${item.progress}% complete',
                   style: GoogleFonts.inter(
-                    color: _purple,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    height: 16 / 12,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: pct,
-                    minHeight: 6,
-                    backgroundColor: const Color(0xFFF3F4F6),
-                    valueColor: const AlwaysStoppedAnimation<Color>(_purple),
+                    color: const Color(0xFF4B5563),
+                    fontSize: 13,
                   ),
                 ),
               ],

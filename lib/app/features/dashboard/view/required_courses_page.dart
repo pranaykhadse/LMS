@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
-import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
-import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
+import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
@@ -100,7 +99,7 @@ class _Body extends StatelessWidget {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: PerPageBadge(perPage: state.perPage),
+                      child: const SizedBox.shrink(),
                     ),
                     const AppFooter(),
                   ],
@@ -133,92 +132,100 @@ class _CourseCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
-    return CourseGridCard(
-      imageUrl: course.logo,
-      title: course.name,
-      buttonLabel: 'View Course',
-      onPressed: viewDisabled
-          ? null
-          : () => Modular.to.pushNamed(
-              CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
-            ),
-      offlineCourse: Course(
-        id: course.id,
-        name: course.name,
-        logoLink: course.logo,
-        averageRating: course.averageRating,
-        ratingCount: course.ratingCount,
-        displayRating: course.displayRating ? 1 : 0,
-      ),
-      infoSection: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _StarRow(rating: course.averageRating, count: course.ratingCount),
-          const SizedBox(height: 6),
-          _ProgressRow(progress: course.progress),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
-    );
-  }
-}
-
-// ─── Progress bar ─────────────────────────────────────────────────────────────
-
-class _ProgressRow extends StatelessWidget {
-  const _ProgressRow({required this.progress});
-  final int progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: progress / 100,
-            minHeight: 5,
-            backgroundColor: const Color(0xFFE8E7F8),
-            valueColor: const AlwaysStoppedAnimation<Color>(_purple),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image — 224px tall, fills width
+          SizedBox(
+            height: 180,
+            width: double.infinity,
+            child: course.logo != null
+                ? Image.network(
+                    course.logo!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: const Color(0xFFF3F4F6),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.school_outlined,
+                          color: _purple, size: 40),
+                    ),
+                  )
+                : Container(
+                    color: const Color(0xFFF3F4F6),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.school_outlined,
+                        color: _purple, size: 40),
+                  ),
           ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          '$progress% complete',
-          style: const TextStyle(color: _muted, fontSize: 10),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Star rating ──────────────────────────────────────────────────────────────
-
-class _StarRow extends StatelessWidget {
-  const _StarRow({required this.rating, required this.count});
-  final double rating;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        ...List.generate(5, (i) {
-          if (i < rating.floor()) {
-            return const Icon(Icons.star_rounded, color: Color(0xFFFFC107), size: 15);
-          }
-          if (i < rating) {
-            return const Icon(Icons.star_half_rounded, color: Color(0xFFFFC107), size: 15);
-          }
-          return const Icon(Icons.star_border_rounded, color: Color(0xFFFFC107), size: 15);
-        }),
-        const SizedBox(width: 4),
-        Text(
-          '${rating.toStringAsFixed(1)} ($count)',
-          style: const TextStyle(color: _muted, fontSize: 11),
-        ),
-      ],
+          // Content
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Expanded(
+                    child: Text(
+                      course.name,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF1F2937),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // "View Course" button — outlined purple, fills on tap
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: viewDisabled
+                          ? null
+                          : () => Modular.to.pushNamed(
+                                CoursesModule.construct(
+                                    '${CoursesModule.detail}/${course.id}'),
+                              ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                            color: Color(0xFF5B5BD6)),
+                        foregroundColor: const Color(0xFF5B5BD6),
+                        backgroundColor: const Color(0xFFF8FAFC),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        textStyle: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      child: const Text('View Course'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

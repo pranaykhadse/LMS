@@ -206,33 +206,6 @@ class _DashboardBody extends ConsumerWidget {
                           ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                    child: isWide
-                        ? IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  child: _DiscussionBoardsCard(
-                                    boards: data.extras.discussionBoards,
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _RewardsPointsCard(rewards: data.extras.rewards),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Column(
-                            children: [
-                              _DiscussionBoardsCard(boards: data.extras.discussionBoards),
-                              const SizedBox(height: 12),
-                              _RewardsPointsCard(rewards: data.extras.rewards),
-                            ],
-                          ),
-                  ),
-                  Padding(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
                     child: _RequiredForYouCard(required: data.requiredForYou),
                   ),
