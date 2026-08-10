@@ -206,6 +206,37 @@ class _DashboardBody extends ConsumerWidget {
                           ),
                   ),
                   Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                    child: isWide
+                        ? IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: _DiscussionBoardsCard(
+                                    boards: data.extras.discussionBoards,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _RewardsPointsCard(
+                                    rewards: data.extras.rewards,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              _DiscussionBoardsCard(
+                                  boards: data.extras.discussionBoards),
+                              const SizedBox(height: 12),
+                              _RewardsPointsCard(
+                                  rewards: data.extras.rewards),
+                            ],
+                          ),
+                  ),
+                  Padding(
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
                     child: _RequiredForYouCard(required: data.requiredForYou),
                   ),
@@ -708,8 +739,9 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
             )
           else
             SizedBox(
-              // Thumbnail 144px wide, content needs ~190px height
-              height: 190,
+              // Thumbnail 144px wide; content needs ~220px for title +
+              // description + due date + Resume button comfortably.
+              height: 220,
               child: PageView.builder(
                 controller: _controller,
                 onPageChanged: (i) => setState(() => _index = i),
@@ -1364,10 +1396,6 @@ class _OverallProgressCard extends StatelessWidget {
 
 // ─── Discussion Boards ──────────────────────────────────────────────────────
 
-// No discussion-thread API/model exists in the app yet (see class_info.dart's
-// discussionForumLink/discussionGuruLink - those are just external webview
-// links on a course lesson, not a threads-with-replies feature), so this
-// always renders the empty state per the reference's p.empty-state styling.
 class _DiscussionBoardsCard extends StatelessWidget {
   const _DiscussionBoardsCard({required this.boards});
   final List<DashboardDiscussionBoardItem> boards;
@@ -1375,25 +1403,39 @@ class _DiscussionBoardsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shown = boards.take(4).toList();
-    return _DashCard(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardHeader(title: 'Discussion Boards', large: true),
+          Text(
+            'Discussion Boards',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF374151),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: _border),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
           const SizedBox(height: 14),
           if (shown.isEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                 'No discussion threads yet.',
-                style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280), fontSize: 14),
               ),
             )
           else
             for (var i = 0; i < shown.length; i++) ...[
-              if (i > 0) const Divider(height: 24, color: _border),
+              if (i > 0) const Divider(height: 24, color: Color(0xFFE5E7EB)),
               _DiscussionBoardRow(item: shown[i]),
             ],
         ],
@@ -1420,9 +1462,9 @@ class _DiscussionBoardRow extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF1E293B),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13.6,
+                  color: const Color(0xFF1F2937),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
               const SizedBox(height: 4),
@@ -1432,7 +1474,8 @@ class _DiscussionBoardRow extends StatelessWidget {
                   if (item.lastReply.isNotEmpty) item.lastReply,
                   '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
                 ].join(' • '),
-                style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 11.2),
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF9CA3AF), fontSize: 12),
               ),
             ],
           ),
@@ -1440,7 +1483,8 @@ class _DiscussionBoardRow extends StatelessWidget {
         const SizedBox(width: 12),
         _ViewButton(
           onPressed: () => Modular.to.pushNamed(
-            CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
+            CoursesModule.construct(
+                '${CoursesModule.detail}/${item.courseId}'),
           ),
         ),
       ],
@@ -1461,21 +1505,49 @@ class _RewardsPointsCard extends ConsumerWidget {
     final firstName = profile?.firstname?.trim();
     final activity = rewards?.activity ?? const <DashboardRewardActivity>[];
 
-    return _DashCard(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _CardHeader(
-            title: 'Rewards & Points',
-            large: true,
-            actionLabel: 'This Month',
-            onAction: () => Modular.to.pushNamed(
-              CoursesModule.construct(CoursesModule.redeemPoints),
-            ),
+          // Header row: title + "This Month" action
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Rewards & Points',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF374151),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Modular.to.pushNamed(
+                  CoursesModule.construct(CoursesModule.redeemPoints),
+                ),
+                child: Text(
+                  'This Month',
+                  style: GoogleFonts.inter(
+                    color: _purple,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: _border),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
           const SizedBox(height: 14),
+
+          // Points circle + name/description
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1518,46 +1590,52 @@ class _RewardsPointsCard extends ConsumerWidget {
                     Text(
                       'Great progress${firstName != null && firstName.isNotEmpty ? ', $firstName' : ''}!',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF1E2939),
-                        fontSize: 15.2,
+                        color: const Color(0xFF1F2937),
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       "You've earned points by completing courses and attending virtual classes.",
-                      style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF6B7280),
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
+
+          // Activity list or empty state
           if (activity.isEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: 12),
               child: Text(
                 'No reward points earned this month yet.',
-                style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280), fontSize: 13),
               ),
             )
           else
             Padding(
-              padding: const EdgeInsets.only(top: 10),
+              padding: const EdgeInsets.only(top: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   for (final a in activity)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
+                      padding: const EdgeInsets.only(bottom: 6),
                       child: Row(
                         children: [
                           Expanded(
                             child: Text(
                               a.label,
                               style: GoogleFonts.inter(
-                                color: const Color(0xFF1E293B),
-                                fontSize: 13.6,
+                                color: const Color(0xFF1F2937),
+                                fontSize: 13,
                               ),
                             ),
                           ),
@@ -1566,7 +1644,7 @@ class _RewardsPointsCard extends ConsumerWidget {
                             style: GoogleFonts.inter(
                               color: _purple,
                               fontWeight: FontWeight.w700,
-                              fontSize: 13.6,
+                              fontSize: 13,
                             ),
                           ),
                         ],
