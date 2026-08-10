@@ -181,9 +181,9 @@ class _TableHeaderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = GoogleFonts.inter(
       color: const Color(0xFF9CA3AF),
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: FontWeight.w600,
-      letterSpacing: 0.5,
+      letterSpacing: 0.55,
     );
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -193,12 +193,12 @@ class _TableHeaderRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(width: 36, child: Text('#', style: style)),
-          Expanded(child: Text('COURSE DETAILS', style: style)),
+          SizedBox(width: 32, child: Text('#', style: style)),
+          Expanded(child: Text('BRIDGEWORK', style: style)),
           const SizedBox(width: 12),
-          SizedBox(width: 160, child: Text('DUE DATE', style: style)),
+          SizedBox(width: 110, child: Text('STATUS', style: style)),
           const SizedBox(width: 12),
-          SizedBox(width: 120, child: Text('STATUS', style: style)),
+          SizedBox(width: 90, child: Text('ACTION', style: style)),
         ],
       ),
     );
@@ -220,7 +220,7 @@ class _CourseRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       decoration: showDivider
           ? const BoxDecoration(
               border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
@@ -229,9 +229,9 @@ class _CourseRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // #
+          // # index
           SizedBox(
-            width: 36,
+            width: 32,
             child: Text(
               '$index',
               style: GoogleFonts.inter(
@@ -241,7 +241,7 @@ class _CourseRow extends StatelessWidget {
               ),
             ),
           ),
-          // Course Details: title + category
+          // BRIDGEWORK: course name + class name + due date
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,49 +257,48 @@ class _CourseRow extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
-                if (item.className.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    item.className,
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF9CA3AF),
-                      fontSize: 12,
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    if (item.className.isNotEmpty) ...[
+                      Text(
+                        item.className,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF9CA3AF),
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        ' • ',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF9CA3AF),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    const Icon(Icons.calendar_today_rounded,
+                        size: 10, color: _purple),
+                    const SizedBox(width: 4),
+                    Text(
+                      item.date.isNotEmpty ? item.date : 'No Due Date',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF6B7280),
+                        fontSize: 12,
+                      ),
                     ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Due Date
-          SizedBox(
-            width: 160,
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_today_rounded,
-                    size: 12, color: _purple),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    item.date,
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF4B5563),
-                      fontSize: 13,
-                    ),
-                  ),
+                  ],
                 ),
               ],
             ),
           ),
           const SizedBox(width: 12),
-          // Status pill — "In Progress" purple badge
+          // STATUS pill
           SizedBox(
-            width: 120,
+            width: 110,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFEBEBFF), // bg-[#ebebff]
+                color: const Color(0xFFEBEBFF),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -307,13 +306,50 @@ class _CourseRow extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   color: const Color(0xFF5B5BD6),
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
+          const SizedBox(width: 12),
+          // ACTION: Resume button
+          SizedBox(
+            width: 90,
+            child: _ResumeButton(item: item),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _ResumeButton extends ConsumerWidget {
+  const _ResumeButton({required this.item});
+  final ContinueLearningListItem item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Material(
+      color: _purple,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => Modular.to.pushNamed(
+          CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          child: Text(
+            'Resume',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+        ),
       ),
     );
   }
