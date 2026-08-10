@@ -605,6 +605,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
   final _controller = PageController();
   int _index = 0;
   Timer? _autoAdvanceTimer;
+  bool _hovering = false;
 
   @override
   void initState() {
@@ -624,7 +625,8 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
     _autoAdvanceTimer?.cancel();
     if (widget.courses.length <= 1) return;
     _autoAdvanceTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (!mounted || !_controller.hasClients) return;
+      // Pause auto-advance while the user is hovering over the card.
+      if (!mounted || !_controller.hasClients || _hovering) return;
       final next = (_index + 1) % widget.courses.length;
       _controller.animateToPage(
         next,
@@ -657,7 +659,10 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
     final headerBg = overdue ? const Color(0xFFFEF2F2) : Colors.white;
     final headerBorder = overdue ? const Color(0xFFFEE2E2) : const Color(0xFFF3F4F6);
 
-    return Container(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: Container(
       // Fixed total card height: header(~52) + course content(180) + dots(~28) = 260
       height: 280,
       decoration: BoxDecoration(
@@ -791,7 +796,8 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
             ),
         ],
       ),
-    );
+    ), // Container
+    ); // MouseRegion
   }
 }
 
