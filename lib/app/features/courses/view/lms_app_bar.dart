@@ -24,7 +24,6 @@ import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.da
 import 'package:url_launcher/url_launcher.dart';
 
 const _appPurple = FigmaTokens.primaryPurple;
-const _appInk = FigmaTokens.cardTitles;
 const _appMuted = FigmaTokens.noteBodyText;
 const _navActive = FigmaTokens.primaryPurple;
 const _navDefault = Color(0xFF6A7282);
@@ -116,8 +115,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        (isWide ? _desktopTopBarHeight + _desktopHeaderHeight : 60.0) +
-            (bottom?.preferredSize.height ?? 0),
+        (isWide ? _desktopTopBarHeight + _desktopHeaderHeight : 49.0) +
+            (bottom?.preferredSize.height ?? 1.0), // 1px for the bottom divider
       );
 
   @override
@@ -293,124 +292,101 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   // ── Phone ────────────────────────────────────────────────────────────────
   Widget _buildMobile(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final canPop = Navigator.canPop(context);
     final showBack =
         !hideBack && (onBack != null || (canPop && onBack == null));
-    final isOffline = ref.watch(OfflineModeNotifier.provider);
-    final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
 
+    // Figma mobile app bar spec:
+    // Container: horizontal, space-between, padding top 8 / right 16 / bottom 8 / left 16
+    // "Menu" label: Inter SemiBold 600, 14px, line-height 20px, color #364153
+    // Hamburger icon: 20×20px, color #6A7282 (#SA7282 in Figma)
+    // Background: white
     return AppBar(
       automaticallyImplyLeading: false,
-      toolbarHeight: 60,
-      backgroundColor: _appPurple,
-      foregroundColor: Colors.white,
-      elevation: 2,
+      toolbarHeight: 48,
+      backgroundColor: Colors.white,
+      foregroundColor: FigmaTokens.modalLabels,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
       titleSpacing: 0,
-      // The hamburger/back button and the title are kept together as a
-      // single left-hand group (via `title` below, not `leading`) so they
-      // read as one cluster, with the action icons as a separate cluster
-      // hugging the right edge - rather than the built-in AppBar
-      // leading/title split, which left an ambiguous, similarly sized gap
-      // on both sides of the title instead of grouping it with the menu
-      // button next to it.
       leadingWidth: 0,
       title: Padding(
-        padding: const EdgeInsets.only(left: 4, right: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            if (showBack) ...[
-              LmsAppBarButton(
-                icon: Icons.arrow_back_ios_new_rounded,
-                onTap: onBack ?? () => safePop(context),
-                iconSize: 18,
-              ),
-              const SizedBox(width: 2),
-            ],
-            Builder(
-              builder: (ctx) => LmsAppBarButton(
-                icon: Icons.menu_rounded,
-                onTap: () => Scaffold.of(ctx).openDrawer(),
-              ),
+            // Left side: back button (if applicable) + "Menu" label
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (showBack) ...[
+                  GestureDetector(
+                    onTap: onBack ?? () => safePop(context),
+                    child: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 18,
+                      color: FigmaTokens.modalLabels,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                if (!showBack)
+                  const Text(
+                    'Menu',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 20 / 14,
+                      letterSpacing: 0,
+                      color: FigmaTokens.modalLabels,
+                    ),
+                  ),
+                if (showBack && title != null)
+                  Text(
+                    title!,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 20 / 14,
+                      color: FigmaTokens.modalLabels,
+                    ),
+                  ),
+              ],
             ),
-            if (title != null) ...[
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  title!,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
+            // Right side: hamburger toggle (or nothing when back button shown)
+            if (!showBack)
+              Builder(
+                builder: (ctx) => GestureDetector(
+                  onTap: () => Scaffold.of(ctx).openDrawer(),
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Center(
+                      child: Icon(
+                        Icons.menu_rounded,
+                        size: 20,
+                        color: FigmaTokens.noteBodyText,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ],
           ],
         ),
       ),
-      actions: [
-        if (onRefresh != null) ...[
-          LmsAppBarButton(
-            icon: Icons.refresh_rounded,
-            // The bell/badge in this same app bar is shared across every
-            // screen, so a manual refresh should always pick up fresh
-            // notifications too, not just whatever this particular page's
-            // own onRefresh re-fetches.
-            onTap: () {
-              onRefresh!();
-              ref.read(NotificationsViewModel.provider.notifier).fetch();
-            },
+      actions: const [],
+      // Use the caller's bottom widget if provided (e.g. a tab bar on the
+      // catalog page); otherwise render a thin 1px divider to separate the
+      // white bar from the page body.
+      bottom: bottom ??
+          PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: FigmaTokens.cardBorders),
           ),
-          const SizedBox(width: 2),
-        ],
-        LmsOfflineToggle(
-          isOffline: isOffline,
-          onChanged: (val) {
-            ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
-            if (!val) ref.read(SyncViewModel.provider).onManualOnline();
-            Toast.info(
-                context, val ? 'Offline mode enabled' : 'Back to online mode');
-          },
-        ),
-        Builder(
-          builder: (bellContext) => Stack(
-          clipBehavior: Clip.none,
-          children: [
-            LmsAppBarButton(
-              icon: Icons.notifications_none_rounded,
-              onTap: () => showLmsNotifications(bellContext),
-            ),
-            if (unreadCount > 0)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
-              ),
-          ],
-          ),
-        ),
-        const SizedBox(width: 2),
-        PopupMenuButton<String>(
-          offset: const Offset(0, 54),
-          constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          onSelected: (value) => _onProfileMenuSelected(context, ref, value),
-          itemBuilder: (context) => _profileMenuItems(profile),
-          child: LmsAvatar(profile: profile, radius: 18),
-        ),
-        const SizedBox(width: 2),
-        LmsAppBarButton(
-          icon: Icons.play_arrow_rounded,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const LearningProgressPage()),
-          ),
-        ),
-        const SizedBox(width: 6),
-      ],
-      bottom: bottom,
     );
   }
 

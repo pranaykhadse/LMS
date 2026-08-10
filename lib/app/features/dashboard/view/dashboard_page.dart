@@ -5,6 +5,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -126,27 +127,15 @@ class _DashboardBody extends ConsumerWidget {
         return RefreshIndicator(
           color: _purple,
           onRefresh: () async => onRefetchAll(),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 900;
+          child: Builder(
+            builder: (context) {
+              final isWide = Responsive.isDesktop(context);
               return ListView(
                 padding: EdgeInsets.zero,
                 children: [
                   _BannerSection(auth: auth),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
-                    child: Text(
-                      "Welcome back! Here's what's happening with your courses.",
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF6A7282),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        height: 24 / 16,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
                     child: _StatRow(
                       isWide: isWide,
                       enrolled: data.summary.enrolledCourses,
@@ -155,7 +144,7 @@ class _DashboardBody extends ConsumerWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                     child: isWide
                         ? IntrinsicHeight(
                             child: Row(
@@ -180,13 +169,13 @@ class _DashboardBody extends ConsumerWidget {
                               _ContinueLearningCard(
                                 courses: _continueLearningCourses(data),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 12),
                               _UpcomingSessionsCard(sessions: data.upcomingSessions),
                             ],
                           ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                     child: isWide
                         ? IntrinsicHeight(
                             child: Row(
@@ -209,7 +198,7 @@ class _DashboardBody extends ConsumerWidget {
                         : Column(
                             children: [
                               _CourseProgressCard(courses: _progressCourses(data)),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 12),
                               _OverallProgressCard(
                                 overallProgress: data.summary.overallProgress,
                               ),
@@ -217,7 +206,7 @@ class _DashboardBody extends ConsumerWidget {
                           ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                     child: isWide
                         ? IntrinsicHeight(
                             child: Row(
@@ -238,13 +227,13 @@ class _DashboardBody extends ConsumerWidget {
                         : Column(
                             children: [
                               _DiscussionBoardsCard(boards: data.extras.discussionBoards),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 12),
                               _RewardsPointsCard(rewards: data.extras.rewards),
                             ],
                           ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
                     child: _RequiredForYouCard(required: data.requiredForYou),
                   ),
                   const AppFooter(),
@@ -327,22 +316,14 @@ class _BannerSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      // Figma: Width Fill(1440), Height Hug(300). A fixed (not just
-      // minimum) height, since Stack's fit: StackFit.expand below needs a
-      // genuinely bounded constraint to expand into - it's inside a
-      // ListView, so a minHeight-only constraint leaves maxHeight
-      // unbounded and crashes the render ("RenderBox was given unbounded
-      // height").
-      height: 300,
-      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      // Figma: width Fill, height 160px, radius 14px
+      height: 160,
+      margin: const EdgeInsets.fromLTRB(12, 16, 12, 0),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Placeholder background photo - swap for the real Figma asset
-          // once it's exported; login-bg.png is reused here purely so the
-          // gradient-overlay-on-photo layout is already wired up.
           Image.asset('assets/images/login-bg.png', fit: BoxFit.cover),
           Container(
             decoration: BoxDecoration(
@@ -356,45 +337,49 @@ class _BannerSection extends StatelessWidget {
               ),
             ),
           ),
+          // Figma content: padding top 16 / right 12 / bottom 8 / left 12
+          // vertical flow, gap 8px between text children
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
             child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Good ${_greeting()}, ${_userName()}!',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w500,
-              height: 36 / 22,
-              letterSpacing: -0.75,
-            ),
-          ),
-          const SizedBox(height: 14),
-          const Text(
-            '"A leader is best when people barely know he exists; '
-            'when his work is done, his aim fulfilled, '
-            'they will all say: We did it ourselves."',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              height: 22 / 16,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            '— Lao-Tzu',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.35,
-              height: 20 / 14,
-            ),
-          ),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Greeting: Inter 500, 16px, line-height 20px, ls -0.75
+                Text(
+                  'Good ${_greeting()}, ${_userName()}!',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    height: 20 / 16,
+                    letterSpacing: -0.75,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Quote body: Inter 400, 11px, line-height 18px
+                Text(
+                  'A leader is best when people barely know he exists...when his '
+                  'work is done, his aim fulfilled, they will all say: We did it ourselves."',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    height: 18 / 11,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Attribution: Inter 500, 12px, line-height 20px, ls 0.35
+                Text(
+                  '- Lao-Tzu',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    height: 20 / 12,
+                    letterSpacing: 0.35,
+                  ),
+                ),
               ],
             ),
           ),
