@@ -272,9 +272,7 @@ class _BadgeCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: earned
-              ? Border.all(color: _gold.withValues(alpha: .6), width: 1.5)
-              : Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+          border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
