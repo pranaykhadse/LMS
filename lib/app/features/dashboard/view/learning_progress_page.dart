@@ -99,59 +99,113 @@ class _ProgressBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width >= 760;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Greeting ─────────────────────────────────────────────────
-          Text(
-            'Hey $firstName!',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: _lpNavy,
-            ),
-          ),
-          const SizedBox(height: 4),
           const Text(
             "Welcome back! Here's what's happening with your courses.",
             style: TextStyle(fontSize: 13, color: _lpMuted, height: 1.4),
           ),
-          const SizedBox(height: 20),
-
-          // ── Summary cards ─────────────────────────────────────────────
-          _SummarySection(summary: data.summary),
           const SizedBox(height: 16),
 
-          // ── Overall progress ─────────────────────────────────────────
-          _OverallProgressCard(progress: data.summary.overallProgress),
-          const SizedBox(height: 24),
+          // ── Stat cards — 3 equal columns ──────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.menu_book_rounded,
+                  iconColor: _lpBlue,
+                  label: 'ENROLLED',
+                  value: '${data.summary.enrolledCourses}',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.bolt_rounded,
+                  iconColor: _lpOrange,
+                  label: 'REQUIRED',
+                  value: '${data.summary.requiredCourses}',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  icon: Icons.check_circle_rounded,
+                  iconColor: _lpGreen,
+                  label: 'COMPLETED',
+                  value: '${data.summary.completedCourses}',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
 
-          // ── Course Progress ───────────────────────────────────────────
-          if (data.progressStatus.isNotEmpty) ...[
-            const _SectionLabel('Course Progress'),
-            const SizedBox(height: 10),
-            _CourseProgressCard(courses: data.progressStatus),
-            const SizedBox(height: 24),
+          // ── Row 2: Continue Learning (left) + Upcoming Sessions (right) ─
+          if (isWide)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: data.continueLearning != null
+                      ? _ContinueLearningCard(info: data.continueLearning!)
+                      : const SizedBox.shrink(),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _UpcomingSessionsCard(
+                    sessions: data.upcomingSessions,
+                    title: 'Upcoming Virtual Classes',
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            if (data.continueLearning != null) ...[
+              _ContinueLearningCard(info: data.continueLearning!),
+              const SizedBox(height: 16),
+            ],
+            _UpcomingSessionsCard(
+              sessions: data.upcomingSessions,
+              title: 'Upcoming Virtual Classes',
+            ),
           ],
+          const SizedBox(height: 16),
 
-          // ── Continue Learning ─────────────────────────────────────────
-          if (data.continueLearning != null) ...[
-            _ContinueLearningCard(info: data.continueLearning!),
-            const SizedBox(height: 24),
-          ],
+          // ── Row 3: Course Progress (left) + Overall Progress (right) ──
+          if (data.progressStatus.isNotEmpty)
+            if (isWide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _CourseProgressCard(
+                      courses: data.progressStatus,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _OverallProgressCard(
+                        progress: data.summary.overallProgress),
+                  ),
+                ],
+              )
+            else ...[
+              _CourseProgressCard(courses: data.progressStatus),
+              const SizedBox(height: 16),
+              _OverallProgressCard(progress: data.summary.overallProgress),
+            ]
+          else
+            _OverallProgressCard(progress: data.summary.overallProgress),
+          const SizedBox(height: 16),
 
-          // ── Upcoming Sessions ─────────────────────────────────────────
-          const _SectionLabel('Upcoming Sessions'),
-          const SizedBox(height: 10),
-          _UpcomingSessionsCard(sessions: data.upcomingSessions),
-          const SizedBox(height: 24),
-
-          // ── Required For You ─────────────────────────────────────────
+          // ── Required For You ──────────────────────────────────────────
           if (data.requiredForYou.isNotEmpty) ...[
-            const _SectionLabel('Required For You'),
-            const SizedBox(height: 10),
             _RequiredCoursesCard(courses: data.requiredForYou),
             const SizedBox(height: 8),
           ],
@@ -163,67 +217,20 @@ class _ProgressBody extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Summary stat cards
+// Stat card
 // ─────────────────────────────────────────────────────────────────────────────
-class _SummarySection extends StatelessWidget {
-  const _SummarySection({required this.summary});
-  final LearningProgressSummary summary;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                icon: Icons.menu_book_rounded,
-                iconColor: _lpBlue,
-                label: 'ENROLLED',
-                value: '${summary.enrolledCourses}',
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(
-                icon: Icons.check_circle_rounded,
-                iconColor: _lpGreen,
-                label: 'COMPLETED',
-                value: '${summary.completedCourses}',
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: _StatCard(
-            icon: Icons.bolt_rounded,
-            iconColor: _lpOrange,
-            label: 'REQUIRED',
-            value: '${summary.requiredCourses}',
-            wide: true,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _StatCard extends StatelessWidget {
   const _StatCard({
     required this.icon,
     required this.iconColor,
     required this.label,
     required this.value,
-    this.wide = false,
   });
 
   final IconData icon;
   final Color iconColor;
   final String label;
   final String value;
-  final bool wide;
 
   @override
   Widget build(BuildContext context) {
@@ -231,47 +238,36 @@ class _StatCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x0A172033), blurRadius: 12, offset: Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
+              Icon(icon, color: iconColor, size: 16),
+              const SizedBox(width: 6),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: _lpMuted,
+                  color: iconColor,
                   letterSpacing: 0.6,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: _lpNavy,
-                  height: 1.1,
-                ),
-              ),
             ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: _lpNavy,
+              height: 1.1,
+            ),
           ),
         ],
       ),
@@ -294,11 +290,7 @@ class _OverallProgressCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
       decoration: BoxDecoration(
         gradient: FigmaTokens.heroGradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x30172033), blurRadius: 16, offset: Offset(0, 6)),
-        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,24 +348,58 @@ class _CourseProgressCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x0A172033), blurRadius: 12, offset: Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
       ),
       child: Column(
-        children: courses.asMap().entries.map((e) {
-          final i = e.key;
-          final course = e.value;
-          return Column(
-            children: [
-              if (i > 0)
-                const Divider(height: 1, color: FigmaTokens.cardBorders, indent: 16, endIndent: 16),
-              _CourseProgressRow(course: course),
-            ],
-          );
-        }).toList(),
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Course Progress',
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: _lpNavy)),
+                HoverBuilder(
+                  builder: (ctx, hovering) => TextButton(
+                    onPressed: () => Modular.to.pushNamed(
+                        CoursesModule.construct(CoursesModule.enrolledCourses)),
+                    style: TextButton.styleFrom(
+                      foregroundColor:
+                          hovering ? FigmaTokens.purpleHover : _lpPurple,
+                      minimumSize: Size.zero,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text('View All',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...courses.asMap().entries.map((e) {
+            final i = e.key;
+            final course = e.value;
+            return Column(
+              children: [
+                if (i > 0)
+                  const Divider(
+                      height: 1,
+                      color: FigmaTokens.cardBorders,
+                      indent: 16,
+                      endIndent: 16),
+                _CourseProgressRow(course: course),
+              ],
+            );
+          }),
+        ],
       ),
     );
   }
@@ -456,11 +482,8 @@ class _ContinueLearningCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x0A172033), blurRadius: 12, offset: Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -523,40 +546,46 @@ class _ContinueLearningCard extends StatelessWidget {
 // Upcoming sessions
 // ─────────────────────────────────────────────────────────────────────────────
 class _UpcomingSessionsCard extends StatelessWidget {
-  const _UpcomingSessionsCard({required this.sessions});
+  const _UpcomingSessionsCard({required this.sessions, this.title = 'Upcoming Sessions'});
   final List<UpcomingSession> sessions;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x0A172033), blurRadius: 12, offset: Offset(0, 4)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: _lpNavy)),
+          const SizedBox(height: 12),
+          if (sessions.isEmpty)
+            const Text('All caught up!',
+                style: TextStyle(color: _lpMuted, fontSize: 14))
+          else
+            ...sessions.asMap().entries.map((e) {
+              final i = e.key;
+              final s = e.value;
+              return Column(
+                children: [
+                  if (i > 0)
+                    const Divider(height: 1, color: FigmaTokens.cardBorders),
+                  _SessionRow(session: s),
+                ],
+              );
+            }),
         ],
       ),
-      child: sessions.isEmpty
-          ? const Text(
-              'All caught up!',
-              style: TextStyle(color: _lpMuted, fontSize: 14),
-            )
-          : Column(
-              children: sessions.asMap().entries.map((e) {
-                final i = e.key;
-                final s = e.value;
-                return Column(
-                  children: [
-                    if (i > 0)
-                      const Divider(height: 1, color: FigmaTokens.cardBorders),
-                    _SessionRow(session: s),
-                  ],
-                );
-              }).toList(),
-            ),
     );
   }
 }
@@ -589,38 +618,75 @@ class _SessionRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: _lpPurple.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-                Icons.calendar_today_rounded, color: _lpPurple, size: 18),
-          ),
-          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  session.courseName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: _lpNavy,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        session.courseName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: _lpNavy,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 if (_dateTimeLabel.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    _dateTimeLabel,
-                    style: const TextStyle(fontSize: 12, color: _lpMuted),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      const Icon(Icons.calendar_today_rounded,
+                          size: 11, color: _lpMuted),
+                      const SizedBox(width: 4),
+                      Text(_dateTimeLabel,
+                          style: const TextStyle(
+                              fontSize: 11, color: _lpMuted)),
+                    ],
                   ),
                 ],
+                if (session.instructor != null) ...[
+                  const SizedBox(height: 2),
+                  Text('Hosted by ${session.instructor}',
+                      style: const TextStyle(
+                          fontSize: 11, color: _lpMuted)),
+                ],
               ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          HoverBuilder(
+            builder: (ctx, hovering) => ElevatedButton(
+              onPressed: () {
+                final courseId = int.tryParse(session.courseId);
+                if (courseId != null) {
+                  Modular.to.pushNamed(
+                    CoursesModule.construct(
+                        '${CoursesModule.detail}/$courseId'),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    hovering ? FigmaTokens.purpleHover : _lpPurple,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+                textStyle: const TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 12),
+              ),
+              child: const Text('Join'),
             ),
           ),
         ],
@@ -641,14 +707,23 @@ class _RequiredCoursesCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-              color: Color(0x0A172033), blurRadius: 12, offset: Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 14, 16, 8),
+            child: Text(
+              'Required For You',
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: _lpNavy),
+            ),
+          ),
+          const Divider(height: 1, color: FigmaTokens.cardBorders),
           ...courses.asMap().entries.map((e) {
             final i = e.key;
             final c = e.value;
@@ -656,16 +731,18 @@ class _RequiredCoursesCard extends StatelessWidget {
               children: [
                 if (i > 0)
                   const Divider(
-                      height: 1, color: FigmaTokens.cardBorders, indent: 16, endIndent: 16),
-                _RequiredCourseRow(course: c),
+                      height: 1,
+                      color: FigmaTokens.cardBorders,
+                      indent: 16,
+                      endIndent: 16),
+                _RequiredCourseRow(course: c, index: i + 1),
               ],
             );
           }),
           const Divider(height: 1, color: FigmaTokens.cardBorders),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: SizedBox(
-              width: double.infinity,
+            child: Center(
               child: HoverBuilder(
                 builder: (context, hovering) => ElevatedButton(
                   onPressed: () => Modular.to.pushNamed(
@@ -675,7 +752,7 @@ class _RequiredCoursesCard extends StatelessWidget {
                     backgroundColor:
                         hovering ? FigmaTokens.purpleHover : _lpPurple,
                     foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(44),
+                    minimumSize: const Size(220, 44),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                     elevation: 0,
@@ -695,8 +772,9 @@ class _RequiredCoursesCard extends StatelessWidget {
 }
 
 class _RequiredCourseRow extends StatelessWidget {
-  const _RequiredCourseRow({required this.course});
+  const _RequiredCourseRow({required this.course, required this.index});
   final RequiredCourseItem course;
+  final int index;
 
   @override
   Widget build(BuildContext context) {
@@ -704,8 +782,17 @@ class _RequiredCourseRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       child: Row(
         children: [
-          const Icon(Icons.bolt_rounded, color: _lpOrange, size: 20),
-          const SizedBox(width: 10),
+          SizedBox(
+            width: 24,
+            child: Text(
+              '$index',
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: _lpMuted),
+            ),
+          ),
+          const SizedBox(width: 6),
           Expanded(
             child: Text(
               course.courseName,
@@ -728,7 +815,6 @@ class _RequiredCourseRow extends StatelessWidget {
                   );
                 }
               }
-
               const shape = StadiumBorder();
               const textStyle =
                   TextStyle(fontWeight: FontWeight.w700, fontSize: 12);
@@ -739,7 +825,8 @@ class _RequiredCourseRow extends StatelessWidget {
                         backgroundColor: _lpPurple,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 6),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         shape: shape,
@@ -751,8 +838,10 @@ class _RequiredCourseRow extends StatelessWidget {
                       onPressed: onPressed,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: _lpPurple,
-                        side: BorderSide(color: _lpPurple.withValues(alpha: 0.4)),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        side: BorderSide(
+                            color: _lpPurple.withValues(alpha: 0.4)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 6),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         shape: shape,
