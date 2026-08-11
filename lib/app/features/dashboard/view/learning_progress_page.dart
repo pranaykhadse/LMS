@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
@@ -235,37 +236,41 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: iconColor, size: 16),
+              Icon(icon, size: 13, color: iconColor),
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: iconColor,
-                  letterSpacing: 0.6,
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF9CA3AF),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.6,
+                    height: 18 / 12,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: _lpNavy,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF1F2937),
+              fontSize: 36,
+              fontWeight: FontWeight.w700,
               height: 1.1,
             ),
           ),
@@ -287,47 +292,53 @@ class _OverallProgressCard extends StatelessWidget {
     final pct = (progress / 100.0).clamp(0.0, 1.0);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: FigmaTokens.heroGradient,
+        gradient: const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [Color(0xFF4A439F), Color(0xFF9650B4)],
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.show_chart_rounded, color: Colors.white, size: 18),
-              SizedBox(width: 8),
+            children: [
+              const Icon(Icons.star_border_rounded,
+                  color: Colors.white, size: 14),
+              const SizedBox(width: 6),
               Text(
-                'Overall Learning Progress',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+                'OVERALL LEARNING PROGRESS',
+                style: GoogleFonts.inter(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             '$progress%',
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 42,
-              fontWeight: FontWeight.w800,
+              fontSize: 48,
+              fontWeight: FontWeight.w700,
               height: 1.0,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(3),
             child: LinearProgressIndicator(
               value: pct,
-              minHeight: 7,
-              backgroundColor: Colors.white.withValues(alpha: 0.25),
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Colors.white),
+              minHeight: 6,
+              backgroundColor: Colors.white.withValues(alpha: 0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                  Colors.white.withValues(alpha: 0.5)),
             ),
           ),
         ],
@@ -348,38 +359,29 @@ class _CourseProgressCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         children: [
-          // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 12, 0),
+            padding: const EdgeInsets.fromLTRB(20, 16, 16, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Course Progress',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: _lpNavy)),
-                HoverBuilder(
-                  builder: (ctx, hovering) => TextButton(
-                    onPressed: () => Modular.to.pushNamed(
-                        CoursesModule.construct(CoursesModule.enrolledCourses)),
-                    style: TextButton.styleFrom(
-                      foregroundColor:
-                          hovering ? FigmaTokens.purpleHover : _lpPurple,
-                      minimumSize: Size.zero,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: const Text('View All',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 12)),
-                  ),
+                Text('Course Progress',
+                    style: GoogleFonts.inter(
+                        color: const Color(0xFF374151),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600)),
+                GestureDetector(
+                  onTap: () => Modular.to.pushNamed(
+                      CoursesModule.construct(CoursesModule.enrolledCourses)),
+                  child: Text('View All',
+                      style: GoogleFonts.inter(
+                          color: _lpPurple,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -412,54 +414,45 @@ class _CourseProgressRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pct = (course.progress / 100.0).clamp(0.0, 1.0);
-    final barColor = course.progress == 100 ? _lpGreen : _lpPurple;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+      child: Column(
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: _lpPurple.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.school_rounded, color: _lpPurple, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            children: [
+              const Icon(Icons.menu_book_rounded, size: 13, color: _lpPurple),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
                   course.courseName,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: _lpNavy,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF4B5563),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 5),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: pct,
-                    minHeight: 4,
-                    backgroundColor: const Color(0xFFEEF0F5),
-                    valueColor: AlwaysStoppedAnimation<Color>(barColor),
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${course.progress}%',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Text(
-            '${course.progress}%',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: course.progress == 100 ? _lpGreen : _lpNavy,
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: pct,
+              minHeight: 6,
+              backgroundColor: const Color(0xFFF3F4F6),
+              valueColor: AlwaysStoppedAnimation<Color>(_lpPurple),
             ),
           ),
         ],
@@ -482,8 +475,8 @@ class _ContinueLearningCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -554,36 +547,38 @@ class _UpcomingSessionsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: _lpNavy)),
-          const SizedBox(height: 12),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF374151),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
           if (sessions.isEmpty)
-            const Text('All caught up!',
-                style: TextStyle(color: _lpMuted, fontSize: 14))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'No upcoming sessions.',
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280), fontSize: 14),
+              ),
+            )
           else
-            ...sessions.asMap().entries.map((e) {
-              final i = e.key;
-              final s = e.value;
-              return Column(
-                children: [
-                  if (i > 0)
-                    const Divider(height: 1, color: FigmaTokens.cardBorders),
-                  _SessionRow(session: s),
-                ],
-              );
-            }),
+            ...sessions.map((s) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _SessionRow(session: s),
+                )),
         ],
       ),
     );
@@ -594,100 +589,142 @@ class _SessionRow extends StatelessWidget {
   const _SessionRow({required this.session});
   final UpcomingSession session;
 
-  String get _dateTimeLabel {
-    final date = session.startDate ?? '';
-    final time = session.startTime ?? '';
-    if (date.isEmpty && time.isEmpty) return '';
-    if (date.isEmpty) return time;
-    if (time.isEmpty) return date;
-    // Format: "Jul 18, 2026 · 11:00 AM"
-    final dt = DateTime.tryParse('$date ${time.length > 5 ? time.substring(0, 5) : time}');
-    if (dt == null) return '$date · $time';
+  String _formatDate(DateTime dt) {
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
-    final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-    final m = dt.minute.toString().padLeft(2, '0');
+    return '${weekdays[dt.weekday - 1]}, ${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+  }
+
+  String _formatTime(DateTime dt) {
+    final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final minute = dt.minute.toString().padLeft(2, '0');
     final ampm = dt.hour >= 12 ? 'PM' : 'AM';
-    return '${months[dt.month - 1]} ${dt.day}, ${dt.year} · $h:$m $ampm';
+    return '$hour:$minute $ampm';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
+    final startDt = session.startDateTime;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        session.courseName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                          color: _lpNavy,
+          // Title + Join button
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  session.courseName,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF1F2937),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
+                  final id = int.tryParse(session.courseId);
+                  if (id != null) {
+                    Modular.to.pushNamed(CoursesModule.construct(
+                        '${CoursesModule.detail}/$id'));
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _lpPurple,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF87171),
+                          shape: BoxShape.circle,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                if (_dateTimeLabel.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today_rounded,
-                          size: 11, color: _lpMuted),
                       const SizedBox(width: 4),
-                      Text(_dateTimeLabel,
-                          style: const TextStyle(
-                              fontSize: 11, color: _lpMuted)),
+                      Text(
+                        'Join',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
-                ],
-                if (session.instructor != null) ...[
-                  const SizedBox(height: 2),
-                  Text('Hosted by ${session.instructor}',
-                      style: const TextStyle(
-                          fontSize: 11, color: _lpMuted)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Date + time
+          if (startDt != null)
+            Row(
+              children: [
+                const Icon(Icons.calendar_today_rounded,
+                    size: 10, color: _lpPurple),
+                const SizedBox(width: 4),
+                Text(
+                  _formatDate(startDt),
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFF9CA3AF),
+                      fontSize: 12,
+                      height: 1.4),
+                ),
+                if (session.startTime != null &&
+                    session.startTime!.isNotEmpty) ...[
+                  Text(' • ',
+                      style: GoogleFonts.inter(
+                          color: const Color(0xFFD1D5DB), fontSize: 12)),
+                  Text(
+                    _formatTime(startDt),
+                    style: GoogleFonts.inter(
+                        color: const Color(0xFF9CA3AF),
+                        fontSize: 12,
+                        height: 1.4),
+                  ),
                 ],
               ],
             ),
-          ),
-          const SizedBox(width: 10),
-          HoverBuilder(
-            builder: (ctx, hovering) => ElevatedButton(
-              onPressed: () {
-                final courseId = int.tryParse(session.courseId);
-                if (courseId != null) {
-                  Modular.to.pushNamed(
-                    CoursesModule.construct(
-                        '${CoursesModule.detail}/$courseId'),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    hovering ? FigmaTokens.purpleHover : _lpPurple,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                shape: const StadiumBorder(),
-                textStyle: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 13),
+          // Hosted by
+          if (session.instructor != null &&
+              session.instructor!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text.rich(TextSpan(children: [
+              TextSpan(
+                text: 'Hosted by ',
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF9CA3AF), fontSize: 12),
               ),
-              child: const Text('Join'),
-            ),
-          ),
+              TextSpan(
+                text: session.instructor,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF4B5563),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ])),
+          ],
         ],
       ),
     );
@@ -704,66 +741,46 @@ class _RequiredCoursesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 14, 16, 8),
-            child: Text(
-              'Required For You',
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: _lpNavy),
+          Text(
+            'Required For You',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF374151),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const Divider(height: 1, color: FigmaTokens.cardBorders),
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
           ...courses.asMap().entries.map((e) {
             final i = e.key;
             final c = e.value;
             return Column(
               children: [
                 if (i > 0)
-                  const Divider(
-                      height: 1,
-                      color: FigmaTokens.cardBorders,
-                      indent: 16,
-                      endIndent: 16),
+                  const Divider(height: 1, color: Color(0xFFF3F4F6)),
                 _RequiredCourseRow(course: c, index: i + 1),
               ],
             );
           }),
-          const Divider(height: 1, color: FigmaTokens.cardBorders),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Center(
-              child: HoverBuilder(
-                builder: (context, hovering) => ElevatedButton(
-                  onPressed: () => Modular.to.pushNamed(
-                    CoursesModule.construct(CoursesModule.requiredCourses),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        hovering ? FigmaTokens.purpleHover : _lpPurple,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(220, 44),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'View All Required Courses',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
+          const SizedBox(height: 20),
+          Center(
+            child: _BrandButton(
+              label: 'View All Required Courses',
+              onPressed: () => Modular.to.pushNamed(
+                CoursesModule.construct(CoursesModule.requiredCourses),
               ),
             ),
           ),
+          const SizedBox(height: 4),
         ],
       ),
     );
@@ -777,78 +794,44 @@ class _RequiredCourseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final courseId = int.tryParse(course.courseId) ?? 0;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
       child: Row(
         children: [
           SizedBox(
-            width: 24,
+            width: 20,
             child: Text(
               '$index',
-              style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: _lpMuted),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              course.courseName,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: _lpNavy,
+              textAlign: TextAlign.right,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          HoverBuilder(
-            builder: (context, hovering) {
-              onPressed() {
-                final courseId = int.tryParse(course.courseId);
-                if (courseId != null) {
-                  Modular.to.pushNamed(
-                    CoursesModule.construct(
-                        '${CoursesModule.detail}/$courseId'),
-                  );
-                }
-              }
-              const shape = StadiumBorder();
-              const textStyle =
-                  TextStyle(fontWeight: FontWeight.w700, fontSize: 12);
-              return hovering
-                  ? ElevatedButton(
-                      onPressed: onPressed,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _lpPurple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: shape,
-                        textStyle: textStyle,
-                      ),
-                      child: const Text('View'),
-                    )
-                  : OutlinedButton(
-                      onPressed: onPressed,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _lpPurple,
-                        side: BorderSide(
-                            color: _lpPurple.withValues(alpha: 0.4)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 6),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: shape,
-                        textStyle: textStyle,
-                      ),
-                      child: const Text('View'),
-                    );
-            },
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              course.courseName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF374151),
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          _ViewButton(
+            onPressed: courseId == 0
+                ? null
+                : () => Modular.to.pushNamed(
+                      CoursesModule.construct(
+                          '${CoursesModule.detail}/$courseId'),
+                    ),
           ),
         ],
       ),
@@ -856,20 +839,92 @@ class _RequiredCourseRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared helper widgets
-// ─────────────────────────────────────────────────────────────────────────────
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-  final String text;
+// ─── View button (outlined → filled on hover) ────────────────────────────────
+
+class _ViewButton extends StatelessWidget {
+  const _ViewButton({required this.onPressed});
+  final VoidCallback? onPressed;
 
   @override
-  Widget build(BuildContext context) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w800,
-          color: _lpNavy,
+  Widget build(BuildContext context) {
+    return HoverBuilder(
+      builder: (context, hovering) {
+        final filled = hovering && onPressed != null;
+        const borderRadius = BorderRadius.all(Radius.circular(4));
+        return Material(
+          color: filled ? _lpPurple : Colors.transparent,
+          borderRadius: borderRadius,
+          child: InkWell(
+            borderRadius: borderRadius,
+            onTap: onPressed,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: _lpPurple),
+                borderRadius: borderRadius,
+              ),
+              child: Text(
+                'View',
+                style: GoogleFonts.inter(
+                  color: filled ? Colors.white : _lpPurple,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── Brand button (solid purple, hover state) ─────────────────────────────────
+
+class _BrandButton extends StatefulWidget {
+  const _BrandButton({required this.label, required this.onPressed});
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  State<_BrandButton> createState() => _BrandButtonState();
+}
+
+class _BrandButtonState extends State<_BrandButton> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onPressed != null;
+    return MouseRegion(
+      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: Material(
+        color: !enabled
+            ? _lpPurple.withValues(alpha: 0.5)
+            : _hovering
+                ? FigmaTokens.purpleHover
+                : _lpPurple,
+        borderRadius: BorderRadius.circular(6),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(6),
+          onTap: widget.onPressed,
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            child: Text(
+              widget.label,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ),
-      );
+      ),
+    );
+  }
 }
