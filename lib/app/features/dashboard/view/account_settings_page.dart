@@ -392,6 +392,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
             ],
           ),
         ),
+        const SizedBox(height: 16),
         const AppFooter(),
               ],
             ),
@@ -444,7 +445,8 @@ class _ProfileHeaderCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ── Top row: Profile label + Edit/Save/Cancel ─────────────          Row(
+          // ── Top row: Profile label + Edit/Save/Cancel ─────────────
+          Row(
             children: [
               const Icon(Icons.person_outline_rounded, color: _asPurple, size: 18),
               const SizedBox(width: 6),
