@@ -107,19 +107,16 @@ class _Body extends ConsumerWidget {
 
   Widget _buildList(BuildContext context, WidgetRef ref, List<InventoryItem> items) {
     final result = state.result!;
-    // Search/clear-search both hit the live API with no offline fallback -
-    // offering them while there's no real connection just invites a tap
-    // that can only fail, the same reasoning as RetryButton.
     final offline = isEffectivelyOffline(ref);
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(child: _PointsBanner(points: result.userPoints)),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Title row + Redeem History button ──
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -149,7 +146,8 @@ class _Body extends ConsumerWidget {
                       child: HoverBuilder(
                         builder: (context, hovering) => ElevatedButton.icon(
                           onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const RedeemHistoryPage()),
+                            MaterialPageRoute(
+                                builder: (_) => const RedeemHistoryPage()),
                           ),
                           icon: const Icon(Icons.history_rounded, size: 16),
                           label: const Text('Redeem History'),
@@ -158,7 +156,8 @@ class _Body extends ConsumerWidget {
                                 hovering ? FigmaTokens.purpleHover : _purple,
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 14),
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8)),
                             textStyle: const TextStyle(
@@ -170,55 +169,54 @@ class _Body extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: searchController,
-                        enabled: !offline,
-                        onSubmitted: (_) => onSearch(),
-                        decoration: InputDecoration(
-                          hintText: offline ? "You're offline" : 'Search items...',
-                          hintStyle: const TextStyle(color: _muted, fontSize: 14),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 0,
-                            horizontal: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: FigmaTokens.cardBorders),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: FigmaTokens.cardBorders),
-                          ),
-                        ),
-                      ),
+                // ── Search bar — full width with suffix icon ──
+                TextField(
+                  controller: searchController,
+                  enabled: !offline,
+                  onSubmitted: (_) => onSearch(),
+                  decoration: InputDecoration(
+                    hintText: offline ? "You're offline" : 'Search items...',
+                    hintStyle: const TextStyle(color: _muted, fontSize: 14),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 0,
+                      horizontal: 14,
                     ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: HoverBuilder(
-                        builder: (context, hovering) => ElevatedButton(
-                          onPressed: offline ? null : onSearch,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                hovering ? FigmaTokens.purpleHover : _purple,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          const BorderSide(color: FigmaTokens.cardBorders),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide:
+                          const BorderSide(color: FigmaTokens.cardBorders),
+                    ),
+                    suffixIcon: HoverBuilder(
+                      builder: (context, hovering) => InkWell(
+                        onTap: offline ? null : onSearch,
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(10),
+                          bottomRight: Radius.circular(10),
+                        ),
+                        child: Container(
+                          width: 44,
+                          decoration: BoxDecoration(
+                            color: hovering
+                                ? FigmaTokens.purpleHover
+                                : _purple,
+                            borderRadius: const BorderRadius.only(
+                              topRight: Radius.circular(9),
+                              bottomRight: Radius.circular(9),
                             ),
                           ),
-                          child: const Icon(Icons.search_rounded, size: 20),
+                          child: const Icon(Icons.search_rounded,
+                              color: Colors.white, size: 20),
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
                 if (state.query.isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -242,7 +240,8 @@ class _Body extends ConsumerWidget {
                 (context, index) => _ItemCard(
                   item: items[index],
                   isRedeeming: state.redeemingId == items[index].id,
-                  onRedeem: () => _showRedeemDialog(context, items[index], notifier),
+                  onRedeem: () =>
+                      _showRedeemDialog(context, items[index], notifier),
                   onView: () => _showDetail(context, items[index]),
                 ),
                 childCount: items.length,
@@ -251,12 +250,12 @@ class _Body extends ConsumerWidget {
                 crossAxisCount: Responsive.columns(
                   context,
                   phone: 2,
-                  tablet: 4,
-                  desktop: 5,
+                  tablet: 3,
+                  desktop: 4,
                 ),
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 0.72,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.78,
               ),
             ),
           ),
@@ -422,27 +421,24 @@ class _ItemCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Image — takes majority of card height
           Expanded(
+            flex: 6,
             child: _ItemImage(imageUrl: item.image),
           ),
+          // Info + buttons section
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 2),
             child: Text(
               item.name,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: _ink,
@@ -453,18 +449,18 @@ class _ItemCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
+            padding: const EdgeInsets.fromLTRB(10, 2, 10, 8),
             child: Text(
               '${item.points} pts',
               style: const TextStyle(
                 color: _purple,
                 fontSize: 12,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
             child: Row(
               children: [
                 Expanded(
@@ -475,7 +471,7 @@ class _ItemCard extends StatelessWidget {
                       minimumSize: const Size(0, 32),
                       side: const BorderSide(color: FigmaTokens.cardBorders),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ),
                     child: const Text(
@@ -510,7 +506,7 @@ class _ItemCard extends StatelessWidget {
                             disabledBackgroundColor: const Color(0xFFB0AFD4),
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                           ),
                           child: isRedeeming
