@@ -385,6 +385,15 @@ class _BadgeImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Wrap in white so transparent PNG areas and the greyscale
+    // semi-transparent overlay don't bleed through to the page background.
+    return Container(
+      color: Colors.white,
+      child: _buildImage(),
+    );
+  }
+
+  Widget _buildImage() {
     if (imageUrl == null) {
       return ColorFiltered(
         colorFilter: earned
