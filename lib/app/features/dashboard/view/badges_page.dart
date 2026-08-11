@@ -64,20 +64,18 @@ class _Body extends StatelessWidget {
             children: [
               // ── Two-column layout on desktop ──────────────────────────
               if (isWide)
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Left: profile card
-                      SizedBox(
-                        width: 160,
-                        child: _ProfileCard(userProfile: userProfile),
-                      ),
-                      const SizedBox(width: 16),
-                      // Right: badges content
-                      Expanded(child: _BadgesContent(result: result)),
-                    ],
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left: profile card — fixed width, natural height
+                    SizedBox(
+                      width: 160,
+                      child: _ProfileCard(userProfile: userProfile),
+                    ),
+                    const SizedBox(width: 16),
+                    // Right: badges content fills remaining width
+                    Expanded(child: _BadgesContent(result: result)),
+                  ],
                 )
               else ...[
                 // Mobile: profile card on top, badges below
