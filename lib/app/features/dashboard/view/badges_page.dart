@@ -13,6 +13,7 @@ const _purple = FigmaTokens.primaryPurple;
 const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
+const _gold = Color(0xFFFFC107);
 
 class BadgesPage extends ConsumerWidget {
   const BadgesPage({super.key});
@@ -60,19 +61,27 @@ class _Body extends StatelessWidget {
               _SectionHeader(
                 title: 'Your Badges',
                 count: result.earnedCount,
-                color: const Color(0xFFFFC107),
+                color: _gold,
                 icon: Icons.emoji_events_rounded,
               ),
               const SizedBox(height: 12),
-              if (result.earned.isEmpty)
-                _EmptySection(
-                  message: 'You have not earned any badges yet.',
-                  icon: Icons.emoji_events_outlined,
-                )
-              else
-                _BadgeGrid(badges: result.earned, earned: true),
+              // White card wrapping earned badges
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: result.earned.isEmpty
+                    ? _EmptySection(
+                        message: 'You have not earned any badges yet.',
+                        icon: Icons.emoji_events_outlined,
+                      )
+                    : _BadgeGrid(badges: result.earned, earned: true),
+              ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
               // ── Available badges ──────────────────────────────────────
               _SectionHeader(
@@ -82,13 +91,21 @@ class _Body extends StatelessWidget {
                 icon: Icons.military_tech_outlined,
               ),
               const SizedBox(height: 12),
-              if (result.notEarned.isEmpty)
-                _EmptySection(
-                  message: 'No additional badges available.',
-                  icon: Icons.military_tech_outlined,
-                )
-              else
-                _BadgeGrid(badges: result.notEarned, earned: false),
+              // White card wrapping available badges
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: result.notEarned.isEmpty
+                    ? _EmptySection(
+                        message: 'No additional badges available.',
+                        icon: Icons.military_tech_outlined,
+                      )
+                    : _BadgeGrid(badges: result.notEarned, earned: false),
+              ),
               const AppFooter(),
             ],
           ),
@@ -167,7 +184,7 @@ class _BadgeGrid extends StatelessWidget {
         ),
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.82,
+        childAspectRatio: 0.75,
       ),
       itemCount: badges.length,
       itemBuilder: (ctx, i) => _BadgeCard(badge: badges[i], earned: earned),
@@ -185,7 +202,7 @@ class _BadgeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       onTap: earned
           ? () => showDialog(
                 context: context,
@@ -195,63 +212,77 @@ class _BadgeCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: earned
-                  ? const Color(0xFFFFC107).withValues(alpha: .15)
-                  : const Color(0x0A000000),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(12),
           border: earned
-              ? Border.all(color: const Color(0xFFFFC107).withValues(alpha: .4), width: 1.5)
-              : null,
+              ? Border.all(color: _gold.withValues(alpha: .6), width: 1.5)
+              : Border.all(color: const Color(0xFFE5E7EB)),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // ── Image area ─────────────────────────────────────────────
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
-                child: _BadgeImage(imageUrl: badge.image, earned: earned),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
-              child: Text(
-                badge.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: earned ? _ink : _muted,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  height: 1.3,
+              flex: 7,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(11),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: _BadgeImage(imageUrl: badge.image, earned: earned),
                 ),
               ),
             ),
-            if (earned)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.check_circle_rounded, color: Color(0xFFFFC107), size: 14),
-                    SizedBox(width: 4),
-                    Text(
-                      'Earned',
-                      style: TextStyle(
-                        color: Color(0xFFFFC107),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
+            // ── Divider ────────────────────────────────────────────────
+            const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
+            // ── Name + earned chip ─────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    badge.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: earned ? _ink : _muted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                    ),
+                  ),
+                  if (earned) ...[
+                    const SizedBox(height: 5),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: _gold.withValues(alpha: .15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.star_rounded, color: _gold, size: 12),
+                          SizedBox(width: 3),
+                          Text(
+                            'Earned',
+                            style: TextStyle(
+                              color: _gold,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
+                ],
               ),
+            ),
           ],
         ),
       ),
@@ -374,12 +405,8 @@ class _EmptySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
       child: Column(
         children: [
           Icon(icon, color: _muted, size: 40),
