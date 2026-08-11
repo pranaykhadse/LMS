@@ -110,7 +110,7 @@ class _ProfileCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -159,7 +159,7 @@ class _BadgesContent extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +182,7 @@ class _BadgesContent extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,7 +274,7 @@ class _BadgeCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: earned
               ? Border.all(color: _gold.withValues(alpha: .6), width: 1.5)
-              : Border.all(color: const Color(0xFFE5E7EB)),
+              : Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
