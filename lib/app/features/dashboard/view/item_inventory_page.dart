@@ -114,117 +114,142 @@ class _Body extends ConsumerWidget {
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(child: _PointsBanner(points: result.userPoints)),
+        // ── White card below points banner ──────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Inventory',
-                            style: TextStyle(
-                              color: _ink,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Title row: folder icon + title + subtitle + Redeem History ──
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // folder icon
+                      const Icon(Icons.folder_outlined, color: _purple, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Inventory',
+                              style: TextStyle(
+                                color: _ink,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            const Text(
+                              'Items available to redeem with your points',
+                              style: TextStyle(color: _muted, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Redeem History button
+                      SizedBox(
+                        height: 36,
+                        child: HoverBuilder(
+                          builder: (context, hovering) => ElevatedButton.icon(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => const RedeemHistoryPage()),
+                            ),
+                            icon: const Icon(Icons.history_rounded, size: 15),
+                            label: const Text('Redeem History'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  hovering ? FigmaTokens.purpleHover : _purple,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                              textStyle: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 13),
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          const Text(
-                            'Items available to redeem with your points',
-                            style: TextStyle(color: _muted, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      height: 36,
-                      child: HoverBuilder(
-                        builder: (context, hovering) => ElevatedButton.icon(
-                          onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const RedeemHistoryPage()),
-                          ),
-                          icon: const Icon(Icons.history_rounded, size: 16),
-                          label: const Text('Redeem History'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                hovering ? FigmaTokens.purpleHover : _purple,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            textStyle: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 13),
-                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: searchController,
-                        enabled: !offline,
-                        onSubmitted: (_) => onSearch(),
-                        decoration: InputDecoration(
-                          hintText: offline ? "You're offline" : 'Search items...',
-                          hintStyle: const TextStyle(color: _muted, fontSize: 14),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 0,
-                            horizontal: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: FigmaTokens.cardBorders),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: FigmaTokens.cardBorders),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: HoverBuilder(
-                        builder: (context, hovering) => ElevatedButton(
-                          onPressed: offline ? null : onSearch,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                hovering ? FigmaTokens.purpleHover : _purple,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  // ── Search bar with prefix icon ──
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: searchController,
+                          enabled: !offline,
+                          onSubmitted: (_) => onSearch(),
+                          decoration: InputDecoration(
+                            hintText:
+                                offline ? "You're offline" : 'Search items...',
+                            hintStyle:
+                                const TextStyle(color: _muted, fontSize: 14),
+                            filled: true,
+                            fillColor: _bg,
+                            // prefix search icon
+                            prefixIcon: const Icon(Icons.search_rounded,
+                                color: _muted, size: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 0,
+                              horizontal: 14,
+                            ),
+                            border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: FigmaTokens.cardBorders),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: FigmaTokens.cardBorders),
                             ),
                           ),
-                          child: const Icon(Icons.search_rounded, size: 20),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: HoverBuilder(
+                          builder: (context, hovering) => ElevatedButton(
+                            onPressed: offline ? null : onSearch,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  hovering ? FigmaTokens.purpleHover : _purple,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child:
+                                const Icon(Icons.search_rounded, size: 20),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (state.query.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _ResetButton(onTap: offline ? null : onClearSearch),
                   ],
-                ),
-                if (state.query.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  _ResetButton(onTap: offline ? null : onClearSearch),
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -438,6 +463,7 @@ class _ItemCard extends StatelessWidget {
           Expanded(
             child: _ItemImage(imageUrl: item.image),
           ),
+          // ── Item name ──
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
             child: Text(
@@ -452,36 +478,45 @@ class _ItemCard extends StatelessWidget {
               ),
             ),
           ),
+          // ── Points chip (task 5) ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
-            child: Text(
-              '${item.points} pts',
-              style: const TextStyle(
-                color: _purple,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: _purple.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${item.points} pts',
+                style: const TextStyle(
+                  color: _purple,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
+          // ── View / Redeem buttons (task 4) ──
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
             child: Row(
               children: [
+                // View button — outlined with eye icon
                 Expanded(
-                  child: OutlinedButton(
+                  child: OutlinedButton.icon(
                     onPressed: onView,
+                    icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
+                    label: const Text('View'),
                     style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.zero,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       minimumSize: const Size(0, 32),
+                      foregroundColor: _muted,
                       side: const BorderSide(color: FigmaTokens.cardBorders),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                    child: const Text(
-                      'View',
-                      style: TextStyle(
-                        color: _muted,
+                      textStyle: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -489,50 +524,58 @@ class _ItemCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
+                // Redeem button — filled with redeem icon; disabled when redeemed
                 Expanded(
                   child: Consumer(
                     builder: (context, ref, _) {
                       final isOnline = watchIsOnline(ref);
+                      final canAct = item.canRedeem &&
+                          !item.isRedeemed &&
+                          !isRedeeming &&
+                          isOnline;
                       return HoverBuilder(
-                        builder: (context, hovering) => ElevatedButton(
-                          onPressed: item.canRedeem &&
-                                  !item.isRedeemed &&
-                                  !isRedeeming &&
-                                  isOnline
-                              ? onRedeem
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: const Size(0, 32),
-                            backgroundColor:
-                                hovering ? FigmaTokens.purpleHover : _purple,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: const Color(0xFFB0AFD4),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: isRedeeming
+                        builder: (context, hovering) => ElevatedButton.icon(
+                          onPressed: canAct ? onRedeem : null,
+                          icon: isRedeeming
                               ? const SizedBox(
-                                  width: 14,
-                                  height: 14,
+                                  width: 12,
+                                  height: 12,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     color: Colors.white,
                                   ),
                                 )
-                              : Text(
+                              : Icon(
                                   item.isRedeemed
-                                      ? 'Redeemed'
-                                      : (!isOnline && item.canRedeem
-                                          ? 'Offline'
-                                          : 'Redeem'),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                      ? Icons.check_circle_outline_rounded
+                                      : Icons.redeem_rounded,
+                                  size: 14,
                                 ),
+                          label: Text(
+                            item.isRedeemed
+                                ? 'Redeemed'
+                                : (!isOnline && item.canRedeem
+                                    ? 'Offline'
+                                    : 'Redeem'),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            minimumSize: const Size(0, 32),
+                            backgroundColor:
+                                hovering ? FigmaTokens.purpleHover : _purple,
+                            foregroundColor: Colors.white,
+                            // greyed out when redeemed / offline / can't redeem
+                            disabledBackgroundColor: const Color(0xFFB0AFD4),
+                            disabledForegroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       );
                     },
