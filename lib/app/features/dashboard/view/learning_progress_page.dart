@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,9 +18,6 @@ const _lpPurple = FigmaTokens.primaryPurple;
 const _lpNavy = FigmaTokens.cardTitles;
 const _lpMuted = FigmaTokens.noteBodyText;
 const _lpBg = FigmaTokens.pageBackground;
-const _lpGreen = Color(0xFF22C55E);
-const _lpOrange = Color(0xFFF59E0B);
-const _lpBlue = Color(0xFF3B82F6);
 
 class LearningProgressPage extends ConsumerWidget {
   const LearningProgressPage({super.key});
@@ -120,7 +119,7 @@ class _ProgressBody extends StatelessWidget {
               Expanded(
                 child: _StatCard(
                   icon: Icons.menu_book_rounded,
-                  iconColor: _lpBlue,
+                  iconColor: _lpPurple,
                   label: 'ENROLLED',
                   value: '${data.summary.enrolledCourses}',
                 ),
@@ -128,8 +127,8 @@ class _ProgressBody extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  icon: Icons.bolt_rounded,
-                  iconColor: _lpOrange,
+                  icon: Icons.error_outline_rounded,
+                  iconColor: const Color(0xFFD97706),
                   label: 'REQUIRED',
                   value: '${data.summary.requiredCourses}',
                 ),
@@ -137,8 +136,8 @@ class _ProgressBody extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  icon: Icons.check_circle_rounded,
-                  iconColor: _lpGreen,
+                  icon: Icons.check_circle_outline_rounded,
+                  iconColor: const Color(0xFF16A34A),
                   label: 'COMPLETED',
                   value: '${data.summary.completedCourses}',
                 ),
@@ -153,9 +152,9 @@ class _ProgressBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: data.continueLearning != null
-                      ? _ContinueLearningCard(info: data.continueLearning!)
-                      : const SizedBox.shrink(),
+                  child: _ContinueLearningCard(
+                    courses: data.extras.continueLearning,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -167,10 +166,8 @@ class _ProgressBody extends StatelessWidget {
               ],
             )
           else ...[
-            if (data.continueLearning != null) ...[
-              _ContinueLearningCard(info: data.continueLearning!),
-              const SizedBox(height: 16),
-            ],
+            _ContinueLearningCard(courses: data.extras.continueLearning),
+            const SizedBox(height: 16),
             _UpcomingSessionsCard(
               sessions: data.upcomingSessions,
               title: 'Upcoming Virtual Classes',
@@ -185,9 +182,7 @@ class _ProgressBody extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: _CourseProgressCard(
-                      courses: data.progressStatus,
-                    ),
+                    child: _CourseProgressCard(courses: data.progressStatus),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -203,6 +198,35 @@ class _ProgressBody extends StatelessWidget {
             ]
           else
             _OverallProgressCard(progress: data.summary.overallProgress),
+          const SizedBox(height: 16),
+
+          // ── Row 4: Rewards & Points (left) + Discussion Board (right) ─
+          if (isWide &&
+              (data.extras.rewards != null ||
+                  data.extras.discussionBoards.isNotEmpty))
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _RewardsPointsCard(rewards: data.extras.rewards),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _DiscussionBoardCard(
+                      boards: data.extras.discussionBoards),
+                ),
+              ],
+            )
+          else ...[
+            if (data.extras.rewards != null) ...[
+              _RewardsPointsCard(rewards: data.extras.rewards),
+              const SizedBox(height: 16),
+            ],
+            if (data.extras.discussionBoards.isNotEmpty) ...[
+              _DiscussionBoardCard(boards: data.extras.discussionBoards),
+              const SizedBox(height: 16),
+            ],
+          ],
           const SizedBox(height: 16),
 
           // ── Required For You ──────────────────────────────────────────
@@ -462,75 +486,246 @@ class _CourseProgressRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Continue Learning card
+// Continue Learning card — PageView carousel with auto-advance
 // ─────────────────────────────────────────────────────────────────────────────
-class _ContinueLearningCard extends StatelessWidget {
-  const _ContinueLearningCard({required this.info});
-  final ContinueLearningInfo info;
+class _ContinueLearningCard extends StatefulWidget {
+  const _ContinueLearningCard({required this.courses});
+  final List<DashboardContinueLearningItem> courses;
+
+  @override
+  State<_ContinueLearningCard> createState() => _ContinueLearningCardState();
+}
+
+class _ContinueLearningCardState extends State<_ContinueLearningCard> {
+  final _controller = PageController();
+  int _index = 0;
+  Timer? _timer;
+  bool _hovering = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  @override
+  void didUpdateWidget(_ContinueLearningCard old) {
+    super.didUpdateWidget(old);
+    if (old.courses.length != widget.courses.length) _startTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    if (widget.courses.length <= 1) return;
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted || !_controller.hasClients || _hovering) return;
+      _controller.animateToPage(
+        (_index + 1) % widget.courses.length,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Continue Learning',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-              color: _lpNavy,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            info.courseName,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: _lpPurple,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: HoverBuilder(
-              builder: (context, hovering) => ElevatedButton.icon(
-                onPressed: () {
-                  final courseId = int.tryParse(info.courseId);
-                  if (courseId != null) {
-                    Modular.to.pushNamed(
-                      CoursesModule.construct(
-                          '${CoursesModule.detail}/$courseId'),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                label: const Text(
-                  'Resume Lesson',
-                  style: TextStyle(fontWeight: FontWeight.w700),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      hovering ? FigmaTokens.purpleHover : _lpPurple,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(44),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  elevation: 0,
-                ),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: Container(
+        height: 280,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ──────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border:
+                    Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'CONTINUE LEARNING',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF6B7280),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  if (widget.courses.isNotEmpty)
+                    GestureDetector(
+                      onTap: () => Modular.to.pushNamed(
+                        CoursesModule.construct(
+                            CoursesModule.enrolledCourses),
+                      ),
+                      child: Text(
+                        'View All',
+                        style: GoogleFonts.inter(
+                          color: _lpPurple,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-          ),
-        ],
+            // ── PageView ─────────────────────────────────────────────
+            if (widget.courses.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'No courses in progress.',
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280), fontSize: 14),
+                ),
+              )
+            else
+              Expanded(
+                child: PageView.builder(
+                  controller: _controller,
+                  onPageChanged: (i) => setState(() => _index = i),
+                  itemCount: widget.courses.length,
+                  itemBuilder: (_, i) =>
+                      _ContinueLearningItem(course: widget.courses[i]),
+                ),
+              ),
+            // ── Dot indicators ────────────────────────────────────────
+            if (widget.courses.length > 1)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: const BoxDecoration(
+                  border:
+                      Border(top: BorderSide(color: Color(0xFFF3F4F6))),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(widget.courses.length, (i) {
+                    return GestureDetector(
+                      onTap: () {
+                        _startTimer();
+                        _controller.animateToPage(i,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin:
+                            const EdgeInsets.symmetric(horizontal: 3),
+                        width: i == _index ? 16 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: i == _index
+                              ? _lpPurple
+                              : const Color(0xFFD1D5DB),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _ContinueLearningItem extends StatelessWidget {
+  const _ContinueLearningItem({required this.course});
+  final DashboardContinueLearningItem course;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Thumbnail
+        SizedBox(
+          width: 120,
+          child: course.logoLink != null
+              ? Image.network(course.logoLink!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const _ImgFallback())
+              : const _ImgFallback(),
+        ),
+        // Content
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (course.className.isNotEmpty)
+                  Text(
+                    course.className.toUpperCase(),
+                    style: GoogleFonts.inter(
+                        color: _lpPurple,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5),
+                  ),
+                const SizedBox(height: 4),
+                Text(
+                  course.courseName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF1F2937),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
+                if (course.description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    course.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                        color: const Color(0xFF9CA3AF),
+                        fontSize: 12,
+                        height: 1.4),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                _BrandButton(
+                  label: 'Resume Lesson →',
+                  onPressed: () {
+                    final id = int.tryParse(course.courseId);
+                    if (id != null) {
+                      Modular.to.pushNamed(CoursesModule.construct(
+                          '${CoursesModule.detail}/$id'));
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -538,13 +733,36 @@ class _ContinueLearningCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Upcoming sessions
 // ─────────────────────────────────────────────────────────────────────────────
-class _UpcomingSessionsCard extends StatelessWidget {
-  const _UpcomingSessionsCard({required this.sessions, this.title = 'Upcoming Sessions'});
+// ─────────────────────────────────────────────────────────────────────────────
+// Upcoming sessions — filterd/sorted/collapsible like dashboard
+// ─────────────────────────────────────────────────────────────────────────────
+class _UpcomingSessionsCard extends StatefulWidget {
+  const _UpcomingSessionsCard(
+      {required this.sessions, this.title = 'Upcoming Sessions'});
   final List<UpcomingSession> sessions;
   final String title;
 
   @override
+  State<_UpcomingSessionsCard> createState() => _UpcomingSessionsCardState();
+}
+
+class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final upcoming = widget.sessions
+        .where((s) => s.startDateTime?.isAfter(now) ?? false)
+        .toList()
+      ..sort((a, b) =>
+          (a.startDateTime ?? DateTime(0))
+              .compareTo(b.startDateTime ?? DateTime(0)));
+    final shown = upcoming.take(8).toList();
+    const collapsed = 3;
+    final visible = _expanded ? shown : shown.take(collapsed).toList();
+    final hasMore = shown.length > collapsed;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -557,7 +775,7 @@ class _UpcomingSessionsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            title,
+            widget.title,
             style: GoogleFonts.inter(
               color: const Color(0xFF374151),
               fontSize: 15,
@@ -565,20 +783,34 @@ class _UpcomingSessionsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          if (sessions.isEmpty)
+          if (shown.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Text(
-                'No upcoming sessions.',
-                style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280), fontSize: 14),
-              ),
+              child: Text('No upcoming sessions.',
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280), fontSize: 14)),
             )
-          else
-            ...sessions.map((s) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _SessionRow(session: s),
-                )),
+          else ...[
+            for (var i = 0; i < visible.length; i++) ...[
+              if (i > 0) const SizedBox(height: 12),
+              _SessionRow(session: visible[i]),
+            ],
+            if (hasMore)
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _expanded = !_expanded),
+                    child: AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(Icons.keyboard_arrow_down_rounded,
+                          color: Color(0xFF6B7280), size: 22),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ],
       ),
     );
@@ -925,6 +1157,238 @@ class _BrandButtonState extends State<_BrandButton> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── Rewards & Points card ────────────────────────────────────────────────────
+
+class _RewardsPointsCard extends ConsumerWidget {
+  const _RewardsPointsCard({required this.rewards});
+  final DashboardRewards? rewards;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final points = rewards?.totalPoints ?? profile?.points ?? 0;
+    final firstName = profile?.firstname?.trim();
+    final activity = rewards?.activity ?? const <DashboardRewardActivity>[];
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text('Rewards & Points',
+                    style: GoogleFonts.inter(
+                        color: const Color(0xFF374151),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600)),
+              ),
+              GestureDetector(
+                onTap: () => Modular.to.pushNamed(
+                    CoursesModule.construct(CoursesModule.redeemPoints)),
+                child: Text('This Month',
+                    style: GoogleFonts.inter(
+                        color: _lpPurple,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: const BoxDecoration(
+                    color: _lpPurple, shape: BoxShape.circle),
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('$points',
+                        style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            height: 1)),
+                    Text('pts',
+                        style: GoogleFonts.inter(
+                            color: Colors.white70,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Great progress${firstName != null && firstName.isNotEmpty ? ', $firstName' : ''}!',
+                      style: GoogleFonts.inter(
+                          color: const Color(0xFF1F2937),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "You've earned points by completing courses and attending virtual classes.",
+                      style: GoogleFonts.inter(
+                          color: const Color(0xFF6B7280), fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (activity.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                children: [
+                  for (final a in activity)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: Text(a.label,
+                                  style: GoogleFonts.inter(
+                                      color: const Color(0xFF1F2937),
+                                      fontSize: 13))),
+                          Text('+${a.points} pts',
+                              style: GoogleFonts.inter(
+                                  color: _lpPurple,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Discussion Board card ────────────────────────────────────────────────────
+
+class _DiscussionBoardCard extends StatelessWidget {
+  const _DiscussionBoardCard({required this.boards});
+  final List<DashboardDiscussionBoardItem> boards;
+
+  @override
+  Widget build(BuildContext context) {
+    if (boards.isEmpty) return const SizedBox.shrink();
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Discussion Board',
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFF374151),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600)),
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _lpPurple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text('${boards.length} Active',
+                    style: GoogleFonts.inter(
+                        color: _lpPurple,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          for (var i = 0; i < boards.length; i++) ...[
+            if (i > 0) const Divider(height: 1, color: Color(0xFFF3F4F6)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(boards[i].title,
+                            style: GoogleFonts.inter(
+                                color: const Color(0xFF1F2937),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        Text(
+                          [
+                            if (boards[i].lastRepliedBy.isNotEmpty)
+                              boards[i].lastRepliedBy,
+                            if (boards[i].lastReply.isNotEmpty)
+                              boards[i].lastReply,
+                            '${boards[i].replyCount} ${boards[i].replyCount == 1 ? 'reply' : 'replies'}',
+                          ].join(' • '),
+                          style: GoogleFonts.inter(
+                              color: const Color(0xFF9CA3AF), fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _ViewButton(
+                    onPressed: () => Modular.to.pushNamed(
+                      CoursesModule.construct(
+                          '${CoursesModule.detail}/${boards[i].courseId}'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Image fallback ───────────────────────────────────────────────────────────
+
+class _ImgFallback extends StatelessWidget {
+  const _ImgFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: FigmaTokens.pageBackground,
+      alignment: Alignment.center,
+      child: const Icon(Icons.school_outlined, color: _lpPurple, size: 40),
     );
   }
 }
