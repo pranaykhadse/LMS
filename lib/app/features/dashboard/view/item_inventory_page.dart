@@ -120,40 +120,54 @@ class _Body extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Inventory',
-                  style: TextStyle(
-                    color: _ink,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Items available to redeem with your points',
-                  style: TextStyle(color: _muted, fontSize: 12),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 36,
-                  child: HoverBuilder(
-                    builder: (context, hovering) => ElevatedButton.icon(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const RedeemHistoryPage()),
-                      ),
-                      icon: const Icon(Icons.history_rounded, size: 16),
-                      label: const Text('Redeem History'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            hovering ? FigmaTokens.purpleHover : _purple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Inventory',
+                            style: TextStyle(
+                              color: _ink,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Items available to redeem with your points',
+                            style: TextStyle(color: _muted, fontSize: 12),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      height: 36,
+                      child: HoverBuilder(
+                        builder: (context, hovering) => ElevatedButton.icon(
+                          onPressed: () => Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const RedeemHistoryPage()),
+                          ),
+                          icon: const Icon(Icons.history_rounded, size: 16),
+                          label: const Text('Redeem History'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                hovering ? FigmaTokens.purpleHover : _purple,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            textStyle: const TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 13),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 14),
                 Row(
@@ -335,11 +349,13 @@ class _PointsBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
           colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
@@ -381,6 +397,7 @@ class _PointsBanner extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }

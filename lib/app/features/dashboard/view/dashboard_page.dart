@@ -1001,9 +1001,11 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Header — "Upcoming Sessions" plain title, no action
           Text(
             'Upcoming Sessions',
@@ -1046,7 +1048,8 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
                 ),
               ),
           ],
-        ],
+          ],
+        ),
       ),
     );
   }
