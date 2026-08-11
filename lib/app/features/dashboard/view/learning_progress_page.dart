@@ -678,13 +678,12 @@ class _SessionRow extends StatelessWidget {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                shape: const StadiumBorder(),
                 textStyle: const TextStyle(
-                    fontWeight: FontWeight.w700, fontSize: 12),
+                    fontWeight: FontWeight.w700, fontSize: 13),
               ),
               child: const Text('Join'),
             ),
