@@ -260,111 +260,137 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           onSave: _save,
         ),
         const SizedBox(height: 16),
-        _SectionCard(
-          icon: Icons.person_outline_rounded,
-          title: 'Personal Details',
-          children: [
-            _FieldRow(
-              label: 'Location',
-              value: profile.location,
-              controller: _isEditing ? _locationCtrl : null,
-            ),
-            _FieldRow(
-              label: 'Website',
-              value: profile.website?.toString(),
-              controller: _isEditing ? _websiteCtrl : null,
-            ),
-            _FieldRow(
-              label: 'LinkedIn',
-              value: profile.linkedIn?.toString(),
-              controller: _isEditing ? _linkedInCtrl : null,
-            ),
-            _FieldRow(
-              label: 'Phone Number',
-              value: widget.detail.phoneNumber,
-              controller: _isEditing ? _phoneCtrl : null,
-              keyboardType: TextInputType.phone,
-            ),
-            _ToggleRow(
-              label: 'Receive Text Message Reminders',
-              value: widget.detail.enableTextMessages,
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _SectionCard(
-          icon: Icons.work_outline_rounded,
-          title: 'Work Information',
-          children: [
-            _FieldRow(
-              label: 'Division',
-              value: profile.division,
-              controller: _isEditing ? _divisionCtrl : null,
-            ),
-            _FieldRow(
-              label: 'Department',
-              value: profile.department,
-              controller: _isEditing ? _departmentCtrl : null,
-            ),
-            _FieldRow(label: 'Cost Code', value: user.costCode),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _SectionCard(
-          icon: Icons.tune_rounded,
-          title: 'Preferences',
-          children: [
-            _ToggleRow(
-              label: 'Two-Factor Auth',
-              sublabel: 'Add an extra layer of security',
-              value: user.enableTwoFactorAuth == 1,
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _SectionCard(
-          icon: Icons.groups_outlined,
-          title: 'Primary Group',
-          children: [
-            _SelectedChip(label: user.primaryGroupLabel ?? 'Not assigned'),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _SectionCard(
-          icon: Icons.notifications_outlined,
-          title: 'Notification Type',
-          children: _notificationOptions
-              .map((label) => _RadioRow(
-                    label: label,
-                    selected: (profile.notificationType?.toString() ?? '')
-                        .toLowerCase()
-                        .contains(label.split(' ').first.toLowerCase()),
-                  ))
-              .toList(),
-        ),
-        const SizedBox(height: 16),
-        _SectionCard(
-          icon: Icons.security_rounded,
-          title: 'Security',
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => showDialog(
-                  context: context,
-                  builder: (_) => const _ResetPasswordDialog(),
-                ),
-                icon: const Icon(Icons.lock_outline_rounded, size: 18),
-                label: const Text('Reset Password'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _asInk,
-                  side: const BorderSide(color: FigmaTokens.cardBorders),
-                  minimumSize: const Size.fromHeight(46),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
+        // ── Single white card containing ALL sections ─────────────────
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Personal Details ──────────────────────────────────
+              _SectionBlock(
+                icon: Icons.person_outline_rounded,
+                title: 'Personal Details',
+                children: [
+                  _FieldRow(
+                    label: 'Location',
+                    value: profile.location,
+                    controller: _isEditing ? _locationCtrl : null,
+                  ),
+                  _FieldRow(
+                    label: 'Website',
+                    value: profile.website?.toString(),
+                    controller: _isEditing ? _websiteCtrl : null,
+                  ),
+                  _FieldRow(
+                    label: 'LinkedIn',
+                    value: profile.linkedIn?.toString(),
+                    controller: _isEditing ? _linkedInCtrl : null,
+                  ),
+                  _FieldRow(
+                    label: 'Phone Number',
+                    value: widget.detail.phoneNumber,
+                    controller: _isEditing ? _phoneCtrl : null,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  _ToggleRow(
+                    label: 'Receive Text Message Reminders',
+                    value: widget.detail.enableTextMessages,
+                  ),
+                ],
               ),
-            ),
-          ],
+              const _SectionDivider(),
+              // ── Work Information ──────────────────────────────────
+              _SectionBlock(
+                icon: Icons.work_outline_rounded,
+                title: 'Work Information',
+                children: [
+                  _FieldRow(
+                    label: 'Division',
+                    value: profile.division,
+                    controller: _isEditing ? _divisionCtrl : null,
+                  ),
+                  _FieldRow(
+                    label: 'Department',
+                    value: profile.department,
+                    controller: _isEditing ? _departmentCtrl : null,
+                  ),
+                  _FieldRow(label: 'Cost Code', value: user.costCode),
+                  _FieldRow(label: 'Supervisor Name', value: null),
+                  _FieldRow(label: 'Supervisor Email', value: null),
+                ],
+              ),
+              const _SectionDivider(),
+              // ── Preferences ───────────────────────────────────────
+              _SectionBlock(
+                icon: Icons.tune_rounded,
+                title: 'Preferences',
+                children: [
+                  _ToggleRow(
+                    label: 'Two-Factor Auth',
+                    sublabel: 'Add an extra layer of security',
+                    value: user.enableTwoFactorAuth == 1,
+                  ),
+                ],
+              ),
+              const _SectionDivider(),
+              // ── Primary Group ─────────────────────────────────────
+              _SectionBlock(
+                icon: Icons.groups_outlined,
+                title: 'Primary Group',
+                children: [
+                  _SelectedChip(label: user.primaryGroupLabel ?? 'Not assigned'),
+                ],
+              ),
+              const _SectionDivider(),
+              // ── Notification Type ─────────────────────────────────
+              _SectionBlock(
+                icon: Icons.notifications_outlined,
+                title: 'Notification Type',
+                children: _notificationOptions
+                    .map((label) => _RadioRow(
+                          label: label,
+                          selected: (profile.notificationType?.toString() ?? '')
+                              .toLowerCase()
+                              .contains(
+                                  label.split(' ').first.toLowerCase()),
+                        ))
+                    .toList(),
+              ),
+              const _SectionDivider(),
+              // ── Security ──────────────────────────────────────────
+              _SectionBlock(
+                icon: Icons.security_rounded,
+                title: 'Security',
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => showDialog(
+                        context: context,
+                        builder: (_) => const _ResetPasswordDialog(),
+                      ),
+                      icon: const Icon(Icons.lock_outline_rounded, size: 16),
+                      label: const Text('Reset Password'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: _asInk,
+                        side: const BorderSide(
+                            color: Color(0xFFD1D5DB), width: 1),
+                        minimumSize: const Size.fromHeight(44),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         const AppFooter(),
               ],
@@ -418,8 +444,7 @@ class _ProfileHeaderCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // ── Top row: Profile label + Edit/Save/Cancel ─────────────
-          Row(
+          // ── Top row: Profile label + Edit/Save/Cancel ─────────────          Row(
             children: [
               const Icon(Icons.person_outline_rounded, color: _asPurple, size: 18),
               const SizedBox(width: 6),
@@ -828,25 +853,26 @@ class _PasswordFieldState extends State<_PasswordField> {
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.icon, required this.title, required this.children});
+// ─── Section block (used inside the single white card) ────────────────────────
+
+class _SectionBlock extends StatelessWidget {
+  const _SectionBlock({
+    required this.icon,
+    required this.title,
+    required this.children,
+  });
   final IconData icon;
   final String title;
   final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Section title row
           Row(
             children: [
               Icon(icon, size: 15, color: _asPurple),
@@ -862,16 +888,26 @@ class _SectionCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
+          // Fields
           ...List.generate(children.length * 2 - 1, (i) {
-            if (i.isOdd) return const SizedBox(height: 12);
+            if (i.isOdd) return const SizedBox(height: 14);
             return children[i ~/ 2];
           }),
         ],
       ),
     );
+  }
+}
+
+// ─── Divider between sections inside the white card ───────────────────────────
+
+class _SectionDivider extends StatelessWidget {
+  const _SectionDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6));
   }
 }
 
@@ -892,15 +928,15 @@ class _FieldRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Label — fixed width, purple, left side
+        // Label — fixed width, dark text, left side
         SizedBox(
-          width: 140,
+          width: 160,
           child: Text(
             '$label:',
             style: const TextStyle(
-              color: _asPurple,
+              color: _asInk,
               fontSize: 13,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
