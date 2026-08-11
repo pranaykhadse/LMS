@@ -239,6 +239,12 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
       children: [
         const InlineBackHeader(title: 'Account Settings'),
         const SizedBox(height: 16),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
         _ProfileHeaderCard(
           name: name.isEmpty ? 'User' : name,
           email: user.email ?? '',
@@ -361,6 +367,10 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           ],
         ),
         const AppFooter(),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -400,25 +410,31 @@ class _ProfileHeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 16, 14, 24),
+      padding: const EdgeInsets.fromLTRB(18, 16, 14, 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 16, offset: Offset(0, 6))],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
       ),
       child: Column(
         children: [
+          // ── Top row: Profile label + Edit/Save/Cancel ─────────────
           Row(
             children: [
-              const Icon(Icons.person_outline_rounded, color: _asPurple, size: 20),
+              const Icon(Icons.person_outline_rounded, color: _asPurple, size: 18),
               const SizedBox(width: 6),
-              const Text('Profile', style: TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 16)),
+              const Text('Profile',
+                  style: TextStyle(
+                      color: _asInk,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15)),
               const Spacer(),
               if (isEditing) ...[
                 TextButton(
                   onPressed: isSaving ? null : onCancel,
                   style: TextButton.styleFrom(foregroundColor: _asMuted),
-                  child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: const Text('Cancel',
+                      style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 4),
                 HoverBuilder(
@@ -429,18 +445,19 @@ class _ProfileHeaderCard extends StatelessWidget {
                           hovering ? FigmaTokens.purpleHover : _asPurple,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      textStyle: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 13),
                     ),
                     child: isSaving
                         ? const SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
+                                strokeWidth: 2, color: Colors.white),
                           )
                         : const Text('Save'),
                   ),
@@ -449,67 +466,101 @@ class _ProfileHeaderCard extends StatelessWidget {
                 HoverBuilder(
                   builder: (context, hovering) => ElevatedButton.icon(
                     onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    icon: const Icon(Icons.edit_outlined, size: 15),
                     label: const Text('Edit'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor:
                           hovering ? FigmaTokens.purpleHover : _asPurple,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      textStyle: const TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 13),
                     ),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 18),
-          Stack(
-            clipBehavior: Clip.none,
+          const SizedBox(height: 20),
+          // ── Avatar left / name+email right ────────────────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _Avatar(url: profile.avatarUrl),
-              if (isUploadingAvatar)
-                const Positioned.fill(
-                  child: CircleAvatar(
-                    radius: 44,
-                    backgroundColor: Colors.black45,
-                    child: SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              // Avatar with camera overlay
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  _Avatar(url: profile.avatarUrl),
+                  if (isUploadingAvatar)
+                    const Positioned.fill(
+                      child: CircleAvatar(
+                        radius: 44,
+                        backgroundColor: Colors.black45,
+                        child: SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    right: -2,
+                    bottom: -2,
+                    child: Material(
+                      color: _asPurple,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        onTap: isUploadingAvatar ? null : onPickAvatar,
+                        customBorder: const CircleBorder(),
+                        child: const Padding(
+                          padding: EdgeInsets.all(7),
+                          child: Icon(Icons.camera_alt_rounded,
+                              size: 16, color: Colors.white),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              Positioned(
-                right: -2,
-                bottom: -2,
-                child: Material(
-                  color: _asPurple,
-                  shape: const CircleBorder(),
-                  child: InkWell(
-                    onTap: isUploadingAvatar ? null : onPickAvatar,
-                    customBorder: const CircleBorder(),
-                    child: const Padding(
-                      padding: EdgeInsets.all(7),
-                      child: Icon(Icons.camera_alt_rounded, size: 16, color: Colors.white),
-                    ),
-                  ),
-                ),
+                ],
+              ),
+              const SizedBox(width: 20),
+              // Name + email (or edit fields)
+              Expanded(
+                child: isEditing
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const _FieldLabel('First Name'),
+                          _EditableName(
+                              controller: firstnameController,
+                              hint: 'First name'),
+                          const SizedBox(height: 10),
+                          const _FieldLabel('Last Name'),
+                          _EditableName(
+                              controller: lastnameController,
+                              hint: 'Last name'),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(name,
+                              style: const TextStyle(
+                                  color: _asInk,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 18)),
+                          const SizedBox(height: 4),
+                          Text(email,
+                              style: const TextStyle(
+                                  color: _asMuted, fontSize: 13)),
+                        ],
+                      ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          if (isEditing) ...[
-            const _FieldLabel('First Name'),
-            _EditableName(controller: firstnameController, hint: 'First name'),
-            const SizedBox(height: 10),
-            const _FieldLabel('Last Name'),
-            _EditableName(controller: lastnameController, hint: 'Last name'),
-          ] else
-            Text(name, style: const TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 18)),
-          const SizedBox(height: 4),
-          Text(email, style: const TextStyle(color: _asMuted, fontSize: 13)),
         ],
       ),
     );
@@ -787,30 +838,32 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: Color(0x0A000000), blurRadius: 16, offset: Offset(0, 6))],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 16, color: _asPurple),
+              Icon(icon, size: 15, color: _asPurple),
               const SizedBox(width: 6),
               Text(
                 title.toUpperCase(),
                 style: const TextStyle(
                   color: _asPurple,
                   fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                  letterSpacing: 0.4,
+                  fontSize: 11,
+                  letterSpacing: 0.6,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
           const SizedBox(height: 14),
           ...List.generate(children.length * 2 - 1, (i) {
             if (i.isOdd) return const SizedBox(height: 12);
@@ -831,52 +884,85 @@ class _FieldRow extends StatelessWidget {
   });
   final String label;
   final String? value;
-
-  /// When set, this field is editable — a TextField is shown instead of the
-  /// read-only box, bound to this controller.
   final TextEditingController? controller;
   final TextInputType? keyboardType;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(label, style: const TextStyle(color: _asMuted, fontSize: 12, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 6),
-        if (controller != null)
-          TextField(
-            controller: controller,
-            keyboardType: keyboardType,
-            style: const TextStyle(color: _asInk, fontSize: 14, fontWeight: FontWeight.w600),
-            decoration: InputDecoration(
-              hintText: 'Not provided',
-              filled: true,
-              fillColor: _asFieldBg,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          )
-        else
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            decoration: BoxDecoration(
-              color: _asFieldBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              (value ?? '').trim().isNotEmpty ? value! : 'Not provided',
-              style: TextStyle(
-                color: (value ?? '').trim().isNotEmpty ? _asInk : _asMuted,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+        // Label — fixed width, purple, left side
+        SizedBox(
+          width: 140,
+          child: Text(
+            '$label:',
+            style: const TextStyle(
+              color: _asPurple,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
           ),
+        ),
+        const SizedBox(width: 12),
+        // Input — fills remaining space
+        Expanded(
+          child: controller != null
+              ? TextField(
+                  controller: controller,
+                  keyboardType: keyboardType,
+                  style: const TextStyle(
+                      color: _asInk,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500),
+                  decoration: InputDecoration(
+                    hintText: 'Not provided',
+                    hintStyle:
+                        const TextStyle(color: _asMuted, fontSize: 13),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(
+                          color: Color(0xFFD1D5DB), width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(
+                          color: Color(0xFFD1D5DB), width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide:
+                          const BorderSide(color: _asPurple, width: 1.5),
+                    ),
+                  ),
+                )
+              : Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                        color: const Color(0xFFD1D5DB), width: 1),
+                  ),
+                  child: Text(
+                    (value ?? '').trim().isNotEmpty
+                        ? value!
+                        : 'Not provided',
+                    style: TextStyle(
+                      color: (value ?? '').trim().isNotEmpty
+                          ? _asInk
+                          : _asMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+        ),
       ],
     );
   }
@@ -892,17 +978,27 @@ class _ToggleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(color: _asFieldBg, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
+      ),
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: _asInk, fontWeight: FontWeight.w700, fontSize: 14)),
+                Text(label,
+                    style: const TextStyle(
+                        color: _asInk,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13)),
                 if (sublabel != null) ...[
                   const SizedBox(height: 2),
-                  Text(sublabel!, style: const TextStyle(color: _asMuted, fontSize: 12)),
+                  Text(sublabel!,
+                      style:
+                          const TextStyle(color: _asMuted, fontSize: 12)),
                 ],
               ],
             ),
@@ -910,7 +1006,7 @@ class _ToggleRow extends StatelessWidget {
           Switch(
             value: value,
             onChanged: (_) => Toast.info(context, 'Coming soon.'),
-            activeThumbColor: _asPurple,
+            activeColor: _asPurple,
           ),
         ],
       ),
@@ -926,17 +1022,21 @@ class _SelectedChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: _asPurple.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _asPurple, width: 1.4),
+        color: _asPurple.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: _asPurple, width: 1.2),
       ),
       child: Row(
         children: [
-          const Icon(Icons.radio_button_checked, color: _asPurple, size: 18),
+          const Icon(Icons.radio_button_checked, color: _asPurple, size: 17),
           const SizedBox(width: 10),
-          Text(label, style: const TextStyle(color: _asPurple, fontWeight: FontWeight.w700, fontSize: 14)),
+          Text(label,
+              style: const TextStyle(
+                  color: _asPurple,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13)),
         ],
       ),
     );
@@ -952,18 +1052,23 @@ class _RadioRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: selected ? _asPurple.withValues(alpha: 0.08) : _asFieldBg,
-        borderRadius: BorderRadius.circular(10),
-        border: selected ? Border.all(color: _asPurple, width: 1.4) : null,
+        color: selected ? _asPurple.withValues(alpha: 0.06) : Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: selected ? _asPurple : const Color(0xFFD1D5DB),
+          width: selected ? 1.2 : 1,
+        ),
       ),
       child: Row(
         children: [
           Icon(
-            selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+            selected
+                ? Icons.radio_button_checked
+                : Icons.radio_button_unchecked,
             color: selected ? _asPurple : _asMuted,
-            size: 18,
+            size: 17,
           ),
           const SizedBox(width: 10),
           Text(
@@ -971,7 +1076,7 @@ class _RadioRow extends StatelessWidget {
             style: TextStyle(
               color: selected ? _asPurple : _asInk,
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 13,
             ),
           ),
         ],
