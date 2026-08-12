@@ -1176,6 +1176,7 @@ class _CatalogCourseCard extends ConsumerStatefulWidget {
 class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
   bool _showOverlay = false;
   bool _isBusy = false;
+  bool _hovering = false;
 
   Future<void> _handleDevPlanAction(BuildContext context, bool isInPlan) async {
     final auth = ref.read(AuthStateNotifier.provider);
@@ -1233,7 +1234,10 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
 
     final isWide = MediaQuery.sizeOf(context).width >= 760;
 
-    return Container(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1461,7 +1465,8 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
             ),
         ],
       ),
-    );
+    ), // Container
+    ); // MouseRegion
   }
 }
 
