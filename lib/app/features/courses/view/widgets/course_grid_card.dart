@@ -51,7 +51,7 @@ class CourseGridCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         children: [
           // ── Image — full-width, no side padding ──────────────────────
           SizedBox(
@@ -84,56 +84,58 @@ class CourseGridCard extends StatelessWidget {
             ),
           ),
 
-          // ── White content area ────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Info section (next session date, rating, etc.)
-                if (infoSection != null) ...[
-                  infoSection!,
-                  const SizedBox(height: 6),
-                ],
-                // Course title — pushed down a bit
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.roboto(
-                    color: const Color(0xFF1A1A2E),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Full-width filled button — reduced border radius
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: onPressed,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: FigmaTokens.primaryPurple,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor:
-                          FigmaTokens.primaryPurple.withValues(alpha: 0.5),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      textStyle: GoogleFonts.roboto(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
+          // ── White content area — title + button pinned to bottom ────
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Info section (next session date, rating, etc.)
+                  if (infoSection != null) ...[
+                    infoSection!,
+                    const SizedBox(height: 6),
+                  ],
+                  // Course title — pushed down a bit
+                  const SizedBox(height: 8),
+                  Text(
+                    title,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.roboto(
+                      color: const Color(0xFF1A1A2E),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      height: 1.35,
                     ),
-                    child: Text(buttonLabel),
                   ),
-                ),
-              ],
+                  // Spacer pushes button to 15px from bottom
+                  const Spacer(),
+                  // Full-width filled button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: onPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: FigmaTokens.primaryPurple,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor:
+                            FigmaTokens.primaryPurple.withValues(alpha: 0.5),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        textStyle: GoogleFonts.roboto(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      child: Text(buttonLabel),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

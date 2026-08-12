@@ -509,35 +509,63 @@ class _FilterPanel extends StatelessWidget {
         );
 
         if (wide) {
-          return Row(
-            children: [
-              Expanded(flex: 5, child: searchField),
-              const SizedBox(width: 16),
-              Expanded(flex: 3, child: skillDropdown),
-              const SizedBox(width: 16),
-              undoButton,
-              const SizedBox(width: 16),
-              SizedBox(height: 42, child: calendarButton),
-            ],
-          );
-        }
-
-        return Column(
-          children: [
-            searchField,
-            const SizedBox(height: 14),
-            skillDropdown,
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                undoButton,
-                const SizedBox(width: 10),
-                Expanded(
-                  child: SizedBox(height: 48, child: calendarButton),
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
-          ],
+            child: Row(
+              children: [
+                Expanded(flex: 5, child: searchField),
+                const SizedBox(width: 16),
+                Expanded(flex: 3, child: skillDropdown),
+                const SizedBox(width: 16),
+                undoButton,
+                const SizedBox(width: 16),
+                SizedBox(height: 42, child: calendarButton),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              searchField,
+              const SizedBox(height: 14),
+              skillDropdown,
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  undoButton,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(height: 48, child: calendarButton),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -1250,7 +1278,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: MainAxisSize.max,
             children: [
               // ── Full-width image ──────────────────────────────────────
               SizedBox(
@@ -1258,91 +1286,88 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                 child: _CourseImage(url: widget.course.logo),
               ),
               // ── White content area ────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Next session info
-                    if (widget.course.nextSession != null) ...[
+              // ── White content area — title + button pinned to bottom ─
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.course.nextSession != null) ...[
+                        Text(
+                          'NEXT AVAILABLE',
+                          style: GoogleFonts.roboto(
+                            color: const Color(0xFF9CA3AF),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today_rounded,
+                                size: 12, color: FigmaTokens.primaryPurple),
+                            const SizedBox(width: 5),
+                            Text(
+                              _formatNextSession(widget.course.nextSession!),
+                              style: GoogleFonts.roboto(
+                                color: FigmaTokens.primaryPurple,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+                      const SizedBox(height: 8),
                       Text(
-                        'NEXT AVAILABLE',
+                        widget.course.name.isEmpty
+                            ? 'Untitled Course'
+                            : widget.course.name,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.roboto(
-                          color: const Color(0xFF9CA3AF),
-                          fontSize: 10,
+                          color: const Color(0xFF1A1A2E),
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
+                          height: 1.35,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(Icons.calendar_today_rounded,
-                              size: 12,
-                              color: FigmaTokens.primaryPurple),
-                          const SizedBox(width: 5),
-                          Text(
-                            _formatNextSession(
-                                widget.course.nextSession!),
-                            style: GoogleFonts.roboto(
-                              color: FigmaTokens.primaryPurple,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
+                      // Spacer pins button 15px from bottom
+                      const Spacer(),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: viewDisabled
+                              ? null
+                              : () => Modular.to.pushNamed(
+                                    CoursesModule.construct(
+                                      '${CoursesModule.detail}/${widget.course.id}',
+                                    ),
+                                    arguments: widget.course.offlineCourse,
+                                  ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: FigmaTokens.primaryPurple,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: FigmaTokens.primaryPurple
+                                .withValues(alpha: 0.5),
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            textStyle: GoogleFonts.roboto(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                    ],
-                    // Title pushed down a bit
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.course.name.isEmpty
-                          ? 'Untitled Course'
-                          : widget.course.name,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.roboto(
-                        color: const Color(0xFF1A1A2E),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Full-width filled button — reduced border radius
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: viewDisabled
-                            ? null
-                            : () => Modular.to.pushNamed(
-                                  CoursesModule.construct(
-                                    '${CoursesModule.detail}/${widget.course.id}',
-                                  ),
-                                  arguments: widget.course.offlineCourse,
-                                ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: FigmaTokens.primaryPurple,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: FigmaTokens.primaryPurple
-                              .withValues(alpha: 0.5),
-                          elevation: 0,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          textStyle: GoogleFonts.roboto(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          child: const Text('View Course'),
                         ),
-                        child: const Text('View Course'),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
