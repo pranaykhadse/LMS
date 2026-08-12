@@ -132,11 +132,13 @@ class CourseGridCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                // More space between title and button
+                const SizedBox(height: 16),
                 OutlinedButton(
                   onPressed: onPressed,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 10),
+                        horizontal: 28, vertical: 14),
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Colors.white),
                     minimumSize: Size.zero,
