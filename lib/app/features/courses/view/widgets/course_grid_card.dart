@@ -54,55 +54,59 @@ class CourseGridCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── 1. Image with title overlay ──────────────────────────────
-          SizedBox(
-            height: 160,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Thumbnail
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(11)),
-                  child: imageUrl != null
-                      ? Image.network(
-                          imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const _ImgFallback(),
-                        )
-                      : const _ImgFallback(),
-                ),
-                // Offline save button
-                if (offlineCourse != null)
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: OfflineCourseButton(course: offlineCourse!),
+          // ── 1. Image with outer padding + title overlay ──────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            child: SizedBox(
+              height: 160,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Thumbnail — small border radius, not full card radius
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: imageUrl != null
+                        ? Image.network(
+                            imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const _ImgFallback(),
+                          )
+                        : const _ImgFallback(),
                   ),
-                // Title overlay bar at bottom of image
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                    decoration: BoxDecoration(
-                      color: _cardPurple.withValues(alpha: 0.85),
+                  // Offline save button
+                  if (offlineCourse != null)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: OfflineCourseButton(course: offlineCourse!),
                     ),
-                    child: Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.roboto(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        height: 1.35,
+                  // Title overlay bar at bottom of image
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(6)),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                        color: _cardPurple.withValues(alpha: 0.85),
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            height: 1.35,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
