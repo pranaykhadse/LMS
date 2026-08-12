@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -262,7 +262,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     crossAxisCount: columns,
                     crossAxisSpacing: width >= 760 ? 28 : 18,
                     mainAxisSpacing: width >= 760 ? 28 : 34,
-                    mainAxisExtent: width >= 760 ? 365 : 390,
+                    mainAxisExtent: width >= 760 ? 345 : 370,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _CatalogCourseCard(
@@ -409,7 +409,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               crossAxisCount: columns,
               crossAxisSpacing: width >= 760 ? 28 : 18,
               mainAxisSpacing: width >= 760 ? 28 : 34,
-              mainAxisExtent: width >= 760 ? 365 : 390,
+              mainAxisExtent: width >= 760 ? 345 : 370,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) => _CatalogCourseCard(
@@ -1280,13 +1280,13 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.max,
             children: [
-              // ── Full-width image ──────────────────────────────────────
+              // -- Full-width image --------------------------------------
               SizedBox(
                 height: 160,
                 child: _CourseImage(url: widget.course.logo),
               ),
-              // ── White content area ────────────────────────────────────
-              // ── White content area — title + button pinned to bottom ─
+              // -- White content area ------------------------------------
+              // -- White content area � title + button pinned to bottom -
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
@@ -1372,7 +1372,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               ),
             ],
           ),
-          // Dev plan button — top-right
+          // Dev plan button � top-right
           if (membership.loaded)
             Positioned(
               top: 10,
@@ -1383,7 +1383,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                     isOnline ? () => setState(() => _showOverlay = true) : null,
               ),
             ),
-          // Offline save button — top-left
+          // Offline save button � top-left
           Positioned(
             top: 10,
             left: 10,
