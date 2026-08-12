@@ -32,8 +32,8 @@ class CourseGridCard extends StatelessWidget {
   /// Optional white middle section (next session, progress, rating, etc.).
   final Widget? infoSection;
 
-  // Purple matching the reference: #5457C1
-  static const _cardPurple = Color(0xFF5457C1);
+  // Primary brand purple
+  static const _cardPurple = FigmaTokens.primaryPurple;
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +172,7 @@ class _ImgFallback extends StatelessWidget {
       color: const Color(0xFFF1EFFB),
       alignment: Alignment.center,
       child: const Icon(Icons.school_outlined,
-          size: 54, color: Color(0xFF5457C1)),
+          size: 54, color: FigmaTokens.primaryPurple),
     );
   }
 }

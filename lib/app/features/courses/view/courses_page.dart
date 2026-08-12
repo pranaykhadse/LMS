@@ -1297,7 +1297,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                 child: Container(
                   width: double.infinity,
                   padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
-                  decoration: const BoxDecoration(color: Color(0xFF5457C1)),
+                  decoration: const BoxDecoration(color: FigmaTokens.primaryPurple),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
