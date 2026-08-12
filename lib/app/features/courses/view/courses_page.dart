@@ -262,7 +262,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     crossAxisCount: columns,
                     crossAxisSpacing: width >= 760 ? 28 : 18,
                     mainAxisSpacing: width >= 760 ? 28 : 34,
-                    mainAxisExtent: width >= 760 ? 445 : 470,
+                    mainAxisExtent: width >= 760 ? 365 : 390,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _CatalogCourseCard(
@@ -409,7 +409,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               crossAxisCount: columns,
               crossAxisSpacing: width >= 760 ? 28 : 18,
               mainAxisSpacing: width >= 760 ? 28 : 34,
-              mainAxisExtent: width >= 760 ? 445 : 470,
+              mainAxisExtent: width >= 760 ? 365 : 390,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) => _CatalogCourseCard(
@@ -1176,7 +1176,6 @@ class _CatalogCourseCard extends ConsumerStatefulWidget {
 class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
   bool _showOverlay = false;
   bool _isBusy = false;
-  bool _hovering = false;
 
   Future<void> _handleDevPlanAction(BuildContext context, bool isInPlan) async {
     final auth = ref.read(AuthStateNotifier.provider);
@@ -1234,153 +1233,54 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
 
     final isWide = MediaQuery.sizeOf(context).width >= 760;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: Container(
+    return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: const [
+        borderRadius: BorderRadius.circular(isWide ? 15 : 14),
+        boxShadow: [
           BoxShadow(
-              color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
         ],
       ),
       child: Stack(
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.max,
             children: [
-              // ── Image: padding 15px sides, 20px top, 185px tall ──────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(15, 20, 15, 0),
-                child: SizedBox(
-                  height: 210,
-                  child: Stack(
-                    children: [
-                      // Background: logo centered with low opacity
-                      Positioned.fill(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Container(
-                            color: FigmaTokens.primaryPurple
-                                .withValues(alpha: 0.08),
-                            alignment: Alignment.center,
-                            child: Image.asset(
-                              'assets/images/logo.png',
-                              fit: BoxFit.contain,
-                              width: 140,
-                              opacity: const AlwaysStoppedAnimation(0.18),
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Foreground: course image as rectangle (not full bleed)
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        right: 40,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: widget.course.logo != null
-                              ? Image.network(
-                                  widget.course.logo!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      const SizedBox.shrink(),
-                                )
-                              : const SizedBox.shrink(),
-                        ),
-                      ),
-                      // Leadership Edge Live logo — top-right
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          height: 26,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      // Offline button — hover only, top-left
-                      if (_hovering)
-                        Positioned(
-                          top: 8,
-                          left: 8,
-                          child: OfflineCourseButton(
-                              course: widget.course.offlineCourse),
-                        ),
-                      // Dev plan button — hover only, top-right
-                      if (_hovering && membership.loaded)
-                        Positioned(
-                          top: 40,
-                          right: 8,
-                          child: _DevPlanButton(
-                            isInPlan: isInPlan,
-                            onTap: isOnline
-                                ? () => setState(() => _showOverlay = true)
-                                : null,
-                          ),
-                        ),
-                      // Title overlay — bottom-right
-                      Positioned(
-                        right: 10,
-                        bottom: 10,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 160),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: FigmaTokens.primaryPurple
-                                  .withValues(alpha: 0.90),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              widget.course.name.isEmpty
-                                  ? 'Untitled Course'
-                                  : widget.course.name,
-                              maxLines: 4,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.roboto(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                height: 1.35,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // ── div.center-content: padding 15px, 80px fixed ─────────
               SizedBox(
-                height: widget.course.nextSession == null ? 0 : 80,
+                height: isWide ? 140 : 160,
+                child: _CourseImage(url: widget.course.logo),
+              ),
+              // Fixed height regardless of whether a course has a next
+              // session, so every card in a row lines up identically
+              // instead of the footer's position shifting per-card.
+              SizedBox(
+                height: 58,
                 child: widget.course.nextSession == null
                     ? null
                     : Padding(
-                        padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                'The next available course begins on',
-                                style: GoogleFonts.roboto(
-                                  color: const Color(0xFF767676),
-                                  fontSize: 12,
-                                ),
+                            Text(
+                              'The next available course begins on',
+                              style: GoogleFonts.roboto(
+                                color: const Color(0xFF767676),
+                                fontSize: 12,
                               ),
                             ),
+                            const SizedBox(height: 2),
                             Text(
                               _formatNextSession(widget.course.nextSession!),
                               style: GoogleFonts.roboto(
@@ -1393,65 +1293,78 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         ),
                       ),
               ),
-              // Spacer pushes footer to bottom of card
-              const Spacer(),
-              // ── Purple footer — always at bottom, full width ──────────
-              Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(minHeight: 120),
-                padding: const EdgeInsets.all(15),
-                color: FigmaTokens.primaryPurple,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        widget.course.name.isEmpty
-                            ? 'Untitled Course'
-                            : widget.course.name,
-                        maxLines: 5,
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
+                  decoration: const BoxDecoration(color: FigmaTokens.primaryPurple),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.roboto(
                           color: Colors.white,
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.w400,
+                          height: 27 / 22,
                         ),
                       ),
-                    ),
-                    // More space between title and button
-                    const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: viewDisabled
-                          ? null
-                          : () => Modular.to.pushNamed(
+                      const Spacer(),
+                      OutlinedButton(
+                        onPressed: viewDisabled
+                            ? null
+                            : () => Modular.to.pushNamed(
                                 CoursesModule.construct(
                                   '${CoursesModule.detail}/${widget.course.id}',
                                 ),
                                 arguments: widget.course.offlineCourse,
                               ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 28, vertical: 14),
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                        style: OutlinedButton.styleFrom(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(isWide ? 7 : 10),
+                          ),
                         ),
-                        textStyle: GoogleFonts.roboto(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
+                        child: Transform.translate(
+                          offset: const Offset(0, -1),
+                          child: Text(
+                            'View Course',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.roboto(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              height: 21 / 16,
+                            ),
+                          ),
                         ),
                       ),
-                      child: const Text('View Course'),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                    ],
+                  ),
                 ),
               ),
             ],
+          ),
+          if (membership.loaded)
+            Positioned(
+              top: 12,
+              right: 12,
+              child: _DevPlanButton(
+                isInPlan: isInPlan,
+                onTap: isOnline ? () => setState(() => _showOverlay = true) : null,
+              ),
+            ),
+          Positioned(
+            top: 12,
+            left: 12,
+            child: OfflineCourseButton(course: widget.course.offlineCourse),
           ),
           // Overlay covers the full card
           if (_showOverlay)
@@ -1465,8 +1378,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
             ),
         ],
       ),
-    ), // Container
-    ); // MouseRegion
+    );
   }
 }
 
@@ -1645,27 +1557,6 @@ class _CourseImage extends StatelessWidget {
                   ),
     );
   }
-}
-
-/// Clips the course thumbnail into a right-pointing triangle/arrow shape,
-/// replicating the CSS clip-path polygon used on the reference website.
-class _TriangleImageClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    final midY = size.height * 0.5;
-    final indentX = size.width * 0.72;
-    path.moveTo(0, 0);
-    path.lineTo(indentX, 0);
-    path.lineTo(size.width, midY);
-    path.lineTo(indentX, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(_TriangleImageClipper old) => false;
 }
 
 class _CatalogError extends StatelessWidget {

@@ -11,7 +11,6 @@ import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
@@ -364,54 +363,120 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
     final membership = ref.watch(DevPlanMembershipViewModel.provider);
     final isInPlan = membership.ids.contains(course.courseId);
     final viewDisabled = isViewCourseDisabled(ref, course.courseId);
-    return Stack(
-      children: [
-        CourseGridCard(
-          imageUrl: course.logo,
-          title: course.courseName,
-          buttonLabel: 'View Course',
-          onPressed: viewDisabled
-              ? null
-              : () => Modular.to.pushNamed(
-                  CoursesModule.construct(
-                    '${CoursesModule.detail}/${course.courseId}',
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(color: Color(0x0A000000), blurRadius: 16, offset: Offset(0, 6)),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 170,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                course.logo != null
+                    ? Image.network(
+                        course.logo!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const _ImgFallback(),
+                      )
+                    : const _ImgFallback(),
+                if (membership.loaded)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: _DevPlanButton(
+                      isInPlan: isInPlan,
+                      onTap: () => setState(() => _showOverlay = true),
+                    ),
+                  ),
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: OfflineCourseButton(
+                    course: Course(
+                      id: course.courseId,
+                      name: course.courseName,
+                      logoLink: course.logo,
+                      averageRating: course.averageRating,
+                      ratingCount: course.ratingCount,
+                      displayRating: course.displayRating ? 1 : 0,
+                    ),
                   ),
                 ),
-          offlineCourse: Course(
-            id: course.courseId,
-            name: course.courseName,
-            logoLink: course.logo,
-            averageRating: course.averageRating,
-            ratingCount: course.ratingCount,
-            displayRating: course.displayRating ? 1 : 0,
-          ),
-          infoSection: course.displayRating
-              ? _StarRow(
-                  rating: course.averageRating,
-                  count: course.ratingCount)
-              : null,
-        ),
-        // Dev plan +/✓ button — top-right of the image area
-        if (membership.loaded)
-          Positioned(
-            top: 10,
-            right: 10,
-            child: _DevPlanButton(
-              isInPlan: isInPlan,
-              onTap: () => setState(() => _showOverlay = true),
+                if (_showOverlay)
+                  _DevPlanOverlay(
+                    isInPlan: isInPlan,
+                    isBusy: _isBusy,
+                    onYes: () => _handleDevPlanAction(isInPlan),
+                    onNo: () => setState(() => _showOverlay = false),
+                  ),
+              ],
             ),
           ),
-        // Confirm overlay
-        if (_showOverlay)
-          Positioned.fill(
-            child: _DevPlanOverlay(
-              isInPlan: isInPlan,
-              isBusy: _isBusy,
-              onYes: () => _handleDevPlanAction(isInPlan),
-              onNo: () => setState(() => _showOverlay = false),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            color: FigmaTokens.primaryPurple,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (course.displayRating) ...[
+                  _StarRow(rating: course.averageRating, count: course.ratingCount),
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  course.courseName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: HoverBuilder(
+                    builder: (context, hovering) => OutlinedButton(
+                      onPressed: viewDisabled
+                          ? null
+                          : () => Modular.to.pushNamed(
+                              CoursesModule.construct(
+                                '${CoursesModule.detail}/${course.courseId}',
+                              ),
+                            ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white),
+                        foregroundColor: Colors.white,
+                        backgroundColor: hovering
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.transparent,
+                        elevation: 0,
+                        minimumSize: const Size.fromHeight(40),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(7)),
+                        textStyle: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13),
+                      ),
+                      child: const Text('View Course'),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

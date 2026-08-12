@@ -12,7 +12,6 @@ import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/model/course.dart';
-import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
@@ -92,7 +91,7 @@ class _Body extends StatelessWidget {
                         ),
                         crossAxisSpacing: 14,
                         mainAxisSpacing: 14,
-                        mainAxisExtent: Responsive.isTablet(context) ? 480 : 460,
+                        mainAxisExtent: Responsive.isTablet(context) ? 400 : 380,
                       ),
                       itemCount: state.courses.length,
                       itemBuilder: (ctx, i) =>
@@ -133,16 +132,101 @@ class _CourseCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
-    return CourseGridCard(
-      imageUrl: course.logo,
-      title: course.name,
-      buttonLabel: 'View Course',
-      onPressed: viewDisabled
-          ? null
-          : () => Modular.to.pushNamed(
-                CoursesModule.construct(
-                    '${CoursesModule.detail}/${course.id}'),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image — 224px tall, fills width
+          SizedBox(
+            height: 180,
+            width: double.infinity,
+            child: course.logo != null
+                ? Image.network(
+                    course.logo!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: const Color(0xFFF3F4F6),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.school_outlined,
+                          color: _purple, size: 40),
+                    ),
+                  )
+                : Container(
+                    color: const Color(0xFFF3F4F6),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.school_outlined,
+                        color: _purple, size: 40),
+                  ),
+          ),
+          // Content — purple background matching CourseGridCard style
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              color: FigmaTokens.primaryPurple,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Expanded(
+                    child: Text(
+                      course.name,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // "View Course" button — white outlined
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: viewDisabled
+                          ? null
+                          : () => Modular.to.pushNamed(
+                                CoursesModule.construct(
+                                    '${CoursesModule.detail}/${course.id}'),
+                              ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white),
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        textStyle: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      child: const Text('View Course'),
+                    ),
+                  ),
+                ],
               ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
