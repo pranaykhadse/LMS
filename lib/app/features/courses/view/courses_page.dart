@@ -1254,15 +1254,29 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(15, 20, 15, 0),
                 child: SizedBox(
-                  height: 185,
+                  height: 210,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: _CourseImage(url: widget.course.logo),
+                      // Triangle-clipped thumbnail
+                      ClipPath(
+                        clipper: _TriangleImageClipper(),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: _CourseImage(url: widget.course.logo),
+                        ),
                       ),
-                      // Title overlay — bottom-RIGHT, max 160px, grows tall
+                      // Leadership Edge Live logo — top-right
+                      Positioned(
+                        top: 10,
+                        right: 12,
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          height: 28,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      // Title overlay — bottom-right inside image
                       Positioned(
                         right: 10,
                         bottom: 10,
@@ -1596,6 +1610,27 @@ class _CourseImage extends StatelessWidget {
                   ),
     );
   }
+}
+
+/// Clips the course thumbnail into a right-pointing triangle/arrow shape,
+/// replicating the CSS clip-path polygon used on the reference website.
+class _TriangleImageClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final midY = size.height * 0.5;
+    final indentX = size.width * 0.72;
+    path.moveTo(0, 0);
+    path.lineTo(indentX, 0);
+    path.lineTo(size.width, midY);
+    path.lineTo(indentX, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(_TriangleImageClipper old) => false;
 }
 
 class _CatalogError extends StatelessWidget {

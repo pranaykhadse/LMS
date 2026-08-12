@@ -43,29 +43,43 @@ class CourseGridCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(15, 20, 15, 0),
             child: SizedBox(
-              height: 185,
+              height: 210,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Thumbnail
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: imageUrl != null
-                        ? Image.network(
-                            imageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const _ImgFallback(),
-                          )
-                        : const _ImgFallback(),
+                  // Thumbnail clipped into a right-pointing triangle/arrow
+                  ClipPath(
+                    clipper: _TriangleImageClipper(),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: imageUrl != null
+                          ? Image.network(
+                              imageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  const _ImgFallback(),
+                            )
+                          : const _ImgFallback(),
+                    ),
                   ),
-                  // Offline save button
+                  // Leadership Edge Live logo — top-right
+                  Positioned(
+                    top: 10,
+                    right: 12,
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      height: 28,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  // Offline save button — top-left
                   if (offlineCourse != null)
                     Positioned(
                       top: 8,
                       left: 8,
                       child: OfflineCourseButton(course: offlineCourse!),
                     ),
-                  // Title overlay — bottom-RIGHT, max 55% width, grows in height
+                  // Title overlay — bottom-right inside image
                   Positioned(
                     right: 10,
                     bottom: 10,
@@ -174,4 +188,29 @@ class _ImgFallback extends StatelessWidget {
           size: 54, color: FigmaTokens.primaryPurple),
     );
   }
+}
+
+/// Clips the image into a right-pointing triangle/arrow shape, replicating
+/// the CSS clip-path polygon used on the reference website's course cards.
+/// The shape: top-left corner → top-right → middle-right point →
+/// bottom-right → bottom-left corner, creating a right-pointing arrow.
+class _TriangleImageClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final midY = size.height * 0.5;
+    final tipX = size.width;         // rightmost tip of arrow
+    final indentX = size.width * 0.72; // where the arrow indent starts
+
+    path.moveTo(0, 0);                    // top-left
+    path.lineTo(indentX, 0);             // top, before the dip
+    path.lineTo(tipX, midY);             // right-pointing tip
+    path.lineTo(indentX, size.height);   // bottom, after the dip
+    path.lineTo(0, size.height);         // bottom-left
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(_TriangleImageClipper old) => false;
 }
