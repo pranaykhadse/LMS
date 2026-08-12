@@ -88,7 +88,7 @@ class CourseGridCard extends StatelessWidget {
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-              decoration: const BoxDecoration(gradient: FigmaTokens.heroGradient),
+              decoration: const BoxDecoration(color: FigmaTokens.primaryPurple),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
