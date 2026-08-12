@@ -171,10 +171,12 @@ class _CourseCard extends ConsumerWidget {
                         color: _purple, size: 40),
                   ),
           ),
-          // Content
+          // Content — purple background matching CourseGridCard style
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              color: FigmaTokens.primaryPurple,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -185,15 +187,15 @@ class _CourseCard extends ConsumerWidget {
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF1F2937),
+                        color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         height: 1.5,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  // "View Course" button — outlined purple, fills on tap
+                  const SizedBox(height: 10),
+                  // "View Course" button — white outlined
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
@@ -204,13 +206,12 @@ class _CourseCard extends ConsumerWidget {
                                     '${CoursesModule.detail}/${course.id}'),
                               ),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                            color: Color(0xFF5B5BD6)),
-                        foregroundColor: const Color(0xFF5B5BD6),
-                        backgroundColor: const Color(0xFFF8FAFC),
+                        side: const BorderSide(color: Colors.white),
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.transparent,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(7),
                         ),
                         textStyle: GoogleFonts.inter(
                           fontSize: 12,

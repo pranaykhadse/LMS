@@ -421,36 +421,33 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            color: FigmaTokens.primaryPurple,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Was else-if (course.nextSession != null) showing a NEXT
-                // SESSION pill - the my_courses API has no per-course
-                // enrollment flag, and a session date shouldn't be shown
-                // for a course the learner hasn't necessarily enrolled in
-                // yet, so removed rather than risk showing it unenrolled.
                 if (course.displayRating) ...[
                   _StarRow(rating: course.averageRating, count: course.ratingCount),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                 ],
                 Text(
                   course.courseName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: _ink,
-                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
                     fontSize: 15,
                     height: 1.3,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
                   child: HoverBuilder(
-                    builder: (context, hovering) => ElevatedButton(
+                    builder: (context, hovering) => OutlinedButton(
                       onPressed: viewDisabled
                           ? null
                           : () => Modular.to.pushNamed(
@@ -458,14 +455,18 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
                                 '${CoursesModule.detail}/${course.courseId}',
                               ),
                             ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            hovering ? FigmaTokens.purpleHover : _purple,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white),
                         foregroundColor: Colors.white,
+                        backgroundColor: hovering
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.transparent,
                         elevation: 0,
-                        minimumSize: const Size.fromHeight(44),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+                        minimumSize: const Size.fromHeight(40),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(7)),
+                        textStyle: const TextStyle(
+                            fontWeight: FontWeight.w700, fontSize: 13),
                       ),
                       child: const Text('View Course'),
                     ),
