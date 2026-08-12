@@ -67,32 +67,56 @@ class _Body extends StatelessWidget {
                   await notifier.fetch(page: state.page);
                 },
                 child: ListView(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: HoverBuilder(
-                          builder: (context, hovering) => ElevatedButton.icon(
-                            onPressed: () => _showAddPlanItemDialog(context, notifier),
-                            icon: const Icon(Icons.add_rounded, size: 18),
-                            label: Transform.translate(
-                              offset: const Offset(0, -1),
-                              child: const Text('Add Custom Plan Item'),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  hovering ? FigmaTokens.purpleHover : _purple,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              minimumSize: const Size(0, 40),
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                            ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'My Development Plan',
+                                  style: TextStyle(
+                                    color: _purple,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                HoverBuilder(
+                                  builder: (context, hovering) => ElevatedButton.icon(
+                                    onPressed: () => _showAddPlanItemDialog(context, notifier),
+                                    icon: const Icon(Icons.add_rounded, size: 18),
+                                    label: Transform.translate(
+                                      offset: const Offset(0, -1),
+                                      child: const Text('Add Custom Plan Item'),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          hovering ? FigmaTokens.purpleHover : _purple,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      minimumSize: const Size(0, 40),
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                                    ),
                           ),
                         ),
                       ),
@@ -104,7 +128,7 @@ class _Body extends StatelessWidget {
                       )
                     else ...[
                       GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        padding: const EdgeInsets.all(16),
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate:
@@ -124,10 +148,14 @@ class _Body extends StatelessWidget {
                             _CourseCard(course: state.courses[i], notifier: notifier),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                         child: PerPageBadge(perPage: state.perPage),
                       ),
                     ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     const AppFooter(),
                   ],
                 ),

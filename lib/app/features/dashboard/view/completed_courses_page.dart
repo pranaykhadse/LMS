@@ -76,32 +76,62 @@ class _Body extends StatelessWidget {
                   await notifier.fetch(page: state.page);
                 },
                 child: ListView(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   children: [
-                    GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: Responsive.columns(
-                          context,
-                          phone: 2,
-                          tablet: 3,
-                          desktop: 4,
-                        ),
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                        mainAxisExtent: Responsive.isTablet(context) ? 360 : 340,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      itemCount: state.courses.length,
-                      itemBuilder: (ctx, i) =>
-                          _CourseCard(course: state.courses[i]),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                            child: Text(
+                              'My Completed Courses',
+                              style: TextStyle(
+                                color: _purple,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: Responsive.columns(
+                                context,
+                                phone: 2,
+                                tablet: 3,
+                                desktop: 4,
+                              ),
+                              crossAxisSpacing: 14,
+                              mainAxisSpacing: 14,
+                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 340,
+                            ),
+                            itemCount: state.courses.length,
+                            itemBuilder: (ctx, i) =>
+                                _CourseCard(course: state.courses[i]),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: PerPageBadge(perPage: state.perPage),
+                          ),
+                        ],
+                      ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: PerPageBadge(perPage: state.perPage),
-                    ),
+                    const SizedBox(height: 16),
                     const AppFooter(),
                   ],
                 ),
