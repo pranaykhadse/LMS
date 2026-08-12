@@ -78,6 +78,18 @@ class CourseJoinDetail {
           item.learningEvents.isNotEmpty)
       .toList();
 
+  /// Subset of [classesRequiringSessionSelection] that have at least one
+  /// upcoming (not-yet-ended) session — only these are shown in the
+  /// session-picker dialog. Classes whose sessions have all ended skip the
+  /// dialog; their latest past session is auto-selected by
+  /// [classLearningEventSelections] instead.
+  List<CourseStructureItem> get classesWithUpcomingSessions => structures
+      .where((item) =>
+          item.classId != null &&
+          (item.typeCode == '2' || item.typeCode == '3') &&
+          item.nextSession.isNotEmpty)
+      .toList();
+
   factory CourseJoinDetail.fromJson(Map<String, dynamic> json) {
     final root = _payloadMap(json);
     final course = _courseMap(root);

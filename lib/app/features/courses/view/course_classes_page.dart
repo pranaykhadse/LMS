@@ -269,12 +269,11 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   bool _cancelling = false;
 
   Future<void> _enroll() async {
-    // A course with one or more Virtual/In Person classes that need a
-    // session picked confirms each class's date/time with the learner
-    // before actually registering, matching the website's step-through
-    // Register -> Confirm wizard. Courses with none of those just enroll
-    // directly, unchanged.
-    final classes = widget.detail.classesRequiringSessionSelection;
+    // Only show the session-picker dialog for classes that have actual
+    // upcoming (not-yet-ended) sessions. If all sessions are past, skip
+    // the dialog and enroll directly — classLearningEventSelections
+    // auto-selects the latest past session as a fallback.
+    final classes = widget.detail.classesWithUpcomingSessions;
     if (classes.isNotEmpty) {
       await showDialog(
         context: context,
@@ -285,7 +284,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
         ),
       );
     } else {
-      await _doEnroll(const <int, int>{});
+      await _doEnroll(widget.detail.classLearningEventSelections);
     }
   }
 
