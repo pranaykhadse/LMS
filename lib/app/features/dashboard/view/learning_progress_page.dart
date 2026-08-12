@@ -380,6 +380,7 @@ class _CourseProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final shown = courses.take(2).toList();
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -398,33 +399,37 @@ class _CourseProgressCard extends StatelessWidget {
                         color: const Color(0xFF374151),
                         fontSize: 15,
                         fontWeight: FontWeight.w600)),
-                GestureDetector(
-                  onTap: () => Modular.to.pushNamed(
-                      CoursesModule.construct(CoursesModule.enrolledCourses)),
-                  child: Text('View All',
-                      style: GoogleFonts.inter(
-                          color: _lpPurple,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600)),
-                ),
+                if (shown.isNotEmpty)
+                  GestureDetector(
+                    onTap: () => Modular.to.pushNamed(
+                        CoursesModule.construct(CoursesModule.allCourseProgress)),
+                    child: Text('View All',
+                        style: GoogleFonts.inter(
+                            color: _lpPurple,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600)),
+                  ),
               ],
             ),
           ),
-          ...courses.asMap().entries.map((e) {
-            final i = e.key;
-            final course = e.value;
-            return Column(
-              children: [
-                if (i > 0)
-                  const Divider(
-                      height: 1,
-                      color: FigmaTokens.cardBorders,
-                      indent: 16,
-                      endIndent: 16),
-                _CourseProgressRow(course: course),
-              ],
-            );
-          }),
+          const SizedBox(height: 8),
+          if (shown.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+              child: Text('No courses in progress.',
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280), fontSize: 14)),
+            )
+          else
+            for (var i = 0; i < shown.length; i++) ...[
+              if (i > 0)
+                const Divider(
+                    height: 1,
+                    color: FigmaTokens.cardBorders,
+                    indent: 16,
+                    endIndent: 16),
+              _CourseProgressRow(course: shown[i]),
+            ],
         ],
       ),
     );
@@ -575,7 +580,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                     GestureDetector(
                       onTap: () => Modular.to.pushNamed(
                         CoursesModule.construct(
-                            CoursesModule.enrolledCourses),
+                            CoursesModule.inProgressCourses),
                       ),
                       child: Text(
                         'View All',
@@ -992,7 +997,7 @@ class _RequiredCoursesCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
-          ...courses.asMap().entries.map((e) {
+          ...courses.take(5).toList().asMap().entries.map((e) {
             final i = e.key;
             final c = e.value;
             return Column(
@@ -1297,6 +1302,7 @@ class _DiscussionBoardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (boards.isEmpty) return const SizedBox.shrink();
+    final shown = boards.take(4).toList();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1331,46 +1337,46 @@ class _DiscussionBoardCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          for (var i = 0; i < boards.length; i++) ...[
+          for (var i = 0; i < shown.length; i++) ...[
             if (i > 0) const Divider(height: 1, color: Color(0xFFF3F4F6)),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(boards[i].title,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(shown[i].title,
+                              style: GoogleFonts.inter(
+                                  color: const Color(0xFF1F2937),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 4),
+                          Text(
+                            [
+                              if (shown[i].lastRepliedBy.isNotEmpty)
+                                shown[i].lastRepliedBy,
+                              if (shown[i].lastReply.isNotEmpty)
+                                shown[i].lastReply,
+                              '${shown[i].replyCount} ${shown[i].replyCount == 1 ? 'reply' : 'replies'}',
+                            ].join(' • '),
                             style: GoogleFonts.inter(
-                                color: const Color(0xFF1F2937),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 4),
-                        Text(
-                          [
-                            if (boards[i].lastRepliedBy.isNotEmpty)
-                              boards[i].lastRepliedBy,
-                            if (boards[i].lastReply.isNotEmpty)
-                              boards[i].lastReply,
-                            '${boards[i].replyCount} ${boards[i].replyCount == 1 ? 'reply' : 'replies'}',
-                          ].join(' • '),
-                          style: GoogleFonts.inter(
-                              color: const Color(0xFF9CA3AF), fontSize: 12),
-                        ),
-                      ],
+                                color: const Color(0xFF9CA3AF), fontSize: 12),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  _ViewButton(
-                    onPressed: () => Modular.to.pushNamed(
-                      CoursesModule.construct(
-                          '${CoursesModule.detail}/${boards[i].courseId}'),
+                    const SizedBox(width: 12),
+                    _ViewButton(
+                      onPressed: () => Modular.to.pushNamed(
+                        CoursesModule.construct(
+                            '${CoursesModule.detail}/${shown[i].courseId}'),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
           ],
         ],
       ),
