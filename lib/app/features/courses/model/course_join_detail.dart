@@ -47,29 +47,35 @@ class CourseJoinDetail {
   /// POST lms-screen/register-course rejects whole-course enrollment
   /// ("some classes require a session selection") unless this is supplied
   /// for every such class. Auto-selects each class's own earliest upcoming
-  /// session.
+  /// session, falling back to the most recent past session if no upcoming
+  /// one exists (all sessions ended) — so enrollment still works for
+  /// courses where all sessions have already started/ended.
   Map<int, int> get classLearningEventSelections {
     final selections = <int, int>{};
     for (final item in structures) {
       if (item.classId == null) continue;
       if (item.typeCode != '2' && item.typeCode != '3') continue;
-      final event = _earliestUpcomingEventOf(item.learningEvents);
+      // Prefer the earliest still-open/upcoming session; fall back to
+      // the latest past session so the server always gets a selection.
+      final event = _earliestUpcomingEventOf(item.learningEvents) ??
+          _latestPastEventOf(item.learningEvents);
       final eventId = event?.learningEventClassId;
       if (eventId != null) selections[item.classId!] = eventId;
     }
     return selections;
   }
 
-  /// Every Virtual Class / In Person class that has at least one upcoming
-  /// session - each one needs its own session picked before whole-course
-  /// enrollment can succeed, matching the website's step-through-each-class
-  /// Register wizard (Next per class, Register on the last, then a final
-  /// Confirm summarizing every selection).
+  /// Every Virtual Class / In Person class that has at least one session
+  /// (upcoming OR past) — each one needs its own session passed before
+  /// whole-course enrollment can succeed. Previously only included classes
+  /// with upcoming sessions, which caused the server to reject enrollment
+  /// with "some classes require a session selection" when all sessions had
+  /// already ended.
   List<CourseStructureItem> get classesRequiringSessionSelection => structures
       .where((item) =>
           item.classId != null &&
           (item.typeCode == '2' || item.typeCode == '3') &&
-          _earliestUpcomingEventOf(item.learningEvents) != null)
+          item.learningEvents.isNotEmpty)
       .toList();
 
   factory CourseJoinDetail.fromJson(Map<String, dynamic> json) {
@@ -556,6 +562,22 @@ LearningEvent? _earliestUpcomingEventOf(List<LearningEvent> events) {
     if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
   }
   return earliest;
+}
+
+/// Returns the most recent past event (end time already passed) from [events].
+/// Used as a fallback when all sessions have ended, so enrollment still
+/// sends a valid learningEventClassId to the server.
+LearningEvent? _latestPastEventOf(List<LearningEvent> events) {
+  final now = DateTime.now();
+  LearningEvent? latest;
+  for (final event in events) {
+    final start = event.startDateTime;
+    if (start == null) continue;
+    final end = event.endDateTime ?? start;
+    if (now.isBefore(end)) continue; // still open — not a past event
+    if (latest == null || start.isAfter(latest.startDateTime!)) latest = event;
+  }
+  return latest;
 }
 
 String _formatNextSessionMoment(DateTime dt) {
