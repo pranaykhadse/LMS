@@ -54,15 +54,14 @@ class CourseGridCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── 1. Image with outer padding + title overlay ──────────────
+          // ── 1. Image with outer padding (150px tall, no title overlay) ─
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
             child: SizedBox(
-              height: 160,
+              height: 150,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Thumbnail — small border radius, not full card radius
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: imageUrl != null
@@ -73,38 +72,12 @@ class CourseGridCard extends StatelessWidget {
                           )
                         : const _ImgFallback(),
                   ),
-                  // Offline save button
                   if (offlineCourse != null)
                     Positioned(
                       top: 8,
                       left: 8,
                       child: OfflineCourseButton(course: offlineCourse!),
                     ),
-                  // Title overlay bar at bottom of image
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(6)),
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                        color: _cardPurple.withValues(alpha: 0.85),
-                        child: Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.roboto(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            height: 1.35,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -117,10 +90,10 @@ class CourseGridCard extends StatelessWidget {
               child: infoSection!,
             ),
 
-          // ── 3. Purple footer ─────────────────────────────────────────
+          // ── 3. Purple footer — title + compact button ─────────────────
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
             color: _cardPurple,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,31 +105,31 @@ class CourseGridCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.roboto(
                     color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
                     height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: onPressed,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 5),
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      textStyle: GoogleFonts.roboto(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
+                const SizedBox(height: 12),
+                // Button — auto-width, not full-width
+                OutlinedButton(
+                  onPressed: onPressed,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 5),
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(buttonLabel),
+                    textStyle: GoogleFonts.roboto(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
+                  child: Text(buttonLabel),
                 ),
               ],
             ),
