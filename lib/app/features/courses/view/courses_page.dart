@@ -1235,7 +1235,6 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
 
     return Container(
       clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.symmetric(horizontal: 15),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -1249,10 +1248,11 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // ── div.team-img: padding 20px 0 15px, 185px tall ────────
+              // ── Image: padding 15px sides, 20px top, 185px tall ──────
               Padding(
-                padding: const EdgeInsets.fromLTRB(0, 20, 0, 15),
+                padding: const EdgeInsets.fromLTRB(15, 20, 15, 0),
                 child: SizedBox(
                   height: 185,
                   child: Stack(
@@ -1262,30 +1262,30 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         borderRadius: BorderRadius.circular(6),
                         child: _CourseImage(url: widget.course.logo),
                       ),
-                      // Title overlay at bottom of image
+                      // Title overlay — bottom-left with padding, auto-width
                       Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        child: ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                              bottom: Radius.circular(6)),
-                          child: Container(
-                            padding:
-                                const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                        left: 10,
+                        bottom: 10,
+                        right: 40,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 5),
+                          decoration: BoxDecoration(
                             color: FigmaTokens.primaryPurple
-                                .withValues(alpha: 0.85),
-                            child: Text(
-                              widget.course.name.isEmpty
-                                  ? 'Untitled Course'
-                                  : widget.course.name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.roboto(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
+                                .withValues(alpha: 0.88),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            widget.course.name.isEmpty
+                                ? 'Untitled Course'
+                                : widget.course.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.roboto(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              height: 1.3,
                             ),
                           ),
                         ),
@@ -1296,16 +1296,15 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               ),
               // ── div.center-content: padding 15px, 80px fixed ─────────
               SizedBox(
-                height: 80,
+                height: widget.course.nextSession == null ? 0 : 80,
                 child: widget.course.nextSession == null
                     ? null
                     : Padding(
-                        padding: const EdgeInsets.all(15),
+                        padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // h6: 12px #767676, margin-bottom 8px
                             Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: Text(
@@ -1316,7 +1315,6 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                                 ),
                               ),
                             ),
-                            // h5: 14px #484848 bold, margin-bottom 8px
                             Text(
                               _formatNextSession(widget.course.nextSession!),
                               style: GoogleFonts.roboto(
@@ -1329,68 +1327,69 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         ),
                       ),
               ),
-              // ── div.bottom-content: padding 15px, bg primaryPurple ───
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(15),
-                color: FigmaTokens.primaryPurple,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // h2: 22px white, margin-bottom 8px
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        widget.course.name.isEmpty
-                            ? 'Untitled Course'
-                            : widget.course.name,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.roboto(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w400,
+              // ── Purple footer — full width, padding 15px ─────────────
+              Padding(
+                padding: const EdgeInsets.only(top: 15),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(15),
+                  color: FigmaTokens.primaryPurple,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          widget.course.name.isEmpty
+                              ? 'Untitled Course'
+                              : widget.course.name,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ),
-                    ),
-                    // p > a: padding 5px 20px, 16px white
-                    OutlinedButton(
-                      onPressed: viewDisabled
-                          ? null
-                          : () => Modular.to.pushNamed(
-                                CoursesModule.construct(
-                                  '${CoursesModule.detail}/${widget.course.id}',
+                      OutlinedButton(
+                        onPressed: viewDisabled
+                            ? null
+                            : () => Modular.to.pushNamed(
+                                  CoursesModule.construct(
+                                    '${CoursesModule.detail}/${widget.course.id}',
+                                  ),
+                                  arguments: widget.course.offlineCourse,
                                 ),
-                                arguments: widget.course.offlineCourse,
-                              ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 5),
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 5),
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          textStyle: GoogleFonts.roboto(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
-                        textStyle: GoogleFonts.roboto(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                        ),
+                        child: const Text('View Course'),
                       ),
-                      child: const Text('View Course'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-          // Dev plan +/✓ button — top-right (inside padded image area)
+          // Dev plan +/✓ button — top-right inside padded image area
           if (membership.loaded)
             Positioned(
               top: 28,
-              right: 8,
+              right: 23,
               child: _DevPlanButton(
                 isInPlan: isInPlan,
                 onTap: isOnline ? () => setState(() => _showOverlay = true) : null,
@@ -1399,7 +1398,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
           // Offline save button — top-left
           Positioned(
             top: 28,
-            left: 8,
+            left: 23,
             child: OfflineCourseButton(course: widget.course.offlineCourse),
           ),
           // Overlay covers the full card
