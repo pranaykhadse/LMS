@@ -86,7 +86,7 @@ class CourseGridCard extends StatelessWidget {
 
           // ── White content area ────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -94,9 +94,10 @@ class CourseGridCard extends StatelessWidget {
                 // Info section (next session date, rating, etc.)
                 if (infoSection != null) ...[
                   infoSection!,
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
                 ],
-                // Course title
+                // Course title — pushed down a bit
+                const SizedBox(height: 8),
                 Text(
                   title,
                   maxLines: 3,
@@ -108,8 +109,8 @@ class CourseGridCard extends StatelessWidget {
                     height: 1.35,
                   ),
                 ),
-                const SizedBox(height: 14),
-                // Full-width filled button — pill shape
+                const SizedBox(height: 16),
+                // Full-width filled button — reduced border radius
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -122,7 +123,7 @@ class CourseGridCard extends StatelessWidget {
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       textStyle: GoogleFonts.roboto(
                         fontSize: 15,
