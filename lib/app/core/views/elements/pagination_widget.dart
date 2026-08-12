@@ -28,114 +28,120 @@ class PaginationWidget extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Page buttons row — centered ────────────────────────────────
+        // ── Centered row + progress bar at same width ──────────────────
         Center(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
+          child: IntrinsicWidth(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Prev chevron
-                _NavBtn(
-                  icon: Icons.chevron_left,
-                  enabled: page > 1,
-                  onTap: () => onPage(page - 1),
+                // Page buttons row
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _NavBtn(
+                        icon: Icons.chevron_left,
+                        enabled: page > 1,
+                        onTap: () => onPage(page - 1),
+                      ),
+                      const SizedBox(width: 4),
+                      ...nums.map((p) {
+                        if (p == -1) {
+                          return Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 6),
+                            child: Text(
+                              '…',
+                              style: TextStyle(
+                                color: _muted,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          );
+                        }
+                        final isCurrent = p == page;
+                        return GestureDetector(
+                          onTap: isCurrent ? null : () => onPage(p),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            margin:
+                                const EdgeInsets.symmetric(horizontal: 3),
+                            width: 36,
+                            height: 36,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color:
+                                  isCurrent ? _purple : Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: isCurrent
+                                  ? null
+                                  : Border.all(
+                                      color: const Color(0xFFE5E7EB)),
+                              boxShadow: isCurrent
+                                  ? [
+                                      BoxShadow(
+                                        color: _purple
+                                            .withValues(alpha: 0.25),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Text(
+                              '$p',
+                              style: GoogleFonts.roboto(
+                                color: isCurrent ? Colors.white : _ink,
+                                fontWeight: isCurrent
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                      const SizedBox(width: 4),
+                      _NavBtn(
+                        icon: Icons.chevron_right,
+                        enabled: page < pages,
+                        onTap: () => onPage(page + 1),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 4),
-                // Page number buttons
-                ...nums.map((p) {
-                  if (p == -1) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Text(
-                        '…',
-                        style: TextStyle(
-                          color: _muted,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    );
-                  }
-                  final isCurrent = p == page;
-                  return GestureDetector(
-                    onTap: isCurrent ? null : () => onPage(p),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: 36,
-                      height: 36,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: isCurrent ? _purple : Colors.white,
-                        borderRadius: BorderRadius.circular(
-                            isCurrent ? 18 : 8),
-                        border: isCurrent
-                            ? null
-                            : Border.all(
-                                color: const Color(0xFFE5E7EB)),
-                        boxShadow: isCurrent
-                            ? [
-                                BoxShadow(
-                                  color: _purple.withValues(alpha: 0.3),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Text(
-                        '$p',
-                        style: GoogleFonts.roboto(
-                          color: isCurrent ? Colors.white : _ink,
-                          fontWeight: isCurrent
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
+                const SizedBox(height: 10),
+                // Progress bar — same width as the row above
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 3,
+                    backgroundColor: const Color(0xFFE5E7EB),
+                    valueColor: AlwaysStoppedAnimation<Color>(_purple),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // PAGE X OF Y
+                Center(
+                  child: Text(
+                    'PAGE $page OF $pages',
+                    style: GoogleFonts.roboto(
+                      color: _muted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8,
                     ),
-                  );
-                }),
-                const SizedBox(width: 4),
-                // Next chevron
-                _NavBtn(
-                  icon: Icons.chevron_right,
-                  enabled: page < pages,
-                  onTap: () => onPage(page + 1),
+                  ),
                 ),
+                const SizedBox(height: 12),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 10),
-        // ── Progress bar ───────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 4,
-              backgroundColor: const Color(0xFFE5E7EB),
-              valueColor: AlwaysStoppedAnimation<Color>(_purple),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        // ── "PAGE X OF Y" label ────────────────────────────────────────
-        Center(
-          child: Text(
-            'PAGE $page OF $pages',
-            style: GoogleFonts.roboto(
-              color: _muted,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
       ],
     );
   }
