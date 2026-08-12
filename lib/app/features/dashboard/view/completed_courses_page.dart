@@ -150,15 +150,22 @@ class _CourseCard extends ConsumerWidget {
         ratingCount: course.ratingCount,
         displayRating: course.displayRating ? 1 : 0,
       ),
-      infoSection: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      infoSection: _buildInfoSection(course),
+    );
+  }
+
+  Widget? _buildInfoSection(DashboardCourse course) {
+    final showStars = course.displayRating && course.ratingCount > 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showStars) ...[
           _StarRow(rating: course.averageRating, count: course.ratingCount),
           const SizedBox(height: 6),
-          const _CompletedBadge(),
         ],
-      ),
+        const _CompletedBadge(),
+      ],
     );
   }
 }
