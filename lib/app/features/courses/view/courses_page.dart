@@ -1237,17 +1237,12 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(isWide ? 15 : 14),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 2,
-            offset: const Offset(0, 1),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -1255,118 +1250,120 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: [
+              // ── Full-width image ──────────────────────────────────────
               SizedBox(
-                height: isWide ? 140 : 160,
+                height: 160,
                 child: _CourseImage(url: widget.course.logo),
               ),
-              // Fixed height regardless of whether a course has a next
-              // session, so every card in a row lines up identically
-              // instead of the footer's position shifting per-card.
-              SizedBox(
-                height: 58,
-                child: widget.course.nextSession == null
-                    ? null
-                    : Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'The next available course begins on',
-                              style: GoogleFonts.roboto(
-                                color: const Color(0xFF767676),
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _formatNextSession(widget.course.nextSession!),
-                              style: GoogleFonts.roboto(
-                                color: const Color(0xFF484848),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-              ),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.fromLTRB(14, 12, 14, isWide ? 10 : 14),
-                  decoration: const BoxDecoration(color: FigmaTokens.primaryPurple),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+              // ── White content area ────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Next session info
+                    if (widget.course.nextSession != null) ...[
                       Text(
-                        widget.course.name.isEmpty ? 'Untitled Course' : widget.course.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                        'NEXT AVAILABLE',
                         style: GoogleFonts.roboto(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w400,
-                          height: 27 / 22,
+                          color: const Color(0xFF9CA3AF),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
                         ),
                       ),
-                      const Spacer(),
-                      OutlinedButton(
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today_rounded,
+                              size: 12,
+                              color: FigmaTokens.primaryPurple),
+                          const SizedBox(width: 5),
+                          Text(
+                            _formatNextSession(
+                                widget.course.nextSession!),
+                            style: GoogleFonts.roboto(
+                              color: FigmaTokens.primaryPurple,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    // Course title
+                    Text(
+                      widget.course.name.isEmpty
+                          ? 'Untitled Course'
+                          : widget.course.name,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.roboto(
+                        color: const Color(0xFF1A1A2E),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    // Full-width filled pill button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
                         onPressed: viewDisabled
                             ? null
                             : () => Modular.to.pushNamed(
-                                CoursesModule.construct(
-                                  '${CoursesModule.detail}/${widget.course.id}',
+                                  CoursesModule.construct(
+                                    '${CoursesModule.detail}/${widget.course.id}',
+                                  ),
+                                  arguments: widget.course.offlineCourse,
                                 ),
-                                arguments: widget.course.offlineCourse,
-                              ),
-                        style: OutlinedButton.styleFrom(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: FigmaTokens.primaryPurple,
                           foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white),
+                          disabledBackgroundColor: FigmaTokens.primaryPurple
+                              .withValues(alpha: 0.5),
+                          elevation: 0,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(isWide ? 7 : 10),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          textStyle: GoogleFonts.roboto(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        child: Transform.translate(
-                          offset: const Offset(0, -1),
-                          child: Text(
-                            'View Course',
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.roboto(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w400,
-                              height: 21 / 16,
-                            ),
-                          ),
-                        ),
+                        child: const Text('View Course'),
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
+          // Dev plan button — top-right
           if (membership.loaded)
             Positioned(
-              top: 12,
-              right: 12,
+              top: 10,
+              right: 10,
               child: _DevPlanButton(
                 isInPlan: isInPlan,
-                onTap: isOnline ? () => setState(() => _showOverlay = true) : null,
+                onTap:
+                    isOnline ? () => setState(() => _showOverlay = true) : null,
               ),
             ),
+          // Offline save button — top-left
           Positioned(
-            top: 12,
-            left: 12,
+            top: 10,
+            left: 10,
             child: OfflineCourseButton(course: widget.course.offlineCourse),
           ),
-          // Overlay covers the full card
+          // Dev plan confirm overlay
           if (_showOverlay)
             Positioned.fill(
               child: _DevPlanOverlay(

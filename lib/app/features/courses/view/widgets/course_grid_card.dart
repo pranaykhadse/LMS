@@ -4,12 +4,11 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 
-/// Same card design as the Course Catalog screen's course cards: a
-/// fixed-height image, an optional white info block underneath it, and a
-/// purple (#603D92) footer with the title and an outlined action button
-/// pinned to the bottom-left. Shared across the "My Courses" grid screens
-/// (Enrolled/Completed/Required/Development Plan) instead of each having
-/// its own copy-pasted card.
+/// Course card matching the reference design:
+///  • Full-width image, no padding, rounded top corners only
+///  • White content area: "NEXT AVAILABLE" label + date, course title
+///  • Full-width primary-color filled "View Course" button (pill shape)
+///  • "+" overlay button top-right (dev plan), shown via overlayButtons
 class CourseGridCard extends StatelessWidget {
   const CourseGridCard({
     super.key,
@@ -19,21 +18,21 @@ class CourseGridCard extends StatelessWidget {
     required this.onPressed,
     this.offlineCourse,
     this.infoSection,
+    this.overlayButtons,
   });
 
   final String? imageUrl;
   final String title;
   final String buttonLabel;
   final VoidCallback? onPressed;
-
-  /// Omit to hide the save-offline button (e.g. a custom development-plan
-  /// entry with no real course behind it).
   final Course? offlineCourse;
 
-  /// Rendered in the white block between the image and the purple footer
-  /// (e.g. star rating / progress bar / completed badge). Omitted entirely
-  /// when null, same as the catalog card without a next-session block.
+  /// White info block between image and title
+  /// (next-session date, star rating, etc.)
   final Widget? infoSection;
+
+  /// Overlay widget shown top-right of image (e.g. dev plan +/- button).
+  final Widget? overlayButtons;
 
   @override
   Widget build(BuildContext context) {
@@ -41,25 +40,22 @@ class CourseGridCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 2,
-            offset: const Offset(0, 1),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
+          // ── Image — full-width, no side padding ──────────────────────
           SizedBox(
-            height: 140,
+            height: 160,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -70,72 +66,73 @@ class CourseGridCard extends StatelessWidget {
                         errorBuilder: (_, __, ___) => const _ImgFallback(),
                       )
                     : const _ImgFallback(),
+                // Offline save button — top-left
                 if (offlineCourse != null)
                   Positioned(
-                    top: 12,
-                    left: 12,
+                    top: 10,
+                    left: 10,
                     child: OfflineCourseButton(course: offlineCourse!),
+                  ),
+                // Dev plan / extra overlay — top-right
+                if (overlayButtons != null)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: overlayButtons!,
                   ),
               ],
             ),
           ),
-          if (infoSection != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 18, 14, 16),
-              child: infoSection!,
-            ),
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-              decoration: const BoxDecoration(color: FigmaTokens.primaryPurple),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Up to 3 lines before truncating - the grid row height
-                  // (set by each page) is sized generously enough that
-                  // realistic titles fit in full; this is just a safety net
-                  // against an unexpectedly long one overflowing the card.
-                  Text(
-                    title,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.roboto(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w400,
-                      height: 27 / 22,
-                    ),
-                  ),
-                  const Spacer(),
-                  OutlinedButton(
-                    onPressed: onPressed,
-                    style: OutlinedButton.styleFrom(
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                    ),
-                    child: Transform.translate(
-                      offset: const Offset(0, -1),
-                      child: Text(
-                        buttonLabel,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.roboto(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          height: 21 / 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+
+          // ── White content area ────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Info section (next session date, rating, etc.)
+                if (infoSection != null) ...[
+                  infoSection!,
+                  const SizedBox(height: 10),
                 ],
-              ),
+                // Course title
+                Text(
+                  title,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.roboto(
+                    color: const Color(0xFF1A1A2E),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    height: 1.35,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Full-width filled button — pill shape
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: onPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: FigmaTokens.primaryPurple,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor:
+                          FigmaTokens.primaryPurple.withValues(alpha: 0.5),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      textStyle: GoogleFonts.roboto(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    child: Text(buttonLabel),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -152,7 +149,8 @@ class _ImgFallback extends StatelessWidget {
     return Container(
       color: const Color(0xFFF1EFFB),
       alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, size: 54, color: Color(0xFF603D92)),
+      child: const Icon(Icons.school_outlined,
+          size: 54, color: FigmaTokens.primaryPurple),
     );
   }
 }
