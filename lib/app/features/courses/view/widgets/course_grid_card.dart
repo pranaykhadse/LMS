@@ -4,14 +4,18 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 
-/// Unified course card used across Course Catalog and all My Courses screens.
+/// Unified course card — exact CSS spec from reference website.
 ///
-/// Layout (top → bottom):
-///  1. Image area — the course thumbnail with the title overlaid at the
-///     bottom in a semi-transparent purple bar.
-///  2. Info section (optional) — white area showing next-session date,
-///     status badge, progress, etc.
-///  3. Purple footer — title text + full-width "View Course" button.
+/// Structure:
+///  • Outer card: padding 0 15px
+///  • Image block (div.team-img.text-center): padding 20px 0 15px, 185px tall
+///      - Image with title overlay bar at bottom (purple + course name 22px)
+///  • Info section (div.center-content): padding 15px
+///      - h6 "The next available…": 12px #767676, margin-bottom 8px
+///      - h5 date: 14px #484848 bold, margin-bottom 8px
+///  • Footer (div.bottom-content): padding 15px, bg primaryPurple
+///      - h2 title: 22px white, margin-bottom 8px
+///      - p > a "View Course": padding 5px 20px, white, 16px Roboto
 class CourseGridCard extends StatelessWidget {
   const CourseGridCard({
     super.key,
@@ -28,40 +32,35 @@ class CourseGridCard extends StatelessWidget {
   final String buttonLabel;
   final VoidCallback? onPressed;
   final Course? offlineCourse;
-
-  /// Optional white middle section (next session, progress, rating, etc.).
   final Widget? infoSection;
-
-  // Primary brand purple
-  static const _cardPurple = FigmaTokens.primaryPurple;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      // Outer card
       clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.symmetric(horizontal: 15),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
+              color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ── 1. Image with outer padding (150px tall, no title overlay) ─
+          // ── div.team-img.text-center: padding 20px 0 15px ────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            padding: const EdgeInsets.fromLTRB(0, 20, 0, 15),
             child: SizedBox(
-              height: 150,
+              height: 185,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
+                  // Image
                   ClipRRect(
                     borderRadius: BorderRadius.circular(6),
                     child: imageUrl != null
@@ -72,46 +71,73 @@ class CourseGridCard extends StatelessWidget {
                           )
                         : const _ImgFallback(),
                   ),
+                  // Offline button
                   if (offlineCourse != null)
                     Positioned(
                       top: 8,
                       left: 8,
                       child: OfflineCourseButton(course: offlineCourse!),
                     ),
+                  // Title overlay bar at bottom of image
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(6)),
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                        color: FigmaTokens.primaryPurple.withValues(alpha: 0.85),
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
 
-          // ── 2. Optional info section (next session / progress etc.) ──
+          // ── div.center-content: padding 15px ─────────────────────────
           if (infoSection != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+              padding: const EdgeInsets.all(15),
               child: infoSection!,
             ),
 
-          // ── 3. Purple footer — title + compact button ─────────────────
+          // ── div.bottom-content: padding 15px, bg primaryPurple ───────
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
-            color: _cardPurple,
+            padding: const EdgeInsets.all(15),
+            color: FigmaTokens.primaryPurple,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  title,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.roboto(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    height: 1.4,
+                // h2: 22px white, margin-bottom 8px
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    title,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.roboto(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                // Button — auto-width, not full-width
+                // p > a: padding 5px 20px, 16px white
                 OutlinedButton(
                   onPressed: onPressed,
                   style: OutlinedButton.styleFrom(
