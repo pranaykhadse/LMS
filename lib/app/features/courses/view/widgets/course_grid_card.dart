@@ -37,9 +37,9 @@ class CourseGridCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         children: [
-          // ── Image: padding 20px 15px 0 15px, 185px tall ──────────────
+          // ── Image: padding 15px sides, 20px top, 185px tall ──────────
           Padding(
             padding: const EdgeInsets.fromLTRB(15, 20, 15, 0),
             child: SizedBox(
@@ -65,28 +65,30 @@ class CourseGridCard extends StatelessWidget {
                       left: 8,
                       child: OfflineCourseButton(course: offlineCourse!),
                     ),
-                  // Title overlay — bottom-left with padding, auto-width
+                  // Title overlay — bottom-RIGHT, max 55% width, grows in height
                   Positioned(
-                    left: 10,
+                    right: 10,
                     bottom: 10,
-                    right: 40,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: FigmaTokens.primaryPurple
-                            .withValues(alpha: 0.88),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.roboto(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          height: 1.3,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 160),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: FigmaTokens.primaryPurple
+                              .withValues(alpha: 0.90),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          title,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.roboto(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            height: 1.35,
+                          ),
                         ),
                       ),
                     ),
@@ -96,58 +98,58 @@ class CourseGridCard extends StatelessWidget {
             ),
           ),
 
-          // ── Info section: padding 15px ────────────────────────────────
+          // ── Info section ──────────────────────────────────────────────
           if (infoSection != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
               child: infoSection!,
             ),
 
-          // ── Purple footer (full width): padding 15px ──────────────────
-          Padding(
-            padding: const EdgeInsets.only(top: 15),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(15),
-              color: FigmaTokens.primaryPurple,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      title,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.roboto(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w400,
-                      ),
+          // ── Spacer pushes purple footer to bottom of card ─────────────
+          const Spacer(),
+
+          // ── Purple footer — always at bottom, full width ──────────────
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(15),
+            color: FigmaTokens.primaryPurple,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    title,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.roboto(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
-                  OutlinedButton(
-                    onPressed: onPressed,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 5),
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      textStyle: GoogleFonts.roboto(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
+                ),
+                OutlinedButton(
+                  onPressed: onPressed,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 10),
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text(buttonLabel),
+                    textStyle: GoogleFonts.roboto(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                ],
-              ),
+                  child: Text(buttonLabel),
+                ),
+              ],
             ),
           ),
         ],
