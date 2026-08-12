@@ -23,7 +23,7 @@ class PaginationWidget extends StatelessWidget {
     if (pages <= 1) return const SizedBox.shrink();
 
     final nums = _pageNumbers(page, pages);
-    final progress = pages > 1 ? (page - 1) / (pages - 1) : 1.0;
+    final progress = page / pages;
 
     return Column(
       mainAxisSize: MainAxisSize.min,

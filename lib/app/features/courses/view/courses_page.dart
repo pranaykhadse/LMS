@@ -357,20 +357,44 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
 
   Widget _perPageBadge(int perPage) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
+    final hPad = isWide ? 48.0 : 27.0;
     return SliverPadding(
-      padding: EdgeInsets.fromLTRB(isWide ? 48 : 27, 10, isWide ? 48 : 27, 0),
-      sliver: SliverToBoxAdapter(child: PerPageBadge(perPage: perPage)),
+      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 0),
+      sliver: SliverToBoxAdapter(
+        child: Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: PerPageBadge(perPage: perPage),
+        ),
+      ),
     );
   }
 
   Widget _groupPagination(CatalogCourseGroup group, int selectedPage) {
+    final isWide = MediaQuery.sizeOf(context).width >= 760;
+    final hPad = isWide ? 48.0 : 27.0;
     return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 42),
+      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 24),
       sliver: SliverToBoxAdapter(
-        child: PaginationWidget(
-          page: selectedPage,
-          pages: group.pagination.pages,
-          onPage: (page) => _changeGroupPage(group.id, page),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius:
+                const BorderRadius.vertical(bottom: Radius.circular(12)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          child: PaginationWidget(
+            page: selectedPage,
+            pages: group.pagination.pages,
+            onPage: (page) => _changeGroupPage(group.id, page),
+          ),
         ),
       ),
     );
@@ -379,16 +403,31 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   Widget _groupTitle(String groupName) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
     final title = groupName.trim().isEmpty ? 'Courses' : '$groupName Courses';
+    final hPad = isWide ? 48.0 : 27.0;
     return SliverPadding(
-      padding: EdgeInsets.fromLTRB(isWide ? 48 : 27, 14, isWide ? 48 : 27, 20),
+      padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 0),
       sliver: SliverToBoxAdapter(
-        child: Text(
-          title,
-          style: GoogleFonts.roboto(
-            color: const Color(0xFFA20067),
-            fontSize: 24,
-            fontWeight: FontWeight.w400,
-            height: 28 / 24,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          child: Text(
+            title,
+            style: GoogleFonts.roboto(
+              color: const Color(0xFFA20067),
+              fontSize: 24,
+              fontWeight: FontWeight.w400,
+              height: 28 / 24,
+            ),
           ),
         ),
       ),
@@ -396,33 +435,44 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   }
 
   Widget _catalogGrid(List<CatalogCourse> courses) {
+    final isWide = MediaQuery.sizeOf(context).width >= 760;
+    final hPad = isWide ? 48.0 : 27.0;
     return SliverPadding(
-      padding: EdgeInsets.symmetric(
-        horizontal: MediaQuery.sizeOf(context).width >= 760 ? 48 : 27,
-      ),
-      sliver: SliverLayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.crossAxisExtent;
-          final columns = _catalogColumns(width);
-          return SliverGrid(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              crossAxisSpacing: width >= 760 ? 28 : 18,
-              mainAxisSpacing: width >= 760 ? 28 : 34,
-              mainAxisExtent: width >= 760 ? 325 : 350,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => _CatalogCourseCard(
-                course: _CourseCardData.fromCatalog(courses[index]),
-              ),
-              childCount: courses.length,
-            ),
-          );
-        },
+      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 0),
+      sliver: SliverToBoxAdapter(
+        child: Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth - 40; // account for container padding
+              final columns = _catalogColumns(constraints.maxWidth);
+              final itemW = (width - (columns - 1) * (isWide ? 28 : 18)) / columns;
+              final extent = isWide ? 325.0 : 350.0;
+              final rows = (courses.length / columns).ceil();
+              final gridH = rows * extent + (rows - 1) * (isWide ? 28 : 34);
+              return SizedBox(
+                height: gridH,
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: isWide ? 28 : 18,
+                    mainAxisSpacing: isWide ? 28 : 34,
+                    mainAxisExtent: extent,
+                  ),
+                  itemCount: courses.length,
+                  itemBuilder: (context, index) => _CatalogCourseCard(
+                    course: _CourseCardData.fromCatalog(courses[index]),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
-}
 
 
 class _FilterPanel extends StatelessWidget {
@@ -1286,7 +1336,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                 child: _CourseImage(url: widget.course.logo),
               ),
               // -- White content area ------------------------------------
-              // -- White content area — title + button pinned to bottom -
+              // -- White content area ï¿½ title + button pinned to bottom -
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
@@ -1372,7 +1422,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               ),
             ],
           ),
-          // Dev plan button — top-right
+          // Dev plan button ï¿½ top-right
           if (membership.loaded)
             Positioned(
               top: 10,
@@ -1383,7 +1433,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                     isOnline ? () => setState(() => _showOverlay = true) : null,
               ),
             ),
-          // Offline save button — top-left
+          // Offline save button ï¿½ top-left
           Positioned(
             top: 10,
             left: 10,
