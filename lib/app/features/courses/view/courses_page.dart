@@ -473,6 +473,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
       ),
     );
   }
+}  // end _CoursesPageState
 
 
 class _FilterPanel extends StatelessWidget {
