@@ -262,7 +262,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     crossAxisCount: columns,
                     crossAxisSpacing: width >= 760 ? 28 : 18,
                     mainAxisSpacing: width >= 760 ? 28 : 34,
-                    mainAxisExtent: width >= 760 ? 365 : 390,
+                    mainAxisExtent: width >= 760 ? 445 : 470,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _CatalogCourseCard(
@@ -409,7 +409,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               crossAxisCount: columns,
               crossAxisSpacing: width >= 760 ? 28 : 18,
               mainAxisSpacing: width >= 760 ? 28 : 34,
-              mainAxisExtent: width >= 760 ? 365 : 390,
+              mainAxisExtent: width >= 760 ? 445 : 470,
             ),
             delegate: SliverChildBuilderDelegate(
               (context, index) => _CatalogCourseCard(
@@ -1334,19 +1334,20 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               // ── Purple footer — always at bottom, full width ──────────
               Container(
                 width: double.infinity,
+                constraints: const BoxConstraints(minHeight: 120),
                 padding: const EdgeInsets.all(15),
                 color: FigmaTokens.primaryPurple,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.max,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 12),
                       child: Text(
                         widget.course.name.isEmpty
                             ? 'Untitled Course'
                             : widget.course.name,
-                        maxLines: 3,
+                        maxLines: 5,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.roboto(
                           color: Colors.white,

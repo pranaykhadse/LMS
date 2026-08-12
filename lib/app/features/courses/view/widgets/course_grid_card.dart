@@ -111,17 +111,19 @@ class CourseGridCard extends StatelessWidget {
           // ── Purple footer — always at bottom, full width ──────────────
           Container(
             width: double.infinity,
+            constraints: const BoxConstraints(minHeight: 120),
             padding: const EdgeInsets.all(15),
             color: FigmaTokens.primaryPurple,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+              mainAxisSize: MainAxisSize.max,
               children: [
+                // Title fills remaining space — longer titles expand, not shrink
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     title,
-                    maxLines: 3,
+                    maxLines: 5,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.roboto(
                       color: Colors.white,
