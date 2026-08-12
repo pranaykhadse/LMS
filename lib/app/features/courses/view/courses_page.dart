@@ -1256,27 +1256,73 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                 child: SizedBox(
                   height: 210,
                   child: Stack(
-                    fit: StackFit.expand,
                     children: [
-                      // Triangle-clipped thumbnail
-                      ClipPath(
-                        clipper: _TriangleImageClipper(),
+                      // Background: logo centered with low opacity
+                      Positioned.fill(
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(6),
-                          child: _CourseImage(url: widget.course.logo),
+                          child: Container(
+                            color: FigmaTokens.primaryPurple
+                                .withValues(alpha: 0.08),
+                            alignment: Alignment.center,
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              fit: BoxFit.contain,
+                              width: 140,
+                              opacity: const AlwaysStoppedAnimation(0.18),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Foreground: course image as rectangle (not full bleed)
+                      Positioned(
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        right: 40,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: widget.course.logo != null
+                              ? Image.network(
+                                  widget.course.logo!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      const SizedBox.shrink(),
+                                )
+                              : const SizedBox.shrink(),
                         ),
                       ),
                       // Leadership Edge Live logo — top-right
                       Positioned(
-                        top: 10,
-                        right: 12,
+                        top: 8,
+                        right: 8,
                         child: Image.asset(
                           'assets/images/logo.png',
-                          height: 28,
+                          height: 26,
                           fit: BoxFit.contain,
                         ),
                       ),
-                      // Title overlay — bottom-right inside image
+                      // Offline button — hover only, top-left
+                      if (_hovering)
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: OfflineCourseButton(
+                              course: widget.course.offlineCourse),
+                        ),
+                      // Dev plan button — hover only, top-right
+                      if (_hovering && membership.loaded)
+                        Positioned(
+                          top: 40,
+                          right: 8,
+                          child: _DevPlanButton(
+                            isInPlan: isInPlan,
+                            onTap: isOnline
+                                ? () => setState(() => _showOverlay = true)
+                                : null,
+                          ),
+                        ),
+                      // Title overlay — bottom-right
                       Positioned(
                         right: 10,
                         bottom: 10,
@@ -1402,22 +1448,6 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                 ),
               ),
             ],
-          ),
-          // Dev plan +/✓ button — top-right inside padded image area
-          if (membership.loaded)
-            Positioned(
-              top: 28,
-              right: 23,
-              child: _DevPlanButton(
-                isInPlan: isInPlan,
-                onTap: isOnline ? () => setState(() => _showOverlay = true) : null,
-              ),
-            ),
-          // Offline save button — top-left
-          Positioned(
-            top: 28,
-            left: 23,
-            child: OfflineCourseButton(course: widget.course.offlineCourse),
           ),
           // Overlay covers the full card
           if (_showOverlay)
