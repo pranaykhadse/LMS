@@ -135,8 +135,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
     // there's no real connection just invites a tap that can only fail, the
     // same reasoning as RetryButton (see lib/app/core/views/elements).
     final offline = isEffectivelyOffline(ref);
-    return Container(
-      color: Colors.white,
+    return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Row(
         children: [
@@ -160,7 +159,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
                       )
                     : null,
                 filled: true,
-                fillColor: _bg,
+                fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
