@@ -6,6 +6,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart' show isEffectivelyOffline;
 import 'package:lms/app/features/dashboard/view/view_competency_page.dart';
@@ -589,13 +590,14 @@ class _EmptyState extends StatelessWidget {
 
 // ─── Error view ───────────────────────────────────────────────────────────────
 
-class _ErrorView extends StatelessWidget {
+class _ErrorView extends ConsumerWidget {
   const _ErrorView({required this.message, this.onRetry});
   final String message;
   final VoidCallback? onRetry;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unauthorized = isUnauthorizedError(message);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -609,10 +611,15 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(color: _muted),
             ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 16),
+            const SizedBox(height: 16),
+            if (unauthorized)
+              ElevatedButton(
+                onPressed: () => redirectToLoginOnSessionExpired(context, ref),
+                style: ElevatedButton.styleFrom(backgroundColor: _purple),
+                child: const Text('Log In Again', style: TextStyle(color: Colors.white)),
+              )
+            else if (onRetry != null)
               RetryButton(onRetry: onRetry!),
-            ],
           ],
         ),
       ),
