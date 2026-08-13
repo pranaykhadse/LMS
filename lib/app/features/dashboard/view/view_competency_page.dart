@@ -123,6 +123,7 @@ class _CourseTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Table(
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
       border: const TableBorder(
         top: BorderSide(color: FigmaTokens.cardBorders),
         bottom: BorderSide(color: FigmaTokens.cardBorders),
