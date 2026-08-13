@@ -190,10 +190,74 @@ class _CourseCard extends ConsumerWidget {
   }
 
   Widget? _buildInfoSection(DashboardCourse course) {
+    final showSession = course.nextSession != null;
     final showStars = course.displayRating && course.ratingCount > 0;
-    if (!showStars) return null;
-    return _StarRow(rating: course.averageRating, count: course.ratingCount);
+    if (!showSession && !showStars) return null;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showSession) ...[
+          _NextSessionRow(date: course.nextSession!),
+          if (showStars) const SizedBox(height: 6),
+        ],
+        if (showStars)
+          _StarRow(rating: course.averageRating, count: course.ratingCount),
+      ],
+    );
   }
+}
+
+// ─── Next session ───────────────────────────────────────────────────────────
+
+class _NextSessionRow extends StatelessWidget {
+  const _NextSessionRow({required this.date});
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'NEXT SESSION',
+          style: TextStyle(
+            color: _muted,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            const Icon(Icons.calendar_today_rounded, size: 12, color: _purple),
+            const SizedBox(width: 5),
+            Text(
+              _formatNextSession(date),
+              style: const TextStyle(
+                color: _purple,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+String _formatNextSession(DateTime dt) {
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+  final hourStr = hour12.toString().padLeft(2, '0');
+  final minute = dt.minute.toString().padLeft(2, '0');
+  final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+  return '${months[dt.month - 1]} ${dt.day}, $hourStr:$minute $ampm';
 }
 
 // ─── Star rating ──────────────────────────────────────────────────────────────

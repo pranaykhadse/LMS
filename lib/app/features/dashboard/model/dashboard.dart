@@ -50,12 +50,16 @@ class DashboardCourse {
     this.description,
     this.category,
     this.dueDate,
+    this.nextSession,
   });
 
   final int id;
   final String name;
   final String? logo;
   final int progress;
+
+  /// Next scheduled session/class date, when the course has one.
+  final DateTime? nextSession;
 
   /// Only populated when built from the learning-progress endpoint's
   /// "continue_learning" list, which is the only place a description is
@@ -81,6 +85,12 @@ class DashboardCourse {
 
   factory DashboardCourse.fromJson(Map<String, dynamic> json) {
     final hasCourseId = json['course_id'] != null;
+    final nextSessionValue = (json['next_session'] ??
+            json['nextSession'] ??
+            json['start_date'] ??
+            json['startDate'] ??
+            json['available_at'])
+        ?.toString();
     return DashboardCourse(
       // Non-course dev plan items carry their id as `non_course_id`, not
       // `id` - the development-plan API's own "Non Course ID" field (see
@@ -106,6 +116,9 @@ class DashboardCourse {
       averageRating: _asDouble(json['average_rating']),
       ratingCount: _asInt(json['rating_count']),
       isNonCourse: !hasCourseId,
+      nextSession: nextSessionValue == null || nextSessionValue.isEmpty
+          ? null
+          : DateTime.tryParse(nextSessionValue),
     );
   }
 }
