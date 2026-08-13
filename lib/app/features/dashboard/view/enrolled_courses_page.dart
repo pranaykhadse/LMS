@@ -22,6 +22,7 @@ const _purple = FigmaTokens.primaryPurple;
 const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
+const _titleColor = Color(0xFFA20067);
 
 // "Enrolled" here means not yet fully complete - a fully completed offline
 // course belongs on the Completed page's offline section instead.
@@ -101,7 +102,7 @@ class _Body extends StatelessWidget {
                             child: Text(
                               'My Enrolled Courses',
                               style: TextStyle(
-                                color: _purple,
+                                color: _titleColor,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                               ),

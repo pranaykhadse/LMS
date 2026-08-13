@@ -22,6 +22,7 @@ const _purple = FigmaTokens.primaryPurple;
 const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
+const _titleColor = Color(0xFFA20067);
 
 class DevelopmentPlanPage extends ConsumerWidget {
   const DevelopmentPlanPage({super.key});
@@ -98,7 +99,7 @@ class _Body extends StatelessWidget {
                                 Text(
                                   'My Development Plan',
                                   style: TextStyle(
-                                    color: _purple,
+                                    color: _titleColor,
                                     fontSize: 18,
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -554,7 +555,7 @@ class _TableDataRow extends ConsumerWidget {
             flex: 6,
             child: Text(
               course.name,
-              style: const TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w600),
+              style: const TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
           Expanded(

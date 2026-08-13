@@ -21,6 +21,7 @@ const _purple = FigmaTokens.primaryPurple;
 const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
+const _titleColor = Color(0xFFA20067);
 
 bool _isRequired(Course course) => course.isRequired == 1;
 
@@ -97,7 +98,7 @@ class _Body extends StatelessWidget {
                             child: Text(
                               'My Required Courses',
                               style: TextStyle(
-                                color: _purple,
+                                color: _titleColor,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                               ),
