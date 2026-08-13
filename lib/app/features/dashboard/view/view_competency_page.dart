@@ -68,155 +68,171 @@ class _Body extends StatelessWidget {
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
-          child: Container(
-            width: double.infinity,
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  result.competency.isNotEmpty ? result.competency : 'Competency',
-                  style: const TextStyle(
-                    color: _vcInk,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                if (result.learningPathName.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    result.learningPathName,
-                    style: const TextStyle(color: _vcMuted, fontSize: 13),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-        if (courses.isEmpty)
-          const SliverFillRemaining(
-            hasScrollBody: false,
-            child: Center(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Text(
-                  'No courses found for this competency.',
-                  style: TextStyle(color: _vcMuted, fontSize: 14),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          )
-        else ...[
-          SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: Container(
-              color: FigmaTokens.pageBackground,
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-              child: const Row(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x0A000000), blurRadius: 16, offset: Offset(0, 6)),
+                ],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(width: 24),
-                  SizedBox(width: 8),
-                  Expanded(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
                     child: Text(
-                      'Course Name',
-                      style: TextStyle(
-                        color: _vcMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
+                      result.competency.isNotEmpty ? result.competency : 'Competency',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: _vcInk,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
+                  if (courses.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Text(
+                        'No courses found for this competency.',
+                        style: TextStyle(color: _vcMuted, fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else
+                    _CourseTable(courses: courses),
                 ],
               ),
             ),
           ),
-          SliverList.separated(
-            itemCount: courses.length,
-            separatorBuilder: (_, __) => const Divider(height: 1, color: FigmaTokens.cardBorders),
-            itemBuilder: (context, i) => _CourseRow(index: i + 1, course: courses[i]),
-          ),
-        ],
+        ),
         const SliverToBoxAdapter(child: AppFooter()),
       ],
     );
   }
 }
 
-class _CourseRow extends StatelessWidget {
-  const _CourseRow({required this.index, required this.course});
-  final int index;
+class _CourseTable extends StatelessWidget {
+  const _CourseTable({required this.courses});
+  final List<DashboardCourse> courses;
+
+  @override
+  Widget build(BuildContext context) {
+    return Table(
+      border: const TableBorder(
+        top: BorderSide(color: FigmaTokens.cardBorders),
+        bottom: BorderSide(color: FigmaTokens.cardBorders),
+        horizontalInside: BorderSide(color: FigmaTokens.cardBorders),
+        verticalInside: BorderSide(color: FigmaTokens.cardBorders),
+      ),
+      columnWidths: const {
+        0: FixedColumnWidth(56),
+        1: FlexColumnWidth(6),
+        2: FlexColumnWidth(3),
+      },
+      children: [
+        const TableRow(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFFFFF), Color(0xFFEEEEEE)],
+            ),
+          ),
+          children: [
+            SizedBox(height: 44),
+            Center(
+              child: Text(
+                'Course Name',
+                style: TextStyle(color: _vcPurple, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ),
+            SizedBox.shrink(),
+          ],
+        ),
+        for (var i = 0; i < courses.length; i++)
+          TableRow(
+            children: [
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Text(
+                    '${i + 1}',
+                    style: const TextStyle(color: _vcPurple, fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                  child: Text(
+                    courses[i].name,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: _vcInk,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ),
+              Center(child: _ViewButton(course: courses[i])),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+class _ViewButton extends StatelessWidget {
+  const _ViewButton({required this.course});
   final DashboardCourse course;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 24,
-            child: Text(
-              '$index',
-              style: const TextStyle(color: _vcMuted, fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              course.name,
-              style: const TextStyle(
-                color: _vcInk,
-                fontSize: 13.5,
-                fontWeight: FontWeight.w600,
-                height: 1.4,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          HoverBuilder(
-            builder: (context, hovering) {
-              final onPressed = () => Modular.to.pushNamed(
-                    CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
-                  );
-              const shape = StadiumBorder();
-              const textStyle = TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5);
-              return hovering
-                  ? ElevatedButton.icon(
-                      onPressed: onPressed,
-                      icon: const Icon(Icons.remove_red_eye_outlined, size: 15, color: Colors.white),
-                      label: const Text('View'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _vcPurple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        minimumSize: const Size(0, 34),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: shape,
-                        textStyle: textStyle,
-                      ),
-                    )
-                  : OutlinedButton.icon(
-                      onPressed: onPressed,
-                      icon: const Icon(Icons.remove_red_eye_outlined, size: 15),
-                      label: const Text('View'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _vcPurple,
-                        side: const BorderSide(color: _vcPurple),
-                        minimumSize: const Size(0, 34),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: shape,
-                        textStyle: textStyle,
-                      ),
-                    );
-            },
-          ),
-        ],
-      ),
+    return HoverBuilder(
+      builder: (context, hovering) {
+        final onPressed = () => Modular.to.pushNamed(
+              CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+            );
+        const shape = StadiumBorder();
+        const textStyle = TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5);
+        return hovering
+            ? ElevatedButton.icon(
+                onPressed: onPressed,
+                icon: const Icon(Icons.remove_red_eye_outlined, size: 15, color: Colors.white),
+                label: const Text('View'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _vcPurple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  minimumSize: const Size(0, 34),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: shape,
+                  textStyle: textStyle,
+                ),
+              )
+            : OutlinedButton.icon(
+                onPressed: onPressed,
+                icon: const Icon(Icons.remove_red_eye_outlined, size: 15),
+                label: const Text('View'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _vcPurple,
+                  side: const BorderSide(color: _vcPurple),
+                  minimumSize: const Size(0, 34),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: shape,
+                  textStyle: textStyle,
+                ),
+              );
+      },
     );
   }
 }
