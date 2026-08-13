@@ -1401,7 +1401,7 @@ class _DetailError extends StatelessWidget {
             Text(message, textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(onRetry: onRetry!),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),

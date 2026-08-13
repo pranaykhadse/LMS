@@ -2009,7 +2009,7 @@ class _ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(onRetry: onRetry!),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),

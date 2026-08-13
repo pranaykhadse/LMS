@@ -1649,7 +1649,7 @@ class _CatalogError extends StatelessWidget {
           const SizedBox(height: 12),
           Text(message, textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          if (onRetry != null) RetryButton(onRetry: onRetry!),
+          if (onRetry != null) RetryButton(onRetry: onRetry!, errorMessage: message),
         ],
       ),
     ),

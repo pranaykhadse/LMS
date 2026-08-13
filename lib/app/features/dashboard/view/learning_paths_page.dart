@@ -5,7 +5,6 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
-import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart' show isEffectivelyOffline;
 import 'package:lms/app/features/dashboard/view/view_competency_page.dart';
@@ -669,14 +668,13 @@ class _EmptyState extends StatelessWidget {
 
 // ─── Error view ───────────────────────────────────────────────────────────────
 
-class _ErrorView extends ConsumerWidget {
+class _ErrorView extends StatelessWidget {
   const _ErrorView({required this.message, this.onRetry});
   final String message;
   final VoidCallback? onRetry;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final unauthorized = isUnauthorizedError(message);
+  Widget build(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -690,15 +688,10 @@ class _ErrorView extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(color: _muted),
             ),
-            const SizedBox(height: 16),
-            if (unauthorized)
-              ElevatedButton(
-                onPressed: () => redirectToLoginOnSessionExpired(context, ref),
-                style: ElevatedButton.styleFrom(backgroundColor: _purple),
-                child: const Text('Log In Again', style: TextStyle(color: Colors.white)),
-              )
-            else if (onRetry != null)
-              RetryButton(onRetry: onRetry!),
+            if (onRetry != null) ...[
+              const SizedBox(height: 16),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
+            ],
           ],
         ),
       ),

@@ -404,7 +404,7 @@ class _ErrorView extends StatelessWidget {
             Text(message, textAlign: TextAlign.center, style: const TextStyle(color: _rhMuted)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(onRetry: onRetry!),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),
