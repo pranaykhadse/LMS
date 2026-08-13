@@ -114,7 +114,7 @@ class _Body extends ConsumerWidget {
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(child: _PointsBanner(points: result.userPoints)),
-        // ── White card below points banner ──────────────────────────────────
+        // ── White card: title + search + item grid, all in one box ──────────
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -199,7 +199,7 @@ class _Body extends ConsumerWidget {
                             hintStyle:
                                 const TextStyle(color: _muted, fontSize: 14),
                             filled: true,
-                            fillColor: _bg,
+                            fillColor: Colors.white,
                             // prefix search icon
                             prefixIcon: const Icon(Icons.search_rounded,
                                 color: _muted, size: 20),
@@ -248,49 +248,48 @@ class _Body extends ConsumerWidget {
                     const SizedBox(height: 10),
                     _ResetButton(onTap: offline ? null : onClearSearch),
                   ],
+                  if (items.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: state.query.isNotEmpty
+                          ? const _NoSearchResults()
+                          : const _EmptyState(),
+                    )
+                  else ...[
+                    const SizedBox(height: 16),
+                    GridView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) => _ItemCard(
+                        item: items[index],
+                        isRedeeming: state.redeemingId == items[index].id,
+                        onRedeem: () =>
+                            _showRedeemDialog(context, items[index], notifier),
+                        onView: () => _showDetail(context, items[index]),
+                      ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: Responsive.columns(
+                          context,
+                          phone: 2,
+                          tablet: 4,
+                          desktop: 5,
+                        ),
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 14,
+                        childAspectRatio: 0.72,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    PerPageBadge(perPage: _perPage),
+                  ],
                 ],
               ),
             ),
           ),
         ),
-        if (items.isEmpty)
-          SliverFillRemaining(
-            child: state.query.isNotEmpty
-                ? const _NoSearchResults()
-                : const _EmptyState(),
-          )
-        else ...[
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            sliver: SliverGrid(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _ItemCard(
-                  item: items[index],
-                  isRedeeming: state.redeemingId == items[index].id,
-                  onRedeem: () => _showRedeemDialog(context, items[index], notifier),
-                  onView: () => _showDetail(context, items[index]),
-                ),
-                childCount: items.length,
-              ),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: Responsive.columns(
-                  context,
-                  phone: 2,
-                  tablet: 4,
-                  desktop: 5,
-                ),
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 0.72,
-              ),
-            ),
-          ),
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: PerPageBadge(perPage: _perPage),
-            ),
-          ),
+        if (items.isNotEmpty)
           SliverToBoxAdapter(
             child: PaginationWidget(
               page: state.page,
@@ -298,7 +297,6 @@ class _Body extends ConsumerWidget {
               onPage: onPageChanged,
             ),
           ),
-        ],
         const SliverToBoxAdapter(child: AppFooter()),
       ],
     );
