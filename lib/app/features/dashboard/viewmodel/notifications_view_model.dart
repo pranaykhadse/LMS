@@ -79,4 +79,12 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
         .toList();
     state = state.copyWith(notifications: updated);
   }
+
+  // Local-only, same as markOneAsRead above - there's no backend endpoint
+  // for this yet, so it just drops the item from the in-memory list (it
+  // reappears on the next fetch/refresh).
+  void deleteOne(String id) {
+    final updated = state.notifications.where((n) => n.id != id).toList();
+    state = state.copyWith(notifications: updated);
+  }
 }

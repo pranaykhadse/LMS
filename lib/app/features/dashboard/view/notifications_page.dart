@@ -348,7 +348,42 @@ class _NotifCard extends StatelessWidget {
                     )
                   else
                     const SizedBox(height: 17),
-                  Icon(Icons.more_vert, size: 18, color: Colors.grey.shade400),
+                  // Nudged down a bit further from the unread dot / title row above.
+                  const SizedBox(height: 10),
+                  PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    icon: Icon(Icons.more_vert, size: 18, color: Colors.grey.shade400),
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'read',
+                        child: Row(
+                          children: [
+                            Icon(Icons.check_circle_outline, size: 16, color: _nNavy),
+                            SizedBox(width: 10),
+                            Text('Mark Read'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline_rounded, size: 16, color: _nNavy),
+                            SizedBox(width: 10),
+                            Text('Delete'),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) {
+                      final notifier = ref.read(NotificationsViewModel.provider.notifier);
+                      if (value == 'read') {
+                        notifier.markOneAsRead(item.id);
+                      } else if (value == 'delete') {
+                        notifier.deleteOne(item.id);
+                      }
+                    },
+                  ),
                 ],
               ),
             ],
