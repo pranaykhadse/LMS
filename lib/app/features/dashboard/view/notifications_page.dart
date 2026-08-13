@@ -8,7 +8,6 @@ import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.da
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 
 const _nPurple = FigmaTokens.primaryPurple;
-const _nPurple2 = FigmaTokens.gradientEnd;
 const _nNavy = FigmaTokens.cardTitles;
 const _nMuted = FigmaTokens.noteBodyText;
 const _nBg = FigmaTokens.pageBackground;
@@ -58,13 +57,7 @@ class _NotifHeader extends StatelessWidget {
     final top = MediaQuery.of(context).padding.top;
     return Container(
       padding: EdgeInsets.fromLTRB(20, top + 12, 20, 24),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_nPurple, _nPurple2],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
+      decoration: const BoxDecoration(color: _nPurple),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
