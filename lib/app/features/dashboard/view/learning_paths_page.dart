@@ -345,7 +345,11 @@ class _TableHeaderRow extends StatelessWidget {
           colors: [Color(0xFFFFFFFF), Color(0xFFEEEEEE)],
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      // Horizontal padding is 8, not 20 like the rows below, because this
+      // container also carries a 12px margin (for the inset gradient bar) -
+      // 8 + 12 = 20, so the +/- icon and column text still land at the same
+      // x position as the rows'.
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       child: Row(
         children: [
           Material(
@@ -432,9 +436,12 @@ class _PathRow extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '$index.',
-                      style: const TextStyle(color: _purple, fontSize: 14, fontWeight: FontWeight.w600),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(
+                        '$index.',
+                        style: const TextStyle(color: _purple, fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
