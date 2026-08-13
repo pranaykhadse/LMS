@@ -159,12 +159,14 @@ class _DetailBody extends ConsumerWidget {
                             ),
                           ),
                         if (constraints.maxWidth >= 760)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(flex: 3, child: _DescriptionCard(detail: detail)),
-                              Expanded(flex: 2, child: _CourseImageCard(url: detail.logo)),
-                            ],
+                          IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(flex: 3, child: _DescriptionCard(detail: detail)),
+                                Expanded(flex: 2, child: _CourseImageCard(url: detail.logo, fillHeight: true)),
+                              ],
+                            ),
                           )
                         else ...[
                           _DescriptionCard(detail: detail),
@@ -637,21 +639,30 @@ class _DescriptionCard extends StatelessWidget {
 }
 
 class _CourseImageCard extends StatelessWidget {
-  const _CourseImageCard({required this.url});
+  const _CourseImageCard({required this.url, this.fillHeight = false});
   final String? url;
+
+  /// True when this sits alongside _DescriptionCard in the two-column
+  /// desktop layout (inside IntrinsicHeight + stretch), so it can fill
+  /// whatever height that gives it instead of a fixed one - matching the
+  /// description card's height instead of leaving empty space below a
+  /// shorter fixed-height image.
+  final bool fillHeight;
 
   @override
   Widget build(BuildContext context) {
     return _InfoCard(
       padding: EdgeInsets.zero,
       child: SizedBox(
-        height: 160,
+        width: double.infinity,
+        height: fillHeight ? double.infinity : 160,
         child:
             url == null
                 ? const _ImageFallback()
                 : Image.network(
                   url!,
                   width: double.infinity,
+                  height: fillHeight ? double.infinity : 160,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const _ImageFallback(),
                 ),
