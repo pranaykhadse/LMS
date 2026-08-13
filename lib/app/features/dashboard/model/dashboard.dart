@@ -95,12 +95,13 @@ class DashboardCourse {
             json['startDate'] ??
             json['available_at'])
         ?.toString();
-    final completedDateValue = (json['completed_at'] ??
+    final completedDateValue = (json['completion_time'] ??
+            json['completionTime'] ??
+            json['completed_at'] ??
             json['completedAt'] ??
             json['completed_date'] ??
             json['completedDate'] ??
-            json['completion_date'] ??
-            json['updated_at'])
+            json['completion_date'])
         ?.toString();
     return DashboardCourse(
       // Non-course dev plan items carry their id as `non_course_id`, not

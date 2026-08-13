@@ -46,8 +46,6 @@ class CompletedCoursesRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
     );
     final data = Map<String, dynamic>.from(response as Map);
-    // ignore: avoid_print
-    print('COMPLETED_COURSES_RAW: $data');
     if (data['status']?.toString() != '1') {
       throw Exception(data['message']?.toString() ?? 'Unable to load completed courses.');
     }
