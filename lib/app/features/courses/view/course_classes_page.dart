@@ -742,34 +742,32 @@ class _StructureCard extends StatelessWidget {
           else
             LayoutBuilder(
               builder: (context, constraints) {
-                // 90% of the available width, centered - leaves visible
-                // spacing on either side instead of the table running
-                // edge-to-edge in the card.
-                final tableWidth = constraints.maxWidth * 0.9;
+                // Full available width - only falls back to a fixed 900px
+                // (with horizontal scroll) when the card is narrower than
+                // that, e.g. on small screens.
+                final tableWidth = constraints.maxWidth;
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: Center(
-                    child: SizedBox(
-                      width: tableWidth < 900 ? 900 : tableWidth,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const _StructureHeaderRow(),
-                          const SizedBox(height: 8),
-                          for (var i = 0; i < items.length; i++)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _StructureItemCard(
-                                index: i + 1,
-                                courseId: courseId,
-                                item: items[i],
-                                isEnrolled: isEnrolled,
-                                courseObjective: courseObjective,
-                                courseTitle: courseTitle,
-                              ),
+                  child: SizedBox(
+                    width: tableWidth < 900 ? 900 : tableWidth,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const _StructureHeaderRow(),
+                        const SizedBox(height: 8),
+                        for (var i = 0; i < items.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _StructureItemCard(
+                              index: i + 1,
+                              courseId: courseId,
+                              item: items[i],
+                              isEnrolled: isEnrolled,
+                              courseObjective: courseObjective,
+                              courseTitle: courseTitle,
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
                   ),
                 );
@@ -800,27 +798,27 @@ class _StructureHeaderRow extends StatelessWidget {
           SizedBox(width: 28, child: Text('#', style: style)),
           SizedBox(width: 16),
           Expanded(
-            flex: 4,
+            flex: 3,
             child: Padding(
               padding: EdgeInsets.only(right: 24),
               child: Text('COURSE DETAILS', style: style),
             ),
           ),
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Padding(
               padding: EdgeInsets.only(right: 24),
               child: Text('NEXT SESSION', style: style),
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 1,
             child: Padding(
               padding: EdgeInsets.only(right: 24),
               child: Text('STATUS', style: style),
             ),
           ),
-          Expanded(flex: 4, child: Text('ACTION', style: style)),
+          Expanded(flex: 6, child: Text('ACTION', style: style)),
         ],
       ),
     );
@@ -1132,7 +1130,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           ),
           const SizedBox(width: 16),
           Expanded(
-            flex: 4,
+            flex: 3,
             child: Padding(
               padding: const EdgeInsets.only(right: 24),
               child: Column(
@@ -1159,7 +1157,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             ),
           ),
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Padding(
               padding: const EdgeInsets.only(right: 24),
               // Only show a session date once the learner is actually
@@ -1185,7 +1183,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: 1,
             child: item.status.isEmpty
                 ? const SizedBox.shrink()
                 : Align(
@@ -1202,7 +1200,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   ),
           ),
           Expanded(
-            flex: 4,
+            flex: 6,
             child: actions.isEmpty
                 ? const SizedBox.shrink()
                 : Wrap(spacing: 8, runSpacing: 8, children: actions),
