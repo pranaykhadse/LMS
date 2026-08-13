@@ -904,7 +904,7 @@ class _SectionBlock extends StatelessWidget {
                 title.toUpperCase(),
                 style: const TextStyle(
                   color: _asInk,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w900,
                   fontSize: 11,
                   letterSpacing: 0.6,
                 ),
