@@ -281,11 +281,12 @@ class _TableHeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFF3F1F6), Color(0xFFE9E6ED)],
+          colors: [Color(0xFFFFFFFF), Color(0xFFEEEEEE)],
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
