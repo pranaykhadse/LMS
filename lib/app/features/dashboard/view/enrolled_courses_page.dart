@@ -185,71 +185,14 @@ class _CourseCard extends ConsumerWidget {
         displayRating: course.displayRating ? 1 : 0,
       ),
       infoSection: _buildInfoSection(course),
+      progress: course.progress,
     );
   }
 
   Widget? _buildInfoSection(DashboardCourse course) {
     final showStars = course.displayRating && course.ratingCount > 0;
-    final showProgress = course.progress > 0;
-    if (!showStars && !showProgress) return null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (showStars) ...[
-          _StarRow(rating: course.averageRating, count: course.ratingCount),
-          if (showProgress) const SizedBox(height: 6),
-        ],
-        if (showProgress) _ProgressRow(progress: course.progress),
-      ],
-    );
-  }
-}
-
-// ─── Circular progress indicator ─────────────────────────────────────────────
-
-class _ProgressRow extends StatelessWidget {
-  const _ProgressRow({required this.progress});
-  final int progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 36,
-          height: 36,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              CircularProgressIndicator(
-                value: progress / 100,
-                strokeWidth: 3,
-                backgroundColor: const Color(0xFFE8E7F8),
-                valueColor: const AlwaysStoppedAnimation<Color>(_purple),
-              ),
-              Text(
-                '$progress',
-                style: const TextStyle(
-                  color: _purple,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          '$progress% complete',
-          style: const TextStyle(
-            color: _muted,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
+    if (!showStars) return null;
+    return _StarRow(rating: course.averageRating, count: course.ratingCount);
   }
 }
 

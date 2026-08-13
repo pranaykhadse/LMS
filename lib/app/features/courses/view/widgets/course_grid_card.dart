@@ -19,6 +19,7 @@ class CourseGridCard extends StatelessWidget {
     this.offlineCourse,
     this.infoSection,
     this.overlayButtons,
+    this.progress,
   });
 
   final String? imageUrl;
@@ -33,6 +34,10 @@ class CourseGridCard extends StatelessWidget {
 
   /// Overlay widget shown top-right of image (e.g. dev plan +/- button).
   final Widget? overlayButtons;
+
+  /// Course completion percentage (0-100). When set and > 0, a small
+  /// circular progress ring is overlaid on the bottom-right of the image.
+  final int? progress;
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +84,13 @@ class CourseGridCard extends StatelessWidget {
                     top: 10,
                     right: 10,
                     child: overlayButtons!,
+                  ),
+                // Progress ring — bottom-right
+                if (progress != null && progress! > 0)
+                  Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: _ProgressRing(progress: progress!),
                   ),
               ],
             ),
@@ -139,6 +151,37 @@ class CourseGridCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProgressRing extends StatelessWidget {
+  const _ProgressRing({required this.progress});
+  final int progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: CircularProgressIndicator(
+        value: progress / 100,
+        strokeWidth: 3,
+        backgroundColor: const Color(0xFFE8E7F8),
+        valueColor: const AlwaysStoppedAnimation<Color>(FigmaTokens.primaryPurple),
       ),
     );
   }
