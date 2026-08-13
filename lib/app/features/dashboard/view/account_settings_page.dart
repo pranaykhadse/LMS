@@ -269,16 +269,10 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           onSave: _save,
         ),
         const SizedBox(height: 16),
-        // ── Single white card containing ALL sections ─────────────────
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        // ── Each section is its own bordered, rounded-corner box ───────
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
               // ── Personal Details ──────────────────────────────────
               _SectionBlock(
                 icon: Icons.person_outline_rounded,
@@ -311,7 +305,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                   ),
                 ],
               ),
-              const _SectionDivider(),
+              const SizedBox(height: 16),
               // ── Work Information ──────────────────────────────────
               _SectionBlock(
                 icon: Icons.work_outline_rounded,
@@ -332,7 +326,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                   _FieldRow(label: 'Supervisor Email', value: null),
                 ],
               ),
-              const _SectionDivider(),
+              const SizedBox(height: 16),
               // ── Preferences ───────────────────────────────────────
               _SectionBlock(
                 icon: Icons.tune_rounded,
@@ -345,7 +339,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                   ),
                 ],
               ),
-              const _SectionDivider(),
+              const SizedBox(height: 16),
               // ── Primary Group ─────────────────────────────────────
               _SectionBlock(
                 icon: Icons.groups_outlined,
@@ -354,7 +348,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                   _SelectedChip(label: user.primaryGroupLabel ?? 'Not assigned'),
                 ],
               ),
-              const _SectionDivider(),
+              const SizedBox(height: 16),
               // ── Notification Type ─────────────────────────────────
               _SectionBlock(
                 icon: Icons.notifications_outlined,
@@ -369,7 +363,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                         ))
                     .toList(),
               ),
-              const _SectionDivider(),
+              const SizedBox(height: 16),
               // ── Security ──────────────────────────────────────────
               _SectionBlock(
                 icon: Icons.security_rounded,
@@ -400,7 +394,6 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
               ),
             ],
           ),
-        ),
                 ],
               ),
             ),
@@ -879,8 +872,14 @@ class _SectionBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -892,7 +891,7 @@ class _SectionBlock extends StatelessWidget {
               Text(
                 title.toUpperCase(),
                 style: const TextStyle(
-                  color: _asPurple,
+                  color: _asInk,
                   fontWeight: FontWeight.w800,
                   fontSize: 11,
                   letterSpacing: 0.6,
@@ -912,16 +911,6 @@ class _SectionBlock extends StatelessWidget {
   }
 }
 
-// ─── Divider between sections inside the white card ───────────────────────────
-
-class _SectionDivider extends StatelessWidget {
-  const _SectionDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6));
-  }
-}
 
 class _FieldRow extends StatelessWidget {
   const _FieldRow({
