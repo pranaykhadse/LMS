@@ -790,9 +790,13 @@ class _StructureHeaderRow extends StatelessWidget {
       fontWeight: FontWeight.w800,
       letterSpacing: .3,
     );
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
-      child: Row(
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEDEAF6),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(width: 28, child: Text('#', style: style)),
