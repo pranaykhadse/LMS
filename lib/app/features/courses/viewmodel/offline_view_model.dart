@@ -5,6 +5,8 @@ import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/repository/offline_course_repository.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
+import 'package:lms/app/features/dashboard/model/notification_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 
 // ── Internal progress model ───────────────────────────────────────────────────
 
@@ -96,13 +98,46 @@ class OfflineViewModel extends ChangeNotifier {
         notifyListeners();
       }
       if (urls.isEmpty) _progress[course.id ?? -1]?.completed = 1;
+    } catch (e) {
+      _notifyDownload(
+        title: 'Download Failed',
+        message:
+            "Couldn't save '${course.name ?? 'this course'}' for offline access.",
+        idSuffix: 'failed-${course.id}-${DateTime.now().millisecondsSinceEpoch}',
+      );
+      rethrow;
     } finally {
       _downloading.remove(course);
       // Use the same null-safe key that was used when the entry was created.
       _progress.remove(course.id ?? -1);
       notifyListeners();
     }
+    _notifyDownload(
+      title: 'Download Complete',
+      message: "'${course.name ?? 'Course'}' is now available offline.",
+      idSuffix: 'complete-${course.id}-${DateTime.now().millisecondsSinceEpoch}',
+    );
     _fetch();
+  }
+
+  /// Surfaces a download's outcome as a local (client-generated) entry in
+  /// the Notifications screen - there's no backend endpoint for this, so it
+  /// only lives in NotificationsViewModel's in-memory state (see addLocal).
+  void _notifyDownload({
+    required String title,
+    required String message,
+    required String idSuffix,
+  }) {
+    ref.read(NotificationsViewModel.provider.notifier).addLocal(
+          NotificationItem(
+            id: 'download-$idSuffix',
+            title: title,
+            message: message,
+            type: 'download',
+            isRead: false,
+            createdAt: DateTime.now(),
+          ),
+        );
   }
 
   // ── Remove offline ────────────────────────────────────────────────────────

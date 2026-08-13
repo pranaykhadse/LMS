@@ -22,7 +22,9 @@ import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
+import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 
 const _purple = FigmaTokens.primaryPurple;
 const _ink = FigmaTokens.cardTitles;
@@ -71,6 +73,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
     final state = ref.watch(LearningProgressViewModel.provider);
 
+    // Reminders for learning events starting soon - checked against
+    // whatever upcoming-sessions data Dashboard already has loaded (there's
+    // no background/push infrastructure to check this while the app isn't
+    // open, so "soon" only ever gets (re-)evaluated on a Dashboard visit or
+    // refresh). Deferred to a post-frame callback since it writes to
+    // another provider (NotificationsViewModel) - not safe to do mid-build.
+    // Safe to call every build: _checkLearningEventReminders is idempotent
+    // per session (see NotificationsViewModel.hasRemindedSession).
+    final upcomingSessions = state.data?.upcomingSessions;
+    if (upcomingSessions != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _checkLearningEventReminders(upcomingSessions);
+      });
+    }
+
     if (!_redirectingUnauthorized &&
         state.state == DataProviderState.error &&
         isUnauthorizedError(state.error)) {
@@ -90,6 +107,46 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           ? const Center(child: CircularProgressIndicator(color: _purple))
           : _DashboardBody(auth: auth, state: state, onRefetchAll: _refetchAll),
     );
+  }
+
+  // A session "starting soon" gets a reminder once it's within this window
+  // of its start time (and hasn't already started).
+  static const _reminderWindow = Duration(hours: 24);
+
+  void _checkLearningEventReminders(List<UpcomingSession> sessions) {
+    final notifier = ref.read(NotificationsViewModel.provider.notifier);
+    final now = DateTime.now();
+    for (final session in sessions) {
+      final start = session.startDateTime;
+      if (start == null) continue;
+      final remaining = start.difference(now);
+      if (remaining.isNegative || remaining > _reminderWindow) continue;
+
+      final sessionKey = '${session.courseId}-${session.classId}';
+      if (notifier.hasRemindedSession(sessionKey)) continue;
+      notifier.markSessionReminded(sessionKey);
+
+      notifier.addLocal(
+        NotificationItem(
+          id: 'reminder-$sessionKey',
+          title: 'Upcoming Session',
+          message:
+              "'${session.courseName}' starts ${_relativeTime(remaining)}.",
+          type: 'reminder',
+          isRead: false,
+          createdAt: now,
+        ),
+      );
+    }
+  }
+
+  String _relativeTime(Duration remaining) {
+    if (remaining.inHours < 1) {
+      final minutes = remaining.inMinutes;
+      return 'in $minutes minute${minutes == 1 ? '' : 's'}';
+    }
+    final hours = remaining.inHours;
+    return 'in $hours hour${hours == 1 ? '' : 's'}';
   }
 }
 
