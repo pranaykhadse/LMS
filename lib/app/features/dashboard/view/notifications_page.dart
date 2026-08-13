@@ -151,7 +151,7 @@ class _StatsBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -191,36 +191,50 @@ class _StatsBar extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           // Total
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.notifications_outlined, size: 14, color: _nMuted),
-              const SizedBox(width: 4),
-              Text(
-                '${state.notifications.length} Total',
-                style: const TextStyle(color: _nMuted, fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F2F4),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.notifications_outlined, size: 14, color: _nMuted),
+                const SizedBox(width: 4),
+                Text(
+                  '${state.notifications.length} Total',
+                  style: const TextStyle(color: _nMuted, fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
           ),
           const Spacer(),
           // Mark all read
           if (state.unreadCount > 0)
             GestureDetector(
               onTap: () => ref.read(NotificationsViewModel.provider.notifier).markAllAsRead(),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.check_circle_outline, size: 16, color: _nPurple),
-                  SizedBox(width: 4),
-                  Text(
-                    'Mark all read',
-                    style: TextStyle(
-                      color: _nPurple,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _nPurple.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.check_circle_outline, size: 16, color: _nPurple),
+                    SizedBox(width: 4),
+                    Text(
+                      'Mark all read',
+                      style: TextStyle(
+                        color: _nPurple,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
         ],
@@ -251,7 +265,7 @@ class _NotifCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border(
           left: BorderSide(
             color: item.isRead ? Colors.transparent : _nPurple,
@@ -267,7 +281,7 @@ class _NotifCard extends StatelessWidget {
         ],
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         onTap: () {
           ref.read(NotificationsViewModel.provider.notifier).markOneAsRead(item.id);
           final url = item.redirectUrl;
