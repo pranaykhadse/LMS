@@ -47,7 +47,6 @@ class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
       backgroundColor: _bg,
       title: 'Redeem your Points',
       selectedSubLabel: 'Redeem your Points',
-      hideBack: true,
       onRefresh: () => notifier.fetch(page: state.page, search: state.query),
       body: _Body(
         state: state,

@@ -125,7 +125,7 @@ class TabletNavBar extends ConsumerWidget {
     String route,
   ) {
     if (ShellMarker.isInShell(context)) {
-      ref.read(currentShellDestinationProvider.notifier).state = destination;
+      navigateShell(ref, destination);
       return;
     }
     resetToModularRoot(context);

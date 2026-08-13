@@ -141,7 +141,6 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
       backgroundColor: _catalogBackground,
       title: 'Course Catalog',
       selectedLabel: 'Course Catalog',
-      hideBack: true,
       onRefresh: () => ref.read(CourseCatalogViewModel.provider.notifier).fetch(),
       body: RefreshIndicator(
         onRefresh: () async {

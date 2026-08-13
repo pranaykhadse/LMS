@@ -227,17 +227,18 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Back button — left of the logo, shown whenever there's
-              // actually somewhere to go back to (or the caller supplied
-              // its own onBack). hideBack silences it for top-level
-              // shell destinations (Dashboard, Course Catalog, ...) where
-              // Navigator.canPop() can still read true from routes
-              // underneath even though there's nowhere meaningful to go.
-              if (!hideBack && (onBack != null || Navigator.of(context).canPop()))
+              // actually somewhere to go back to. Shell-tab switches
+              // (Dashboard <-> Course Catalog <-> Learning Paths <-> ...)
+              // never touch Navigator, so canPop() alone can't see that
+              // history - shellHistoryProvider tracks it instead, and this
+              // reverses through tab switches and pushed routes (course
+              // detail, etc.) alike, in the order they actually happened.
+              if (!hideBack && _canGoBack(context, ref))
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: onBack ?? () => safePop(context),
+                    onTap: onBack ?? () => _goBack(context, ref),
                     child: const Padding(
                       padding: EdgeInsets.only(right: 14),
                       child: Icon(
@@ -254,8 +255,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
                     if (ShellMarker.isInShell(context)) {
-                      ref.read(currentShellDestinationProvider.notifier).state =
-                          ShellDestination.dashboard;
+                      navigateShell(ref, ShellDestination.dashboard);
                       return;
                     }
                     resetToModularRoot(context);
@@ -298,6 +298,26 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         children: [header, bottom!],
       ),
     );
+  }
+
+  /// True once there's actually somewhere for the back button to go -
+  /// [shellHistoryProvider] while inside the shell (tab switches never
+  /// reach Navigator), otherwise a normal [Navigator.canPop] check for
+  /// pushed routes (course detail, notifications, account settings, ...).
+  bool _canGoBack(BuildContext context, WidgetRef ref) {
+    if (onBack != null) return true;
+    if (ShellMarker.isInShell(context)) {
+      return ref.watch(shellHistoryProvider).isNotEmpty;
+    }
+    return Navigator.of(context).canPop();
+  }
+
+  /// Reverses one step - out of shell history if inside the shell (falling
+  /// through to a normal pop if history is somehow already empty), or a
+  /// normal pop otherwise.
+  void _goBack(BuildContext context, WidgetRef ref) {
+    if (ShellMarker.isInShell(context) && goBackInShell(ref)) return;
+    safePop(context);
   }
 
   // ── Phone ────────────────────────────────────────────────────────────────
@@ -439,7 +459,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
     // the page doesn't slide. Falls back to a real navigation if somehow
     // reached from outside the shell.
     if (ShellMarker.isInShell(context)) {
-      ref.read(currentShellDestinationProvider.notifier).state = destination;
+      navigateShell(ref, destination);
       return;
     }
     resetToModularRoot(context);

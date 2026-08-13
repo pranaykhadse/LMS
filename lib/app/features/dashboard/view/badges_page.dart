@@ -30,7 +30,6 @@ class BadgesPage extends ConsumerWidget {
       backgroundColor: _bg,
       title: 'Badges',
       selectedSubLabel: 'Badges',
-      hideBack: true,
       onRefresh: notifier.fetch,
       body: _Body(state: state, onRetry: notifier.fetch, userProfile: auth?.userProfile),
     );

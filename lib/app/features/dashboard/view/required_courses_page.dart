@@ -37,7 +37,6 @@ class RequiredCoursesPage extends ConsumerWidget {
       backgroundColor: _bg,
       title: 'My Required Courses',
       selectedSubLabel: 'My Required Courses',
-      hideBack: true,
       onRefresh: () => notifier.fetch(page: state.page),
       body: isEffectivelyOffline(ref)
           ? const OfflineCoursesSection(
