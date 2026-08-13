@@ -297,6 +297,7 @@ class _Body extends ConsumerWidget {
               onPage: onPageChanged,
             ),
           ),
+        const SliverToBoxAdapter(child: _PointSystemExplainer()),
         const SliverToBoxAdapter(child: AppFooter()),
       ],
     );
@@ -424,6 +425,190 @@ class _PointsBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+// ─── Point system explainer ───────────────────────────────────────────────────
+
+const _explainerTitle = Color(0xFFB0006D);
+
+class _PointSystemExplainer extends StatelessWidget {
+  const _PointSystemExplainer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      child: CustomPaint(
+        painter: _DashedBorderPainter(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+          child: Column(
+            children: [
+              const Text(
+                'How does the point system work?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _explainerTitle,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 36),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  const height = 190.0;
+                  // Fractional x-position and y-offset (0 = top, 1 = bottom)
+                  // for each step, forming the zigzag "staircase" layout.
+                  const steps = [
+                    _Step(Icons.how_to_reg_rounded, 'Register for\na course', 0.10, 0.78),
+                    _Step(Icons.school_outlined, 'Complete learning\nevents', 0.37, 0.78),
+                    _Step(Icons.emoji_events_outlined, 'Earn Points', 0.64, 0.18),
+                    _Step(Icons.redeem_outlined, 'Get rewards for\nyour points', 0.90, 0.78),
+                  ];
+                  final points = [
+                    for (final s in steps) Offset(s.xFraction * width, s.yFraction * height)
+                  ];
+                  return SizedBox(
+                    width: width,
+                    height: height,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: CustomPaint(painter: _StepConnectorPainter(points)),
+                        ),
+                        for (var i = 0; i < steps.length; i++)
+                          Positioned(
+                            left: points[i].dx - 60,
+                            top: points[i].dy - 28,
+                            width: 120,
+                            child: _StepBadge(
+                              icon: steps[i].icon,
+                              label: steps[i].label,
+                              labelAbove: steps[i].yFraction < 0.5,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Step {
+  const _Step(this.icon, this.label, this.xFraction, this.yFraction);
+  final IconData icon;
+  final String label;
+  final double xFraction;
+  final double yFraction;
+}
+
+class _StepBadge extends StatelessWidget {
+  const _StepBadge({required this.icon, required this.label, required this.labelAbove});
+  final IconData icon;
+  final String label;
+  final bool labelAbove;
+
+  @override
+  Widget build(BuildContext context) {
+    final circle = Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFFE4D9EF), width: 1.5),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, color: _purple, size: 24),
+    );
+    final text = Text(
+      label,
+      textAlign: TextAlign.center,
+      style: const TextStyle(color: _ink, fontSize: 12, fontWeight: FontWeight.w700, height: 1.3),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: labelAbove
+          ? [text, const SizedBox(height: 8), circle]
+          : [circle, const SizedBox(height: 8), text],
+    );
+  }
+}
+
+/// Right-angle dashed connectors between consecutive step centers, matching
+/// the staircase layout of the reference diagram.
+class _StepConnectorPainter extends CustomPainter {
+  _StepConnectorPainter(this.points);
+  final List<Offset> points;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFD9CBEA)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    for (var i = 0; i < points.length - 1; i++) {
+      final a = points[i];
+      final b = points[i + 1];
+      final corner = Offset(b.dx, a.dy);
+      _drawDashedLine(canvas, paint, a, corner);
+      _drawDashedLine(canvas, paint, corner, b);
+    }
+  }
+
+  void _drawDashedLine(Canvas canvas, Paint paint, Offset a, Offset b) {
+    const dashWidth = 5.0;
+    const gapWidth = 4.0;
+    final total = (b - a).distance;
+    if (total == 0) return;
+    final direction = (b - a) / total;
+    var drawn = 0.0;
+    while (drawn < total) {
+      final segmentEnd = (drawn + dashWidth).clamp(0.0, total);
+      canvas.drawLine(a + direction * drawn, a + direction * segmentEnd, paint);
+      drawn += dashWidth + gapWidth;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StepConnectorPainter oldDelegate) => oldDelegate.points != points;
+}
+
+/// Dashed rounded-rectangle border used around the explainer panel, since
+/// Flutter has no built-in dashed BoxBorder.
+class _DashedBorderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(6),
+    );
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..color = FigmaTokens.cardBorders
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      const dashWidth = 5.0;
+      const gapWidth = 4.0;
+      while (distance < metric.length) {
+        final segmentEnd = (distance + dashWidth).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, segmentEnd), paint);
+        distance += dashWidth + gapWidth;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) => false;
 }
 
 // ─── Item card ────────────────────────────────────────────────────────────────
