@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
@@ -19,11 +19,15 @@ class NotificationsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(NotificationsViewModel.provider);
 
-    return Scaffold(
+    // Same shared header (height, logo, date/time, wifi/offline toggle,
+    // notification bell, profile menu, ...) every other screen uses,
+    // instead of this page's own custom purple banner.
+    return AppScaffold(
       backgroundColor: _nBg,
+      title: 'Notifications',
+      onRefresh: () => ref.read(NotificationsViewModel.provider.notifier).fetch(),
       body: Column(
         children: [
-          _NotifHeader(state: state, ref: ref),
           _StatsBar(state: state, ref: ref),
           Expanded(
             child: state.isLoading
@@ -38,98 +42,6 @@ class NotificationsPage extends ConsumerWidget {
                           return _NotifCard(item: item, ref: ref);
                         },
                       ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Header ────────────────────────────────────────────────────────────────────
-
-class _NotifHeader extends StatelessWidget {
-  const _NotifHeader({required this.state, required this.ref});
-  final NotificationsState state;
-  final WidgetRef ref;
-
-  @override
-  Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, top + 12, 20, 24),
-      decoration: const BoxDecoration(color: _nPurple),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Back button
-          LmsAppBarButton(
-            icon: Icons.arrow_back_ios_new_rounded,
-            onTap: () => Navigator.of(context).pop(),
-            iconSize: 31,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Notifications',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Stay updated with your latest activities',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Bell with badge
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 22),
-              ),
-              if (state.unreadCount > 0)
-                Positioned(
-                  top: -2,
-                  right: -2,
-                  child: Container(
-                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.all(Radius.circular(9)),
-                    ),
-                    child: Text(
-                      state.unreadCount > 99 ? '99+' : '${state.unreadCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
           ),
         ],
       ),
