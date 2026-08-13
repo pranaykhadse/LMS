@@ -137,7 +137,7 @@ class _Body extends StatelessWidget {
                 ),
               ),
             ),
-            PaginationWidget(
+            const SizedBox(height: 12),`n            PaginationWidget(
               page: state.page,
               pages: state.totalPages,
               onPage: (page) => _goToPage(context, page),

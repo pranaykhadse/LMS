@@ -140,7 +140,7 @@ class _Body extends StatelessWidget {
                 ),
               ),
             ),
-            PaginationWidget(
+            const SizedBox(height: 12),`n            PaginationWidget(
               page: state.page,
               pages: state.totalPages,
               onPage: (page) => _goToPage(context, page),
@@ -205,7 +205,7 @@ class _CourseCard extends ConsumerWidget {
   }
 }
 
-// ─── Progress bar ─────────────────────────────────────────────────────────────
+// ─── Circular progress indicator ─────────────────────────────────────────────
 
 class _ProgressRow extends StatelessWidget {
   const _ProgressRow({required this.progress});
@@ -213,23 +213,46 @@ class _ProgressRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: progress / 100,
-            minHeight: 5,
-            backgroundColor: const Color(0xFFE8E7F8),
-            valueColor: const AlwaysStoppedAnimation<Color>(_purple),
+        SizedBox(
+          width: 36,
+          height: 36,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircularProgressIndicator(
+                value: progress / 100,
+                strokeWidth: 3,
+                backgroundColor: const Color(0xFFE8E7F8),
+                valueColor: const AlwaysStoppedAnimation<Color>(_purple),
+              ),
+              Text(
+                '$progress',
+                style: const TextStyle(
+                  color: _purple,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(width: 8),
         Text(
           '$progress% complete',
-          style: const TextStyle(color: _muted, fontSize: 10),
+          style: const TextStyle(
+            color: _muted,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
         ),
+      ],
+    );
+  }
+}
+
+// ─── Star rating ──────────────────────────────────────────────────────────────
       ],
     );
   }
