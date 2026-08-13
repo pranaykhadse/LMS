@@ -203,7 +203,7 @@ class _DownloadTriggerButton extends StatelessWidget {
           textStyle: context.textTheme.bodySmall
               ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );
@@ -358,7 +358,7 @@ class _DownloadedRow extends StatelessWidget {
                 textStyle: context.textTheme.bodySmall
                     ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
           ),
