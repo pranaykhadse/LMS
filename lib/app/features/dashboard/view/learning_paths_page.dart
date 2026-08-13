@@ -4,6 +4,7 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart' show isEffectivelyOffline;
@@ -527,7 +528,7 @@ class _CompetencyPreview extends StatelessWidget {
                   style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
                 ),
               ),
-              SizedBox(width: 70),
+              SizedBox(width: 90),
             ],
           ),
         ),
@@ -594,25 +595,53 @@ class _CompetencyPreviewRow extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 70,
+            width: 90,
             child: competency.name.isEmpty
                 ? const SizedBox.shrink()
-                : InkWell(
-                    onTap: () => _openViewCompetency(
-                      context,
-                      learningPathId: pathId,
-                      competency: competency.name,
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.remove_red_eye_outlined, size: 14, color: _purple),
-                        SizedBox(width: 4),
-                        Text(
-                          'View',
-                          style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
-                        ),
-                      ],
+                : Align(
+                    alignment: Alignment.centerRight,
+                    child: HoverBuilder(
+                      builder: (context, hovering) {
+                        final onPressed = () => _openViewCompetency(
+                              context,
+                              learningPathId: pathId,
+                              competency: competency.name,
+                            );
+                        const shape = StadiumBorder();
+                        const textStyle =
+                            TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5);
+                        return hovering
+                            ? ElevatedButton.icon(
+                                onPressed: onPressed,
+                                icon: const Icon(Icons.remove_red_eye_outlined,
+                                    size: 14, color: Colors.white),
+                                label: const Text('View'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _purple,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  minimumSize: const Size(0, 30),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  shape: shape,
+                                  textStyle: textStyle,
+                                ),
+                              )
+                            : OutlinedButton.icon(
+                                onPressed: onPressed,
+                                icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
+                                label: const Text('View'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: _purple,
+                                  side: const BorderSide(color: _purple),
+                                  minimumSize: const Size(0, 30),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  shape: shape,
+                                  textStyle: textStyle,
+                                ),
+                              );
+                      },
                     ),
                   ),
           ),
