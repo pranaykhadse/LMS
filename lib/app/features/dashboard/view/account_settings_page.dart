@@ -6,7 +6,6 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
-import 'package:lms/app/core/views/elements/inline_back_header.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
@@ -235,16 +234,26 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
         .join(' ');
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
-        const InlineBackHeader(title: 'Account Settings'),
-        const SizedBox(height: 16),
         Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+        const Text(
+          'Account Settings',
+          style: TextStyle(color: _asInk, fontSize: 20, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 16),
         _ProfileHeaderCard(
           name: name.isEmpty ? 'User' : name,
           email: user.email ?? '',
@@ -392,12 +401,13 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        const AppFooter(),
-              ],
+                ],
+              ),
             ),
           ),
         ),
+        const SizedBox(height: 16),
+        const AppFooter(),
       ],
     );
   }
