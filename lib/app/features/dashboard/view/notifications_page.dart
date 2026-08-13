@@ -308,7 +308,7 @@ class _NotifCard extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: _nPurple.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.notifications_rounded, color: _nPurple, size: 20),
               ),
