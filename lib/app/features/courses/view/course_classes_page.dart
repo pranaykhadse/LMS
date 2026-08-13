@@ -434,10 +434,9 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  if (hasCountdown) ...[countdown, const SizedBox(width: 24)],
-                  statusBadge,
-                  const SizedBox(width: 24),
-                  Expanded(child: Align(alignment: Alignment.centerRight, child: _actionButton())),
+                  if (hasCountdown) countdown,
+                  Expanded(child: Center(child: statusBadge)),
+                  _actionButton(),
                 ],
               );
             },
@@ -1381,12 +1380,13 @@ class _TimeBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      width: 62,
+      padding: const EdgeInsets.symmetric(vertical: 14),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: const Color(0xFFFAF9FF),
         border: Border.all(color: FigmaTokens.cardBorders),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1395,16 +1395,16 @@ class _TimeBox extends StatelessWidget {
             value.toString().padLeft(2, '0'),
             style: const TextStyle(
               color: _detailPurple,
-              fontSize: 20,
+              fontSize: 26,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             label,
             style: const TextStyle(
               color: _detailMuted,
-              fontSize: 8,
+              fontSize: 9,
               fontWeight: FontWeight.w800,
             ),
           ),
