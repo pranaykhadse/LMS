@@ -818,7 +818,7 @@ class _ContinueLearningItem extends ConsumerWidget {
       children: [
         // ── Thumbnail (left, fills full card height) ───────────────────
         SizedBox(
-          width: 120,
+          width: 200,
           child: Stack(
             fit: StackFit.expand,
             children: [
