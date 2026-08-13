@@ -225,7 +225,14 @@ class _CompletedRow extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.circle, size: 6, color: _purple),
+              Container(
+                width: 6,
+                height: 6,
+                decoration: const BoxDecoration(
+                  color: _purple,
+                  shape: BoxShape.circle,
+                ),
+              ),
               const SizedBox(width: 6),
               Text(
                 _formatCompletedDate(date!),
