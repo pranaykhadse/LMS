@@ -79,12 +79,12 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
           _SearchBar(
             controller: _searchController,
             onSearch: _onSearch,
+            onReset: _onReset,
           ),
           Expanded(
             child: _Body(
               state: state,
               onRetry: () => notifier.fetch(),
-              onReset: _onReset,
             ),
           ),
         ],
@@ -96,9 +96,14 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
 // ─── Search bar ───────────────────────────────────────────────────────────────
 
 class _SearchBar extends ConsumerStatefulWidget {
-  const _SearchBar({required this.controller, required this.onSearch});
+  const _SearchBar({
+    required this.controller,
+    required this.onSearch,
+    required this.onReset,
+  });
   final TextEditingController controller;
   final VoidCallback onSearch;
+  final VoidCallback onReset;
 
   @override
   ConsumerState<_SearchBar> createState() => _SearchBarState();
@@ -169,12 +174,12 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
             color: offline ? _muted.withValues(alpha: 0.4) : _purple,
             borderRadius: BorderRadius.circular(10),
             child: InkWell(
-              onTap: offline ? null : widget.onSearch,
+              onTap: offline ? null : widget.onReset,
               borderRadius: BorderRadius.circular(10),
               child: const SizedBox(
                 width: 44,
                 height: 44,
-                child: Icon(Icons.search_rounded, color: Colors.white, size: 22),
+                child: Icon(Icons.undo_rounded, color: Colors.white, size: 20),
               ),
             ),
           ),
@@ -187,10 +192,9 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
 // ─── Body ─────────────────────────────────────────────────────────────────────
 
 class _Body extends StatelessWidget {
-  const _Body({required this.state, required this.onRetry, required this.onReset});
+  const _Body({required this.state, required this.onRetry});
   final LearningPathsState state;
   final VoidCallback onRetry;
-  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
@@ -209,32 +213,6 @@ class _Body extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
-            _ResetButton(onTap: onReset),
-            const SizedBox(height: 18),
-            const Text(
-              'Learning Paths',
-              style: TextStyle(color: _sectionTitle, fontSize: 21, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 4),
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(color: _muted, fontSize: 12.5),
-                children: [
-                  const TextSpan(text: 'Showing '),
-                  TextSpan(
-                    text: '1-$total',
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: _ink),
-                  ),
-                  const TextSpan(text: ' of '),
-                  TextSpan(
-                    text: '$total',
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: _ink),
-                  ),
-                  const TextSpan(text: ' items.'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -245,14 +223,50 @@ class _Body extends StatelessWidget {
               ),
               clipBehavior: Clip.antiAlias,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Learning Paths',
+                          style: TextStyle(
+                              color: _sectionTitle, fontSize: 20, fontWeight: FontWeight.w800),
+                        ),
+                        RichText(
+                          text: TextSpan(
+                            style: const TextStyle(color: _muted, fontSize: 12.5),
+                            children: [
+                              const TextSpan(text: 'Showing '),
+                              TextSpan(
+                                text: '1-$total',
+                                style: const TextStyle(fontWeight: FontWeight.w800, color: _ink),
+                              ),
+                              const TextSpan(text: ' of '),
+                              TextSpan(
+                                text: '$total',
+                                style: const TextStyle(fontWeight: FontWeight.w800, color: _ink),
+                              ),
+                              const TextSpan(text: ' items.'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const _TableHeaderRow(),
+                  const Divider(height: 1, color: FigmaTokens.cardBorders),
                   for (var i = 0; i < state.paths.length; i++) ...[
-                    if (i > 0) const Divider(height: 1, color: FigmaTokens.cardBorders),
                     _PathRow(index: i + 1, path: state.paths[i]),
+                    if (i != state.paths.length - 1)
+                      const Divider(height: 1, color: FigmaTokens.cardBorders),
                   ],
                 ],
               ),
             ),
+            const SizedBox(height: 16),
             const AppFooter(),
           ],
         );
@@ -260,28 +274,41 @@ class _Body extends StatelessWidget {
   }
 }
 
-// ─── Reset button ───────────────────────────────────────────────────────────
+// ─── Table header row ───────────────────────────────────────────────────────
 
-class _ResetButton extends StatelessWidget {
-  const _ResetButton({required this.onTap});
-  final VoidCallback onTap;
+class _TableHeaderRow extends StatelessWidget {
+  const _TableHeaderRow();
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Material(
-        color: _purple,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: const SizedBox(
-            width: 44,
-            height: 44,
-            child: Icon(Icons.undo_rounded, color: Colors.white, size: 20),
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFF3F1F6), Color(0xFFE9E6ED)],
         ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: const Row(
+        children: [
+          SizedBox(width: 30),
+          SizedBox(width: 10),
+          Expanded(
+            flex: 6,
+            child: Text(
+              'Learning Path',
+              style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              'Group',
+              style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -306,67 +333,69 @@ class _PathRowState extends State<_PathRow> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 22,
-                child: Text(
-                  '${widget.index}.',
-                  style: const TextStyle(color: _muted, fontSize: 14, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.path.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _ink,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14.5,
-                        height: 1.3,
-                      ),
-                    ),
-                    if (widget.path.groupName.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        widget.path.groupName,
-                        style: const TextStyle(color: _muted, fontSize: 12),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
               Material(
                 color: _purple,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 child: InkWell(
                   onTap: () => setState(() => _expanded = !_expanded),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   child: SizedBox(
-                    width: 30,
-                    height: 30,
+                    width: 22,
+                    height: 22,
                     child: Icon(
                       _expanded ? Icons.remove_rounded : Icons.add_rounded,
                       color: Colors.white,
-                      size: 18,
+                      size: 15,
                     ),
                   ),
                 ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 6,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${widget.index}.',
+                      style: const TextStyle(color: _purple, fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.path.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: _purple,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14.5,
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 3,
+                child: widget.path.groupName.isEmpty
+                    ? const SizedBox.shrink()
+                    : Text(
+                        widget.path.groupName,
+                        style: const TextStyle(color: _purple, fontSize: 13.5, fontWeight: FontWeight.w600),
+                      ),
               ),
             ],
           ),
         ),
         if (_expanded)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
             child: _CompetencyPreview(path: widget.path),
           ),
       ],
