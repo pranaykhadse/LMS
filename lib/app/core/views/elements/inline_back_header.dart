@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/core/views/elements/safe_pop.dart';
 
-/// Inline page header showing:
-///   ← Back  |  [title]  [optional badge]
+/// Inline page header showing: [title]  [optional badge]
 ///
-/// Matches the "← Back | In-Progress Courses  16 courses" pattern used
-/// across sub-pages. The back button calls [onBack] if provided, otherwise
-/// pops the navigator.
+/// The leading "← Back" link previously shown here is gone - back
+/// navigation for these pages will get its own logic later, and until
+/// then this is just a title row.
 class InlineBackHeader extends StatelessWidget {
   const InlineBackHeader({
     super.key,
@@ -18,6 +15,9 @@ class InlineBackHeader extends StatelessWidget {
   });
 
   final String title;
+
+  /// No longer used now that the back link is gone - kept so call sites
+  /// don't need updating when back navigation is redesigned.
   final VoidCallback? onBack;
 
   /// Optional pill widget shown after the title (e.g. "16 courses").
@@ -29,32 +29,6 @@ class InlineBackHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
       child: Row(
         children: [
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: onBack ?? () => safePop(context),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.arrow_back_ios_new_rounded,
-                      size: 14, color: FigmaTokens.primaryPurple),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Back',
-                    style: GoogleFonts.inter(
-                      color: FigmaTokens.primaryPurple,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-              width: 1, height: 16, color: const Color(0xFFD1D5DB)),
-          const SizedBox(width: 12),
           Text(
             title,
             style: GoogleFonts.inter(
