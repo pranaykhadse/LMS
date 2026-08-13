@@ -134,6 +134,12 @@ Widget appActionChip({
     backgroundColor: bgColor,
     disabledColor: disabledColor ?? bgColor,
     side: BorderSide(color: borderColor),
+    // ActionChip defaults to a fully-rounded stadium shape - override it to
+    // match the same 8px radius every other compact action button (Watch
+    // Video, Article, Tasks, ...) uses.
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+    ),
     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
     labelPadding: const EdgeInsets.only(left: 2, right: 4),
     avatar: Icon(icon, size: 14, color: fgColor),
