@@ -12,7 +12,9 @@ bool isUnauthorizedError(String? error) {
   return v.startsWith('unauthorized') ||
       v.contains('invalid credentials') ||
       v.contains('status code of 401') ||
-      v.contains(' 401');
+      v.contains(' 401') ||
+      v.contains('session expired') ||
+      v.contains('session has expired');
 }
 
 /// Logs the user out and sends them back to the login screen, with a

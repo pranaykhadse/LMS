@@ -33,6 +33,7 @@ class RetryButton extends ConsumerWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor:
                 hovering ? FigmaTokens.purpleHover : FigmaTokens.primaryPurple,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           ),
           child: const Text('Go To Login', style: TextStyle(color: Colors.white)),
         ),
@@ -55,6 +56,7 @@ class RetryButton extends ConsumerWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor:
               hovering ? FigmaTokens.purpleHover : FigmaTokens.primaryPurple,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         ),
         child: const Text('Try Again', style: TextStyle(color: Colors.white)),
       ),
