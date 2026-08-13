@@ -23,11 +23,22 @@ const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
 
-class DevelopmentPlanPage extends ConsumerWidget {
+class DevelopmentPlanPage extends ConsumerStatefulWidget {
   const DevelopmentPlanPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DevelopmentPlanPage> createState() => _DevelopmentPlanPageState();
+}
+
+class _DevelopmentPlanPageState extends ConsumerState<DevelopmentPlanPage> {
+  // Version 1 is the original card-grid layout; Version 2 is the table
+  // layout matching the web app's My Development Plan screen. Both are
+  // kept, toggled from the page header, while Version 2 is the required
+  // design going forward.
+  int _version = 2;
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(DevelopmentPlanViewModel.provider);
     final notifier = ref.read(DevelopmentPlanViewModel.provider.notifier);
 
@@ -36,15 +47,27 @@ class DevelopmentPlanPage extends ConsumerWidget {
       title: 'My Development Plan',
       selectedSubLabel: 'My Development Plan',
       onRefresh: () => notifier.fetch(page: state.page),
-      body: _Body(state: state, notifier: notifier),
+      body: _Body(
+        state: state,
+        notifier: notifier,
+        version: _version,
+        onVersionChanged: (v) => setState(() => _version = v),
+      ),
     );
   }
 }
 
 class _Body extends StatelessWidget {
-  const _Body({required this.state, required this.notifier});
+  const _Body({
+    required this.state,
+    required this.notifier,
+    required this.version,
+    required this.onVersionChanged,
+  });
   final DevelopmentPlanState state;
   final DevelopmentPlanViewModel notifier;
+  final int version;
+  final ValueChanged<int> onVersionChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -131,12 +154,33 @@ class _Body extends StatelessWidget {
                               ],
                             ),
                           ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: _VersionToggle(
+                                version: version,
+                                onChanged: onVersionChanged,
+                              ),
+                            ),
+                          ),
                           if (state.courses.isEmpty)
                             const Padding(
                               padding: EdgeInsets.only(top: 40, bottom: 40),
                               child: _EmptyState(),
                             )
-                          else ...[
+                          else if (version == 2) ...[
+                            _DevelopmentPlanTable(
+                              courses: state.courses,
+                              notifier: notifier,
+                              startIndex: (state.page - 1) * state.perPage + 1,
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                              child: PerPageBadge(perPage: state.perPage),
+                            ),
+                          ] else ...[
                             GridView.builder(
                               padding: const EdgeInsets.all(16),
                               shrinkWrap: true,
@@ -429,6 +473,219 @@ class _UpdatePlanItemDialogState extends State<_UpdatePlanItemDialog> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Version toggle ─────────────────────────────────────────────────────────
+
+class _VersionToggle extends StatelessWidget {
+  const _VersionToggle({required this.version, required this.onChanged});
+  final int version;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: _bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: FigmaTokens.cardBorders),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _VersionChip(
+            label: 'Version 1',
+            selected: version == 1,
+            onTap: () => onChanged(1),
+          ),
+          _VersionChip(
+            label: 'Version 2',
+            selected: version == 2,
+            onTap: () => onChanged(2),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VersionChip extends StatelessWidget {
+  const _VersionChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? _purple : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : _muted,
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Development plan table (Version 2) ────────────────────────────────────
+
+class _DevelopmentPlanTable extends StatelessWidget {
+  const _DevelopmentPlanTable({
+    required this.courses,
+    required this.notifier,
+    required this.startIndex,
+  });
+  final List<DashboardCourse> courses;
+  final DevelopmentPlanViewModel notifier;
+  final int startIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _TableHeaderRow(),
+        const Divider(height: 1, color: FigmaTokens.cardBorders),
+        for (var i = 0; i < courses.length; i++) ...[
+          _TableDataRow(
+            index: startIndex + i,
+            course: courses[i],
+            notifier: notifier,
+          ),
+          if (i != courses.length - 1)
+            const Divider(height: 1, color: FigmaTokens.cardBorders),
+        ],
+      ],
+    );
+  }
+}
+
+class _TableHeaderRow extends StatelessWidget {
+  const _TableHeaderRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          SizedBox(width: 32, child: _HeaderCell('#')),
+          Expanded(flex: 3, child: _HeaderCell('Group')),
+          Expanded(flex: 6, child: _HeaderCell('Course')),
+          Expanded(flex: 2, child: _HeaderCell('Status')),
+          SizedBox(width: 110),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  const _HeaderCell(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+    );
+  }
+}
+
+class _TableDataRow extends ConsumerWidget {
+  const _TableDataRow({
+    required this.index,
+    required this.course,
+    required this.notifier,
+  });
+  final int index;
+  final DashboardCourse course;
+  final DevelopmentPlanViewModel notifier;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewDisabled =
+        !course.isNonCourse && isViewCourseDisabled(ref, course.id);
+    final group = course.isNonCourse
+        ? 'Non Course Development Plan'
+        : (course.category?.isNotEmpty == true ? course.category! : 'Course');
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 32,
+            child: Text(
+              '$index',
+              style: const TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(group, style: const TextStyle(color: _ink, fontSize: 13)),
+          ),
+          Expanded(
+            flex: 6,
+            child: Text(
+              course.name,
+              style: const TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              '${course.progress}%',
+              style: const TextStyle(color: _ink, fontSize: 13),
+            ),
+          ),
+          SizedBox(
+            width: 110,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: course.isNonCourse
+                    ? () => _showUpdatePlanItemDialog(context, notifier, course)
+                    : viewDisabled
+                        ? null
+                        : () => Modular.to.pushNamed(
+                            CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+                          ),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  foregroundColor: _purple,
+                ),
+                child: Text(
+                  course.isNonCourse ? 'Update' : 'View Course',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
