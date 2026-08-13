@@ -163,9 +163,9 @@ class _ProgressRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 28,
-      height: 28,
-      padding: const EdgeInsets.all(3),
+      width: 24,
+      height: 24,
+      padding: const EdgeInsets.all(2.5),
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,
@@ -177,11 +177,24 @@ class _ProgressRing extends StatelessWidget {
           ),
         ],
       ),
-      child: CircularProgressIndicator(
-        value: progress / 100,
-        strokeWidth: 3,
-        backgroundColor: const Color(0xFFE8E7F8),
-        valueColor: const AlwaysStoppedAnimation<Color>(FigmaTokens.primaryPurple),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: progress / 100,
+            strokeWidth: 2.5,
+            backgroundColor: const Color(0xFFE8E7F8),
+            valueColor: const AlwaysStoppedAnimation<Color>(FigmaTokens.primaryPurple),
+          ),
+          Text(
+            '$progress',
+            style: const TextStyle(
+              color: FigmaTokens.primaryPurple,
+              fontSize: 7,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
