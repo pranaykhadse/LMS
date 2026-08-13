@@ -740,30 +740,40 @@ class _StructureCard extends StatelessWidget {
               style: TextStyle(color: _detailMuted),
             )
           else
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SizedBox(
-                width: 900,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _StructureHeaderRow(),
-                    const Divider(height: 1, color: FigmaTokens.cardBorders),
-                    for (var i = 0; i < items.length; i++) ...[
-                      _StructureItemCard(
-                        index: i + 1,
-                        courseId: courseId,
-                        item: items[i],
-                        isEnrolled: isEnrolled,
-                        courseObjective: courseObjective,
-                        courseTitle: courseTitle,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // 90% of the available width, centered - leaves visible
+                // spacing on either side instead of the table running
+                // edge-to-edge in the card.
+                final tableWidth = constraints.maxWidth * 0.9;
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Center(
+                    child: SizedBox(
+                      width: tableWidth < 900 ? 900 : tableWidth,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _StructureHeaderRow(),
+                          const SizedBox(height: 8),
+                          for (var i = 0; i < items.length; i++)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _StructureItemCard(
+                                index: i + 1,
+                                courseId: courseId,
+                                item: items[i],
+                                isEnrolled: isEnrolled,
+                                courseObjective: courseObjective,
+                                courseTitle: courseTitle,
+                              ),
+                            ),
+                        ],
                       ),
-                      if (i != items.length - 1)
-                        const Divider(height: 1, color: FigmaTokens.cardBorders),
-                    ],
-                  ],
-                ),
-              ),
+                    ),
+                  ),
+                );
+              },
             ),
         ],
       ),
@@ -783,15 +793,33 @@ class _StructureHeaderRow extends StatelessWidget {
       letterSpacing: .3,
     );
     return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 12),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(width: 28, child: Text('#', style: style)),
-          SizedBox(width: 12),
-          Expanded(flex: 4, child: Text('COURSE DETAILS', style: style)),
-          Expanded(flex: 3, child: Text('NEXT SESSION', style: style)),
-          Expanded(flex: 2, child: Text('STATUS', style: style)),
+          SizedBox(width: 16),
+          Expanded(
+            flex: 4,
+            child: Padding(
+              padding: EdgeInsets.only(right: 24),
+              child: Text('COURSE DETAILS', style: style),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: EdgeInsets.only(right: 24),
+              child: Text('NEXT SESSION', style: style),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: EdgeInsets.only(right: 24),
+              child: Text('STATUS', style: style),
+            ),
+          ),
           Expanded(flex: 4, child: Text('ACTION', style: style)),
         ],
       ),
@@ -1086,8 +1114,12 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           ),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: FigmaTokens.cardBorders),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -1098,11 +1130,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
               style: const TextStyle(color: _detailMuted, fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             flex: 4,
             child: Padding(
-              padding: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.only(right: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -1129,7 +1161,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           Expanded(
             flex: 3,
             child: Padding(
-              padding: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.only(right: 24),
               // Only show a session date once the learner is actually
               // registered for THIS class - showing one for a class they
               // haven't registered for implies a commitment that hasn't
