@@ -226,6 +226,28 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Back button — left of the logo, shown whenever there's
+              // actually somewhere to go back to (or the caller supplied
+              // its own onBack). hideBack silences it for top-level
+              // shell destinations (Dashboard, Course Catalog, ...) where
+              // Navigator.canPop() can still read true from routes
+              // underneath even though there's nowhere meaningful to go.
+              if (!hideBack && (onBack != null || Navigator.of(context).canPop()))
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onBack ?? () => safePop(context),
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 14),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ),
               MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
