@@ -232,6 +232,8 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     final name = [profile.firstname, profile.lastname]
         .where((s) => (s ?? '').trim().isNotEmpty)
         .join(' ');
+    final notificationTypeSelection =
+        (profile.notificationType?.toString() ?? '').toLowerCase();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -278,6 +280,10 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                 icon: Icons.person_outline_rounded,
                 title: 'Personal Details',
                 children: [
+                  // Not yet returned by the profile API - shown as
+                  // "Not provided" like Supervisor Name/Email below, ready
+                  // to wire up once the backend exposes it.
+                  const _FieldRow(label: 'State', value: null),
                   _FieldRow(
                     label: 'Location',
                     value: profile.location,
@@ -322,8 +328,9 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                     controller: _isEditing ? _departmentCtrl : null,
                   ),
                   _FieldRow(label: 'Cost Code', value: user.costCode),
-                  _FieldRow(label: 'Supervisor Name', value: null),
-                  _FieldRow(label: 'Supervisor Email', value: null),
+                  _FieldRow(label: 'Employee ID', value: user.employeeId?.toString()),
+                  const _FieldRow(label: 'Supervisor Name', value: null),
+                  const _FieldRow(label: 'Supervisor Email', value: null),
                 ],
               ),
               const SizedBox(height: 16),
@@ -353,15 +360,20 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
               _SectionBlock(
                 icon: Icons.notifications_outlined,
                 title: 'Notification Type',
-                children: _notificationOptions
-                    .map((label) => _RadioRow(
-                          label: label,
-                          selected: (profile.notificationType?.toString() ?? '')
-                              .toLowerCase()
-                              .contains(
-                                  label.split(' ').first.toLowerCase()),
-                        ))
-                    .toList(),
+                children: [
+                  ..._notificationOptions.map((label) => _RadioRow(
+                        label: label,
+                        selected: notificationTypeSelection
+                            .contains(label.split(' ').first.toLowerCase()),
+                      )),
+                  // The number that channel actually sends to - only shown
+                  // once that channel is selected, matching the reference.
+                  if (notificationTypeSelection.contains('text') ||
+                      notificationTypeSelection.contains('sms'))
+                    _PlainValueBox(value: profile.textPhoneNumber?.toString())
+                  else if (notificationTypeSelection.contains('whatsapp'))
+                    _PlainValueBox(value: profile.whatsappPhoneNumber?.toString()),
+                ],
               ),
               const SizedBox(height: 16),
               // ── Security ──────────────────────────────────────────
@@ -1046,6 +1058,35 @@ class _ToggleRow extends StatelessWidget {
             activeColor: _asPurple,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Plain full-width value box with no label - used for the phone number
+/// tied to the currently-selected notification channel (Text/WhatsApp).
+class _PlainValueBox extends StatelessWidget {
+  const _PlainValueBox({this.value});
+  final String? value;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasValue = (value ?? '').trim().isNotEmpty;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
+      ),
+      child: Text(
+        hasValue ? value! : 'Not provided',
+        style: TextStyle(
+          color: hasValue ? _asInk : _asMuted,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
