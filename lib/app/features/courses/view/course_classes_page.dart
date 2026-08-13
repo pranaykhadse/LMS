@@ -124,8 +124,9 @@ class _DetailBody extends ConsumerWidget {
                       .fetch(),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final maxWidth =
-                  constraints.maxWidth >= 760 ? 1100.0 : double.infinity;
+              // 95% of the viewport width, with the remaining 5% split
+              // evenly as left/right spacing (via the Center below).
+              final maxWidth = constraints.maxWidth * 0.95;
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Center(
@@ -222,9 +223,7 @@ class _CourseHero extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(6, 10, 6, 0),
       padding: const EdgeInsets.fromLTRB(14, 34, 14, 54),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [_detailPurple, _detailPurple2]),
-      ),
+      decoration: const BoxDecoration(color: _detailPurple),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -402,89 +401,46 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       ],
     );
 
-    return _InfoCard(
+    return Container(
       margin: const EdgeInsets.fromLTRB(22, 0, 22, 28),
-      child: Column(
-        children: [
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1EEF7),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: _InfoCard(
+        margin: EdgeInsets.zero,
+        child: Column(
+          children: [
           // Only show the countdown once the learner is actually enrolled -
           // showing a countdown toward a session they haven't registered
           // for is misleading. On wide screens it sits inline with the
           // primary action button, matching the reference's single header
           // bar instead of stacking them.
-          if (hasCountdown)
-            LayoutBuilder(
-              builder: (context, constraints) {
-                if (constraints.maxWidth < 480) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      countdown,
-                      const SizedBox(height: 20),
-                      SizedBox(width: double.infinity, child: _actionButton()),
-                    ],
-                  );
-                }
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final statusBadge = _statusBadge(detail);
+              if (constraints.maxWidth < 620) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    countdown,
-                    const SizedBox(width: 24),
-                    Expanded(child: Align(alignment: Alignment.centerRight, child: _actionButton())),
+                    if (hasCountdown) ...[countdown, const SizedBox(height: 20)],
+                    statusBadge,
+                    const SizedBox(height: 20),
+                    SizedBox(width: double.infinity, child: _actionButton()),
                   ],
                 );
-              },
-            )
-          else
-            SizedBox(width: double.infinity, child: _actionButton()),
-          const SizedBox(height: 20),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(17, 8, 10, 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6F3FF),
-                border: Border.all(color: FigmaTokens.cardBorders),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    detail.launchStatus.toUpperCase(),
-                    style: const TextStyle(
-                      color: _detailPurple,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  if (detail.progressPercentage > 0) ...[
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 36,
-                      height: 36,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            value: detail.progressPercentage,
-                            strokeWidth: 2.5,
-                            color: _detailPurple,
-                            backgroundColor: Colors.white,
-                          ),
-                          Text(
-                            '${(detail.progressPercentage * 100).round()}%',
-                            style: const TextStyle(
-                              color: _detailPurple,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  if (hasCountdown) ...[countdown, const SizedBox(width: 24)],
+                  statusBadge,
+                  const SizedBox(width: 24),
+                  Expanded(child: Align(alignment: Alignment.centerRight, child: _actionButton())),
                 ],
-              ),
-            ),
+              );
+            },
           ),
           if (detail.learningPath != null) ...[
             const SizedBox(height: 26),
@@ -524,6 +480,59 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
               ),
             ),
           ],
+        ],
+        ),
+      ),
+    );
+  }
+
+  /// Status pill: a full ring when the course is closed (nothing left to
+  /// complete), or the learner's actual completion percentage when it's
+  /// still open.
+  Widget _statusBadge(CourseJoinDetail detail) {
+    final isClosed = detail.launchStatus.toLowerCase().contains('closed');
+    final progress = isClosed ? 1.0 : detail.progressPercentage;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(17, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F3FF),
+        border: Border.all(color: FigmaTokens.cardBorders),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            detail.launchStatus.toUpperCase(),
+            style: const TextStyle(
+              color: _detailPurple,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 2.5,
+                  color: _detailPurple,
+                  backgroundColor: Colors.white,
+                ),
+                Text(
+                  '${(progress * 100).round()}%',
+                  style: const TextStyle(
+                    color: _detailPurple,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
