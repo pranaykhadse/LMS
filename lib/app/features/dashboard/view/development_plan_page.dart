@@ -23,22 +23,11 @@ const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
 
-class DevelopmentPlanPage extends ConsumerStatefulWidget {
+class DevelopmentPlanPage extends ConsumerWidget {
   const DevelopmentPlanPage({super.key});
 
   @override
-  ConsumerState<DevelopmentPlanPage> createState() => _DevelopmentPlanPageState();
-}
-
-class _DevelopmentPlanPageState extends ConsumerState<DevelopmentPlanPage> {
-  // Version 1 is the original card-grid layout; Version 2 is the table
-  // layout matching the web app's My Development Plan screen. Both are
-  // kept, toggled from the page header, while Version 2 is the required
-  // design going forward.
-  int _version = 2;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(DevelopmentPlanViewModel.provider);
     final notifier = ref.read(DevelopmentPlanViewModel.provider.notifier);
 
@@ -47,27 +36,21 @@ class _DevelopmentPlanPageState extends ConsumerState<DevelopmentPlanPage> {
       title: 'My Development Plan',
       selectedSubLabel: 'My Development Plan',
       onRefresh: () => notifier.fetch(page: state.page),
-      body: _Body(
-        state: state,
-        notifier: notifier,
-        version: _version,
-        onVersionChanged: (v) => setState(() => _version = v),
-      ),
+      body: _Body(state: state, notifier: notifier),
     );
   }
 }
 
+// The original card-grid layout (below, _CourseCard/GridView) is kept in
+// this file but no longer reachable from the UI - the table layout is now
+// the only design shown. Kept around in case the grid layout is needed
+// again later rather than deleted outright.
+const _kUseTableLayout = true;
+
 class _Body extends StatelessWidget {
-  const _Body({
-    required this.state,
-    required this.notifier,
-    required this.version,
-    required this.onVersionChanged,
-  });
+  const _Body({required this.state, required this.notifier});
   final DevelopmentPlanState state;
   final DevelopmentPlanViewModel notifier;
-  final int version;
-  final ValueChanged<int> onVersionChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -154,22 +137,12 @@ class _Body extends StatelessWidget {
                               ],
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: _VersionToggle(
-                                version: version,
-                                onChanged: onVersionChanged,
-                              ),
-                            ),
-                          ),
                           if (state.courses.isEmpty)
                             const Padding(
                               padding: EdgeInsets.only(top: 40, bottom: 40),
                               child: _EmptyState(),
                             )
-                          else if (version == 2) ...[
+                          else if (_kUseTableLayout) ...[
                             _DevelopmentPlanTable(
                               courses: state.courses,
                               notifier: notifier,
@@ -478,76 +451,7 @@ class _UpdatePlanItemDialogState extends State<_UpdatePlanItemDialog> {
   }
 }
 
-// ─── Version toggle ─────────────────────────────────────────────────────────
-
-class _VersionToggle extends StatelessWidget {
-  const _VersionToggle({required this.version, required this.onChanged});
-  final int version;
-  final ValueChanged<int> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: _bg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: FigmaTokens.cardBorders),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _VersionChip(
-            label: 'Version 1',
-            selected: version == 1,
-            onTap: () => onChanged(1),
-          ),
-          _VersionChip(
-            label: 'Version 2',
-            selected: version == 2,
-            onTap: () => onChanged(2),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VersionChip extends StatelessWidget {
-  const _VersionChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? _purple : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : _muted,
-            fontSize: 12.5,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Development plan table (Version 2) ────────────────────────────────────
+// ─── Development plan table ─────────────────────────────────────────────────
 
 class _DevelopmentPlanTable extends StatelessWidget {
   const _DevelopmentPlanTable({
