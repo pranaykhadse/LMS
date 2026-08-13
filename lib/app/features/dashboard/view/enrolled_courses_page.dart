@@ -254,12 +254,6 @@ class _ProgressRow extends StatelessWidget {
 }
 
 // ─── Star rating ──────────────────────────────────────────────────────────────
-      ],
-    );
-  }
-}
-
-// ─── Star rating ──────────────────────────────────────────────────────────────
 
 class _StarRow extends StatelessWidget {
   const _StarRow({required this.rating, required this.count});
