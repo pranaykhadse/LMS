@@ -467,7 +467,10 @@ class _PathRow extends StatelessWidget {
         ),
         if (expanded)
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+            // Left-aligned with the path name text above (row padding 20 +
+            // the 22px expand icon + the 10px gap after it), not flush
+            // with the icon itself.
+            padding: const EdgeInsets.fromLTRB(52, 0, 20, 14),
             child: _CompetencyPreview(path: path),
           ),
       ],
