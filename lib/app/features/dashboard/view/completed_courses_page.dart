@@ -195,42 +195,60 @@ class _CourseCard extends ConsumerWidget {
           _StarRow(rating: course.averageRating, count: course.ratingCount),
           const SizedBox(height: 6),
         ],
-        const _CompletedBadge(),
+        _CompletedRow(date: course.completedDate),
       ],
     );
   }
 }
 
-// ─── Completed badge ──────────────────────────────────────────────────────────
+// ─── Completed date ────────────────────────────────────────────────────────
 
-class _CompletedBadge extends StatelessWidget {
-  const _CompletedBadge();
+class _CompletedRow extends StatelessWidget {
+  const _CompletedRow({required this.date});
+  final DateTime? date;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 12),
-          SizedBox(width: 4),
-          Text(
-            'Completed',
-            style: TextStyle(
-              color: Color(0xFF2E7D32),
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'COMPLETED',
+          style: TextStyle(
+            color: _muted,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
+        ),
+        if (date != null) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              const Icon(Icons.circle, size: 6, color: _purple),
+              const SizedBox(width: 6),
+              Text(
+                _formatCompletedDate(date!),
+                style: const TextStyle(
+                  color: _purple,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ],
-      ),
+      ],
     );
   }
+}
+
+String _formatCompletedDate(DateTime dt) {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  return '${months[dt.month - 1]} ${dt.day.toString().padLeft(2, '0')}, ${dt.year}';
 }
 
 // ─── Star rating ──────────────────────────────────────────────────────────────

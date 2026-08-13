@@ -51,6 +51,7 @@ class DashboardCourse {
     this.category,
     this.dueDate,
     this.nextSession,
+    this.completedDate,
   });
 
   final int id;
@@ -60,6 +61,9 @@ class DashboardCourse {
 
   /// Next scheduled session/class date, when the course has one.
   final DateTime? nextSession;
+
+  /// Date the course was completed, when reported by the API.
+  final DateTime? completedDate;
 
   /// Only populated when built from the learning-progress endpoint's
   /// "continue_learning" list, which is the only place a description is
@@ -91,6 +95,13 @@ class DashboardCourse {
             json['startDate'] ??
             json['available_at'])
         ?.toString();
+    final completedDateValue = (json['completed_at'] ??
+            json['completedAt'] ??
+            json['completed_date'] ??
+            json['completedDate'] ??
+            json['completion_date'] ??
+            json['updated_at'])
+        ?.toString();
     return DashboardCourse(
       // Non-course dev plan items carry their id as `non_course_id`, not
       // `id` - the development-plan API's own "Non Course ID" field (see
@@ -119,6 +130,10 @@ class DashboardCourse {
       nextSession: nextSessionValue == null || nextSessionValue.isEmpty
           ? null
           : DateTime.tryParse(nextSessionValue),
+      completedDate:
+          completedDateValue == null || completedDateValue.isEmpty
+              ? null
+              : DateTime.tryParse(completedDateValue),
     );
   }
 }
