@@ -226,12 +226,13 @@ class _CompletedRow extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 6,
-                height: 6,
+                width: 14,
+                height: 14,
                 decoration: const BoxDecoration(
                   color: _purple,
                   shape: BoxShape.circle,
                 ),
+                child: const Icon(Icons.check, size: 10, color: Colors.white),
               ),
               const SizedBox(width: 6),
               Text(
