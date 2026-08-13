@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
-import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
@@ -148,7 +147,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
               decoration: InputDecoration(
                 hintText: offline ? "You're offline" : 'Search learning paths...',
                 hintStyle: const TextStyle(color: _muted, fontSize: 14),
-                prefixIcon: const Icon(Icons.search_rounded, color: _muted, size: 22),
+                prefixIcon: const Icon(Icons.search_rounded, color: _purple, size: 22),
                 suffixIcon: _hasText && !offline
                     ? IconButton(
                         icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
@@ -255,13 +254,7 @@ class _Body extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const _TableHeaderRow(),
-                  const Divider(height: 1, color: FigmaTokens.cardBorders),
-                  for (var i = 0; i < state.paths.length; i++) ...[
-                    _PathRow(index: i + 1, path: state.paths[i]),
-                    if (i != state.paths.length - 1)
-                      const Divider(height: 1, color: FigmaTokens.cardBorders),
-                  ],
+                  _PathsTable(paths: state.paths),
                 ],
               ),
             ),
@@ -273,10 +266,73 @@ class _Body extends StatelessWidget {
   }
 }
 
+// ─── Paths table ──────────────────────────────────────────────────────────────
+
+/// Owns which rows are expanded so the header's +/- can expand or collapse
+/// every row at once, alongside each row's own individual toggle.
+class _PathsTable extends StatefulWidget {
+  const _PathsTable({required this.paths});
+  final List<LearningPath> paths;
+
+  @override
+  State<_PathsTable> createState() => _PathsTableState();
+}
+
+class _PathsTableState extends State<_PathsTable> {
+  final Set<int> _expanded = {};
+
+  bool get _allExpanded =>
+      widget.paths.isNotEmpty && _expanded.length == widget.paths.length;
+
+  void _toggleAll() {
+    setState(() {
+      if (_allExpanded) {
+        _expanded.clear();
+      } else {
+        _expanded
+          ..clear()
+          ..addAll(List.generate(widget.paths.length, (i) => i));
+      }
+    });
+  }
+
+  void _toggleRow(int index) {
+    setState(() {
+      if (_expanded.contains(index)) {
+        _expanded.remove(index);
+      } else {
+        _expanded.add(index);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _TableHeaderRow(allExpanded: _allExpanded, onToggleAll: _toggleAll),
+        const Divider(height: 1, color: FigmaTokens.cardBorders),
+        for (var i = 0; i < widget.paths.length; i++) ...[
+          _PathRow(
+            index: i + 1,
+            path: widget.paths[i],
+            expanded: _expanded.contains(i),
+            onToggle: () => _toggleRow(i),
+          ),
+          if (i != widget.paths.length - 1)
+            const Divider(height: 1, color: FigmaTokens.cardBorders),
+        ],
+      ],
+    );
+  }
+}
+
 // ─── Table header row ───────────────────────────────────────────────────────
 
 class _TableHeaderRow extends StatelessWidget {
-  const _TableHeaderRow();
+  const _TableHeaderRow({required this.allExpanded, required this.onToggleAll});
+  final bool allExpanded;
+  final VoidCallback onToggleAll;
 
   @override
   Widget build(BuildContext context) {
@@ -290,18 +346,34 @@ class _TableHeaderRow extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      child: const Row(
+      child: Row(
         children: [
-          SizedBox(width: 30),
-          SizedBox(width: 10),
-          Expanded(
+          Material(
+            color: _purple,
+            borderRadius: BorderRadius.circular(6),
+            child: InkWell(
+              onTap: onToggleAll,
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: Icon(
+                  allExpanded ? Icons.remove_rounded : Icons.add_rounded,
+                  color: Colors.white,
+                  size: 15,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
             flex: 6,
             child: Text(
               'Learning Path',
               style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
             ),
           ),
-          Expanded(
+          const Expanded(
             flex: 3,
             child: Text(
               'Group',
@@ -316,17 +388,17 @@ class _TableHeaderRow extends StatelessWidget {
 
 // ─── Learning path row ────────────────────────────────────────────────────────
 
-class _PathRow extends StatefulWidget {
-  const _PathRow({required this.index, required this.path});
+class _PathRow extends StatelessWidget {
+  const _PathRow({
+    required this.index,
+    required this.path,
+    required this.expanded,
+    required this.onToggle,
+  });
   final int index;
   final LearningPath path;
-
-  @override
-  State<_PathRow> createState() => _PathRowState();
-}
-
-class _PathRowState extends State<_PathRow> {
-  bool _expanded = false;
+  final bool expanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -341,13 +413,13 @@ class _PathRowState extends State<_PathRow> {
                 color: _purple,
                 borderRadius: BorderRadius.circular(6),
                 child: InkWell(
-                  onTap: () => setState(() => _expanded = !_expanded),
+                  onTap: onToggle,
                   borderRadius: BorderRadius.circular(6),
                   child: SizedBox(
                     width: 22,
                     height: 22,
                     child: Icon(
-                      _expanded ? Icons.remove_rounded : Icons.add_rounded,
+                      expanded ? Icons.remove_rounded : Icons.add_rounded,
                       color: Colors.white,
                       size: 15,
                     ),
@@ -361,13 +433,13 @@ class _PathRowState extends State<_PathRow> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${widget.index}.',
+                      '$index.',
                       style: const TextStyle(color: _purple, fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        widget.path.name,
+                        path.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -383,20 +455,20 @@ class _PathRowState extends State<_PathRow> {
               ),
               Expanded(
                 flex: 3,
-                child: widget.path.groupName.isEmpty
+                child: path.groupName.isEmpty
                     ? const SizedBox.shrink()
                     : Text(
-                        widget.path.groupName,
+                        path.groupName,
                         style: const TextStyle(color: _purple, fontSize: 13.5, fontWeight: FontWeight.w600),
                       ),
               ),
             ],
           ),
         ),
-        if (_expanded)
+        if (expanded)
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-            child: _CompetencyPreview(path: widget.path),
+            child: _CompetencyPreview(path: path),
           ),
       ],
     );
@@ -410,34 +482,53 @@ class _CompetencyPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final competencies = path.competencies;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEAF6F6),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (competencies.isEmpty)
-            Text(
-              path.courses.isEmpty
-                  ? 'No competency details available.'
-                  : 'Courses: ${path.courses.map((c) => c.name).join(', ')}',
-              style: const TextStyle(color: _ink, fontSize: 12.5, height: 1.4),
-            )
-          else
-            for (var i = 0; i < competencies.length; i++) ...[
-              if (i > 0) const SizedBox(height: 10),
-              _CompetencyPreviewRow(
-                index: i + 1,
-                pathId: path.id,
-                competency: competencies[i],
+    if (competencies.isEmpty) {
+      return Text(
+        path.courses.isEmpty
+            ? 'No competency details available.'
+            : 'Courses: ${path.courses.map((c) => c.name).join(', ')}',
+        style: const TextStyle(color: _ink, fontSize: 12.5, height: 1.4),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Text(
+                  'Competency',
+                  style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                ),
               ),
+              Expanded(
+                flex: 4,
+                child: Text(
+                  'Courses',
+                  style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  'Competency Type',
+                  style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                ),
+              ),
+              SizedBox(width: 70),
             ],
+          ),
+        ),
+        const Divider(height: 1, color: FigmaTokens.cardBorders),
+        for (var i = 0; i < competencies.length; i++) ...[
+          _CompetencyPreviewRow(index: i + 1, pathId: path.id, competency: competencies[i]),
+          if (i != competencies.length - 1)
+            const Divider(height: 1, color: FigmaTokens.cardBorders),
         ],
-      ),
+      ],
     );
   }
 }
@@ -455,120 +546,69 @@ class _CompetencyPreviewRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final courses = competency.courseNames;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 18,
-          height: 18,
-          margin: const EdgeInsets.only(top: 1),
-          decoration: BoxDecoration(color: _purple, borderRadius: BorderRadius.circular(4)),
-          alignment: Alignment.center,
-          child: Text(
-            '$index',
-            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$index',
+                  style: const TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    competency.name.isEmpty ? '—' : competency.name,
+                    style: const TextStyle(color: _ink, fontSize: 12.5),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(color: _ink, fontSize: 12.5, fontWeight: FontWeight.w700),
-                  children: [
-                    const TextSpan(text: 'Competency: '),
-                    TextSpan(
-                      text: competency.name.isEmpty ? '—' : competency.name,
-                      style: const TextStyle(color: _purple, fontWeight: FontWeight.w600),
+          Expanded(
+            flex: 4,
+            child: Text(
+              courses.join(', '),
+              style: const TextStyle(color: _ink, fontSize: 12.5),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              competency.competencyType.toUpperCase(),
+              style: const TextStyle(color: _ink, fontSize: 12.5),
+            ),
+          ),
+          SizedBox(
+            width: 70,
+            child: competency.name.isEmpty
+                ? const SizedBox.shrink()
+                : InkWell(
+                    onTap: () => _openViewCompetency(
+                      context,
+                      learningPathId: pathId,
+                      competency: competency.name,
                     ),
-                  ],
-                ),
-              ),
-              if (courses.isNotEmpty) ...[
-                const SizedBox(height: 3),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(color: _ink, fontSize: 12.5, fontWeight: FontWeight.w700),
-                    children: [
-                      const TextSpan(text: 'Courses: '),
-                      TextSpan(
-                        text: courses.join(', '),
-                        style: const TextStyle(color: _muted, fontWeight: FontWeight.w500),
-                      ),
-                    ],
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.remove_red_eye_outlined, size: 14, color: _purple),
+                        SizedBox(width: 4),
+                        Text(
+                          'View',
+                          style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-              if (competency.competencyType.isNotEmpty) ...[
-                const SizedBox(height: 3),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(color: _ink, fontSize: 12.5, fontWeight: FontWeight.w700),
-                    children: [
-                      const TextSpan(text: 'Type: '),
-                      TextSpan(
-                        text: competency.competencyType.toUpperCase(),
-                        style: const TextStyle(color: _muted, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              if (competency.name.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: HoverBuilder(
-                    builder: (context, hovering) {
-                      final onPressed = () => _openViewCompetency(
-                            context,
-                            learningPathId: pathId,
-                            competency: competency.name,
-                          );
-                      const shape = StadiumBorder();
-                      const textStyle =
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5);
-                      return hovering
-                          ? ElevatedButton.icon(
-                              onPressed: onPressed,
-                              icon: const Icon(Icons.remove_red_eye_outlined,
-                                  size: 14, color: Colors.white),
-                              label: const Text('View'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _purple,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                minimumSize: const Size(0, 30),
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                shape: shape,
-                                textStyle: textStyle,
-                              ),
-                            )
-                          : OutlinedButton.icon(
-                              onPressed: onPressed,
-                              icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
-                              label: const Text('View'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: _purple,
-                                side: const BorderSide(color: _purple),
-                                minimumSize: const Size(0, 30),
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                shape: shape,
-                                textStyle: textStyle,
-                              ),
-                            );
-                    },
-                  ),
-                ),
-              ],
-            ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
