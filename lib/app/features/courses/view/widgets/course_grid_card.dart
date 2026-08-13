@@ -163,8 +163,8 @@ class _ProgressRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 24,
-      height: 24,
+      width: 28,
+      height: 28,
       padding: const EdgeInsets.all(2.5),
       decoration: BoxDecoration(
         color: Colors.white,
