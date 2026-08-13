@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatf
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/view/widgets/link_button.dart' show appActionChip;
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
@@ -158,7 +159,7 @@ class _DownloadTriggerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.appColorScheme.primary;
+    final primary = FigmaTokens.primaryPurple;
     if (!fullWidth && defaultTargetPlatform == TargetPlatform.macOS) {
       return appActionChip(
         icon: Icons.download_outlined,
@@ -234,7 +235,7 @@ class _DownloadingRow extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: pct == 0.0 ? null : pct,
                 strokeWidth: 3,
-                color: context.appColorScheme.primary,
+                color: FigmaTokens.primaryPurple,
               ),
             ),
             const SizedBox(width: 8),
@@ -285,7 +286,7 @@ class _DownloadedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.appColorScheme.primary;
+    final primary = FigmaTokens.primaryPurple;
     final playLabel = _isVideo ? "Play $label" : "Open $label";
     final playIcon = _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded;
 

@@ -18,7 +18,12 @@ abstract class AppColorScheme extends ThemeExtension<AppColorScheme> {
   Color get error => Colors.red;
   Color get success => Colors.green;
 
-  Color get primary => Color(0xFF754cbf);
+  // Matches FigmaTokens.primaryPurple (lib/app/core/design/figma_tokens.dart)
+  // - this is the seed color for the app's global Material theme (default
+  // buttons, checkboxes, etc. that don't explicitly override their color),
+  // so it needs to be the same purple as everywhere else that's been
+  // explicitly redesigned, not a separate, more blue-leaning shade.
+  Color get primary => const Color(0xFF693D94);
   Color get secondary => Color(0xFF40479a);
 
   Color get primaryDark => Color(0xFF513ab4);
