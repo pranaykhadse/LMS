@@ -98,60 +98,73 @@ class _Body extends StatelessWidget {
                                   ),
                                 ),
                                 HoverBuilder(
-                                  builder: (context, hovering) => ElevatedButton.icon(
-                                    onPressed: () => _showAddPlanItemDialog(context, notifier),
-                                    icon: const Icon(Icons.add_rounded, size: 18),
+                                  builder: (context, hovering) =>
+                                      ElevatedButton.icon(
+                                    onPressed: () => _showAddPlanItemDialog(
+                                        context, notifier),
+                                    icon: const Icon(Icons.add_rounded,
+                                        size: 18),
                                     label: Transform.translate(
                                       offset: const Offset(0, -1),
-                                      child: const Text('Add Custom Plan Item'),
+                                      child: const Text(
+                                          'Add Custom Plan Item'),
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          hovering ? FigmaTokens.purpleHover : _purple,
+                                      backgroundColor: hovering
+                                          ? FigmaTokens.purpleHover
+                                          : _purple,
                                       foregroundColor: Colors.white,
                                       elevation: 0,
                                       minimumSize: const Size(0, 40),
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius:
+                                            BorderRadius.circular(8),
                                       ),
-                                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                                      textStyle: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 13),
                                     ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                    if (state.courses.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 40),
-                        child: _EmptyState(),
-                      )
-                    else ...[
-                      GridView.builder(
-                        padding: const EdgeInsets.all(16),
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: Responsive.columns(
-                            context,
-                            phone: 2,
-                            tablet: 3,
-                            desktop: 4,
-                          ),
-                          crossAxisSpacing: 14,
-                          mainAxisSpacing: 14,
-                          mainAxisExtent: Responsive.isTablet(context) ? 360 : 340,
-                        ),
-                        itemCount: state.courses.length,
-                        itemBuilder: (ctx, i) =>
-                            _CourseCard(course: state.courses[i], notifier: notifier),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: PerPageBadge(perPage: state.perPage),
-                      ),
-                    ],
+                          if (state.courses.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 40, bottom: 40),
+                              child: _EmptyState(),
+                            )
+                          else ...[
+                            GridView.builder(
+                              padding: const EdgeInsets.all(16),
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: Responsive.columns(
+                                  context,
+                                  phone: 2,
+                                  tablet: 3,
+                                  desktop: 4,
+                                ),
+                                crossAxisSpacing: 14,
+                                mainAxisSpacing: 14,
+                                mainAxisExtent:
+                                    Responsive.isTablet(context) ? 360 : 340,
+                              ),
+                              itemCount: state.courses.length,
+                              itemBuilder: (ctx, i) => _CourseCard(
+                                  course: state.courses[i],
+                                  notifier: notifier),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              child: PerPageBadge(perPage: state.perPage),
+                            ),
+                          ],
                         ],
                       ),
                     ),
