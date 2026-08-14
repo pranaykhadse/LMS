@@ -19,6 +19,7 @@ import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
+import 'package:lms/app/features/dashboard/view/widgets/confirm_mentor_modal.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
@@ -34,6 +35,12 @@ const _border = FigmaTokens.cardBorders;
 
 bool _anyCourse(Course course) => true;
 
+// Module-level (not per-State) so the modal doesn't reappear every time the
+// user navigates back to Dashboard within the same app run - only once per
+// app open, closest match to the reference's intent without a backend
+// endpoint to persist an actual "confirmed" state yet.
+bool _mentorModalShownThisSession = false;
+
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
@@ -43,6 +50,13 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   bool _redirectingUnauthorized = false;
+
+  // Shown at most once per app session, matching the reference's
+  // "confirm every three months" intent as closely as possible without a
+  // backend endpoint yet to persist that a mentor was actually confirmed -
+  // gated on mentor_popup_month (server-side signal a confirmation is due)
+  // so it doesn't pop up for users the backend hasn't flagged.
+  bool _mentorModalChecked = false;
 
   void _refetchAll() {
     ref.read(LearningProgressViewModel.provider.notifier).fetch();
@@ -86,6 +100,17 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _checkLearningEventReminders(upcomingSessions);
       });
+    }
+
+    final mentorPopupMonth = auth?.userProfile?.mentorPopupMonth;
+    if (!_mentorModalChecked && mentorPopupMonth != null && mentorPopupMonth != 0) {
+      _mentorModalChecked = true;
+      if (!_mentorModalShownThisSession) {
+        _mentorModalShownThisSession = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) showConfirmMentorModal(context);
+        });
+      }
     }
 
     if (!_redirectingUnauthorized &&
