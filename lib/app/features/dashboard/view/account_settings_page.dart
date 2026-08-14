@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lms/app/core/data/countries.dart';
@@ -12,7 +11,6 @@ import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
-import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/model/user_profile_detail.dart';
 import 'package:lms/app/features/dashboard/viewmodel/account_settings_view_model.dart';
 
@@ -409,18 +407,6 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                             borderRadius: BorderRadius.circular(8)),
                         textStyle: const TextStyle(
                             fontWeight: FontWeight.w600, fontSize: 13),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: TextButton(
-                      onPressed: () => Modular.to.pushNamed(
-                        CoursesModule.construct(CoursesModule.colorPalette),
-                      ),
-                      child: const Text(
-                        'Color Palette (Design Reference)',
-                        style: TextStyle(color: _asMuted, fontSize: 12),
                       ),
                     ),
                   ),

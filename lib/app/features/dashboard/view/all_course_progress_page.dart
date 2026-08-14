@@ -184,7 +184,6 @@ class _TableHeaderRow extends StatelessWidget {
       fontWeight: FontWeight.w600,
       letterSpacing: 0.5,
     );
-    // Design ref: grid-cols-[2rem_1fr_140px] "# | Course/Category/Due Date | Progress"
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: const BoxDecoration(
@@ -195,6 +194,8 @@ class _TableHeaderRow extends StatelessWidget {
         children: [
           SizedBox(width: 36, child: Text('#', style: style)),
           Expanded(child: Text('COURSE', style: style)),
+          const SizedBox(width: 12),
+          SizedBox(width: 140, child: Text('CATEGORY', style: style)),
           const SizedBox(width: 12),
           SizedBox(width: 140, child: Text('PROGRESS', style: style)),
         ],
@@ -259,6 +260,18 @@ class _CourseRow extends StatelessWidget {
                     height: 1.4,
                   ),
                 ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Category
+          SizedBox(
+            width: 140,
+            child: Text(
+              'General',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 13,
               ),
             ),
           ),

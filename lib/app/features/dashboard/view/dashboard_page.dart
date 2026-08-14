@@ -19,7 +19,6 @@ import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
-import 'package:lms/app/features/dashboard/view/widgets/confirm_mentor_modal.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
@@ -35,12 +34,6 @@ const _border = FigmaTokens.cardBorders;
 
 bool _anyCourse(Course course) => true;
 
-// Module-level (not per-State) so the modal doesn't reappear every time the
-// user navigates back to Dashboard within the same app run - only once per
-// app open, closest match to the reference's intent without a backend
-// endpoint to persist an actual "confirmed" state yet.
-bool _mentorModalShownThisSession = false;
-
 class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
@@ -50,13 +43,6 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   bool _redirectingUnauthorized = false;
-
-  // Shown at most once per app session, matching the reference's
-  // "confirm every three months" intent as closely as possible without a
-  // backend endpoint yet to persist that a mentor was actually confirmed -
-  // gated on mentor_popup_month (server-side signal a confirmation is due)
-  // so it doesn't pop up for users the backend hasn't flagged.
-  bool _mentorModalChecked = false;
 
   void _refetchAll() {
     ref.read(LearningProgressViewModel.provider.notifier).fetch();
@@ -100,17 +86,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _checkLearningEventReminders(upcomingSessions);
       });
-    }
-
-    final mentorPopupMonth = auth?.userProfile?.mentorPopupMonth;
-    if (!_mentorModalChecked && mentorPopupMonth != null && mentorPopupMonth != 0) {
-      _mentorModalChecked = true;
-      if (!_mentorModalShownThisSession) {
-        _mentorModalShownThisSession = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) showConfirmMentorModal(context);
-        });
-      }
     }
 
     if (!_redirectingUnauthorized &&
@@ -207,38 +182,15 @@ class _DashboardBody extends ConsumerWidget {
         return RefreshIndicator(
           color: _purple,
           onRefresh: () async => onRefetchAll(),
-          // Design ref: w-full max-w-[1440px] mx-auto - content stays
-          // capped and centered on very wide (desktop/web) windows instead
-          // of stretching edge to edge.
           child: Builder(
             builder: (context) {
               final isWide = Responsive.isDesktop(context);
-              // Design ref: px-3 sm:px-6 (outer) / space-y-4 sm:space-y-5 (gaps)
-              final outerH = Responsive.isTablet(context) ? 24.0 : 12.0;
-              final gapV = Responsive.isTablet(context) ? 20.0 : 16.0;
-              return SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1440),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
+              return ListView(
+                padding: EdgeInsets.zero,
+                children: [
                   _BannerSection(auth: auth),
-                  // Design ref: <p className="hidden sm:block ...">
-                  if (isWide)
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
-                      child: Text(
-                        "Welcome back! Here's what's happening with your courses.",
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF6B7280),
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
+                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
                     child: _StatRow(
                       isWide: isWide,
                       enrolled: data.summary.enrolledCourses,
@@ -247,7 +199,7 @@ class _DashboardBody extends ConsumerWidget {
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                     child: isWide
                         ? IntrinsicHeight(
                             child: Row(
@@ -272,13 +224,13 @@ class _DashboardBody extends ConsumerWidget {
                               _ContinueLearningCard(
                                 courses: _continueLearningCourses(data),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 12),
                               _UpcomingSessionsCard(sessions: data.upcomingSessions),
                             ],
                           ),
                   ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                     child: isWide
                         ? IntrinsicHeight(
                             child: Row(
@@ -301,7 +253,7 @@ class _DashboardBody extends ConsumerWidget {
                         : Column(
                             children: [
                               _CourseProgressCard(courses: _progressCourses(data)),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 12),
                               _OverallProgressCard(
                                 overallProgress: data.summary.overallProgress,
                               ),
@@ -309,21 +261,21 @@ class _DashboardBody extends ConsumerWidget {
                           ),
                   ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
                     child: isWide
                         ? IntrinsicHeight(
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Expanded(
-                                  child: _RewardsPointsCard(
-                                    rewards: data.extras.rewards,
+                                  child: _DiscussionBoardsCard(
+                                    boards: data.extras.discussionBoards,
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: _DiscussionBoardsCard(
-                                    boards: data.extras.discussionBoards,
+                                  child: _RewardsPointsCard(
+                                    rewards: data.extras.rewards,
                                   ),
                                 ),
                               ],
@@ -331,23 +283,20 @@ class _DashboardBody extends ConsumerWidget {
                           )
                         : Column(
                             children: [
-                              _RewardsPointsCard(
-                                  rewards: data.extras.rewards),
-                              const SizedBox(height: 16),
                               _DiscussionBoardsCard(
                                   boards: data.extras.discussionBoards),
+                              const SizedBox(height: 12),
+                              _RewardsPointsCard(
+                                  rewards: data.extras.rewards),
                             ],
                           ),
                   ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, gapV),
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
                     child: _RequiredForYouCard(required: data.requiredForYou),
                   ),
-                        const AppFooter(),
-                      ],
-                    ),
-                  ),
-                ),
+                  const AppFooter(),
+                ],
               );
             },
           ),
@@ -424,83 +373,73 @@ class _BannerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Design ref: h-[160px] sm:h-[220px] lg:h-[276px]
-    final isDesktop = Responsive.isDesktop(context);
-    final isTablet = Responsive.isTablet(context);
-    final height = isDesktop ? 276.0 : (isTablet ? 220.0 : 160.0);
-    // Design ref: px-3 sm:px-6 pt-4 pb-2 (outer wrapper, not inner padding)
-    final outerH = isTablet ? 24.0 : 12.0;
-    // Design ref: px-5 sm:px-10 (inner content padding)
-    final innerH = isTablet ? 40.0 : 20.0;
-    final greetingSize = isDesktop ? 22.0 : (isTablet ? 18.0 : 16.0);
-    final quoteSize = isDesktop ? 16.0 : (isTablet ? 13.0 : 11.0);
-    final attributionSize = isDesktop ? 14.0 : 12.0;
-
     return Container(
       width: double.infinity,
-      height: height,
-      // Design ref: rounded-xl (12px)
-      margin: EdgeInsets.fromLTRB(outerH, 16, outerH, 8),
+      // Figma: width Fill, height 160px, radius 14px
+      height: 160,
+      margin: const EdgeInsets.fromLTRB(12, 16, 12, 0),
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset('assets/images/dashboard-hero.jpg', fit: BoxFit.cover),
-          // Design ref: solid #693D94 tint at 82% opacity (not a two-tone
-          // gradient - both linear-gradient stops are the same color).
+          Image.asset('assets/images/login-bg.png', fit: BoxFit.cover),
           Container(
-            color: FigmaTokens.primaryPurple.withValues(alpha: 0.82),
-          ),
-          // Design ref: absolute inset-0 flex items-center px-5 sm:px-10 -
-          // content is vertically centered within the banner, not
-          // top-anchored.
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: innerH),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 578),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Greeting
-                    Text(
-                      'Good ${_greeting()}, ${_userName()}!',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: greetingSize,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: -0.75,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    // Quote body
-                    Text(
-                      'A leader is best when people barely know he exists...when his '
-                      'work is done, his aim fulfilled, they will all say: We did it ourselves."',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: quoteSize,
-                        fontWeight: FontWeight.w400,
-                        height: 1.4,
-                      ),
-                    ),
-                    SizedBox(height: isTablet ? 14 : 8),
-                    // Attribution
-                    Text(
-                      '- Lao-Tzu',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: attributionSize,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.35,
-                      ),
-                    ),
-                  ],
-                ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  FigmaTokens.primaryPurple.withValues(alpha: 0.85),
+                  FigmaTokens.gradientEnd.withValues(alpha: 0.85),
+                ],
               ),
+            ),
+          ),
+          // Figma content: padding top 16 / right 12 / bottom 8 / left 12
+          // vertical flow, gap 8px between text children
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Greeting: Inter 500, 16px, line-height 20px, ls -0.75
+                Text(
+                  'Good ${_greeting()}, ${_userName()}!',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    height: 20 / 16,
+                    letterSpacing: -0.75,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Quote body: Inter 400, 11px, line-height 18px
+                Text(
+                  'A leader is best when people barely know he exists...when his '
+                  'work is done, his aim fulfilled, they will all say: We did it ourselves."',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    height: 18 / 11,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Attribution: Inter 500, 12px, line-height 20px, ls 0.35
+                Text(
+                  '- Lao-Tzu',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    height: 20 / 12,
+                    letterSpacing: 0.35,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -539,8 +478,7 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             icon: Icons.error_outline_rounded,
-            // Design ref: text-amber-500
-            iconColor: const Color(0xFFF59E0B),
+            iconColor: const Color(0xFFD97706),
             label: 'REQUIRED',
             value: required,
           ),
@@ -549,8 +487,7 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             icon: Icons.check_circle_outline_rounded,
-            // Design ref: text-green-500
-            iconColor: const Color(0xFF22C55E),
+            iconColor: const Color(0xFF16A34A),
             label: 'COMPLETED',
             value: completed,
           ),
@@ -781,9 +718,8 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: Container(
-      // Design ref: header (px-5 pt-4 pb-3 + text) ~56 + content h-[200px]
-      // + dots row (py-3 + 6px dot) ~34 = ~290
-      height: 290,
+      // Fixed total card height: header(~52) + course content(180) + dots(~28) = 260
+      height: 280,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -794,11 +730,8 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Header ──────────────────────────────────────────────────
-          // Design ref: flex items-center justify-between px-5 pt-4 pb-3
-          // border-b border-gray-100 - text-base font-semibold
-          // text-gray-500 uppercase / text-xs font-semibold text-[#693D94]
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
             decoration: BoxDecoration(
               color: headerBg,
               border: Border(bottom: BorderSide(color: headerBorder)),
@@ -806,14 +739,37 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    'CONTINUE LEARNING',
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF6B7280),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
+                  child: Row(
+                    children: [
+                      Text(
+                        'CONTINUE LEARNING',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF6B7280),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      if (overdue) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEF4444),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'OVERDUE',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 if (widget.courses.isNotEmpty)
@@ -825,7 +781,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                       'View All',
                       style: GoogleFonts.inter(
                         color: _purple,
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -859,9 +815,10 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
           // ── Dot indicators ───────────────────────────────────────────
           if (widget.courses.length > 1)
             Container(
-              // Design ref: flex items-center justify-center gap-1.5 py-3
-              // (no border)
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Color(0xFFF3F4F6))),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(widget.courses.length, (i) {
@@ -911,57 +868,47 @@ class _ContinueLearningItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
 
-    // Design ref: hidden sm:flex gap-0 h-[200px]; image div
-    // flex-shrink-0 style="padding: 0 0 0 18px", w-36 (144px) h-full
-    // rounded-xl; text div flex flex-1 items-center p-4
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Thumbnail (left, fills full card height) ───────────────────
-        Padding(
-          padding: const EdgeInsets.only(left: 18),
-          child: SizedBox(
-            width: 144,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  course.logo != null
-                      ? Image.network(
-                          course.logo!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const _ImgFallback(),
-                        )
-                      : const _ImgFallback(),
-                  Positioned(
-                    top: 4,
-                    left: 4,
-                    child: OfflineCourseButton(
-                      course: Course(
-                        id: course.id,
-                        name: course.name,
-                        logoLink: course.logo,
-                        averageRating: course.averageRating,
-                        ratingCount: course.ratingCount,
-                        displayRating: course.displayRating ? 1 : 0,
-                      ),
-                    ),
+        SizedBox(
+          width: 200,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              course.logo != null
+                  ? Image.network(
+                      course.logo!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const _ImgFallback(),
+                    )
+                  : const _ImgFallback(),
+              Positioned(
+                top: 4,
+                left: 4,
+                child: OfflineCourseButton(
+                  course: Course(
+                    id: course.id,
+                    name: course.name,
+                    logoLink: course.logo,
+                    averageRating: course.averageRating,
+                    ratingCount: course.ratingCount,
+                    displayRating: course.displayRating ? 1 : 0,
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
 
         // ── Text content (right) ──────────────────────────────────────
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Category label
                 if (course.category != null)
@@ -969,21 +916,21 @@ class _ContinueLearningItem extends ConsumerWidget {
                     course.category!.toUpperCase(),
                     style: GoogleFonts.inter(
                       color: accentColor,
-                      fontSize: 13,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
                     ),
                   ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
 
                 // Course title
                 Text(
                   course.name,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: const Color(0xFF1F2937),
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     height: 1.35,
                   ),
@@ -998,26 +945,26 @@ class _ContinueLearningItem extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       color: const Color(0xFF9CA3AF),
-                      fontSize: 16,
-                      height: 1.5,
+                      fontSize: 12,
+                      height: 1.4,
                     ),
                   ),
                 ],
 
                 // Due date
                 if (course.dueDate != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Icon(Icons.calendar_today_rounded,
-                          size: 10, color: accentColor),
+                          size: 11, color: accentColor),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           '${accentColor == const Color(0xFFDC2626) ? "Overdue: " : "Due: "}${course.dueDate}',
                           style: GoogleFonts.inter(
                             color: accentColor,
-                            fontSize: 16,
+                            fontSize: 11,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1027,10 +974,9 @@ class _ContinueLearningItem extends ConsumerWidget {
                 ],
                 const SizedBox(height: 12),
 
-                // Resume button — Design ref: px-4 py-2 rounded-[20px]
-                // text-base font-medium
+                // Resume button
                 _BrandButton(
-                  label: 'Resume',
+                  label: 'Resume Lesson →',
                   onPressed: viewDisabled
                       ? null
                       : () => Modular.to.pushNamed(
@@ -1038,12 +984,12 @@ class _ContinueLearningItem extends ConsumerWidget {
                               '${CoursesModule.detail}/${course.id}',
                             ),
                           ),
-                  borderRadius: 20,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  borderRadius: 6,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   textStyle: GoogleFonts.inter(
                     color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -1115,12 +1061,12 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          // Header — "Upcoming Virtual Classes" plain title, no action
+          // Header — "Upcoming Sessions" plain title, no action
           Text(
-            'Upcoming Virtual Classes',
+            'Upcoming Sessions',
             style: GoogleFonts.inter(
               color: const Color(0xFF374151), // gray-700
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1208,14 +1154,14 @@ class _SessionRow extends StatelessWidget {
                   event.courseName.isNotEmpty ? event.courseName : event.title,
                   style: GoogleFonts.inter(
                     color: const Color(0xFF1F2937),
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     height: 1.4,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              // Join button with live pulse dot — Design ref: rounded-xl
+              // Join button with live pulse dot
               GestureDetector(
                 onTap: () => Modular.to.pushNamed(
                   CoursesModule.construct(
@@ -1226,7 +1172,7 @@ class _SessionRow extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: _purple,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1341,7 +1287,7 @@ class _CourseProgressCard extends StatelessWidget {
                   'Course Progress',
                   style: GoogleFonts.inter(
                     color: const Color(0xFF374151), // gray-700
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1405,7 +1351,7 @@ class _CourseProgressRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: const Color(0xFF4B5563), // gray-600
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w400,
                   height: 1.4,
                 ),
@@ -1417,7 +1363,7 @@ class _CourseProgressRow extends StatelessWidget {
               suffix: '%',
               style: GoogleFonts.inter(
                 color: const Color(0xFF9CA3AF),
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1447,7 +1393,7 @@ class _OverallProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Design ref: linear-gradient(to right, #693d94, #aa399f), rounded-xl p-5
+    // Design ref: gradient from #5865f2 → #7c3aed, rounded-xl p-5
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -1455,7 +1401,7 @@ class _OverallProgressCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
+          colors: [Color(0xFF4A439F), Color(0xFF9650B4)],
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -1472,7 +1418,7 @@ class _OverallProgressCard extends StatelessWidget {
                 'OVERALL LEARNING PROGRESS',
                 style: GoogleFonts.inter(
                   color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 16,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),
@@ -1528,50 +1474,29 @@ class _DiscussionBoardsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Discussion Boards',
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF374151),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              if (shown.isNotEmpty)
-                // Design ref: text-xs font-semibold text-[#693D94]
-                // bg-[#f0e8f7] px-2.5 py-1 rounded-full
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0E8F7),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${shown.length} Active',
-                    style: GoogleFonts.inter(
-                      color: _purple,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-            ],
+          Text(
+            'Discussion Boards',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF374151),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          const SizedBox(height: 14),
           if (shown.isEmpty)
-            Text(
-              'No discussion threads yet.',
-              style: GoogleFonts.inter(
-                  color: const Color(0xFF6B7280), fontSize: 14),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                'No discussion threads yet.',
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280), fontSize: 14),
+              ),
             )
           else
-            // Design ref: space-y-3 (12px gap, no dividers)
             for (var i = 0; i < shown.length; i++) ...[
-              if (i > 0) const SizedBox(height: 12),
+              if (i > 0) const Divider(height: 24, color: Color(0xFFE5E7EB)),
               _DiscussionBoardRow(item: shown[i]),
             ],
         ],
@@ -1586,53 +1511,44 @@ class _DiscussionBoardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Design ref: rounded-lg border border-gray-100 bg-gray-50 p-3
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB), // gray-50
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFF3F4F6)), // gray-100
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF1F2937),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF1F2937),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  [
-                    if (item.lastRepliedBy.isNotEmpty) item.lastRepliedBy,
-                    if (item.lastReply.isNotEmpty) item.lastReply,
-                    '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
-                  ].join(' • '),
-                  style: GoogleFonts.inter(
-                      color: const Color(0xFF9CA3AF), fontSize: 12),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                [
+                  if (item.lastRepliedBy.isNotEmpty) item.lastRepliedBy,
+                  if (item.lastReply.isNotEmpty) item.lastReply,
+                  '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
+                ].join(' • '),
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF9CA3AF), fontSize: 12),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          _ViewButton(
-            onPressed: () => Modular.to.pushNamed(
-              CoursesModule.construct(
-                  '${CoursesModule.detail}/${item.courseId}'),
-            ),
+        ),
+        const SizedBox(width: 12),
+        _ViewButton(
+          onPressed: () => Modular.to.pushNamed(
+            CoursesModule.construct(
+                '${CoursesModule.detail}/${item.courseId}'),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1668,7 +1584,7 @@ class _RewardsPointsCard extends ConsumerWidget {
                   'Rewards & Points',
                   style: GoogleFonts.inter(
                     color: const Color(0xFF374151),
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1677,42 +1593,30 @@ class _RewardsPointsCard extends ConsumerWidget {
                 onTap: () => Modular.to.pushNamed(
                   CoursesModule.construct(CoursesModule.redeemPoints),
                 ),
-                // Design ref: text-xs text-[#693D94] font-semibold
-                // bg-[#f0e8f7] px-2.5 py-1 rounded-full
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0E8F7),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'This Month',
-                    style: GoogleFonts.inter(
-                      color: _purple,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+                child: Text(
+                  'This Month',
+                  style: GoogleFonts.inter(
+                    color: _purple,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          const SizedBox(height: 14),
 
           // Points circle + name/description
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 80,
-                height: 80,
+                width: 52,
+                height: 52,
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
-                  ),
+                  color: _purple,
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -1723,23 +1627,23 @@ class _RewardsPointsCard extends ConsumerWidget {
                       value: points,
                       style: GoogleFonts.inter(
                         color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
                         height: 1,
                       ),
                     ),
                     Text(
                       'pts',
                       style: GoogleFonts.inter(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
+                        color: Colors.white70,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1756,77 +1660,60 @@ class _RewardsPointsCard extends ConsumerWidget {
                     Text(
                       "You've earned points by completing courses and attending virtual classes.",
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF9CA3AF), // gray-400
-                        fontSize: 12,
+                        color: const Color(0xFF6B7280),
+                        fontSize: 13,
                       ),
                     ),
-
-                    // Activity list or empty state — Design ref: this sits
-                    // inside the text column (indented under the circle),
-                    // not spanning the full card width.
-                    if (activity.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          'No reward points earned this month yet.',
-                          style: GoogleFonts.inter(
-                              color: const Color(0xFF6B7280), fontSize: 12),
-                        ),
-                      )
-                    else
-                      // Design ref: border-t border-gray-100 pt-2 space-y-1
-                      Container(
-                        margin: const EdgeInsets.only(top: 12),
-                        padding: const EdgeInsets.only(top: 8),
-                        decoration: const BoxDecoration(
-                          border: Border(
-                              top: BorderSide(color: Color(0xFFF3F4F6))),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (final a in activity)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                // Design ref: bg-gray-50 rounded-lg px-2.5 py-1.5
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF9FAFB),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          a.label,
-                                          style: GoogleFonts.inter(
-                                            color: const Color(0xFF6B7280),
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                      Text(
-                                        '+${a.points} pts',
-                                        style: GoogleFonts.inter(
-                                          color: _purple,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
                   ],
                 ),
               ),
             ],
           ),
+
+          // Activity list or empty state
+          if (activity.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                'No reward points earned this month yet.',
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280), fontSize: 13),
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final a in activity)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              a.label,
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF1F2937),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '+${a.points} pts',
+                            style: GoogleFonts.inter(
+                              color: _purple,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -1856,7 +1743,7 @@ class _RequiredForYouCard extends StatelessWidget {
             'Required For You',
             style: GoogleFonts.inter(
               color: const Color(0xFF374151),
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1888,13 +1775,13 @@ class _RequiredForYouCard extends StatelessWidget {
                 onPressed: () => Modular.to.pushNamed(
                   CoursesModule.construct(CoursesModule.requiredCourses),
                 ),
-                borderRadius: 20,
+                borderRadius: 6,
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 10),
                 textStyle: GoogleFonts.inter(
                   color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -1924,7 +1811,7 @@ class _RequiredRow extends ConsumerWidget {
             textAlign: TextAlign.right,
             style: GoogleFonts.inter(
               color: const Color(0xFF9CA3AF),
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -1938,7 +1825,7 @@ class _RequiredRow extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: const Color(0xFF374151),
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -1969,8 +1856,7 @@ class _ViewButton extends StatelessWidget {
     return HoverBuilder(
       builder: (context, hovering) {
         final filled = hovering && onPressed != null;
-        // Design ref: rounded-xl (12px)
-        const borderRadius = BorderRadius.all(Radius.circular(12));
+        const borderRadius = BorderRadius.all(Radius.circular(4));
         return Material(
           color: filled ? _purple : Colors.transparent,
           borderRadius: borderRadius,
