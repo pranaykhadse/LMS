@@ -1117,7 +1117,7 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
             'Upcoming Virtual Classes',
             style: GoogleFonts.inter(
               color: const Color(0xFF374151), // gray-700
-              fontSize: 15,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1205,14 +1205,14 @@ class _SessionRow extends StatelessWidget {
                   event.courseName.isNotEmpty ? event.courseName : event.title,
                   style: GoogleFonts.inter(
                     color: const Color(0xFF1F2937),
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     height: 1.4,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              // Join button with live pulse dot
+              // Join button with live pulse dot — Design ref: rounded-xl
               GestureDetector(
                 onTap: () => Modular.to.pushNamed(
                   CoursesModule.construct(
@@ -1223,7 +1223,7 @@ class _SessionRow extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: _purple,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1338,7 +1338,7 @@ class _CourseProgressCard extends StatelessWidget {
                   'Course Progress',
                   style: GoogleFonts.inter(
                     color: const Color(0xFF374151), // gray-700
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1402,7 +1402,7 @@ class _CourseProgressRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   color: const Color(0xFF4B5563), // gray-600
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w400,
                   height: 1.4,
                 ),
@@ -1414,7 +1414,7 @@ class _CourseProgressRow extends StatelessWidget {
               suffix: '%',
               style: GoogleFonts.inter(
                 color: const Color(0xFF9CA3AF),
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1529,7 +1529,7 @@ class _DiscussionBoardsCard extends StatelessWidget {
             'Discussion Boards',
             style: GoogleFonts.inter(
               color: const Color(0xFF374151),
-              fontSize: 15,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1635,7 +1635,7 @@ class _RewardsPointsCard extends ConsumerWidget {
                   'Rewards & Points',
                   style: GoogleFonts.inter(
                     color: const Color(0xFF374151),
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -1798,7 +1798,7 @@ class _RequiredForYouCard extends StatelessWidget {
             'Required For You',
             style: GoogleFonts.inter(
               color: const Color(0xFF374151),
-              fontSize: 15,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1866,7 +1866,7 @@ class _RequiredRow extends ConsumerWidget {
             textAlign: TextAlign.right,
             style: GoogleFonts.inter(
               color: const Color(0xFF9CA3AF),
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w400,
             ),
           ),
@@ -1880,7 +1880,7 @@ class _RequiredRow extends ConsumerWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: const Color(0xFF374151),
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w400,
             ),
           ),
