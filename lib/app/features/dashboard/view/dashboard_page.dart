@@ -778,8 +778,9 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: Container(
-      // Fixed total card height: header(~52) + course content(180) + dots(~28) = 260
-      height: 280,
+      // Design ref: header (px-5 pt-4 pb-3 + text) ~56 + content h-[200px]
+      // + dots row (py-3 + 6px dot) ~34 = ~290
+      height: 290,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -790,8 +791,11 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Header ──────────────────────────────────────────────────
+          // Design ref: flex items-center justify-between px-5 pt-4 pb-3
+          // border-b border-gray-100 - text-base font-semibold
+          // text-gray-500 uppercase / text-xs font-semibold text-[#693D94]
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 10),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             decoration: BoxDecoration(
               color: headerBg,
               border: Border(bottom: BorderSide(color: headerBorder)),
@@ -799,37 +803,14 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
             child: Row(
               children: [
                 Expanded(
-                  child: Row(
-                    children: [
-                      Text(
-                        'CONTINUE LEARNING',
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF6B7280),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      if (overdue) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEF4444),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'OVERDUE',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
+                  child: Text(
+                    'CONTINUE LEARNING',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
                 if (widget.courses.isNotEmpty)
@@ -841,7 +822,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                       'View All',
                       style: GoogleFonts.inter(
                         color: _purple,
-                        fontSize: 14,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -875,10 +856,9 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
           // ── Dot indicators ───────────────────────────────────────────
           if (widget.courses.length > 1)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: Color(0xFFF3F4F6))),
-              ),
+              // Design ref: flex items-center justify-center gap-1.5 py-3
+              // (no border)
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(widget.courses.length, (i) {
@@ -928,47 +908,57 @@ class _ContinueLearningItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
 
+    // Design ref: hidden sm:flex gap-0 h-[200px]; image div
+    // flex-shrink-0 style="padding: 0 0 0 18px", w-36 (144px) h-full
+    // rounded-xl; text div flex flex-1 items-center p-4
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Thumbnail (left, fills full card height) ───────────────────
-        SizedBox(
-          width: 200,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              course.logo != null
-                  ? Image.network(
-                      course.logo!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const _ImgFallback(),
-                    )
-                  : const _ImgFallback(),
-              Positioned(
-                top: 4,
-                left: 4,
-                child: OfflineCourseButton(
-                  course: Course(
-                    id: course.id,
-                    name: course.name,
-                    logoLink: course.logo,
-                    averageRating: course.averageRating,
-                    ratingCount: course.ratingCount,
-                    displayRating: course.displayRating ? 1 : 0,
+        Padding(
+          padding: const EdgeInsets.only(left: 18),
+          child: SizedBox(
+            width: 144,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  course.logo != null
+                      ? Image.network(
+                          course.logo!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const _ImgFallback(),
+                        )
+                      : const _ImgFallback(),
+                  Positioned(
+                    top: 4,
+                    left: 4,
+                    child: OfflineCourseButton(
+                      course: Course(
+                        id: course.id,
+                        name: course.name,
+                        logoLink: course.logo,
+                        averageRating: course.averageRating,
+                        ratingCount: course.ratingCount,
+                        displayRating: course.displayRating ? 1 : 0,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
 
         // ── Text content (right) ──────────────────────────────────────
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Category label
                 if (course.category != null)
@@ -976,21 +966,21 @@ class _ContinueLearningItem extends ConsumerWidget {
                     course.category!.toUpperCase(),
                     style: GoogleFonts.inter(
                       color: accentColor,
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
                     ),
                   ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
 
                 // Course title
                 Text(
                   course.name,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: const Color(0xFF1F2937),
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     height: 1.35,
                   ),
@@ -1005,26 +995,26 @@ class _ContinueLearningItem extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
                       color: const Color(0xFF9CA3AF),
-                      fontSize: 12,
-                      height: 1.4,
+                      fontSize: 16,
+                      height: 1.5,
                     ),
                   ),
                 ],
 
                 // Due date
                 if (course.dueDate != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Row(
                     children: [
                       Icon(Icons.calendar_today_rounded,
-                          size: 11, color: accentColor),
+                          size: 10, color: accentColor),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           '${accentColor == const Color(0xFFDC2626) ? "Overdue: " : "Due: "}${course.dueDate}',
                           style: GoogleFonts.inter(
                             color: accentColor,
-                            fontSize: 11,
+                            fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1034,7 +1024,8 @@ class _ContinueLearningItem extends ConsumerWidget {
                 ],
                 const SizedBox(height: 12),
 
-                // Resume button
+                // Resume button — Design ref: px-4 py-2 rounded-[20px]
+                // text-base font-medium
                 _BrandButton(
                   label: 'Resume',
                   onPressed: viewDisabled
@@ -1044,12 +1035,12 @@ class _ContinueLearningItem extends ConsumerWidget {
                               '${CoursesModule.detail}/${course.id}',
                             ),
                           ),
-                  borderRadius: 6,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  borderRadius: 20,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   textStyle: GoogleFonts.inter(
                     color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
