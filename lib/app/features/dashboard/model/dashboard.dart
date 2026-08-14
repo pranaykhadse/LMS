@@ -1,3 +1,5 @@
+import 'package:lms/app/core/utils/format_utils.dart';
+
 class DashboardResponse {
   const DashboardResponse({
     required this.ongoingCourses,
@@ -130,11 +132,11 @@ class DashboardCourse {
       isNonCourse: !hasCourseId,
       nextSession: nextSessionValue == null || nextSessionValue.isEmpty
           ? null
-          : DateTime.tryParse(nextSessionValue),
+          : nextSessionValue.parseApiUtc(),
       completedDate:
           completedDateValue == null || completedDateValue.isEmpty
               ? null
-              : DateTime.tryParse(completedDateValue),
+              : completedDateValue.parseApiUtc(),
     );
   }
 }

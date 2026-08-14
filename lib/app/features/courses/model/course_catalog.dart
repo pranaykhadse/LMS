@@ -1,3 +1,5 @@
+import 'package:lms/app/core/utils/format_utils.dart';
+
 class CourseCatalogResponse {
   const CourseCatalogResponse({
     required this.skills,
@@ -226,7 +228,7 @@ class CatalogCourse {
       nextSession:
           nextSessionValue == null || nextSessionValue.isEmpty
               ? null
-              : DateTime.tryParse(nextSessionValue),
+              : nextSessionValue.parseApiUtc(),
       nextSessionLabel: _nullableString(nextSessionValue),
       displayRating:
           _firstValue(json, course, const [

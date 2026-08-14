@@ -1,3 +1,5 @@
+import 'package:lms/app/core/utils/format_utils.dart';
+
 class NotificationItem {
   const NotificationItem({
     required this.id,
@@ -28,7 +30,7 @@ class NotificationItem {
     final createdAtStr = json['created_at']?.toString();
     DateTime? createdAt;
     if (createdAtStr != null && createdAtStr.isNotEmpty) {
-      createdAt = DateTime.tryParse(createdAtStr);
+      createdAt = createdAtStr.parseApiUtc();
     }
 
     return NotificationItem(
@@ -61,7 +63,11 @@ class NotificationItem {
         'type': type,
         'is_read': isRead,
         'reference_id': referenceId,
-        'created_at': createdAt?.toIso8601String(),
+        // toUtc() keeps the local disk cache round-trip-safe: parseApiUtc()
+        // always re-anchors a parsed value to UTC, so caching the already
+        // local-converted value verbatim would shift it further on every
+        // reload.
+        'created_at': createdAt?.toUtc().toIso8601String(),
         'redirect_url': redirectUrl,
       };
 }

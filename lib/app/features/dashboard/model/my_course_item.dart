@@ -1,3 +1,5 @@
+import 'package:lms/app/core/utils/format_utils.dart';
+
 class MyCoursesResult {
   const MyCoursesResult({required this.total, required this.courses});
   final int total;
@@ -55,7 +57,7 @@ class MyCourseItem {
       logo: logo.isNotEmpty ? logo : null,
       nextSession: json['next_session'] == null
           ? null
-          : DateTime.tryParse(json['next_session'].toString()),
+          : json['next_session'].toString().parseApiUtc(),
     );
   }
 }
