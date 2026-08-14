@@ -29,7 +29,7 @@ class InProgressCoursesPage extends ConsumerWidget {
 
     return AppScaffold(
       backgroundColor: _bg,
-      title: 'In-Progress Courses',
+      title: 'Course in Progress',
       selectedSubLabel: 'Continue Learning',
       onRefresh: () => notifier.fetch(page: state.page),
       body: _Body(state: state, notifier: notifier),
@@ -59,7 +59,7 @@ class _Body extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-              child: _Header(count: state.totalCourses, title: 'In-Progress Courses'),
+              child: _Header(count: state.totalCourses, title: 'Course in Progress'),
             ),
             Expanded(
               child: RefreshIndicator(
@@ -185,6 +185,7 @@ class _TableHeaderRow extends StatelessWidget {
       fontWeight: FontWeight.w600,
       letterSpacing: 0.5,
     );
+    // Design ref: grid-cols-[2rem_1fr_90px_80px] "# | Bridgework | Status | Action"
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: const BoxDecoration(
@@ -196,9 +197,13 @@ class _TableHeaderRow extends StatelessWidget {
           SizedBox(width: 36, child: Text('#', style: style)),
           Expanded(child: Text('COURSE DETAILS', style: style)),
           const SizedBox(width: 12),
-          SizedBox(width: 160, child: Text('DUE DATE', style: style)),
+          SizedBox(
+              width: 100,
+              child: Text('STATUS', style: style, textAlign: TextAlign.center)),
           const SizedBox(width: 12),
-          SizedBox(width: 120, child: Text('STATUS', style: style)),
+          SizedBox(
+              width: 90,
+              child: Text('ACTION', style: style, textAlign: TextAlign.center)),
         ],
       ),
     );
@@ -241,74 +246,108 @@ class _CourseRow extends StatelessWidget {
               ),
             ),
           ),
-          // Course Details: title + category
+          // Course Details: title + category · due date
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.courseName,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     color: const Color(0xFF1F2937),
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    height: 1.4,
+                    height: 1.35,
                   ),
                 ),
-                if (item.className.isNotEmpty) ...[
+                if (item.className.isNotEmpty || item.date.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(
-                    item.className,
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF9CA3AF),
-                      fontSize: 12,
-                    ),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (item.className.isNotEmpty)
+                        Text(
+                          item.className,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF9CA3AF),
+                            fontSize: 12,
+                          ),
+                        ),
+                      if (item.className.isNotEmpty && item.date.isNotEmpty)
+                        Text(
+                          '  ·  ',
+                          style: GoogleFonts.inter(
+                              color: const Color(0xFFD1D5DB), fontSize: 12),
+                        ),
+                      if (item.date.isNotEmpty) ...[
+                        const Icon(Icons.calendar_today_rounded,
+                            size: 10, color: _purple),
+                        const SizedBox(width: 4),
+                        Text(
+                          item.date,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF6B7280),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ],
             ),
           ),
           const SizedBox(width: 12),
-          // Due Date
+          // Status pill — "In Progress" purple badge
           SizedBox(
-            width: 160,
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_today_rounded,
-                    size: 12, color: _purple),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    item.date,
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF4B5563),
-                      fontSize: 13,
-                    ),
+            width: 100,
+            child: Center(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEBEBFF), // bg-[#ebebff]
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'In Progress',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF5B5BD6),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
+              ),
             ),
           ),
           const SizedBox(width: 12),
-          // Status pill — "In Progress" purple badge
+          // Resume action button
           SizedBox(
-            width: 120,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEBEBFF), // bg-[#ebebff]
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'In Progress',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF5B5BD6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+            width: 90,
+            child: Center(
+              child: GestureDetector(
+                onTap: () => Modular.to.pushNamed(
+                  CoursesModule.construct(
+                      '${CoursesModule.detail}/${item.courseId}'),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _purple,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Resume',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ),
