@@ -207,12 +207,20 @@ class _DashboardBody extends ConsumerWidget {
         return RefreshIndicator(
           color: _purple,
           onRefresh: () async => onRefetchAll(),
+          // Design ref: w-full max-w-[1440px] mx-auto - content stays
+          // capped and centered on very wide (desktop/web) windows instead
+          // of stretching edge to edge.
           child: Builder(
             builder: (context) {
               final isWide = Responsive.isDesktop(context);
-              return ListView(
-                padding: EdgeInsets.zero,
-                children: [
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1440),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                   _BannerSection(auth: auth),
                   // Design ref: <p className="hidden sm:block ...">
                   if (isWide)
@@ -332,8 +340,11 @@ class _DashboardBody extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
                     child: _RequiredForYouCard(required: data.requiredForYou),
                   ),
-                  const AppFooter(),
-                ],
+                        const AppFooter(),
+                      ],
+                    ),
+                  ),
+                ),
               );
             },
           ),
@@ -410,13 +421,25 @@ class _BannerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Design ref: h-[160px] sm:h-[220px] lg:h-[276px]
+    final isDesktop = Responsive.isDesktop(context);
+    final isTablet = Responsive.isTablet(context);
+    final height = isDesktop ? 276.0 : (isTablet ? 220.0 : 160.0);
+    // Design ref: px-3 sm:px-6 pt-4 pb-2 (outer wrapper, not inner padding)
+    final outerH = isTablet ? 24.0 : 12.0;
+    // Design ref: px-5 sm:px-10 (inner content padding)
+    final innerH = isTablet ? 40.0 : 20.0;
+    final greetingSize = isDesktop ? 22.0 : (isTablet ? 18.0 : 16.0);
+    final quoteSize = isDesktop ? 16.0 : (isTablet ? 13.0 : 11.0);
+    final attributionSize = isDesktop ? 14.0 : 12.0;
+
     return Container(
       width: double.infinity,
-      // Figma: width Fill, height 160px, radius 14px
-      height: 160,
-      margin: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+      height: height,
+      // Design ref: rounded-xl (12px)
+      margin: EdgeInsets.fromLTRB(outerH, 16, outerH, 8),
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -426,50 +449,55 @@ class _BannerSection extends StatelessWidget {
           Container(
             color: FigmaTokens.primaryPurple.withValues(alpha: 0.82),
           ),
-          // Figma content: padding top 16 / right 12 / bottom 8 / left 12
-          // vertical flow, gap 8px between text children
+          // Design ref: absolute inset-0 flex items-center px-5 sm:px-10 -
+          // content is vertically centered within the banner, not
+          // top-anchored.
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Greeting: Inter 500, 16px, line-height 20px, ls -0.75
-                Text(
-                  'Good ${_greeting()}, ${_userName()}!',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    height: 20 / 16,
-                    letterSpacing: -0.75,
-                  ),
+            padding: EdgeInsets.symmetric(horizontal: innerH),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 578),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Greeting
+                    Text(
+                      'Good ${_greeting()}, ${_userName()}!',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: greetingSize,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: -0.75,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Quote body
+                    Text(
+                      'A leader is best when people barely know he exists...when his '
+                      'work is done, his aim fulfilled, they will all say: We did it ourselves."',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: quoteSize,
+                        fontWeight: FontWeight.w400,
+                        height: 1.4,
+                      ),
+                    ),
+                    SizedBox(height: isTablet ? 14 : 8),
+                    // Attribution
+                    Text(
+                      '- Lao-Tzu',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: attributionSize,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.35,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                // Quote body: Inter 400, 11px, line-height 18px
-                Text(
-                  'A leader is best when people barely know he exists...when his '
-                  'work is done, his aim fulfilled, they will all say: We did it ourselves."',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
-                    height: 18 / 11,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Attribution: Inter 500, 12px, line-height 20px, ls 0.35
-                Text(
-                  '- Lao-Tzu',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    height: 20 / 12,
-                    letterSpacing: 0.35,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
