@@ -213,6 +213,9 @@ class _DashboardBody extends ConsumerWidget {
           child: Builder(
             builder: (context) {
               final isWide = Responsive.isDesktop(context);
+              // Design ref: px-3 sm:px-6 (outer) / space-y-4 sm:space-y-5 (gaps)
+              final outerH = Responsive.isTablet(context) ? 24.0 : 12.0;
+              final gapV = Responsive.isTablet(context) ? 20.0 : 16.0;
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Center(
@@ -225,7 +228,7 @@ class _DashboardBody extends ConsumerWidget {
                   // Design ref: <p className="hidden sm:block ...">
                   if (isWide)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+                      padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
                       child: Text(
                         "Welcome back! Here's what's happening with your courses.",
                         style: GoogleFonts.inter(
@@ -235,7 +238,7 @@ class _DashboardBody extends ConsumerWidget {
                       ),
                     ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
+                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
                     child: _StatRow(
                       isWide: isWide,
                       enrolled: data.summary.enrolledCourses,
@@ -244,7 +247,7 @@ class _DashboardBody extends ConsumerWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
                     child: isWide
                         ? IntrinsicHeight(
                             child: Row(
@@ -269,13 +272,13 @@ class _DashboardBody extends ConsumerWidget {
                               _ContinueLearningCard(
                                 courses: _continueLearningCourses(data),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               _UpcomingSessionsCard(sessions: data.upcomingSessions),
                             ],
                           ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
                     child: isWide
                         ? IntrinsicHeight(
                             child: Row(
@@ -298,7 +301,7 @@ class _DashboardBody extends ConsumerWidget {
                         : Column(
                             children: [
                               _CourseProgressCard(courses: _progressCourses(data)),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               _OverallProgressCard(
                                 overallProgress: data.summary.overallProgress,
                               ),
@@ -306,7 +309,7 @@ class _DashboardBody extends ConsumerWidget {
                           ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
                     child: isWide
                         ? IntrinsicHeight(
                             child: Row(
@@ -330,14 +333,14 @@ class _DashboardBody extends ConsumerWidget {
                             children: [
                               _RewardsPointsCard(
                                   rewards: data.extras.rewards),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               _DiscussionBoardsCard(
                                   boards: data.extras.discussionBoards),
                             ],
                           ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, gapV),
                     child: _RequiredForYouCard(required: data.requiredForYou),
                   ),
                         const AppFooter(),
