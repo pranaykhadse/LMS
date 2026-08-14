@@ -214,6 +214,18 @@ class _DashboardBody extends ConsumerWidget {
                 padding: EdgeInsets.zero,
                 children: [
                   _BannerSection(auth: auth),
+                  // Design ref: <p className="hidden sm:block ...">
+                  if (isWide)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+                      child: Text(
+                        "Welcome back! Here's what's happening with your courses.",
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF6B7280),
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
                     child: _StatRow(
@@ -408,18 +420,11 @@ class _BannerSection extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset('assets/images/login-bg.png', fit: BoxFit.cover),
+          Image.asset('assets/images/dashboard-hero.jpg', fit: BoxFit.cover),
+          // Design ref: solid #693D94 tint at 82% opacity (not a two-tone
+          // gradient - both linear-gradient stops are the same color).
           Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  FigmaTokens.primaryPurple.withValues(alpha: 0.85),
-                  FigmaTokens.gradientEnd.withValues(alpha: 0.85),
-                ],
-              ),
-            ),
+            color: FigmaTokens.primaryPurple.withValues(alpha: 0.82),
           ),
           // Figma content: padding top 16 / right 12 / bottom 8 / left 12
           // vertical flow, gap 8px between text children
