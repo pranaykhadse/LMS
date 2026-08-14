@@ -6,7 +6,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 const _footerText = Color(0xFF6B7280);
 const _footerBorder = Color(0xFFE4E7EC);
-const _linkedInBg = Color(0xFFE2E8F0);
 
 /// Matches the website's global footer (Terms of Use / Your Profile /
 /// Support + LinkedIn) — shown at the bottom of every main screen.
@@ -18,14 +17,16 @@ class AppFooter extends StatelessWidget {
     return Column(
       children: [
         const Divider(height: 1, color: _footerBorder),
+        // Design ref: flex ... gap-3 py-3 border-t border-gray-200
+        // text-[13px] text-gray-400
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 24,
+                spacing: 16,
                 runSpacing: 8,
                 children: [
                   _FooterLink(
@@ -71,38 +72,38 @@ class _FooterLink extends StatelessWidget {
       onTap: onTap,
       child: Text(
         label,
-        style: GoogleFonts.inter(color: _footerText, fontSize: 14),
+        style: GoogleFonts.inter(color: _footerText, fontSize: 13),
       ),
     );
   }
 }
 
+// Design ref: plain icon-only link (text-gray-500, hover:text-[#0077b5]),
+// no circular badge background - <Linkedin size={16} />. Material Icons has
+// no bundled LinkedIn glyph, so this keeps the "in" mark but drops the
+// circle/fill this had before to match the reference's plain-icon treatment.
 class _LinkedInBadge extends StatelessWidget {
   const _LinkedInBadge();
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      customBorder: const CircleBorder(),
       onTap: () => launchUrl(
         Uri.parse('https://www.linkedin.com/company/looking-forward-consulting'),
         mode: LaunchMode.externalApplication,
       ),
-      child: Container(
-        width: 36,
-        height: 36,
-        alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: _linkedInBg,
-          shape: BoxShape.circle,
-        ),
-        child: Text(
-          'in',
-          style: GoogleFonts.inter(
-            color: _footerText,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            height: 1,
+      child: SizedBox(
+        width: 16,
+        height: 16,
+        child: Center(
+          child: Text(
+            'in',
+            style: GoogleFonts.inter(
+              color: _footerText,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              height: 1,
+            ),
           ),
         ),
       ),

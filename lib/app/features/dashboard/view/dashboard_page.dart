@@ -1888,13 +1888,13 @@ class _RequiredForYouCard extends StatelessWidget {
                 onPressed: () => Modular.to.pushNamed(
                   CoursesModule.construct(CoursesModule.requiredCourses),
                 ),
-                borderRadius: 6,
+                borderRadius: 20,
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 10),
                 textStyle: GoogleFonts.inter(
                   color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
