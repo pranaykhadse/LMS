@@ -1469,7 +1469,7 @@ class _OverallProgressCard extends StatelessWidget {
                 'OVERALL LEARNING PROGRESS',
                 style: GoogleFonts.inter(
                   color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 12,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),
@@ -1525,29 +1525,50 @@ class _DiscussionBoardsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Discussion Boards',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF374151),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFE5E7EB)),
-          const SizedBox(height: 14),
-          if (shown.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                'No discussion threads yet.',
-                style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280), fontSize: 14),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Discussion Boards',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF374151),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
+              if (shown.isNotEmpty)
+                // Design ref: text-xs font-semibold text-[#693D94]
+                // bg-[#f0e8f7] px-2.5 py-1 rounded-full
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0E8F7),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${shown.length} Active',
+                    style: GoogleFonts.inter(
+                      color: _purple,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (shown.isEmpty)
+            Text(
+              'No discussion threads yet.',
+              style: GoogleFonts.inter(
+                  color: const Color(0xFF6B7280), fontSize: 14),
             )
           else
+            // Design ref: space-y-3 (12px gap, no dividers)
             for (var i = 0; i < shown.length; i++) ...[
-              if (i > 0) const Divider(height: 24, color: Color(0xFFE5E7EB)),
+              if (i > 0) const SizedBox(height: 12),
               _DiscussionBoardRow(item: shown[i]),
             ],
         ],
@@ -1562,44 +1583,53 @@ class _DiscussionBoardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF1F2937),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+    // Design ref: rounded-lg border border-gray-100 bg-gray-50 p-3
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF9FAFB), // gray-50
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFF3F4F6)), // gray-100
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF1F2937),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                [
-                  if (item.lastRepliedBy.isNotEmpty) item.lastRepliedBy,
-                  if (item.lastReply.isNotEmpty) item.lastReply,
-                  '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
-                ].join(' • '),
-                style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF), fontSize: 12),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  [
+                    if (item.lastRepliedBy.isNotEmpty) item.lastRepliedBy,
+                    if (item.lastReply.isNotEmpty) item.lastReply,
+                    '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
+                  ].join(' • '),
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFF9CA3AF), fontSize: 12),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        _ViewButton(
-          onPressed: () => Modular.to.pushNamed(
-            CoursesModule.construct(
-                '${CoursesModule.detail}/${item.courseId}'),
+          const SizedBox(width: 12),
+          _ViewButton(
+            onPressed: () => Modular.to.pushNamed(
+              CoursesModule.construct(
+                  '${CoursesModule.detail}/${item.courseId}'),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1644,20 +1674,28 @@ class _RewardsPointsCard extends ConsumerWidget {
                 onTap: () => Modular.to.pushNamed(
                   CoursesModule.construct(CoursesModule.redeemPoints),
                 ),
-                child: Text(
-                  'This Month',
-                  style: GoogleFonts.inter(
-                    color: _purple,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                // Design ref: text-xs text-[#693D94] font-semibold
+                // bg-[#f0e8f7] px-2.5 py-1 rounded-full
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0E8F7),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'This Month',
+                    style: GoogleFonts.inter(
+                      color: _purple,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFE5E7EB)),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
           // Points circle + name/description
           Row(
@@ -1715,60 +1753,77 @@ class _RewardsPointsCard extends ConsumerWidget {
                     Text(
                       "You've earned points by completing courses and attending virtual classes.",
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF6B7280),
-                        fontSize: 13,
+                        color: const Color(0xFF9CA3AF), // gray-400
+                        fontSize: 12,
                       ),
                     ),
+
+                    // Activity list or empty state — Design ref: this sits
+                    // inside the text column (indented under the circle),
+                    // not spanning the full card width.
+                    if (activity.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Text(
+                          'No reward points earned this month yet.',
+                          style: GoogleFonts.inter(
+                              color: const Color(0xFF6B7280), fontSize: 12),
+                        ),
+                      )
+                    else
+                      // Design ref: border-t border-gray-100 pt-2 space-y-1
+                      Container(
+                        margin: const EdgeInsets.only(top: 12),
+                        padding: const EdgeInsets.only(top: 8),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                              top: BorderSide(color: Color(0xFFF3F4F6))),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final a in activity)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                // Design ref: bg-gray-50 rounded-lg px-2.5 py-1.5
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF9FAFB),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          a.label,
+                                          style: GoogleFonts.inter(
+                                            color: const Color(0xFF6B7280),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        '+${a.points} pts',
+                                        style: GoogleFonts.inter(
+                                          color: _purple,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
             ],
           ),
-
-          // Activity list or empty state
-          if (activity.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                'No reward points earned this month yet.',
-                style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280), fontSize: 13),
-              ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final a in activity)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              a.label,
-                              style: GoogleFonts.inter(
-                                color: const Color(0xFF1F2937),
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            '+${a.points} pts',
-                            style: GoogleFonts.inter(
-                              color: _purple,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
         ],
       ),
     );
@@ -1911,7 +1966,8 @@ class _ViewButton extends StatelessWidget {
     return HoverBuilder(
       builder: (context, hovering) {
         final filled = hovering && onPressed != null;
-        const borderRadius = BorderRadius.all(Radius.circular(4));
+        // Design ref: rounded-xl (12px)
+        const borderRadius = BorderRadius.all(Radius.circular(12));
         return Material(
           color: filled ? _purple : Colors.transparent,
           borderRadius: borderRadius,
