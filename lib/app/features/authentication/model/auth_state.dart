@@ -636,6 +636,7 @@ class UserProfile {
     String? division,
     String? department,
     dynamic avatarPath,
+    dynamic countryCode,
   }) => {
     "firstname": firstname ?? this.firstname,
     "middlename": middlename,
@@ -650,6 +651,7 @@ class UserProfile {
     "points": points,
     "website": website ?? this.website,
     "linked_in": linkedIn ?? this.linkedIn,
+    "country_code": countryCode ?? this.countryCode,
     "metered_access": meteredAccess,
     "restricted_group_id": restrictedGroupId,
     "restriction_type": restrictionType,

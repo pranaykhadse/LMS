@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lms/app/core/data/countries.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
@@ -113,6 +114,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   late final TextEditingController _divisionCtrl;
   late final TextEditingController _departmentCtrl;
   late final TextEditingController _phoneCtrl;
+  String? _countryCode;
 
   @override
   void initState() {
@@ -126,6 +128,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _divisionCtrl = TextEditingController(text: p.division ?? '');
     _departmentCtrl = TextEditingController(text: p.department ?? '');
     _phoneCtrl = TextEditingController(text: widget.detail.phoneNumber ?? '');
+    _countryCode = p.countryCode?.toString();
   }
 
   @override
@@ -151,6 +154,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _divisionCtrl.text = p.division ?? '';
     _departmentCtrl.text = p.department ?? '';
     _phoneCtrl.text = widget.detail.phoneNumber ?? '';
+    _countryCode = p.countryCode?.toString();
   }
 
   void _startEditing() => setState(() => _isEditing = true);
@@ -212,6 +216,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           division: _divisionCtrl.text.trim(),
           department: _departmentCtrl.text.trim(),
           phoneNumber: _phoneCtrl.text.trim(),
+          countryCode: _countryCode,
         );
     if (!mounted) return;
     setState(() {
@@ -299,11 +304,14 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                     value: profile.linkedIn?.toString(),
                     controller: _isEditing ? _linkedInCtrl : null,
                   ),
-                  _FieldRow(
+                  _PhoneFieldRow(
                     label: 'Phone Number',
                     value: widget.detail.phoneNumber,
                     controller: _isEditing ? _phoneCtrl : null,
-                    keyboardType: TextInputType.phone,
+                    countryCode: _countryCode,
+                    onCountryChanged: _isEditing
+                        ? (code) => setState(() => _countryCode = code)
+                        : null,
                   ),
                   _ToggleRow(
                     label: 'Receive Text Message Reminders',
@@ -1013,6 +1021,265 @@ class _FieldRow extends StatelessWidget {
                 ),
         ),
       ],
+    );
+  }
+}
+
+/// Same layout as [_FieldRow], but for the phone number: while editing, a
+/// country picker (flag + dial code) sits in front of the number field so
+/// `country_code` and the number are captured separately, matching the
+/// API's own `country_code` / `text_phone_number` split. Read-only mode
+/// collapses that back down to a single "+<code> <number>" line instead of
+/// showing the picker.
+class _PhoneFieldRow extends StatelessWidget {
+  const _PhoneFieldRow({
+    required this.label,
+    this.value,
+    this.controller,
+    this.countryCode,
+    this.onCountryChanged,
+  });
+
+  final String label;
+  final String? value;
+  final TextEditingController? controller;
+  final String? countryCode;
+  final ValueChanged<String>? onCountryChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEditing = controller != null;
+    final country = countryForDialCode(countryCode);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 160,
+          child: Text(
+            '$label:',
+            style: const TextStyle(
+              color: _asInk,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: isEditing
+              ? Row(
+                  children: [
+                    _CountryCodePicker(
+                      country: country,
+                      onSelected: (c) => onCountryChanged?.call(c.dialCode),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: controller,
+                        keyboardType: TextInputType.phone,
+                        style: const TextStyle(
+                            color: _asInk,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500),
+                        decoration: InputDecoration(
+                          hintText: 'Not provided',
+                          hintStyle:
+                              const TextStyle(color: _asMuted, fontSize: 13),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFD1D5DB), width: 1),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFD1D5DB), width: 1),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: const BorderSide(
+                                color: _asPurple, width: 1.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                        color: const Color(0xFFD1D5DB), width: 1),
+                  ),
+                  child: Text(
+                    (value ?? '').trim().isNotEmpty
+                        ? [
+                            if (country != null) '+${country.dialCode}',
+                            value!.trim(),
+                          ].join(' ')
+                        : 'Not provided',
+                    style: TextStyle(
+                      color: (value ?? '').trim().isNotEmpty
+                          ? _asInk
+                          : _asMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The tappable "flag +code" button shown in front of the phone field while
+/// editing - opens [_CountryPickerDialog] to change it.
+class _CountryCodePicker extends StatelessWidget {
+  const _CountryCodePicker({required this.country, required this.onSelected});
+
+  final Country? country;
+  final ValueChanged<Country> onSelected;
+
+  Future<void> _open(BuildContext context) async {
+    final selected = await showDialog<Country>(
+      context: context,
+      builder: (_) => const _CountryPickerDialog(),
+    );
+    if (selected != null) onSelected(selected);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => _open(context),
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              country?.flag ?? '🌐',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              country != null ? '+${country!.dialCode}' : 'Code',
+              style: const TextStyle(
+                  color: _asInk, fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_down_rounded,
+                size: 16, color: _asMuted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Searchable "Country / +dial code" list dialog, used by
+/// [_CountryCodePicker].
+class _CountryPickerDialog extends StatefulWidget {
+  const _CountryPickerDialog();
+
+  @override
+  State<_CountryPickerDialog> createState() => _CountryPickerDialogState();
+}
+
+class _CountryPickerDialogState extends State<_CountryPickerDialog> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _query.trim().toLowerCase();
+    final results = query.isEmpty
+        ? kCountries
+        : kCountries
+            .where((c) =>
+                c.name.toLowerCase().contains(query) ||
+                c.dialCode.contains(query))
+            .toList();
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380, maxHeight: 480),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Select country',
+                style: TextStyle(
+                    color: _asInk, fontSize: 15, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                autofocus: true,
+                onChanged: (v) => setState(() => _query = v),
+                style: const TextStyle(fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Search country or code',
+                  prefixIcon: const Icon(Icons.search, size: 18),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(6),
+                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: results.isEmpty
+                    ? const Center(
+                        child: Text('No matches',
+                            style: TextStyle(color: _asMuted, fontSize: 13)),
+                      )
+                    : ListView.builder(
+                        itemCount: results.length,
+                        itemBuilder: (context, i) {
+                          final c = results[i];
+                          return ListTile(
+                            dense: true,
+                            leading: Text(c.flag,
+                                style: const TextStyle(fontSize: 18)),
+                            title: Text(c.name,
+                                style: const TextStyle(
+                                    fontSize: 13, color: _asInk)),
+                            trailing: Text('+${c.dialCode}',
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    color: _asMuted,
+                                    fontWeight: FontWeight.w600)),
+                            onTap: () => Navigator.of(context).pop(c),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
