@@ -268,14 +268,14 @@ class _DashboardBody extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Expanded(
-                                  child: _DiscussionBoardsCard(
-                                    boards: data.extras.discussionBoards,
+                                  child: _RewardsPointsCard(
+                                    rewards: data.extras.rewards,
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: _RewardsPointsCard(
-                                    rewards: data.extras.rewards,
+                                  child: _DiscussionBoardsCard(
+                                    boards: data.extras.discussionBoards,
                                   ),
                                 ),
                               ],
@@ -283,11 +283,11 @@ class _DashboardBody extends ConsumerWidget {
                           )
                         : Column(
                             children: [
-                              _DiscussionBoardsCard(
-                                  boards: data.extras.discussionBoards),
-                              const SizedBox(height: 12),
                               _RewardsPointsCard(
                                   rewards: data.extras.rewards),
+                              const SizedBox(height: 12),
+                              _DiscussionBoardsCard(
+                                  boards: data.extras.discussionBoards),
                             ],
                           ),
                   ),
@@ -478,7 +478,8 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             icon: Icons.error_outline_rounded,
-            iconColor: const Color(0xFFD97706),
+            // Design ref: text-amber-500
+            iconColor: const Color(0xFFF59E0B),
             label: 'REQUIRED',
             value: required,
           ),
@@ -487,7 +488,8 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             icon: Icons.check_circle_outline_rounded,
-            iconColor: const Color(0xFF16A34A),
+            // Design ref: text-green-500
+            iconColor: const Color(0xFF22C55E),
             label: 'COMPLETED',
             value: completed,
           ),
@@ -976,7 +978,7 @@ class _ContinueLearningItem extends ConsumerWidget {
 
                 // Resume button
                 _BrandButton(
-                  label: 'Resume Lesson →',
+                  label: 'Resume',
                   onPressed: viewDisabled
                       ? null
                       : () => Modular.to.pushNamed(
@@ -1061,9 +1063,9 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          // Header — "Upcoming Sessions" plain title, no action
+          // Header — "Upcoming Virtual Classes" plain title, no action
           Text(
-            'Upcoming Sessions',
+            'Upcoming Virtual Classes',
             style: GoogleFonts.inter(
               color: const Color(0xFF374151), // gray-700
               fontSize: 15,
@@ -1393,7 +1395,7 @@ class _OverallProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Design ref: gradient from #5865f2 → #7c3aed, rounded-xl p-5
+    // Design ref: linear-gradient(to right, #693d94, #aa399f), rounded-xl p-5
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -1401,7 +1403,7 @@ class _OverallProgressCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          colors: [Color(0xFF4A439F), Color(0xFF9650B4)],
+          colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
         ),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -1613,10 +1615,14 @@ class _RewardsPointsCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 52,
-                height: 52,
+                width: 80,
+                height: 80,
                 decoration: const BoxDecoration(
-                  color: _purple,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
+                  ),
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -1627,23 +1633,23 @@ class _RewardsPointsCard extends ConsumerWidget {
                       value: points,
                       style: GoogleFonts.inter(
                         color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
                         height: 1,
                       ),
                     ),
                     Text(
                       'pts',
                       style: GoogleFonts.inter(
-                        color: Colors.white70,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
