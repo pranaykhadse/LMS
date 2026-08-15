@@ -1122,7 +1122,7 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
         .toList()
       ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
     final shown = upcoming.take(8).toList();
-    const collapsedCount = 3;
+    const collapsedCount = 2;
     final visible = _expanded ? shown : shown.take(collapsedCount).toList();
     final hasMore = shown.length > collapsedCount;
 
@@ -1280,12 +1280,11 @@ class _SessionRow extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          // Date • time
+          // Date • time — Design ref: gap-1.5 (6px)
           Row(
             children: [
-              const Icon(Icons.calendar_today_rounded,
-                  size: 10, color: _purple),
-              const SizedBox(width: 4),
+              const Icon(LucideIcons.calendarDays, size: 10, color: _purple),
+              const SizedBox(width: 6),
               Text(
                 _formatDate(event.startDateTime),
                 style: GoogleFonts.inter(
