@@ -1110,8 +1110,6 @@ class _UpcomingSessionsCard extends StatefulWidget {
 }
 
 class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
-  bool _expanded = false;
-
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -1121,23 +1119,23 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
         .where((e) => e.startDateTime.isAfter(now))
         .toList()
       ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
-    final shown = upcoming.take(8).toList();
+    // No expand/collapse toggle - matches the reference (a fixed 2-session
+    // list, no arrow), and keeps this card's height matched to Continue
+    // Learning's fixed 284px instead of growing with the session count.
     const collapsedCount = 2;
-    final visible = _expanded ? shown : shown.take(collapsedCount).toList();
-    final hasMore = shown.length > collapsedCount;
+    final visible = upcoming.take(collapsedCount).toList();
 
     return Container(
+      height: 284,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           // Header — "Upcoming Virtual Classes" plain title, no action
           Text(
             'Upcoming Virtual Classes',
@@ -1148,7 +1146,7 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
             ),
           ),
           const SizedBox(height: 16),
-          if (shown.isEmpty)
+          if (visible.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
@@ -1156,32 +1154,12 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
                 style: GoogleFonts.inter(color: const Color(0xFF6B7280), fontSize: 14),
               ),
             )
-          else ...[
+          else
             for (var i = 0; i < visible.length; i++) ...[
               if (i > 0) const SizedBox(height: 12),
               _SessionRow(event: visible[i]),
             ],
-            if (hasMore)
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: Center(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _expanded = !_expanded),
-                    child: AnimatedRotation(
-                      turns: _expanded ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 200),
-                      child: const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Color(0xFF6B7280),
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -1238,7 +1216,10 @@ class _SessionRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Join button with live pulse dot — Design ref: rounded-xl
+              // Design ref: px-2.5 py-1 rounded-xl, no dot/icon at all -
+              // just the "Join" label (44.75x26 measured, matching plain
+              // text at this padding - a pulse dot was inflating the width
+              // beyond spec and isn't in the reference).
               GestureDetector(
                 onTap: () => Modular.to.pushNamed(
                   CoursesModule.construct(
@@ -1251,29 +1232,13 @@ class _SessionRow extends StatelessWidget {
                     color: _purple,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Pulse dot (static red dot — Flutter has no CSS
-                      // animate-pulse; a simple dot conveys the same intent)
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF87171), // red-400
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
+                  child: Text(
                         'Join',
                         style: GoogleFonts.inter(
                           color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
-                      ),
-                    ],
                   ),
                 ),
               ),
