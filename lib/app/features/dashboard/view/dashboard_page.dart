@@ -191,6 +191,12 @@ class _DashboardBody extends ConsumerWidget {
               // Design ref: px-3 sm:px-6 (outer) / space-y-4 sm:space-y-5 (gaps)
               final outerH = Responsive.isTablet(context) ? 24.0 : 12.0;
               final gapV = Responsive.isTablet(context) ? 20.0 : 16.0;
+              // Design ref: the whole section list sits in a single
+              // px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5 wrapper -
+              // py-6/py-4 is this wrapper's OWN top/bottom padding
+              // (applies once, before the first child), separate from the
+              // smaller space-y-5/4 gap between children.
+              final containerV = Responsive.isTablet(context) ? 24.0 : 16.0;
               return Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1440),
@@ -198,10 +204,15 @@ class _DashboardBody extends ConsumerWidget {
                     padding: EdgeInsets.zero,
                     children: [
                   _BannerSection(auth: auth),
-                  // Design ref: <p className="hidden sm:block ...">
-                  if (isWide)
+                  // Design ref: <p className="hidden sm:block ..."> - shown
+                  // at the sm breakpoint (isTablet), not lg (isWide/
+                  // isDesktop) - and as the first child in the wrapper, its
+                  // top spacing is the wrapper's own py-6/py-4 (containerV),
+                  // not the smaller space-y-5/4 gap (gapV) used between
+                  // later siblings.
+                  if (Responsive.isTablet(context))
                     Padding(
-                      padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
+                      padding: EdgeInsets.fromLTRB(outerH, containerV, outerH, 0),
                       child: Text(
                         "Welcome back! Here's what's happening with your courses.",
                         style: GoogleFonts.inter(
@@ -211,7 +222,13 @@ class _DashboardBody extends ConsumerWidget {
                       ),
                     ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
+                    // When the welcome subtitle is hidden (narrow widths),
+                    // the stat row becomes the first child instead.
+                    padding: EdgeInsets.fromLTRB(
+                        outerH,
+                        Responsive.isTablet(context) ? gapV : containerV,
+                        outerH,
+                        0),
                     child: _StatRow(
                       isWide: isWide,
                       enrolled: data.summary.enrolledCourses,
