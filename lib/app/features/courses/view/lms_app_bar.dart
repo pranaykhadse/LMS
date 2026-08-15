@@ -865,7 +865,8 @@ class _NavDropdownState extends State<_NavDropdown> {
                     _isOpen
                         ? Icons.keyboard_arrow_up_rounded
                         : Icons.keyboard_arrow_down_rounded,
-                    size: 13,
+                    // Design ref: svg w-[11px] h-[11px] opacity-60
+                    size: 11,
                     color: color.withValues(alpha: 0.6),
                   ),
                 ),
