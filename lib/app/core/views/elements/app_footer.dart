@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -79,9 +80,7 @@ class _FooterLink extends StatelessWidget {
 }
 
 // Design ref: plain icon-only link (text-gray-500, hover:text-[#0077b5]),
-// no circular badge background - <Linkedin size={16} />. Material Icons has
-// no bundled LinkedIn glyph, so this keeps the "in" mark but drops the
-// circle/fill this had before to match the reference's plain-icon treatment.
+// no circular badge background - <Linkedin size={16} />, 16x16 measured.
 class _LinkedInBadge extends StatelessWidget {
   const _LinkedInBadge();
 
@@ -92,21 +91,7 @@ class _LinkedInBadge extends StatelessWidget {
         Uri.parse('https://www.linkedin.com/company/looking-forward-consulting'),
         mode: LaunchMode.externalApplication,
       ),
-      child: SizedBox(
-        width: 16,
-        height: 16,
-        child: Center(
-          child: Text(
-            'in',
-            style: GoogleFonts.inter(
-              color: _footerText,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              height: 1,
-            ),
-          ),
-        ),
-      ),
+      child: const Icon(LucideIcons.linkedin, size: 16, color: _footerText),
     );
   }
 }

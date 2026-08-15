@@ -1864,6 +1864,7 @@ class _RequiredForYouCard extends StatelessWidget {
               color: const Color(0xFF374151),
               fontSize: 16,
               fontWeight: FontWeight.w600,
+              height: 24 / 16,
             ),
           ),
           const SizedBox(height: 16),
@@ -1922,9 +1923,9 @@ class _RequiredRow extends ConsumerWidget {
     final viewDisabled = isViewCourseDisabled(ref, courseId);
     return Row(
       children: [
-        // Number
+        // Number — Design ref: w-4 (16px), shrink-0, text-right
         SizedBox(
-          width: 20,
+          width: 16,
           child: Text(
             '$index',
             textAlign: TextAlign.right,
@@ -1932,26 +1933,34 @@ class _RequiredRow extends ConsumerWidget {
               color: const Color(0xFF9CA3AF),
               fontSize: 16,
               fontWeight: FontWeight.w400,
+              height: 24 / 16,
             ),
           ),
         ),
         const SizedBox(width: 12),
-        // Course name
+        // Course name — Design ref: line-clamp-2
         Expanded(
           child: Text(
             item.courseName,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
               color: const Color(0xFF374151),
               fontSize: 16,
               fontWeight: FontWeight.w400,
+              height: 24 / 16,
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        // View button — outlined purple, fills on hover
+        // Design ref: mr-8 (32px) on the number+title group, before the
+        // View button
+        const SizedBox(width: 32),
+        // View button — outlined purple, fills on hover. Design ref:
+        // text-[13px] font-medium here (Discussion Board's View button is
+        // a different 12px/font-semibold spec, despite sharing this widget)
         _ViewButton(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
           onPressed: viewDisabled
               ? null
               : () => Modular.to.pushNamed(
@@ -1967,8 +1976,15 @@ class _RequiredRow extends ConsumerWidget {
 // Outlined purple "View" button — fills solid on hover, matching design ref:
 // border border-[#5b5bd6] text-[#5b5bd6] hover:bg-[#5b5bd6] hover:text-white
 class _ViewButton extends StatelessWidget {
-  const _ViewButton({required this.onPressed});
+  const _ViewButton({
+    required this.onPressed,
+    // Design ref default: Discussion Board's text-xs font-semibold (12/600)
+    this.fontSize = 12,
+    this.fontWeight = FontWeight.w600,
+  });
   final VoidCallback? onPressed;
+  final double fontSize;
+  final FontWeight fontWeight;
 
   @override
   Widget build(BuildContext context) {
@@ -1993,9 +2009,8 @@ class _ViewButton extends StatelessWidget {
                 'View',
                 style: GoogleFonts.inter(
                   color: filled ? Colors.white : _purple,
-                  // Design ref: text-xs font-semibold (12px/600)
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontSize: fontSize,
+                  fontWeight: fontWeight,
                 ),
               ),
             ),
