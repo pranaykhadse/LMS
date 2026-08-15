@@ -1588,12 +1588,20 @@ class _DiscussionBoardRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Design ref: rounded-lg border border-gray-100 bg-gray-50 p-3
-    return Container(
+    // hover:border-[#693D94]/30 hover:bg-[#f0e8f7]/30
+    return HoverBuilder(
+      builder: (context, hovering) => Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB), // gray-50
+        color: hovering
+            ? const Color(0xFFF0E8F7).withValues(alpha: 0.3)
+            : const Color(0xFFF9FAFB), // gray-50
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFF3F4F6)), // gray-100
+        border: Border.all(
+          color: hovering
+              ? _purple.withValues(alpha: 0.3)
+              : const Color(0xFFF3F4F6), // gray-100
+        ),
       ),
       child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1637,6 +1645,7 @@ class _DiscussionBoardRow extends StatelessWidget {
           ),
         ),
       ],
+      ),
       ),
     );
   }
