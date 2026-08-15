@@ -774,9 +774,11 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: Container(
-      // Design ref: header (px-5 pt-4 pb-3 + text) ~56 + content h-[200px]
-      // + dots row (py-3 + 6px dot) ~34 = ~290
-      height: 290,
+      // Design ref: header (pt-4 pb-3 + 24px text line-height) 52 +
+      // content h-[200px] + dots row (py-3 + 6px dot) 30 = 282 - matches
+      // the measured rendered row height (284.8, ~3px of font-metrics
+      // rounding) closer than the earlier 290px guess.
+      height: 284,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
