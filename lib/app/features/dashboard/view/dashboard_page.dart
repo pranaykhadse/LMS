@@ -948,13 +948,19 @@ class _ContinueLearningItem extends ConsumerWidget {
         ),
 
         // ── Text content (right) ──────────────────────────────────────
+        // Design ref: flex flex-1 items-center p-4 - the content block is
+        // vertically centered within the row's full height (h-[200px], or
+        // taller if this card gets stretched to match Upcoming Sessions),
+        // not top-anchored. Center wraps the column explicitly rather than
+        // relying only on Column's own mainAxisAlignment, since that's a
+        // no-op if anything upstream ever hands it loose height again.
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(
+            child: Center(
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Category label
                 if (course.category != null)
@@ -1048,6 +1054,7 @@ class _ContinueLearningItem extends ConsumerWidget {
                   ),
                 ),
               ],
+              ),
             ),
           ),
         ),
