@@ -962,17 +962,14 @@ class _ContinueLearningItem extends ConsumerWidget {
         // ── Text content (right) ──────────────────────────────────────
         // Design ref: flex flex-1 items-center p-4 - the content block is
         // vertically centered within the row's full height, but stays
-        // left-aligned/close to the image horizontally (items-center in a
-        // row context only affects the cross axis, i.e. vertical - it
-        // doesn't push content to the middle horizontally). Align with
-        // centerLeft gets the vertical centering without Center's
-        // horizontal centering, which was shoving the whole text block
-        // into the middle of the available width.
+        // Content starts at the top of the row instead of being vertically
+        // centered - explicit user preference, overriding the reference's
+        // own items-center.
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: Alignment.topLeft,
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
