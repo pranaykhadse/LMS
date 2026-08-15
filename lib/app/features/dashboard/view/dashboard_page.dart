@@ -959,15 +959,18 @@ class _ContinueLearningItem extends ConsumerWidget {
 
         // ── Text content (right) ──────────────────────────────────────
         // Design ref: flex flex-1 items-center p-4 - the content block is
-        // vertically centered within the row's full height (h-[200px], or
-        // taller if this card gets stretched to match Upcoming Sessions),
-        // not top-anchored. Center wraps the column explicitly rather than
-        // relying only on Column's own mainAxisAlignment, since that's a
-        // no-op if anything upstream ever hands it loose height again.
+        // vertically centered within the row's full height, but stays
+        // left-aligned/close to the image horizontally (items-center in a
+        // row context only affects the cross axis, i.e. vertical - it
+        // doesn't push content to the middle horizontally). Align with
+        // centerLeft gets the vertical centering without Center's
+        // horizontal centering, which was shoving the whole text block
+        // into the middle of the available width.
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Center(
+            child: Align(
+              alignment: Alignment.centerLeft,
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
