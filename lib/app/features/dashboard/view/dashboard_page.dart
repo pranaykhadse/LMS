@@ -1697,7 +1697,7 @@ class _RewardsPointsCard extends ConsumerWidget {
 
           // Points circle + name/description
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 80,
