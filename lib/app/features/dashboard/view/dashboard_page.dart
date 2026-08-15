@@ -1664,6 +1664,7 @@ class _RewardsPointsCard extends ConsumerWidget {
                     color: const Color(0xFF374151),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    height: 24 / 16,
                   ),
                 ),
               ),
@@ -1743,7 +1744,9 @@ class _RewardsPointsCard extends ConsumerWidget {
                       style: GoogleFonts.inter(
                         color: const Color(0xFF1F2937),
                         fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        // Design ref: font-semibold (600), was 700
+                        fontWeight: FontWeight.w600,
+                        height: 20 / 14,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1752,6 +1755,8 @@ class _RewardsPointsCard extends ConsumerWidget {
                       style: GoogleFonts.inter(
                         color: const Color(0xFF9CA3AF), // gray-400
                         fontSize: 12,
+                        // Design ref: leading-relaxed = 1.625
+                        height: 1.625,
                       ),
                     ),
 
@@ -1798,6 +1803,7 @@ class _RewardsPointsCard extends ConsumerWidget {
                                           style: GoogleFonts.inter(
                                             color: const Color(0xFF6B7280),
                                             fontSize: 12,
+                                            height: 16 / 12,
                                           ),
                                         ),
                                       ),
@@ -1807,6 +1813,7 @@ class _RewardsPointsCard extends ConsumerWidget {
                                           color: _purple,
                                           fontWeight: FontWeight.w600,
                                           fontSize: 12,
+                                          height: 16 / 12,
                                         ),
                                       ),
                                     ],
