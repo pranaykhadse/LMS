@@ -278,9 +278,22 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       selectedSubLabel: selectedSubLabel,
     );
 
-    final header = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [topBar, navBar],
+    // Design ref: both the purple TopBar and the white NavBar sit inside
+    // the same w-full max-w-[1440px] mx-auto wrapper as the rest of the
+    // page - on windows wider than 1440px, both bars stop at 1440px and
+    // are centered, with the page's own gray background showing on
+    // either side, not stretched edge-to-edge.
+    final header = Container(
+      color: FigmaTokens.pageBackground,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1440),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [topBar, navBar],
+          ),
+        ),
+      ),
     );
     final headerHeight = _desktopTopBarHeight + _desktopHeaderHeight;
     if (bottom == null) {
