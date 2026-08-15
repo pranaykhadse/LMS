@@ -1526,11 +1526,12 @@ class _DiscussionBoardsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Discussion Boards',
+                  'Discussion Board',
                   style: GoogleFonts.inter(
                     color: const Color(0xFF374151),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    height: 24 / 16,
                   ),
                 ),
               ),
@@ -1605,7 +1606,8 @@ class _DiscussionBoardRow extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 4),
+              // Design ref: mt-0.5 (2px)
+              const SizedBox(height: 2),
               Text(
                 [
                   if (item.lastRepliedBy.isNotEmpty) item.lastRepliedBy,
@@ -1613,12 +1615,15 @@ class _DiscussionBoardRow extends StatelessWidget {
                   '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
                 ].join(' • '),
                 style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF), fontSize: 12),
+                    color: const Color(0xFF9CA3AF),
+                    fontSize: 12,
+                    height: 16 / 12),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        // Design ref: gap-2 (8px)
+        const SizedBox(width: 8),
         _ViewButton(
           onPressed: () => Modular.to.pushNamed(
             CoursesModule.construct(
@@ -1988,8 +1993,9 @@ class _ViewButton extends StatelessWidget {
                 'View',
                 style: GoogleFonts.inter(
                   color: filled ? Colors.white : _purple,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
+                  // Design ref: text-xs font-semibold (12px/600)
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
