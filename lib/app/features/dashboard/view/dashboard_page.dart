@@ -808,6 +808,8 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
+                      // Design ref: text-base default line-height = 24px
+                      height: 24 / 16,
                     ),
                   ),
                 ),
