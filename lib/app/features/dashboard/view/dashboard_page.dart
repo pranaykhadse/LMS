@@ -374,6 +374,7 @@ List<DashboardCourse> _continueLearningCourses(LearningProgressData data) {
           description: item.description.isNotEmpty ? item.description : null,
           category: item.className.isNotEmpty ? item.className : null,
           dueDate: item.formattedDueDate,
+          dueDateRaw: item.dueDateTime,
         ),
       )
       .toList();
@@ -759,10 +760,11 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
   }
 
   bool _isOverdue(DashboardCourse course) {
-    if (course.dueDate == null) return false;
-    final parsed = DateTime.tryParse(course.dueDate!);
-    if (parsed == null) return false;
-    return parsed.isBefore(DateTime.now());
+    // dueDate is a display string ("August 1, 2026") - not re-parseable.
+    // dueDateRaw is the actual DateTime it was derived from.
+    final due = course.dueDateRaw;
+    if (due == null) return false;
+    return due.isBefore(DateTime.now());
   }
 
   @override

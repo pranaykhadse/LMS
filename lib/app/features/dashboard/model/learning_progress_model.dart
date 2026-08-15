@@ -239,11 +239,18 @@ class DashboardContinueLearningItem {
 
   /// "August 1, 2026" - null when [dueDate] is null or unparsable.
   String? get formattedDueDate {
-    final raw = dueDate;
-    if (raw == null) return null;
-    final date = DateTime.tryParse(raw);
+    final date = dueDateTime;
     if (date == null) return null;
     return '${_monthNames[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  /// Parsed [dueDate] - the actual comparable value overdue checks should
+  /// use, since [formattedDueDate] is a display string ("August 1, 2026")
+  /// that DateTime.tryParse can't read back.
+  DateTime? get dueDateTime {
+    final raw = dueDate;
+    if (raw == null) return null;
+    return DateTime.tryParse(raw);
   }
 
   factory DashboardContinueLearningItem.fromJson(Map<String, dynamic> json) =>

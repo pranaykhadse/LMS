@@ -52,6 +52,7 @@ class DashboardCourse {
     this.description,
     this.category,
     this.dueDate,
+    this.dueDateRaw,
     this.nextSession,
     this.completedDate,
   });
@@ -79,8 +80,14 @@ class DashboardCourse {
   final String? category;
 
   /// Already-formatted ("August 1, 2026") - same "continue_learning"-only
-  /// availability as [description].
+  /// availability as [description]. Display-only; use [dueDateRaw] for any
+  /// actual date comparison (e.g. overdue checks), since this string isn't
+  /// re-parseable.
   final String? dueDate;
+
+  /// The actual comparable due-date value backing [dueDate]'s display
+  /// string - same "continue_learning"-only availability.
+  final DateTime? dueDateRaw;
   final bool displayRating;
   final double averageRating;
   final int ratingCount;
