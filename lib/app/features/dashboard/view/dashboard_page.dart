@@ -239,24 +239,28 @@ class _DashboardBody extends ConsumerWidget {
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
+                    // Continue Learning has its own fixed height (matching
+                    // the reference's h-[200px] content area) - not
+                    // CrossAxisAlignment.stretch, which was forcing it to
+                    // grow/shrink to match however many sessions Upcoming
+                    // Sessions happened to have that load, making its image
+                    // and content visibly resize between page loads.
                     child: isWide
-                        ? IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  child: _ContinueLearningCard(
-                                    courses: _continueLearningCourses(data),
-                                  ),
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: _ContinueLearningCard(
+                                  courses: _continueLearningCourses(data),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _UpcomingSessionsCard(
-                                    sessions: data.upcomingSessions,
-                                  ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _UpcomingSessionsCard(
+                                  sessions: data.upcomingSessions,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           )
                         : Column(
                             children: [
