@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
@@ -519,7 +520,8 @@ class _StatRow extends StatelessWidget {
       children: [
         Expanded(
           child: _StatCard(
-            icon: Icons.menu_book_rounded,
+            // Design ref: <BookOpen size={13} className="text-[#693D94]" />
+            icon: LucideIcons.bookOpen,
             iconColor: _purple,
             label: 'ENROLLED',
             value: enrolled,
@@ -528,8 +530,8 @@ class _StatRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            icon: Icons.error_outline_rounded,
-            // Design ref: text-amber-500
+            // Design ref: <AlertCircle size={13} className="text-amber-500" />
+            icon: LucideIcons.alertCircle,
             iconColor: const Color(0xFFF59E0B),
             label: 'REQUIRED',
             value: required,
@@ -538,8 +540,8 @@ class _StatRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            icon: Icons.check_circle_outline_rounded,
-            // Design ref: text-green-500
+            // Design ref: <CheckCircle size={13} className="text-green-500" />
+            icon: LucideIcons.checkCircle,
             iconColor: const Color(0xFF22C55E),
             label: 'COMPLETED',
             value: completed,
@@ -600,7 +602,8 @@ class _StatCard extends StatelessWidget {
             style: GoogleFonts.inter(
               color: const Color(0xFF1F2937),
               fontSize: 36,
-              fontWeight: FontWeight.w700,
+              // Design ref: font-semibold (600), was 700
+              fontWeight: FontWeight.w600,
               height: 1.1,
             ),
           ),
