@@ -1187,12 +1187,20 @@ class _SessionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Design ref: rounded-lg border border-gray-100 bg-gray-50 p-3
-    return Container(
+    // hover:border-[#693D94]/30 hover:bg-[#693D94]/5
+    return HoverBuilder(
+      builder: (context, hovering) => Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB), // gray-50
+        color: hovering
+            ? _purple.withValues(alpha: 0.05)
+            : const Color(0xFFF9FAFB), // gray-50
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFF3F4F6)), // gray-100
+        border: Border.all(
+          color: hovering
+              ? _purple.withValues(alpha: 0.3)
+              : const Color(0xFFF3F4F6), // gray-100
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1294,6 +1302,7 @@ class _SessionRow extends StatelessWidget {
             ),
           ],
         ],
+      ),
       ),
     );
   }
