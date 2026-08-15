@@ -824,6 +824,8 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                         color: _purple,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
+                        // Design ref: text-xs default line-height = 16px
+                        height: 16 / 12,
                       ),
                     ),
                   ),
@@ -1369,6 +1371,7 @@ class _CourseProgressCard extends StatelessWidget {
                       color: _purple,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      height: 16 / 12,
                     ),
                   ),
                 ),
