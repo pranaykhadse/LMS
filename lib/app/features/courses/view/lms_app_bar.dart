@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -513,7 +514,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 child: Row(
           children: [
             _NavItem(
-            icon: Icons.local_library_outlined,
+            icon: LucideIcons.library,
             label: 'Course Catalog',
             selected: selectedLabel == 'Course Catalog',
             onTap: () => _goTo(
@@ -525,7 +526,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 48),
           _NavDropdown(
-            icon: Icons.menu_book_outlined,
+            icon: LucideIcons.bookOpen,
             label: 'My Courses',
             selected: myCoursesActive,
             items: [
@@ -573,7 +574,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 48),
           _NavItem(
-            icon: Icons.map_outlined,
+            icon: LucideIcons.map,
             label: 'Learning Paths',
             selected: selectedLabel == 'Learning Paths',
             onTap: () => _goTo(
@@ -585,7 +586,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 48),
           _NavDropdown(
-            icon: Icons.workspace_premium_outlined,
+            icon: LucideIcons.award,
             label: 'Points & Badges',
             selected: pointsBadgesActive,
             items: [
@@ -613,7 +614,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 48),
           _NavDropdown(
-            icon: Icons.chat_bubble_outline,
+            icon: LucideIcons.messageCircle,
             label: 'Contact a Coach',
             selected: false,
             items: [
