@@ -992,17 +992,19 @@ class _ContinueLearningItem extends ConsumerWidget {
                     style: GoogleFonts.inter(
                       color: const Color(0xFF9CA3AF),
                       fontSize: 16,
-                      height: 1.5,
+                      // Design ref: leading-relaxed = 1.625
+                      height: 1.625,
                     ),
                   ),
                 ],
 
-                // Due date
+                // Due date — Design ref: mb-2 (8px) below the description
                 if (course.dueDate != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(Icons.calendar_today_rounded,
+                      // Design ref: <CalendarDays size={10} />
+                      Icon(LucideIcons.calendarDays,
                           size: 10, color: accentColor),
                       const SizedBox(width: 4),
                       Flexible(
@@ -1021,7 +1023,9 @@ class _ContinueLearningItem extends ConsumerWidget {
                 const SizedBox(height: 12),
 
                 // Resume button — Design ref: px-4 py-2 rounded-[20px]
-                // text-base font-medium
+                // text-base font-medium; bg matches the overdue accent
+                // color (red) or purple otherwise, same as the due-date
+                // text/icon above.
                 _BrandButton(
                   label: 'Resume',
                   onPressed: viewDisabled
@@ -1031,6 +1035,10 @@ class _ContinueLearningItem extends ConsumerWidget {
                               '${CoursesModule.detail}/${course.id}',
                             ),
                           ),
+                  color: accentColor,
+                  hoverColor: accentColor == const Color(0xFFDC2626)
+                      ? const Color(0xFFB91C1C) // red-700 hover
+                      : FigmaTokens.purpleHover,
                   borderRadius: 20,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   textStyle: GoogleFonts.inter(
@@ -2005,6 +2013,8 @@ class _BrandButton extends StatefulWidget {
     required this.borderRadius,
     required this.padding,
     required this.textStyle,
+    this.color,
+    this.hoverColor,
   });
 
   final String label;
@@ -2012,6 +2022,11 @@ class _BrandButton extends StatefulWidget {
   final double borderRadius;
   final EdgeInsetsGeometry padding;
   final TextStyle textStyle;
+
+  /// Overrides the default purple background — e.g. red for an overdue
+  /// course's Resume button.
+  final Color? color;
+  final Color? hoverColor;
 
   @override
   State<_BrandButton> createState() => _BrandButtonState();
@@ -2023,16 +2038,18 @@ class _BrandButtonState extends State<_BrandButton> {
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onPressed != null;
+    final baseColor = widget.color ?? _purple;
+    final hoverColor = widget.hoverColor ?? FigmaTokens.purpleHover;
     return MouseRegion(
       cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: Material(
         color: !enabled
-            ? _purple.withOpacity(0.5)
+            ? baseColor.withOpacity(0.5)
             : _hovering
-                ? FigmaTokens.purpleHover
-                : _purple,
+                ? hoverColor
+                : baseColor,
         borderRadius: BorderRadius.circular(widget.borderRadius),
         child: InkWell(
           borderRadius: BorderRadius.circular(widget.borderRadius),
