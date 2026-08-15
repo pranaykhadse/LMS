@@ -447,7 +447,8 @@ class _BannerSection extends StatelessWidget {
                         letterSpacing: -0.75,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    // Design ref: flex flex-col gap-1 sm:gap-[7px]
+                    SizedBox(height: isTablet ? 7 : 4),
                     // Quote body
                     Text(
                       'A leader is best when people barely know he exists...when his '
