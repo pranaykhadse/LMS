@@ -146,7 +146,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         if (onRefresh != null) ...[
           LmsAppBarButton(
             icon: Icons.refresh_rounded,
-            iconSize: 18,
+            // Design ref: bell svg is w-[14px] h-[14px] - matched across
+            // every icon in this row for consistency.
+            iconSize: 14,
             // The bell/badge in this same header is shared across every
             // screen, so a manual refresh should always pick up fresh
             // notifications too, not just whatever this particular page's
@@ -160,7 +162,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ],
         LmsOfflineToggle(
           isOffline: isOffline,
-          iconSize: 18,
+          iconSize: 14,
           switchScale: 0.8,
           onChanged: (val) {
             ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
@@ -178,7 +180,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               children: [
                 LmsAppBarButton(
                   icon: Icons.notifications_none_rounded,
-                  iconSize: 18,
+                  iconSize: 14,
                   boxSize: 34,
                   onTap: () => showLmsNotifications(bellContext),
                 ),
@@ -195,7 +197,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         const SizedBox(width: 4),
         LmsAppBarButton(
           icon: Icons.play_arrow_rounded,
-          iconSize: 18,
+          iconSize: 14,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const LearningProgressPage()),
           ),
