@@ -727,46 +727,39 @@ class _ProfileMenuButtonState extends State<_ProfileMenuButton> {
         widget.onSelected(value);
       },
       itemBuilder: widget.itemBuilder,
-      // Pill container: #7D4AAB background, 4px radius, 6px gap
-      // between avatar/name/chevron, 8/2/8/2 padding - matches the
-      // Figma spec exactly.
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(
-          color: const Color(0xFF7D4AAB),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            LmsAvatar(
-              profile: widget.profile,
-              radius: 10,
-              fallbackColor: const Color(0xFF6A7282),
+      // Design ref: no background pill - just avatar (w-5 h-5) + name
+      // (text-xs, #FFFFFF, Inter) + chevron (w-[11px] h-[11px]) directly
+      // on the purple bar, 6px gap between them (gap-1.5).
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          LmsAvatar(
+            profile: widget.profile,
+            radius: 10,
+            fallbackColor: const Color(0xFF6A7282),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _lastFirst(widget.profile),
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              height: 16 / 12,
             ),
-            const SizedBox(width: 6),
-            Text(
-              _lastFirst(widget.profile),
-              style: GoogleFonts.inter(
-                color: const Color(0xFFE5E7EB),
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                height: 16 / 12,
-              ),
+          ),
+          const SizedBox(width: 4),
+          Transform.translate(
+            offset: const Offset(0, 1.0),
+            child: Icon(
+              _isOpen
+                  ? Icons.keyboard_arrow_up_rounded
+                  : Icons.keyboard_arrow_down_rounded,
+              color: Colors.white,
+              size: 11,
             ),
-            const SizedBox(width: 4),
-            Transform.translate(
-              offset: const Offset(0, 1.0),
-              child: Icon(
-                _isOpen
-                    ? Icons.keyboard_arrow_up_rounded
-                    : Icons.keyboard_arrow_down_rounded,
-                color: const Color(0xFF99A1AF),
-                size: 13,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
