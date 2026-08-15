@@ -521,7 +521,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.root),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 48),
           _NavDropdown(
             icon: Icons.menu_book_outlined,
             label: 'My Courses',
@@ -569,7 +569,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 48),
           _NavItem(
             icon: Icons.map_outlined,
             label: 'Learning Paths',
@@ -581,7 +581,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               CoursesModule.construct(CoursesModule.learningPaths),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 48),
           _NavDropdown(
             icon: Icons.workspace_premium_outlined,
             label: 'Points & Badges',
@@ -609,7 +609,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 48),
           _NavDropdown(
             icon: Icons.chat_bubble_outline,
             label: 'Contact a Coach',
