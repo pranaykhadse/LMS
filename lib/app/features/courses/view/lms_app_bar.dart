@@ -663,7 +663,10 @@ class _NavItem extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 13, color: color),
+            Transform.translate(
+              offset: const Offset(0, 1),
+              child: Icon(icon, size: 13, color: color),
+            ),
             const SizedBox(width: 6),
             Text(
               label,
@@ -842,7 +845,10 @@ class _NavDropdownState extends State<_NavDropdown> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: 13, color: color),
+            Transform.translate(
+              offset: const Offset(0, 1),
+              child: Icon(icon, size: 13, color: color),
+            ),
             const SizedBox(width: 6),
             Text(
               label,
