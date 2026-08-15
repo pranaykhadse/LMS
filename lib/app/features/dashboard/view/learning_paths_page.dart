@@ -6,6 +6,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart' show isEffectivelyOffline;
 import 'package:lms/app/features/dashboard/view/view_competency_page.dart';
@@ -202,7 +203,7 @@ class _Body extends StatelessWidget {
         return const Center(child: CircularProgressIndicator(color: _purple));
       case DataProviderState.error:
         return _ErrorView(
-          message: state.error ?? 'Unable to load learning paths.',
+          message: friendlyErrorMessage(state.error, 'Unable to load learning paths.'),
           onRetry: onRetry,
         );
       case DataProviderState.data:

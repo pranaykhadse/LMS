@@ -7,6 +7,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/model/view_competency.dart';
@@ -45,7 +46,7 @@ class ViewCompetencyPage extends ConsumerWidget {
         DataProviderState.loading =>
           const Center(child: CircularProgressIndicator(color: _vcPurple)),
         DataProviderState.error => _ErrorView(
-            message: state.error ?? 'Unable to load competency details.',
+            message: friendlyErrorMessage(state.error, 'Unable to load competency details.'),
             onRetry: () => ref
                 .read(ViewCompetencyViewModel.provider(args).notifier)
                 .fetch(),

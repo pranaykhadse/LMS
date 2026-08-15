@@ -170,7 +170,7 @@ class _DashboardBody extends ConsumerWidget {
         return const Center(child: CircularProgressIndicator(color: _purple));
       case DataProviderState.error:
         return _ErrorView(
-          message: state.error ?? 'Unable to load dashboard.',
+          message: friendlyErrorMessage(state.error, 'Unable to load dashboard.'),
           onRetry: onRefetchAll,
         );
       case DataProviderState.data:

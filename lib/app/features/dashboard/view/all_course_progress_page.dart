@@ -10,6 +10,7 @@ import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/repository/all_course_progress_repository.dart';
 import 'package:lms/app/features/dashboard/viewmodel/all_course_progress_view_model.dart';
@@ -50,7 +51,7 @@ class _Body extends StatelessWidget {
         return const Center(child: CircularProgressIndicator(color: _purple));
       case DataProviderState.error:
         return _ErrorView(
-          message: state.error ?? 'Unable to load course progress.',
+          message: friendlyErrorMessage(state.error, 'Unable to load course progress.'),
           onRetry: () => notifier.fetch(),
         );
       case DataProviderState.data:

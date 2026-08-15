@@ -8,6 +8,7 @@ import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -68,7 +69,7 @@ class _MyCoursesPageState extends ConsumerState<MyCoursesPage> {
         DataProviderState.loading =>
           const Center(child: CircularProgressIndicator(color: _purple)),
         DataProviderState.error => _ErrorView(
-            message: state.error ?? 'Unable to load your courses.',
+            message: friendlyErrorMessage(state.error, 'Unable to load your courses.'),
             onRetry: () => ref.read(MyCoursesViewModel.provider.notifier).fetch(),
           ),
         DataProviderState.data => ListView(

@@ -99,7 +99,7 @@ class _DetailBody extends ConsumerWidget {
           );
         }
         return _DetailError(
-          message: state.error ?? 'Unable to load course details.',
+          message: friendlyErrorMessage(state.error, 'Unable to load course details.'),
           onRetry:
               () =>
                   ref

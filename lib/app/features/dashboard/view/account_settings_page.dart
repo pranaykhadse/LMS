@@ -54,7 +54,7 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
         DataProviderState.error => _redirectingUnauthorized
             ? const Center(child: CircularProgressIndicator(color: _asPurple))
             : _ErrorView(
-                message: state.error ?? 'Unable to load your profile.',
+                message: friendlyErrorMessage(state.error, 'Unable to load your profile.'),
                 onRetry: () =>
                     ref.read(AccountSettingsViewModel.provider.notifier).fetch(),
               ),

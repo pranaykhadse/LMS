@@ -7,6 +7,7 @@ import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/dashboard/model/redeem_history_item.dart';
 import 'package:lms/app/features/dashboard/viewmodel/redeem_history_view_model.dart';
 
@@ -30,7 +31,7 @@ class RedeemHistoryPage extends ConsumerWidget {
         DataProviderState.loading =>
           const Center(child: CircularProgressIndicator(color: _rhPurple)),
         DataProviderState.error => _ErrorView(
-            message: state.error ?? 'Unable to load your redeem history.',
+            message: friendlyErrorMessage(state.error, 'Unable to load your redeem history.'),
             onRetry: () =>
                 ref.read(RedeemHistoryViewModel.provider.notifier).fetch(),
           ),

@@ -10,6 +10,7 @@ import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
 import 'package:lms/app/features/dashboard/view/redeem_history_page.dart';
@@ -96,7 +97,9 @@ class _Body extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (state.result == null) {
       if (state.providerState == DataProviderState.error) {
-        return _ErrorView(message: state.error ?? 'Unable to load inventory.', onRetry: onRetry);
+        return _ErrorView(
+            message: friendlyErrorMessage(state.error, 'Unable to load inventory.'),
+            onRetry: onRetry);
       }
       return const Center(child: CircularProgressIndicator(color: _purple));
     }
