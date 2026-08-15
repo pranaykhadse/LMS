@@ -1330,6 +1330,7 @@ class _CourseProgressCard extends StatelessWidget {
                     color: const Color(0xFF374151), // gray-700
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    height: 24 / 16,
                   ),
                 ),
               ),
@@ -1361,8 +1362,9 @@ class _CourseProgressCard extends StatelessWidget {
               ),
             )
           else
+            // Design ref: space-y-8 (32px)
             for (var i = 0; i < shown.length; i++) ...[
-              if (i > 0) const SizedBox(height: 16),
+              if (i > 0) const SizedBox(height: 32),
               _CourseProgressRow(course: shown[i]),
             ],
         ],
@@ -1383,8 +1385,8 @@ class _CourseProgressRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            // BookOpen icon matching design ref
-            const Icon(Icons.menu_book_rounded, size: 13, color: _purple),
+            // Design ref: <BookOpen size={13} />
+            const Icon(LucideIcons.bookOpen, size: 13, color: _purple),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -1395,7 +1397,7 @@ class _CourseProgressRow extends StatelessWidget {
                   color: const Color(0xFF4B5563), // gray-600
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
-                  height: 1.4,
+                  height: 24 / 16,
                 ),
               ),
             ),
@@ -1407,6 +1409,7 @@ class _CourseProgressRow extends StatelessWidget {
                 color: const Color(0xFF9CA3AF),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
+                height: 24 / 16,
               ),
             ),
           ],
@@ -1453,8 +1456,9 @@ class _OverallProgressCard extends StatelessWidget {
           // Label row: star icon + "OVERALL LEARNING PROGRESS"
           Row(
             children: [
-              const Icon(Icons.star_border_rounded,
-                  color: Colors.white, size: 14),
+              // Design ref: <Star size={14} className="text-white opacity-90" />
+              Icon(LucideIcons.star,
+                  color: Colors.white.withValues(alpha: 0.9), size: 14),
               const SizedBox(width: 8),
               Text(
                 'OVERALL LEARNING PROGRESS',
@@ -1463,6 +1467,7 @@ class _OverallProgressCard extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
+                  height: 24 / 16,
                 ),
               ),
             ],
@@ -1475,7 +1480,8 @@ class _OverallProgressCard extends StatelessWidget {
             style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 48,
-              fontWeight: FontWeight.w700,
+              // Design ref: font-semibold (600), was 700
+              fontWeight: FontWeight.w600,
               height: 1,
             ),
           ),
