@@ -10,6 +10,11 @@ class Responsive {
   static const double desktop = 1024;
   static const double wide = 1400;
 
+  /// Max width of a page's main content column on large windows. Past this,
+  /// content is centered with breathing room on either side instead of
+  /// stretching edge to edge.
+  static const double maxContentWidth = 1280;
+
   static double widthOf(BuildContext context) => MediaQuery.sizeOf(context).width;
 
   /// True for both tablet (iPad) and desktop widths (≥ 700 px).
