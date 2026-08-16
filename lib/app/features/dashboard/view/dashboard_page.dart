@@ -563,12 +563,17 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Design ref: bg-white rounded-lg border border-gray-200 px-5 py-4
+    final isTablet = Responsive.isTablet(context);
+    // Design ref (>=700px): bg-white rounded-lg border border-gray-200 px-5 py-4
+    // Design ref (phone): padding 16/12/16/12, radius 10, label 10px
+    // uppercase #99A1AF, value 30px bold #1E2939.
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: isTablet
+          ? const EdgeInsets.symmetric(horizontal: 20, vertical: 16)
+          : const EdgeInsets.fromLTRB(12, 16, 12, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -583,11 +588,11 @@ class _StatCard extends StatelessWidget {
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF), // gray-400
-                    fontSize: 12,
+                    color: isTablet ? const Color(0xFF9CA3AF) : const Color(0xFF99A1AF),
+                    fontSize: isTablet ? 12 : 10,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 0.6,
-                    height: 18 / 12,
+                    letterSpacing: isTablet ? 0.6 : 0.5,
+                    height: isTablet ? 18 / 12 : 1.5,
                   ),
                 ),
               ),
@@ -597,11 +602,12 @@ class _StatCard extends StatelessWidget {
           _AnimatedCounter(
             value: value,
             style: GoogleFonts.inter(
-              color: const Color(0xFF1F2937),
-              fontSize: 36,
-              // Design ref: font-semibold (600), was 700
-              fontWeight: FontWeight.w600,
-              height: 1.1,
+              color: isTablet ? const Color(0xFF1F2937) : const Color(0xFF1E2939),
+              fontSize: isTablet ? 36 : 30,
+              // Design ref: font-semibold (600) on tablet/desktop, bold
+              // (700) on phone per the mobile spec.
+              fontWeight: isTablet ? FontWeight.w600 : FontWeight.w700,
+              height: isTablet ? 1.1 : 1.2,
             ),
           ),
         ],
