@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -137,12 +136,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
     // same reasoning as RetryButton (see lib/app/core/views/elements).
     final offline = isEffectivelyOffline(ref);
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        Responsive.pageHPad(context),
-        14,
-        Responsive.pageHPad(context),
-        14,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Row(
         children: [
           Expanded(
@@ -216,12 +210,7 @@ class _Body extends StatelessWidget {
         if (state.paths.isEmpty) return const _EmptyState();
         final total = state.paths.length;
         return ListView(
-          padding: EdgeInsets.fromLTRB(
-            Responsive.pageHPad(context),
-            16,
-            Responsive.pageHPad(context),
-            24,
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
             Container(
               decoration: BoxDecoration(

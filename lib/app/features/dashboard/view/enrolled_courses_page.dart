@@ -80,12 +80,7 @@ class _Body extends StatelessWidget {
                   await notifier.fetch(page: state.page);
                 },
                 child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    Responsive.pageHPad(context),
-                    16,
-                    Responsive.pageHPad(context),
-                    0,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   children: [
                     // ── White card: title + grid ──────────────────────
                     Container(

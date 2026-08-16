@@ -3,7 +3,6 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -133,12 +132,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
         children: [
           // ── Calendar card ───────────────────────────────────────────────
           Container(
-            margin: EdgeInsets.fromLTRB(
-              Responsive.pageHPad(context),
-              12,
-              Responsive.pageHPad(context),
-              8,
-            ),
+            margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
@@ -268,12 +262,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
 
           // ── Section label ───────────────────────────────────────────────
           Padding(
-            padding: EdgeInsets.fromLTRB(
-              Responsive.pageHPad(context),
-              4,
-              Responsive.pageHPad(context),
-              6,
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
             child: Row(
               children: [
                 Text(
@@ -371,12 +360,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
                 );
               }
               return ListView.builder(
-                padding: EdgeInsets.fromLTRB(
-                  Responsive.pageHPad(context),
-                  0,
-                  Responsive.pageHPad(context),
-                  16,
-                ),
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                 itemCount: list.length + 1,
                 itemBuilder: (context, i) => i < list.length
                     ? _CalendarEventTile(
@@ -423,12 +407,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(
-            Responsive.pageHPad(context),
-            16,
-            Responsive.pageHPad(context),
-            12,
-          ),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Row(
             children: [
               Text(
@@ -459,7 +438,7 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
           ),
         ),
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: Responsive.pageHPad(context)),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Container(
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(

@@ -12,11 +12,6 @@ class Responsive {
 
   static double widthOf(BuildContext context) => MediaQuery.sizeOf(context).width;
 
-  /// Horizontal page padding matching the dashboard's own outer gutter
-  /// (24px ≥ 700px wide, 12px below). Use this so a screen's main content
-  /// lines up with the dashboard's width.
-  static double pageHPad(BuildContext context) => isTablet(context) ? 24.0 : 12.0;
-
   /// True for both tablet (iPad) and desktop widths (≥ 700 px).
   static bool isTablet(BuildContext context) => widthOf(context) >= tablet;
 
