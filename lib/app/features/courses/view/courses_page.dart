@@ -3,6 +3,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -152,9 +153,9 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
           slivers: [
             SliverPadding(
               padding: EdgeInsets.fromLTRB(
-                isWide ? 32 : 12,
+                Responsive.pageHPad(context),
                 isWide ? 24 : 42,
-                isWide ? 32 : 12,
+                Responsive.pageHPad(context),
                 isWide ? 12 : 28,
               ),
               sliver: SliverToBoxAdapter(
@@ -184,9 +185,9 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
             if (effectivelyOffline)
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(
-                  isWide ? 48 : 20,
+                  Responsive.pageHPad(context),
                   14,
-                  isWide ? 48 : 20,
+                  Responsive.pageHPad(context),
                   12,
                 ),
                 sliver: const SliverToBoxAdapter(
@@ -250,7 +251,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
         return [
           SliverPadding(
             padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.sizeOf(context).width >= 760 ? 48 : 27,
+              horizontal: Responsive.pageHPad(context),
             ),
             sliver: SliverLayoutBuilder(
               builder: (context, constraints) {
@@ -355,8 +356,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   }
 
   Widget _perPageBadge(int perPage) {
-    final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final hPad = isWide ? 48.0 : 27.0;
+    final hPad = Responsive.pageHPad(context);
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 0),
       sliver: SliverToBoxAdapter(
@@ -370,8 +370,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   }
 
   Widget _groupPagination(CatalogCourseGroup group, int selectedPage) {
-    final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final hPad = isWide ? 48.0 : 27.0;
+    final hPad = Responsive.pageHPad(context);
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 24),
       sliver: SliverToBoxAdapter(
@@ -400,9 +399,8 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   }
 
   Widget _groupTitle(String groupName) {
-    final isWide = MediaQuery.sizeOf(context).width >= 760;
     final title = groupName.trim().isEmpty ? 'Courses' : '$groupName Courses';
-    final hPad = isWide ? 48.0 : 27.0;
+    final hPad = Responsive.pageHPad(context);
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 0),
       sliver: SliverToBoxAdapter(
@@ -435,7 +433,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
 
   Widget _catalogGrid(List<CatalogCourse> courses) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final hPad = isWide ? 48.0 : 27.0;
+    final hPad = Responsive.pageHPad(context);
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 0),
       sliver: SliverToBoxAdapter(

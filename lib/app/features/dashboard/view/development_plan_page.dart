@@ -75,7 +75,12 @@ class _Body extends StatelessWidget {
                   await notifier.fetch(page: state.page);
                 },
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  padding: EdgeInsets.fromLTRB(
+                    Responsive.pageHPad(context),
+                    16,
+                    Responsive.pageHPad(context),
+                    0,
+                  ),
                   children: [
                     Container(
                       decoration: BoxDecoration(

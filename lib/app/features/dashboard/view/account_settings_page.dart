@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lms/app/core/data/countries.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -241,7 +242,12 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
         (profile.notificationType?.toString() ?? '').toLowerCase();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      padding: EdgeInsets.fromLTRB(
+        Responsive.pageHPad(context),
+        16,
+        Responsive.pageHPad(context),
+        32,
+      ),
       children: [
         Center(
           child: ConstrainedBox(

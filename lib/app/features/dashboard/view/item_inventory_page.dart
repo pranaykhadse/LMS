@@ -120,7 +120,12 @@ class _Body extends ConsumerWidget {
         // ── White card: title + search + item grid, all in one box ──────────
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: EdgeInsets.fromLTRB(
+              Responsive.pageHPad(context),
+              16,
+              Responsive.pageHPad(context),
+              8,
+            ),
             child: Container(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
               decoration: BoxDecoration(
@@ -377,7 +382,12 @@ class _PointsBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: EdgeInsets.fromLTRB(
+        Responsive.pageHPad(context),
+        16,
+        Responsive.pageHPad(context),
+        0,
+      ),
       child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
