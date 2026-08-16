@@ -144,7 +144,11 @@ class _Body extends StatelessWidget {
                               padding: EdgeInsets.only(top: 40, bottom: 40),
                               child: _EmptyState(),
                             )
-                          else if (_kUseTableLayout) ...[
+                          // The table layout's fixed multi-column rows don't
+                          // fit a phone screen, so phone keeps the card-grid
+                          // layout below regardless of _kUseTableLayout.
+                          else if (_kUseTableLayout &&
+                              Responsive.isTablet(context)) ...[
                             _DevelopmentPlanTable(
                               courses: state.courses,
                               notifier: notifier,

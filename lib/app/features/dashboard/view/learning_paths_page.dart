@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -371,20 +372,30 @@ class _TableHeaderRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          const Expanded(
-            flex: 6,
-            child: Text(
-              'Learning Path',
-              style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+          // Phone: the row below stacks name/group instead of showing them
+          // side by side, so these column labels don't apply there.
+          if (Responsive.isTablet(context)) ...[
+            const Expanded(
+              flex: 6,
+              child: Text(
+                'Learning Path',
+                style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
             ),
-          ),
-          const Expanded(
-            flex: 3,
-            child: Text(
-              'Group',
-              style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+            const Expanded(
+              flex: 3,
+              child: Text(
+                'Group',
+                style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
             ),
-          ),
+          ] else
+            const Expanded(
+              child: Text(
+                'Learning Paths',
+                style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ),
         ],
       ),
     );
@@ -433,41 +444,36 @@ class _PathRow extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                flex: 6,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 3),
-                      child: Text(
-                        '$index.',
-                        style: const TextStyle(color: _purple, fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        path.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: _purple,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14.5,
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: 3,
-                child: path.groupName.isEmpty
-                    ? const SizedBox.shrink()
-                    : Text(
-                        path.groupName,
-                        style: const TextStyle(color: _purple, fontSize: 13.5, fontWeight: FontWeight.w600),
+                child: Responsive.isTablet(context)
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 6, child: _pathNameLine(index)),
+                          Expanded(
+                            flex: 3,
+                            child: path.groupName.isEmpty
+                                ? const SizedBox.shrink()
+                                : Text(
+                                    path.groupName,
+                                    style: const TextStyle(
+                                        color: _purple, fontSize: 13.5, fontWeight: FontWeight.w600),
+                                  ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _pathNameLine(index),
+                          if (path.groupName.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              path.groupName,
+                              style: const TextStyle(
+                                  color: _purple, fontSize: 13, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ],
                       ),
               ),
             ],
@@ -481,6 +487,35 @@ class _PathRow extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(52, 0, 20, 14),
             child: _CompetencyPreview(path: path),
           ),
+      ],
+    );
+  }
+
+  Widget _pathNameLine(int index) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Text(
+            '$index.',
+            style: const TextStyle(color: _purple, fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            path.name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: _purple,
+              fontWeight: FontWeight.w600,
+              fontSize: 14.5,
+              height: 1.3,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -504,36 +539,40 @@ class _CompetencyPreview extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: Text(
-                  'Competency',
-                  style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+        // Phone: rows below stack these fields instead of a 4-column table,
+        // so the column header row doesn't apply.
+        if (Responsive.isTablet(context)) ...[
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'Competency',
+                    style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                  ),
                 ),
-              ),
-              Expanded(
-                flex: 4,
-                child: Text(
-                  'Courses',
-                  style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    'Courses',
+                    style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                  ),
                 ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  'Competency Type',
-                  style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Competency Type',
+                    style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                  ),
                 ),
-              ),
-              SizedBox(width: 90),
-            ],
+                SizedBox(width: 90),
+              ],
+            ),
           ),
-        ),
-        const Divider(height: 1, color: FigmaTokens.cardBorders),
+          const Divider(height: 1, color: FigmaTokens.cardBorders),
+        ],
         for (var i = 0; i < competencies.length; i++) ...[
           _CompetencyPreviewRow(index: i + 1, pathId: path.id, competency: competencies[i]),
           if (i != competencies.length - 1)
@@ -554,33 +593,105 @@ class _CompetencyPreviewRow extends StatelessWidget {
   final int pathId;
   final LearningPathCompetency competency;
 
+  Widget _viewButton(BuildContext context) {
+    if (competency.name.isEmpty) return const SizedBox.shrink();
+    return HoverBuilder(
+      builder: (context, hovering) {
+        final onPressed = () => _openViewCompetency(
+              context,
+              learningPathId: pathId,
+              competency: competency.name,
+            );
+        const shape = StadiumBorder();
+        const textStyle = TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5);
+        return hovering
+            ? ElevatedButton.icon(
+                onPressed: onPressed,
+                icon: const Icon(Icons.remove_red_eye_outlined, size: 14, color: Colors.white),
+                label: const Text('View'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _purple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  minimumSize: const Size(0, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: shape,
+                  textStyle: textStyle,
+                ),
+              )
+            : OutlinedButton.icon(
+                onPressed: onPressed,
+                icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
+                label: const Text('View'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _purple,
+                  side: const BorderSide(color: _purple),
+                  minimumSize: const Size(0, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: shape,
+                  textStyle: textStyle,
+                ),
+              );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final courses = competency.courseNames;
+    final competencyName = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$index',
+          style: const TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            competency.name.isEmpty ? '—' : competency.name,
+            style: const TextStyle(color: _ink, fontSize: 12.5),
+          ),
+        ),
+      ],
+    );
+
+    if (!Responsive.isTablet(context)) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            competencyName,
+            if (courses.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Courses: ${courses.join(', ')}',
+                style: const TextStyle(color: _ink, fontSize: 12.5),
+              ),
+            ],
+            const SizedBox(height: 6),
+            Text(
+              competency.competencyType.toUpperCase(),
+              style: const TextStyle(color: _ink, fontSize: 12.5),
+            ),
+            if (competency.name.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _viewButton(context),
+            ],
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 3,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$index',
-                  style: const TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    competency.name.isEmpty ? '—' : competency.name,
-                    style: const TextStyle(color: _ink, fontSize: 12.5),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          Expanded(flex: 3, child: competencyName),
           Expanded(
             flex: 4,
             child: Text(
@@ -597,54 +708,7 @@ class _CompetencyPreviewRow extends StatelessWidget {
           ),
           SizedBox(
             width: 90,
-            child: competency.name.isEmpty
-                ? const SizedBox.shrink()
-                : Align(
-                    alignment: Alignment.centerRight,
-                    child: HoverBuilder(
-                      builder: (context, hovering) {
-                        final onPressed = () => _openViewCompetency(
-                              context,
-                              learningPathId: pathId,
-                              competency: competency.name,
-                            );
-                        const shape = StadiumBorder();
-                        const textStyle =
-                            TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5);
-                        return hovering
-                            ? ElevatedButton.icon(
-                                onPressed: onPressed,
-                                icon: const Icon(Icons.remove_red_eye_outlined,
-                                    size: 14, color: Colors.white),
-                                label: const Text('View'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: _purple,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  minimumSize: const Size(0, 30),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  shape: shape,
-                                  textStyle: textStyle,
-                                ),
-                              )
-                            : OutlinedButton.icon(
-                                onPressed: onPressed,
-                                icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
-                                label: const Text('View'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: _purple,
-                                  side: const BorderSide(color: _purple),
-                                  minimumSize: const Size(0, 30),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  shape: shape,
-                                  textStyle: textStyle,
-                                ),
-                              );
-                      },
-                    ),
-                  ),
+            child: Align(alignment: Alignment.centerRight, child: _viewButton(context)),
           ),
         ],
       ),

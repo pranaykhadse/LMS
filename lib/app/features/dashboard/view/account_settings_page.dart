@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lms/app/core/data/countries.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -946,80 +947,79 @@ class _FieldRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final labelText = Text(
+      '$label:',
+      style: const TextStyle(
+        color: _asInk,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+    final field = controller != null
+        ? TextField(
+            controller: controller,
+            keyboardType: keyboardType,
+            style: const TextStyle(
+                color: _asInk, fontSize: 13, fontWeight: FontWeight.w500),
+            decoration: InputDecoration(
+              hintText: 'Not provided',
+              hintStyle: const TextStyle(color: _asMuted, fontSize: 13),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide:
+                    const BorderSide(color: Color(0xFFD1D5DB), width: 1),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide:
+                    const BorderSide(color: Color(0xFFD1D5DB), width: 1),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: const BorderSide(color: _asPurple, width: 1.5),
+              ),
+            ),
+          )
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
+            ),
+            child: Text(
+              (value ?? '').trim().isNotEmpty ? value! : 'Not provided',
+              style: TextStyle(
+                color: (value ?? '').trim().isNotEmpty ? _asInk : _asMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          );
+
+    // Phone (<700px): label above field, full-width - a 160px fixed label
+    // leaves too little room for the input on a narrow screen.
+    if (!Responsive.isTablet(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          labelText,
+          const SizedBox(height: 6),
+          field,
+        ],
+      );
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Label — fixed width, dark text, left side
-        SizedBox(
-          width: 160,
-          child: Text(
-            '$label:',
-            style: const TextStyle(
-              color: _asInk,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
+        SizedBox(width: 160, child: labelText),
         const SizedBox(width: 12),
-        // Input — fills remaining space
-        Expanded(
-          child: controller != null
-              ? TextField(
-                  controller: controller,
-                  keyboardType: keyboardType,
-                  style: const TextStyle(
-                      color: _asInk,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500),
-                  decoration: InputDecoration(
-                    hintText: 'Not provided',
-                    hintStyle:
-                        const TextStyle(color: _asMuted, fontSize: 13),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(
-                          color: Color(0xFFD1D5DB), width: 1),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide: const BorderSide(
-                          color: Color(0xFFD1D5DB), width: 1),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      borderSide:
-                          const BorderSide(color: _asPurple, width: 1.5),
-                    ),
-                  ),
-                )
-              : Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                        color: const Color(0xFFD1D5DB), width: 1),
-                  ),
-                  child: Text(
-                    (value ?? '').trim().isNotEmpty
-                        ? value!
-                        : 'Not provided',
-                    style: TextStyle(
-                      color: (value ?? '').trim().isNotEmpty
-                          ? _asInk
-                          : _asMuted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-        ),
+        Expanded(child: field),
       ],
     );
   }
@@ -1051,23 +1051,15 @@ class _PhoneFieldRow extends StatelessWidget {
     final isEditing = controller != null;
     final country = countryForDialCode(countryCode);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: 160,
-          child: Text(
-            '$label:',
-            style: const TextStyle(
-              color: _asInk,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: isEditing
+    final labelText = Text(
+      '$label:',
+      style: const TextStyle(
+        color: _asInk,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+    final field = isEditing
               ? Row(
                   children: [
                     _CountryCodePicker(
@@ -1135,8 +1127,25 @@ class _PhoneFieldRow extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-        ),
+                );
+
+    if (!Responsive.isTablet(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          labelText,
+          const SizedBox(height: 6),
+          field,
+        ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(width: 160, child: labelText),
+        const SizedBox(width: 12),
+        Expanded(child: field),
       ],
     );
   }

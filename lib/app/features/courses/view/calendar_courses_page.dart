@@ -3,6 +3,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -403,138 +404,147 @@ class _CalendarCoursesPageState extends ConsumerState<CalendarCoursesPage> {
     final today = _dateOnly(DateTime.now());
     final days = List.generate(7, (i) => weekStart.add(Duration(days: i)));
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-          child: Row(
-            children: [
-              Text(
-                _weekRangeLabel(weekStart),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: _calNavy,
-                ),
-              ),
-              const Spacer(),
-              TextButton(
-                onPressed: () => setState(() => _weekAnchor = DateTime.now()),
-                style: TextButton.styleFrom(foregroundColor: _calMuted),
-                child: const Text('Today', style: TextStyle(fontWeight: FontWeight.w600)),
-              ),
-              IconButton(
-                onPressed: () =>
-                    setState(() => _weekAnchor = _weekAnchor.subtract(const Duration(days: 7))),
-                icon: const Icon(Icons.chevron_left, color: _calPurple),
-              ),
-              IconButton(
-                onPressed: () =>
-                    setState(() => _weekAnchor = _weekAnchor.add(const Duration(days: 7))),
-                icon: const Icon(Icons.chevron_right, color: _calPurple),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Container(
-            clipBehavior: Clip.antiAlias,
+    return Builder(
+      builder: (context) {
+        // Phone: 7 equal-width Expanded columns get too narrow to read, so
+        // give each day a fixed width and let the week scroll horizontally
+        // instead of squeezing everything to fit.
+        final isPhone = !Responsive.isTablet(context);
+        const dayWidth = 110.0;
+
+        Widget dayHeaderCell(DateTime day) {
+          final cell = Container(
             decoration: BoxDecoration(
-              border: Border.all(color: FigmaTokens.cardBorders),
-              borderRadius: BorderRadius.circular(8),
+              color: isSameDay(day, today)
+                  ? const Color(0xFFFFF6D9)
+                  : const Color(0xFFF7F8FB),
+              border: const Border(
+                right: BorderSide(color: FigmaTokens.cardBorders),
+                bottom: BorderSide(color: FigmaTokens.cardBorders),
+              ),
             ),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            alignment: Alignment.center,
+            child: Text(
+              _dayHeaderLabel(day),
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: _calNavy,
+              ),
+            ),
+          );
+          return isPhone ? SizedBox(width: dayWidth, child: cell) : Expanded(child: cell);
+        }
+
+        Widget dayBodyCell(DateTime day) {
+          final cell = Container(
+            constraints: const BoxConstraints(minHeight: 70),
+            decoration: BoxDecoration(
+              color: isSameDay(day, today) ? const Color(0xFFFFFBEF) : Colors.white,
+              border: const Border(
+                right: BorderSide(color: FigmaTokens.cardBorders),
+              ),
+            ),
+            padding: const EdgeInsets.all(4),
             child: Column(
               children: [
-                Row(
-                  children: [
-                    for (final day in days)
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isSameDay(day, today)
-                                ? const Color(0xFFFFF6D9)
-                                : const Color(0xFFF7F8FB),
-                            border: const Border(
-                              right: BorderSide(color: FigmaTokens.cardBorders),
-                              bottom: BorderSide(color: FigmaTokens.cardBorders),
-                            ),
+                for (final event in (eventMap[_dateOnly(day)] ?? const <CalendarEvent>[]))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: GestureDetector(
+                      onTap: () => _openEventDetails(event),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _calPurple,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          _shortName(event.title.isNotEmpty ? event.title : event.courseName),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.w700,
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          alignment: Alignment.center,
-                          child: Text(
-                            _dayHeaderLabel(day),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: _calNavy,
-                            ),
-                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                  ],
-                ),
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final day in days)
-                        Expanded(
-                          child: Container(
-                            constraints: const BoxConstraints(minHeight: 70),
-                            decoration: BoxDecoration(
-                              color: isSameDay(day, today)
-                                  ? const Color(0xFFFFFBEF)
-                                  : Colors.white,
-                              border: const Border(
-                                right: BorderSide(color: FigmaTokens.cardBorders),
-                              ),
-                            ),
-                            padding: const EdgeInsets.all(4),
-                            child: Column(
-                              children: [
-                                for (final event
-                                    in (eventMap[_dateOnly(day)] ?? const <CalendarEvent>[]))
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 3),
-                                    child: GestureDetector(
-                                      onTap: () => _openEventDetails(event),
-                                      child: Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 4, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: _calPurple,
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          _shortName(event.title.isNotEmpty
-                                              ? event.title
-                                              : event.courseName),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 8,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
-                ),
               ],
             ),
-          ),
-        ),
-      ],
+          );
+          return isPhone ? SizedBox(width: dayWidth, child: cell) : Expanded(child: cell);
+        }
+
+        final grid = Column(
+          children: [
+            Row(children: [for (final day in days) dayHeaderCell(day)]),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [for (final day in days) dayBodyCell(day)],
+              ),
+            ),
+          ],
+        );
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Row(
+                children: [
+                  Text(
+                    _weekRangeLabel(weekStart),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: _calNavy,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => setState(() => _weekAnchor = DateTime.now()),
+                    style: TextButton.styleFrom(foregroundColor: _calMuted),
+                    child: const Text('Today', style: TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                  IconButton(
+                    onPressed: () => setState(
+                        () => _weekAnchor = _weekAnchor.subtract(const Duration(days: 7))),
+                    icon: const Icon(Icons.chevron_left, color: _calPurple),
+                  ),
+                  IconButton(
+                    onPressed: () =>
+                        setState(() => _weekAnchor = _weekAnchor.add(const Duration(days: 7))),
+                    icon: const Icon(Icons.chevron_right, color: _calPurple),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                clipBehavior: Clip.antiAlias,
+                decoration: BoxDecoration(
+                  border: Border.all(color: FigmaTokens.cardBorders),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: isPhone
+                    ? SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(width: dayWidth * 7, child: grid),
+                      )
+                    : grid,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
