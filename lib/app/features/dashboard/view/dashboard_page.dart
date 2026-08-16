@@ -993,12 +993,13 @@ class _ContinueLearningItem extends ConsumerWidget {
                 hoverColor: accentColor == const Color(0xFFDC2626)
                     ? const Color(0xFFB91C1C)
                     : FigmaTokens.purpleHover,
-                borderRadius: 20,
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                borderRadius: 14,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 textStyle: GoogleFonts.inter(
                   color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  height: 18 / 12,
                 ),
               ),
             ),
@@ -1535,17 +1536,20 @@ class _OverallProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Design ref: linear-gradient(to right, #693d94, #aa399f), rounded-xl p-5
+    final isTablet = Responsive.isTablet(context);
+    // Design ref (>=700px): linear-gradient(to right, #693d94, #aa399f),
+    // rounded-xl p-5. Design ref (phone): padding 12, radius 14, label
+    // 12px/0.3 letter-spacing, percentage 30px, gaps 8/8 instead of 12/16.
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isTablet ? 20 : 12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(isTablet ? 12 : 14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1561,28 +1565,28 @@ class _OverallProgressCard extends StatelessWidget {
                 'OVERALL LEARNING PROGRESS',
                 style: GoogleFonts.inter(
                   color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 16,
+                  fontSize: isTablet ? 16 : 12,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5,
-                  height: 24 / 16,
+                  letterSpacing: isTablet ? 0.5 : 0.3,
+                  height: isTablet ? 24 / 16 : 16 / 12,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: isTablet ? 12 : 8),
           // Big percentage number — animates up from 0
           _AnimatedCounter(
             value: overallProgress,
             suffix: '%',
             style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 48,
+              fontSize: isTablet ? 48 : 30,
               // Design ref: font-semibold (600), was 700
               fontWeight: FontWeight.w600,
-              height: 1,
+              height: isTablet ? 1 : 36 / 30,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isTablet ? 16 : 8),
           // Progress bar: white semi-transparent track + fill
           ClipRRect(
             borderRadius: BorderRadius.circular(3),
