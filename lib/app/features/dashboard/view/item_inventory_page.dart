@@ -482,7 +482,11 @@ class _PointSystemExplainer extends StatelessWidget {
                         ),
                         for (var i = 0; i < steps.length; i++)
                           Positioned(
-                            left: points[i].dx - 60,
+                            // Clamped so the 120px-wide label can't spill
+                            // past the available width on a narrow phone
+                            // screen (the 0.90-fraction step was getting
+                            // clipped on the right edge before this).
+                            left: (points[i].dx - 60).clamp(0.0, width - 120),
                             top: points[i].dy - 28,
                             width: 120,
                             child: _StepBadge(
