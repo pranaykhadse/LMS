@@ -1215,13 +1215,16 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
     // Learning's fixed 284px instead of growing with the session count.
     const collapsedCount = 2;
     final visible = upcoming.take(collapsedCount).toList();
+    final isTablet = Responsive.isTablet(context);
 
     return Container(
-      height: 284,
+      // Design ref (phone): the two cards stack instead of sitting side by
+      // side, so there's no need to match Continue Learning's fixed height.
+      height: isTablet ? 284 : null,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -1234,6 +1237,7 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
               color: const Color(0xFF374151), // gray-700
               fontSize: 16,
               fontWeight: FontWeight.w600,
+              height: isTablet ? null : 24 / 16,
             ),
           ),
           const SizedBox(height: 16),
@@ -1278,8 +1282,69 @@ class _SessionRow extends StatelessWidget {
     return '$hour:$minute $ampm';
   }
 
+  void _openSession(BuildContext context) => Modular.to.pushNamed(
+        CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
+      );
+
   @override
   Widget build(BuildContext context) {
+    final isTablet = Responsive.isTablet(context);
+    final title = Text(
+      event.courseName.isNotEmpty ? event.courseName : event.title,
+      style: GoogleFonts.inter(
+        color: isTablet ? const Color(0xFF1F2937) : const Color(0xFF1E2939),
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        height: isTablet ? 1.4 : 22 / 16,
+      ),
+    );
+    final dateRow = Row(
+      children: [
+        const Icon(LucideIcons.calendarDays, size: 10, color: _purple),
+        const SizedBox(width: 6),
+        Text(
+          _formatDate(event.startDateTime),
+          style: GoogleFonts.inter(
+            color: const Color(0xFF9CA3AF),
+            fontSize: 12,
+            height: 1.4,
+          ),
+        ),
+        if (event.startTime != null && event.startTime!.isNotEmpty) ...[
+          Text(
+            ' • ',
+            style: GoogleFonts.inter(color: const Color(0xFFD1D5DB), fontSize: 12),
+          ),
+          Text(
+            _formatTime(event.startDateTime),
+            style: GoogleFonts.inter(
+              color: const Color(0xFF9CA3AF),
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ],
+    );
+    final hostedBy = event.instructor != null && event.instructor!.isNotEmpty
+        ? Text.rich(
+            TextSpan(children: [
+              TextSpan(
+                text: 'Hosted by ',
+                style: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 12),
+              ),
+              TextSpan(
+                text: event.instructor,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF4B5563),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ]),
+          )
+        : null;
+
     // Design ref: rounded-lg border border-gray-100 bg-gray-50 p-3
     // hover:border-[#693D94]/30 hover:bg-[#693D94]/5
     return HoverBuilder(
@@ -1289,7 +1354,7 @@ class _SessionRow extends StatelessWidget {
         color: hovering
             ? _purple.withValues(alpha: 0.05)
             : const Color(0xFFF9FAFB), // gray-50
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
         border: Border.all(
           color: hovering
               ? _purple.withValues(alpha: 0.3)
@@ -1298,104 +1363,72 @@ class _SessionRow extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title + Join button row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  event.courseName.isNotEmpty ? event.courseName : event.title,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF1F2937),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                  ),
+        children: isTablet
+            ? [
+                // Title + Join button row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: title),
+                    const SizedBox(width: 8),
+                    // Design ref: px-2.5 py-1 rounded-xl, no dot/icon at all -
+                    // just the "Join" label (44.75x26 measured, matching plain
+                    // text at this padding - a pulse dot was inflating the width
+                    // beyond spec and isn't in the reference).
+                    GestureDetector(
+                      onTap: () => _openSession(context),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _purple,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Join',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              // Design ref: px-2.5 py-1 rounded-xl, no dot/icon at all -
-              // just the "Join" label (44.75x26 measured, matching plain
-              // text at this padding - a pulse dot was inflating the width
-              // beyond spec and isn't in the reference).
-              GestureDetector(
-                onTap: () => Modular.to.pushNamed(
-                  CoursesModule.construct(
-                      '${CoursesModule.detail}/${event.courseId}'),
-                ),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _purple,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
+                const SizedBox(height: 6),
+                dateRow,
+                if (hostedBy != null) ...[const SizedBox(height: 2), hostedBy],
+              ]
+            : [
+                title,
+                const SizedBox(height: 6),
+                dateRow,
+                if (hostedBy != null) ...[const SizedBox(height: 2), hostedBy],
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: GestureDetector(
+                    onTap: () => _openSession(context),
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _purple,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
                         'Join',
                         style: GoogleFonts.inter(
                           color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
+                          height: 18 / 12,
                         ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          // Date • time — Design ref: gap-1.5 (6px)
-          Row(
-            children: [
-              const Icon(LucideIcons.calendarDays, size: 10, color: _purple),
-              const SizedBox(width: 6),
-              Text(
-                _formatDate(event.startDateTime),
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF9CA3AF),
-                  fontSize: 12,
-                  height: 1.4,
-                ),
-              ),
-              if (event.startTime != null && event.startTime!.isNotEmpty) ...[
-                Text(
-                  ' • ',
-                  style: GoogleFonts.inter(
-                      color: const Color(0xFFD1D5DB), fontSize: 12),
-                ),
-                Text(
-                  _formatTime(event.startDateTime),
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF),
-                    fontSize: 12,
-                    height: 1.4,
+                      ),
+                    ),
                   ),
                 ),
               ],
-            ],
-          ),
-          // Hosted by
-          if (event.instructor != null && event.instructor!.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text.rich(
-              TextSpan(children: [
-                TextSpan(
-                  text: 'Hosted by ',
-                  style: GoogleFonts.inter(
-                      color: const Color(0xFF9CA3AF), fontSize: 12),
-                ),
-                TextSpan(
-                  text: event.instructor,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF4B5563),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ]),
-            ),
-          ],
-        ],
       ),
       ),
     );
