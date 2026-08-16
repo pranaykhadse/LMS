@@ -12,11 +12,6 @@ class Responsive {
 
   static double widthOf(BuildContext context) => MediaQuery.sizeOf(context).width;
 
-  /// Horizontal page padding matching the Course Catalog's search bar and
-  /// course-card grid (48px ≥ 760px wide, 27px below). Use this so a
-  /// screen's main content lines up with that reference width.
-  static double pageHPad(BuildContext context) => widthOf(context) >= 760 ? 48.0 : 27.0;
-
   /// True for both tablet (iPad) and desktop widths (≥ 700 px).
   static bool isTablet(BuildContext context) => widthOf(context) >= tablet;
 

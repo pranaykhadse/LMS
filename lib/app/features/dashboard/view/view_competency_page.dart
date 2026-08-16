@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -71,10 +70,7 @@ class _Body extends StatelessWidget {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: Responsive.pageHPad(context),
-              vertical: 16,
-            ),
+            padding: const EdgeInsets.all(16),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,

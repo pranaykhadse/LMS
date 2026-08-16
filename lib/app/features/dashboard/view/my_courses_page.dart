@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -74,12 +73,7 @@ class _MyCoursesPageState extends ConsumerState<MyCoursesPage> {
             onRetry: () => ref.read(MyCoursesViewModel.provider.notifier).fetch(),
           ),
         DataProviderState.data => ListView(
-            padding: EdgeInsets.fromLTRB(
-              Responsive.pageHPad(context),
-              16,
-              Responsive.pageHPad(context),
-              24,
-            ),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
               _FiltersPanel(
                 expanded: _filtersExpanded,

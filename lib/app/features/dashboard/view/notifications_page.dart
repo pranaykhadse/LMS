@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart' show readIsOnline;
@@ -37,12 +36,7 @@ class NotificationsPage extends ConsumerWidget {
                 : state.notifications.isEmpty
                     ? _EmptyState()
                     : ListView.builder(
-                        padding: EdgeInsets.fromLTRB(
-                          Responsive.pageHPad(context),
-                          12,
-                          Responsive.pageHPad(context),
-                          24,
-                        ),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                         itemCount: state.notifications.length,
                         itemBuilder: (ctx, i) {
                           final item = state.notifications[i];
@@ -66,12 +60,7 @@ class _StatsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.fromLTRB(
-        Responsive.pageHPad(context),
-        14,
-        Responsive.pageHPad(context),
-        0,
-      ),
+      margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
