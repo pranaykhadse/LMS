@@ -123,7 +123,9 @@ class _Body extends StatelessWidget {
                               ),
                               crossAxisSpacing: 14,
                               mainAxisSpacing: 14,
-                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 340,
+                              // Phone: 340 overflowed by 14px on a
+                              // 3-line title + next-session date + button.
+                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 354,
                             ),
                             itemCount: state.courses.length,
                             itemBuilder: (ctx, i) =>
@@ -235,12 +237,16 @@ class _NextSessionRow extends StatelessWidget {
           children: [
             const Icon(Icons.calendar_today_rounded, size: 12, color: _purple),
             const SizedBox(width: 5),
-            Text(
-              _formatNextSession(date),
-              style: const TextStyle(
-                color: _purple,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+            Flexible(
+              child: Text(
+                _formatNextSession(date),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: _purple,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
