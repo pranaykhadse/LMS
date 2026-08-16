@@ -1994,11 +1994,12 @@ class _RequiredForYouCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shown = required.take(5).toList();
+    final isTablet = Responsive.isTablet(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -2041,13 +2042,13 @@ class _RequiredForYouCard extends StatelessWidget {
                 onPressed: () => Modular.to.pushNamed(
                   CoursesModule.construct(CoursesModule.requiredCourses),
                 ),
-                borderRadius: 20,
+                borderRadius: isTablet ? 20 : 14,
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 10),
                 textStyle: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: isTablet ? FontWeight.w500 : FontWeight.w600,
                 ),
               ),
             ),
