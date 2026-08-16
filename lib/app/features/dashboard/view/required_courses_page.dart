@@ -119,7 +119,10 @@ class _Body extends StatelessWidget {
                               ),
                               crossAxisSpacing: 14,
                               mainAxisSpacing: 14,
-                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 340,
+                              // Phone: 340 overflowed by 14px on a 3-line
+                              // title + info row + button (same as the
+                              // enrolled/completed course cards).
+                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 354,
                             ),
                             itemCount: state.courses.length,
                             itemBuilder: (ctx, i) =>

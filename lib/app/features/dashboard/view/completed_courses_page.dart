@@ -120,7 +120,9 @@ class _Body extends StatelessWidget {
                               ),
                               crossAxisSpacing: 14,
                               mainAxisSpacing: 14,
-                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 340,
+                              // Phone: 340 overflowed by 14px on a 3-line
+                              // title + completed-date row + button.
+                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 354,
                             ),
                             itemCount: state.courses.length,
                             itemBuilder: (ctx, i) =>
@@ -237,12 +239,16 @@ class _CompletedRow extends StatelessWidget {
                 child: const Icon(Icons.check, size: 10, color: Colors.white),
               ),
               const SizedBox(width: 6),
-              Text(
-                _formatCompletedDate(date!),
-                style: const TextStyle(
-                  color: _purple,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+              Flexible(
+                child: Text(
+                  _formatCompletedDate(date!),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _purple,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
