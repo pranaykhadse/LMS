@@ -2138,8 +2138,10 @@ class _ViewButton extends StatelessWidget {
     return HoverBuilder(
       builder: (context, hovering) {
         final filled = hovering && onPressed != null;
-        // Design ref: rounded-xl (12px)
-        const borderRadius = BorderRadius.all(Radius.circular(12));
+        // Design ref (>=700px): rounded-xl (12px). Design ref (phone): 4px.
+        final borderRadius = BorderRadius.all(
+          Radius.circular(Responsive.isTablet(context) ? 12 : 4),
+        );
         return Material(
           color: filled ? _purple : Colors.transparent,
           borderRadius: borderRadius,
