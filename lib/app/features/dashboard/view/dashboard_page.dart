@@ -462,8 +462,8 @@ class _BannerSection extends StatelessWidget {
                         letterSpacing: -0.75,
                       ),
                     ),
-                    // Design ref: flex flex-col gap-1 sm:gap-[7px]
-                    SizedBox(height: isTablet ? 7 : 4),
+                    // Design ref: greeting -> gap-8 -> (quote -> gap-4 -> attribution)
+                    SizedBox(height: isTablet ? 7 : 8),
                     // Quote body
                     Text(
                       'A leader is best when people barely know he exists...when his '
@@ -475,7 +475,7 @@ class _BannerSection extends StatelessWidget {
                         height: 1.4,
                       ),
                     ),
-                    SizedBox(height: isTablet ? 14 : 8),
+                    SizedBox(height: isTablet ? 14 : 4),
                     // Attribution
                     Text(
                       '- Lao-Tzu',
