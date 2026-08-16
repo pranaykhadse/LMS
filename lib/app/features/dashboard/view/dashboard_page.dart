@@ -774,6 +774,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
     final headerBg = overdue ? const Color(0xFFFEF2F2) : Colors.white;
     final headerBorder = overdue ? const Color(0xFFFEE2E2) : const Color(0xFFF3F4F6);
 
+    final isTablet = Responsive.isTablet(context);
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
@@ -782,7 +783,9 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
       // content h-[200px] + dots row (py-3 + 6px dot) 30 = 282 - matches
       // the measured rendered row height (284.8, ~3px of font-metrics
       // rounding) closer than the earlier 290px guess.
-      height: 284,
+      // Design ref (phone): the whole card is Fill(239.24) - phone's
+      // content has no thumbnail so it needs far less height.
+      height: isTablet ? 284 : 239,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -811,7 +814,8 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                       color: const Color(0xFF6B7280),
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
+                      // Design ref (phone): letter-spacing 0.4
+                      letterSpacing: isTablet ? 0.5 : 0.4,
                       // Design ref: text-base default line-height = 24px
                       height: 24 / 16,
                     ),
@@ -826,10 +830,10 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                       'View All',
                       style: GoogleFonts.inter(
                         color: _purple,
-                        fontSize: 12,
+                        // Design ref (phone): 16px, line-height 24
+                        fontSize: isTablet ? 12 : 16,
                         fontWeight: FontWeight.w600,
-                        // Design ref: text-xs default line-height = 16px
-                        height: 16 / 12,
+                        height: isTablet ? 16 / 12 : 24 / 16,
                       ),
                     ),
                   ),
@@ -913,6 +917,95 @@ class _ContinueLearningItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
+
+    // Design ref: the row layout below is "hidden sm:flex" - phone gets
+    // its own simpler card instead (no thumbnail, full-width Resume).
+    if (!Responsive.isTablet(context)) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFF3F4F6)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (course.category != null) ...[
+              Text(
+                course.category!.toUpperCase(),
+                style: GoogleFonts.inter(
+                  color: accentColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
+                  height: 18 / 12,
+                ),
+              ),
+              const SizedBox(height: 2),
+            ],
+            Text(
+              course.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF1E2939),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                height: 22 / 16,
+              ),
+            ),
+            if (course.dueDate != null) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(LucideIcons.calendarDays, size: 10, color: accentColor),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      '${accentColor == const Color(0xFFDC2626) ? "Overdue: " : "Due: "}${course.dueDate}',
+                      style: GoogleFonts.inter(
+                        color: accentColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        height: 18 / 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: _BrandButton(
+                label: 'Resume',
+                onPressed: viewDisabled
+                    ? null
+                    : () => Modular.to.pushNamed(
+                          CoursesModule.construct(
+                            '${CoursesModule.detail}/${course.id}',
+                          ),
+                        ),
+                color: accentColor,
+                hoverColor: accentColor == const Color(0xFFDC2626)
+                    ? const Color(0xFFB91C1C)
+                    : FigmaTokens.purpleHover,
+                borderRadius: 20,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                textStyle: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     // Design ref: hidden sm:flex gap-0 h-[200px]; image div
     // flex-shrink-0 style="padding: 0 0 0 18px", w-36 (144px) h-full
