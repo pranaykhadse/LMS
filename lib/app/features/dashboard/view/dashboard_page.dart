@@ -183,9 +183,6 @@ class _DashboardBody extends ConsumerWidget {
         return RefreshIndicator(
           color: _purple,
           onRefresh: () async => onRefetchAll(),
-          // Design ref: w-full max-w-[1440px] mx-auto - same wrapper the
-          // header (LmsAppBar) now uses, so the body lines up with it
-          // instead of stretching wider than the header above it.
           child: Builder(
             builder: (context) {
               final isWide = Responsive.isDesktop(context);
@@ -198,12 +195,9 @@ class _DashboardBody extends ConsumerWidget {
               // (applies once, before the first child), separate from the
               // smaller space-y-5/4 gap between children.
               final containerV = Responsive.isTablet(context) ? 24.0 : 16.0;
-              return Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 1440),
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
+              return ListView(
+                padding: EdgeInsets.zero,
+                children: [
                   _BannerSection(auth: auth),
                   // Design ref: <p className="hidden sm:block ..."> - shown
                   // at the sm breakpoint (isTablet), not lg (isWide/
@@ -340,9 +334,7 @@ class _DashboardBody extends ConsumerWidget {
                   ),
                     const AppFooter(),
                   ],
-                ),
-              ),
-            );
+                );
             },
           ),
         );
