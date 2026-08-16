@@ -784,8 +784,10 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
       // the measured rendered row height (284.8, ~3px of font-metrics
       // rounding) closer than the earlier 290px guess.
       // Design ref (phone): the whole card is Fill(239.24) - phone's
-      // content has no thumbnail so it needs far less height.
-      height: isTablet ? 284 : 239,
+      // content has no thumbnail so it needs far less height. Bumped to
+      // 242 - 239 overflowed by 2px in the rendered app (font-metrics
+      // rounding, same as the desktop 284 above).
+      height: isTablet ? 284 : 242,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
