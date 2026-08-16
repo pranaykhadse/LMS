@@ -1444,11 +1444,12 @@ class _CourseProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shown = courses.take(2).toList();
+    final isTablet = Responsive.isTablet(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
