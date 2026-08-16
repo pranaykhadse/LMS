@@ -61,7 +61,12 @@ class _Body extends StatelessWidget {
           color: _purple,
           onRefresh: () async => onRetry(),
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            padding: EdgeInsets.fromLTRB(
+              Responsive.pageHPad(context),
+              16,
+              Responsive.pageHPad(context),
+              32,
+            ),
             children: [
               // ── Two-column layout on desktop ──────────────────────────
               if (isWide)

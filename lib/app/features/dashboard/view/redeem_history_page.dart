@@ -51,7 +51,9 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomScrollView(
       slivers: [
-        SliverToBoxAdapter(
+        SliverPadding(
+          padding: EdgeInsets.symmetric(horizontal: Responsive.pageHPad(context)),
+          sliver: SliverToBoxAdapter(
           child: Container(
             width: double.infinity,
             color: Colors.white,
@@ -85,12 +87,18 @@ class _Body extends StatelessWidget {
               ],
             ),
           ),
+          ),
         ),
         if (result.items.isEmpty)
           const SliverFillRemaining(child: _EmptyState())
         else
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+            padding: EdgeInsets.fromLTRB(
+              Responsive.pageHPad(context),
+              16,
+              Responsive.pageHPad(context),
+              32,
+            ),
             sliver: SliverGrid(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _RedeemedItemCard(item: result.items[index]),
