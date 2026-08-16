@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/providers/shell_destination_provider.dart';
-import 'package:lms/app/core/views/elements/main_container.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/view/app_drawer.dart';
 
@@ -62,11 +61,9 @@ class AppScaffold extends ConsumerWidget {
 
     // Desktop/tablet body gets a small top padding to breathe below the
     // taller header; phone body spans full height.
-    final content = MainContainer(
-      child: isTablet
-          ? Padding(padding: const EdgeInsets.only(top: 14), child: body)
-          : body,
-    );
+    final content = isTablet
+        ? Padding(padding: const EdgeInsets.only(top: 14), child: body)
+        : body;
 
     // ── Phone (< 700 px): hamburger drawer + purple mobile AppBar ──────────
     if (!isTablet) {
