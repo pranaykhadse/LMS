@@ -20,6 +20,7 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
+import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
@@ -1387,34 +1388,15 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                       ),
                       // Spacer pins button 15px from bottom
                       const Spacer(),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: viewDisabled
-                              ? null
-                              : () => Modular.to.pushNamed(
-                                    CoursesModule.construct(
-                                      '${CoursesModule.detail}/${widget.course.id}',
-                                    ),
-                                    arguments: widget.course.offlineCourse,
+                      ViewCourseButton(
+                        onPressed: viewDisabled
+                            ? null
+                            : () => Modular.to.pushNamed(
+                                  CoursesModule.construct(
+                                    '${CoursesModule.detail}/${widget.course.id}',
                                   ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: FigmaTokens.primaryPurple,
-                            foregroundColor: Colors.white,
-                            disabledBackgroundColor: FigmaTokens.primaryPurple
-                                .withValues(alpha: 0.5),
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            textStyle: GoogleFonts.roboto(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          child: const Text('View Course'),
-                        ),
+                                  arguments: widget.course.offlineCourse,
+                                ),
                       ),
                     ],
                   ),
