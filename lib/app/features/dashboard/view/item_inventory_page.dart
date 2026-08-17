@@ -477,7 +477,7 @@ class _PointSystemExplainer extends StatelessWidget {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final width = constraints.maxWidth;
-                    const height = 190.0;
+                    const height = 240.0;
                     final points = [
                       for (final s in _steps) Offset(s.xFraction * width, s.yFraction * height)
                     ];
