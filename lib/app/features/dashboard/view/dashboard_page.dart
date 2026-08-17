@@ -207,8 +207,7 @@ class _DashboardBody extends ConsumerWidget {
                   // top spacing is the wrapper's own py-6/py-4 (containerV),
                   // not the smaller space-y-5/4 gap (gapV) used between
                   // later siblings.
-                  if (Responsive.isTablet(context))
-                    Padding(
+                  Padding(
                       padding: EdgeInsets.fromLTRB(outerH, containerV, outerH, 0),
                       child: Text(
                         "Welcome back! Here's what's happening with your courses.",
@@ -219,13 +218,7 @@ class _DashboardBody extends ConsumerWidget {
                       ),
                     ),
                   Padding(
-                    // When the welcome subtitle is hidden (narrow widths),
-                    // the stat row becomes the first child instead.
-                    padding: EdgeInsets.fromLTRB(
-                        outerH,
-                        Responsive.isTablet(context) ? gapV : containerV,
-                        outerH,
-                        0),
+                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
                     child: _StatRow(
                       isWide: isWide,
                       enrolled: data.summary.enrolledCourses,

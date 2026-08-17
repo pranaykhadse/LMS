@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -118,7 +120,7 @@ class _ProgressBody extends StatelessWidget {
             children: [
               Expanded(
                 child: _StatCard(
-                  icon: Icons.menu_book_rounded,
+                  icon: LucideIcons.bookOpen,
                   iconColor: _lpPurple,
                   label: 'ENROLLED',
                   value: '${data.summary.enrolledCourses}',
@@ -127,8 +129,8 @@ class _ProgressBody extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  icon: Icons.error_outline_rounded,
-                  iconColor: const Color(0xFFD97706),
+                  icon: LucideIcons.alertCircle,
+                  iconColor: const Color(0xFFF59E0B),
                   label: 'REQUIRED',
                   value: '${data.summary.requiredCourses}',
                 ),
@@ -136,8 +138,8 @@ class _ProgressBody extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  icon: Icons.check_circle_outline_rounded,
-                  iconColor: const Color(0xFF16A34A),
+                  icon: LucideIcons.checkCircle,
+                  iconColor: const Color(0xFF22C55E),
                   label: 'COMPLETED',
                   value: '${data.summary.completedCourses}',
                 ),
@@ -845,124 +847,149 @@ class _SessionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final startDt = session.startDateTime;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
+    final isTablet = Responsive.isTablet(context);
+
+    final title = Text(
+      session.courseName,
+      style: GoogleFonts.inter(
+        color: isTablet ? const Color(0xFF1F2937) : const Color(0xFF1E2939),
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        height: isTablet ? 1.4 : 22 / 16,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title + Join button
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    );
+
+    final dateRow = startDt != null
+        ? Row(
             children: [
-              Expanded(
-                child: Text(
-                  session.courseName,
+              const Icon(LucideIcons.calendarDays, size: 10, color: _lpPurple),
+              const SizedBox(width: 6),
+              Text(
+                _formatDate(startDt),
+                style: GoogleFonts.inter(
+                    color: const Color(0xFF9CA3AF), fontSize: 12, height: 1.4),
+              ),
+              if (session.startTime != null &&
+                  session.startTime!.isNotEmpty) ...[
+                Text(' • ',
+                    style: GoogleFonts.inter(
+                        color: const Color(0xFFD1D5DB), fontSize: 12)),
+                Text(
+                  _formatTime(startDt),
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF1F2937),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
+                      color: const Color(0xFF9CA3AF), fontSize: 12, height: 1.4),
+                ),
+              ],
+            ],
+          )
+        : const SizedBox.shrink();
+
+    final hostedBy =
+        session.instructor != null && session.instructor!.isNotEmpty
+            ? Text.rich(TextSpan(children: [
+                TextSpan(
+                  text: 'Hosted by ',
+                  style: GoogleFonts.inter(
+                      color: const Color(0xFF9CA3AF), fontSize: 12),
+                ),
+                TextSpan(
+                  text: session.instructor,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF4B5563),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  final id = int.tryParse(session.courseId);
-                  if (id != null) {
-                    Modular.to.pushNamed(CoursesModule.construct(
-                        '${CoursesModule.detail}/$id'));
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _lpPurple,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+              ]))
+            : null;
+
+    void openSession() {
+      final id = int.tryParse(session.courseId);
+      if (id != null) {
+        Modular.to.pushNamed(
+            CoursesModule.construct('${CoursesModule.detail}/$id'));
+      }
+    }
+
+    // Join pill — inline on tablet/desktop, full-width at bottom on phone
+    final joinPill = GestureDetector(
+      onTap: openSession,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: _lpPurple,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          'Join',
+          style: GoogleFonts.inter(
+              color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+
+    return HoverBuilder(
+      builder: (context, hovering) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: hovering
+              ? _lpPurple.withValues(alpha: 0.05)
+              : const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
+          border: Border.all(
+            color: hovering
+                ? _lpPurple.withValues(alpha: 0.3)
+                : const Color(0xFFF3F4F6),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: isTablet
+              ? [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF87171),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Join',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      Expanded(child: title),
+                      const SizedBox(width: 8),
+                      joinPill,
                     ],
                   ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          // Date + time
-          if (startDt != null)
-            Row(
-              children: [
-                const Icon(Icons.calendar_today_rounded,
-                    size: 10, color: _lpPurple),
-                const SizedBox(width: 4),
-                Text(
-                  _formatDate(startDt),
-                  style: GoogleFonts.inter(
-                      color: const Color(0xFF9CA3AF),
-                      fontSize: 12,
-                      height: 1.4),
-                ),
-                if (session.startTime != null &&
-                    session.startTime!.isNotEmpty) ...[
-                  Text(' • ',
-                      style: GoogleFonts.inter(
-                          color: const Color(0xFFD1D5DB), fontSize: 12)),
-                  Text(
-                    _formatTime(startDt),
-                    style: GoogleFonts.inter(
-                        color: const Color(0xFF9CA3AF),
-                        fontSize: 12,
-                        height: 1.4),
+                  const SizedBox(height: 6),
+                  dateRow,
+                  if (hostedBy != null) ...[const SizedBox(height: 2), hostedBy],
+                ]
+              : [
+                  title,
+                  const SizedBox(height: 6),
+                  dateRow,
+                  if (hostedBy != null) ...[const SizedBox(height: 2), hostedBy],
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: GestureDetector(
+                      onTap: openSession,
+                      child: Container(
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: _lpPurple,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          'Join',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            height: 18 / 12,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
-              ],
-            ),
-          // Hosted by
-          if (session.instructor != null &&
-              session.instructor!.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text.rich(TextSpan(children: [
-              TextSpan(
-                text: 'Hosted by ',
-                style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF), fontSize: 12),
-              ),
-              TextSpan(
-                text: session.instructor,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF4B5563),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ])),
-          ],
-        ],
+        ),
       ),
     );
   }
