@@ -335,12 +335,14 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   // ── Phone ────────────────────────────────────────────────────────────────
   //
-  // Condensed version of the desktop purple TopBar (logo, notification
-  // bell, profile avatar - no date pill/refresh/offline toggle/progress
-  // icon), stacked above the existing white "Menu" bar.
+  // Condensed version of the desktop purple TopBar (back button, logo,
+  // offline toggle, notification bell, profile avatar - no date pill,
+  // refresh, or progress icon, too many to fit legibly on a narrow
+  // screen), stacked above the existing white "Menu" bar.
   Widget _buildMobileTopBar(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
+    final isOffline = ref.watch(OfflineModeNotifier.provider);
 
     return Container(
       width: double.infinity,
@@ -351,22 +353,55 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          GestureDetector(
-            onTap: () {
-              if (ShellMarker.isInShell(context)) {
-                navigateShell(ref, ShellDestination.dashboard);
-                return;
-              }
-              resetToModularRoot(context);
-              Modular.to.navigate(
-                CoursesModule.construct(CoursesModule.dashboard),
-              );
-            },
-            child: const Logo(size: 22),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Back button — same visibility rule as desktop's TopBar.
+              if (!hideBack && _canGoBack(context, ref))
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onBack ?? () => _goBack(context, ref),
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 10),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              GestureDetector(
+                onTap: () {
+                  if (ShellMarker.isInShell(context)) {
+                    navigateShell(ref, ShellDestination.dashboard);
+                    return;
+                  }
+                  resetToModularRoot(context);
+                  Modular.to.navigate(
+                    CoursesModule.construct(CoursesModule.dashboard),
+                  );
+                },
+                child: const Logo(size: 22),
+              ),
+            ],
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              LmsOfflineToggle(
+                isOffline: isOffline,
+                iconSize: 16,
+                switchScale: 0.65,
+                onChanged: (val) {
+                  ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
+                  if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+                  Toast.info(context,
+                      val ? 'Offline mode enabled' : 'Back to online mode');
+                },
+              ),
               SizedBox(
                 width: 30,
                 height: 30,
@@ -401,7 +436,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 child: LmsAvatar(
                   profile: profile,
                   radius: 14,
-                  fallbackColor: const Color(0xFF6A7282),
+                  fallbackColor: _appPurple,
                 ),
               ),
             ],
