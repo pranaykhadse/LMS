@@ -7,17 +7,27 @@ class AllCourseProgressItem {
     required this.courseId,
     required this.courseName,
     required this.progress,
+    this.category = '',
+    this.dueDate = '',
   });
 
   final String courseId;
   final String courseName;
   final int progress;
+  final String category;
+  final String dueDate;
 
   factory AllCourseProgressItem.fromJson(Map<String, dynamic> json) {
     return AllCourseProgressItem(
       courseId: json['course_id']?.toString() ?? '',
       courseName: json['course_name']?.toString() ?? '',
       progress: _asInt(json['progress']),
+      category: json['category']?.toString() ??
+          json['class_name']?.toString() ??
+          '',
+      dueDate: json['due_date']?.toString() ??
+          json['date']?.toString() ??
+          '',
     );
   }
 }

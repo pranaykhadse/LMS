@@ -3,6 +3,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -51,7 +52,8 @@ class _Body extends StatelessWidget {
         return const Center(child: CircularProgressIndicator(color: _purple));
       case DataProviderState.error:
         return _ErrorView(
-          message: friendlyErrorMessage(state.error, 'Unable to load course progress.'),
+          message: friendlyErrorMessage(
+              state.error, 'Unable to load course progress.'),
           onRetry: () => notifier.fetch(),
         );
       case DataProviderState.data:
@@ -172,19 +174,24 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ─── Table header row ───────────────────────────────────────────────────────
+// ─── Table header row ────────────────────────────────────────────────────────
+//
+// Desktop: #  |  COURSE  |  CATEGORY  |  DUE DATE
+// Mobile:  #  |  COURSE / CATEGORY / DUE DATE  (combined sub-label)
 
 class _TableHeaderRow extends StatelessWidget {
   const _TableHeaderRow();
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = Responsive.isTablet(context);
     final style = GoogleFonts.inter(
       color: const Color(0xFF9CA3AF),
       fontSize: 12,
       fontWeight: FontWeight.w600,
       letterSpacing: 0.5,
     );
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: const BoxDecoration(
@@ -194,9 +201,24 @@ class _TableHeaderRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(width: 36, child: Text('#', style: style)),
-          Expanded(child: Text('COURSE', style: style)),
-          const SizedBox(width: 12),
-          SizedBox(width: 140, child: Text('PROGRESS', style: style)),
+          Expanded(
+            child: Text(
+              isDesktop ? 'COURSE' : 'COURSE / CATEGORY / DUE DATE',
+              style: style,
+            ),
+          ),
+          if (isDesktop) ...[
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 160,
+              child: Text('CATEGORY', style: style),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 130,
+              child: Text('DUE DATE', style: style),
+            ),
+          ],
         ],
       ),
     );
@@ -217,6 +239,8 @@ class _CourseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = Responsive.isTablet(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: showDivider
@@ -227,7 +251,7 @@ class _CourseRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // #
+          // ── # ──────────────────────────────────────────────────────
           SizedBox(
             width: 36,
             child: Text(
@@ -239,58 +263,134 @@ class _CourseRow extends StatelessWidget {
               ),
             ),
           ),
-          // Course name
+
+          // ── COURSE ─────────────────────────────────────────────────
+          // Desktop: course name only (clickable)
+          // Mobile:  course name + category · date inline below
           Expanded(
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: () => Modular.to.pushNamed(
-                  CoursesModule.construct(
-                      '${CoursesModule.detail}/${item.courseId}'),
-                ),
-                child: Text(
-                  item.courseName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF1F2937),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
+            child: isDesktop
+                ? MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => Modular.to.pushNamed(
+                        CoursesModule.construct(
+                            '${CoursesModule.detail}/${item.courseId}'),
+                      ),
+                      child: Text(
+                        item.courseName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF1F2937),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Modular.to.pushNamed(
+                          CoursesModule.construct(
+                              '${CoursesModule.detail}/${item.courseId}'),
+                        ),
+                        child: Text(
+                          item.courseName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF1F2937),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                      if (item.category.isNotEmpty || item.dueDate.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            if (item.category.isNotEmpty)
+                              Text(
+                                item.category,
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF9CA3AF),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            if (item.category.isNotEmpty &&
+                                item.dueDate.isNotEmpty)
+                              Text(
+                                '  ·  ',
+                                style: GoogleFonts.inter(
+                                    color: const Color(0xFFD1D5DB),
+                                    fontSize: 12),
+                              ),
+                            if (item.dueDate.isNotEmpty) ...[
+                              const Icon(Icons.calendar_today_rounded,
+                                  size: 10, color: _purple),
+                              const SizedBox(width: 4),
+                              Text(
+                                item.dueDate,
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF6B7280),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
+          ),
+
+          // ── CATEGORY — desktop only ────────────────────────────────
+          if (isDesktop) ...[
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 160,
+              child: Text(
+                item.category,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF),
+                  fontSize: 13,
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          // PROGRESS — percentage + thin progress bar
-          SizedBox(
-            width: 140,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${item.progress}%',
-                  style: GoogleFonts.inter(
-                    color: _purple,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: (item.progress.clamp(0, 100)) / 100,
-                    minHeight: 6,
-                    backgroundColor: const Color(0xFFF3F4F6),
-                    valueColor: const AlwaysStoppedAnimation<Color>(_purple),
-                  ),
-                ),
-              ],
+          ],
+
+          // ── DUE DATE — desktop only ────────────────────────────────
+          if (isDesktop) ...[
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 130,
+              child: item.dueDate.isNotEmpty
+                  ? Row(
+                      children: [
+                        const Icon(Icons.calendar_today_rounded,
+                            size: 12, color: _purple),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            item.dueDate,
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF6B7280),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -317,12 +417,14 @@ class _EmptyState extends StatelessWidget {
                 color: const Color(0xFFF0ECFF),
                 borderRadius: BorderRadius.circular(50),
               ),
-              child: const Icon(Icons.donut_large_rounded, color: _purple, size: 52),
+              child: const Icon(Icons.donut_large_rounded,
+                  color: _purple, size: 52),
             ),
             const SizedBox(height: 24),
             const Text(
               'No Course Progress Yet',
-              style: TextStyle(color: _ink, fontSize: 20, fontWeight: FontWeight.w900),
+              style: TextStyle(
+                  color: _ink, fontSize: 20, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -352,7 +454,9 @@ class _ErrorView extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, color: _muted, size: 48),
             const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: _muted)),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: _muted)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               RetryButton(onRetry: onRetry!, errorMessage: message),
