@@ -379,26 +379,38 @@ class _DrawerItemState extends State<_DrawerItem> {
               ),
             ),
           ),
-          if (hasChildren && _expanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    width: 2,
-                    margin: const EdgeInsets.only(right: 12),
-                    color: _purple,
-                  ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        for (final sub in widget.children) _SubTile(sub: sub),
-                      ],
+          if (hasChildren)
+            // AnimatedCrossFade instead of an instant conditional insert -
+            // toggling this InkWell used to swap a whole subtree into the
+            // tree within the same tap's hit-test frame, which corrupted
+            // the semantics tree ('!semantics.parentDataDirty' assertion
+            // flood + "Cannot hit test a render box with no size"). This
+            // is the same safe transition ExpansionTile uses internally.
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 180),
+              crossFadeState:
+                  _expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+              firstChild: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      width: 2,
+                      margin: const EdgeInsets.only(right: 12),
+                      color: _purple,
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: Column(
+                        children: [
+                          for (final sub in widget.children) _SubTile(sub: sub),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              secondChild: const SizedBox(width: double.infinity),
             ),
         ],
       ),
