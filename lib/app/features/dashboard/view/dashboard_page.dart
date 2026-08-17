@@ -108,7 +108,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       onRefresh: _refetchAll,
       body: _redirectingUnauthorized
           ? const Center(child: CircularProgressIndicator(color: _purple))
-          : _DashboardBody(auth: auth, state: state, onRefetchAll: _refetchAll),
+          : DashboardBody(auth: auth, state: state, onRefetchAll: _refetchAll),
     );
   }
 
@@ -153,17 +153,22 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   }
 }
 
-// ─── Body ─────────────────────────────────────────────────────────────────────
+// ─── Body (also used by LearningProgressPage) ─────────────────────────────────
 
-class _DashboardBody extends ConsumerWidget {
-  const _DashboardBody({
+class DashboardBody extends ConsumerWidget {
+  const DashboardBody({
+    super.key,
     required this.auth,
     required this.state,
     required this.onRefetchAll,
+    this.showBanner = true,
   });
   final AuthState? auth;
   final DataState<LearningProgressData> state;
   final VoidCallback onRefetchAll;
+  /// When false the gradient hero banner is omitted — used by
+  /// LearningProgressPage which shares this body but has its own AppBar.
+  final bool showBanner;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -200,7 +205,7 @@ class _DashboardBody extends ConsumerWidget {
               return ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _BannerSection(auth: auth),
+                  if (showBanner) _BannerSection(auth: auth),
                   // Design ref: <p className="hidden sm:block ..."> - shown
                   // at the sm breakpoint (isTablet), not lg (isWide/
                   // isDesktop) - and as the first child in the wrapper, its
