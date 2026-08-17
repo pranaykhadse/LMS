@@ -752,34 +752,94 @@ class _StructureCard extends StatelessWidget {
                 // (with horizontal scroll) when the card is narrower than
                 // that, e.g. on small screens.
                 final tableWidth = constraints.maxWidth;
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: tableWidth < 900 ? 900 : tableWidth,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const _StructureHeaderRow(),
-                        const SizedBox(height: 8),
-                        for (var i = 0; i < items.length; i++)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _StructureItemCard(
-                              index: i + 1,
-                              courseId: courseId,
-                              item: items[i],
-                              isEnrolled: isEnrolled,
-                              courseObjective: courseObjective,
-                              courseTitle: courseTitle,
+                final needsScroll = tableWidth < 900;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (needsScroll)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.swipe_rounded, size: 14, color: _detailMuted),
+                            SizedBox(width: 4),
+                            Text(
+                              'Swipe to see Next Session, Status & Actions',
+                              style: TextStyle(
+                                color: _detailMuted,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                      ],
+                          ],
+                        ),
+                      ),
+                    _StructureTableScroller(
+                      width: tableWidth < 900 ? 900 : tableWidth,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _StructureHeaderRow(),
+                          const SizedBox(height: 8),
+                          for (var i = 0; i < items.length; i++)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _StructureItemCard(
+                                index: i + 1,
+                                courseId: courseId,
+                                item: items[i],
+                                isEnrolled: isEnrolled,
+                                courseObjective: courseObjective,
+                                courseTitle: courseTitle,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 );
               },
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Wraps the Course Structure table in a horizontally-scrolling area with
+/// an always-visible scrollbar - on a narrow screen the table needs a
+/// swipe to reveal Next Session/Status/Action, and without a visible
+/// scrollbar that content just looked cut off with no indication more
+/// was there.
+class _StructureTableScroller extends StatefulWidget {
+  const _StructureTableScroller({required this.width, required this.child});
+  final double width;
+  final Widget child;
+
+  @override
+  State<_StructureTableScroller> createState() => _StructureTableScrollerState();
+}
+
+class _StructureTableScrollerState extends State<_StructureTableScroller> {
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scrollbar(
+      controller: _controller,
+      thumbVisibility: true,
+      child: SingleChildScrollView(
+        controller: _controller,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(bottom: 10),
+        child: SizedBox(width: widget.width, child: widget.child),
       ),
     );
   }
