@@ -300,14 +300,14 @@ class _SubItem {
 /// sub-items appear inline (behind a purple left accent line) instead of
 /// in a separate floating card, matching the reference design.
 ///
-/// Groups use the real ExpansionTile (via its backgroundColor/shape
-/// properties for the box styling) rather than a hand-rolled expand/
-/// collapse - three different from-scratch approaches (instant
-/// conditional insert, AnimatedCrossFade, AnimatedSize) all produced the
-/// same semantics-tree corruption in this Column/Drawer nesting; only
-/// ExpansionTile's own internal (and separately battle-tested) animation
-/// avoids it.
-class _DrawerItem extends StatelessWidget {
+/// Groups use the real ExpansionTile completely unmodified (no
+/// backgroundColor/shape/clipBehavior on it - that combination, even
+/// with ExpansionTile's own internal animation, still produced the
+/// '!semantics.parentDataDirty' assertion flood). The box styling comes
+/// from a plain outer Container instead, colored via a simple bool state
+/// set from ExpansionTile's own onExpansionChanged callback - no custom
+/// RenderObject-affecting properties touch ExpansionTile itself.
+class _DrawerItem extends StatefulWidget {
   const _DrawerItem({
     required this.icon,
     required this.label,
@@ -322,37 +322,45 @@ class _DrawerItem extends StatelessWidget {
   final List<_SubItem> children;
 
   @override
+  State<_DrawerItem> createState() => _DrawerItemState();
+}
+
+class _DrawerItemState extends State<_DrawerItem> {
+  // Reinitialized fresh whenever ExpansionTile's key below changes (i.e.
+  // whenever `selected` changes), since that recreates this whole State.
+  late bool _expanded = widget.selected;
+
+  @override
   Widget build(BuildContext context) {
-    if (children.isNotEmpty) {
-      final expandedShape = RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: _activeBorder),
-      );
-      final collapsedShape = RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: const BorderSide(color: FigmaTokens.cardBorders),
-      );
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+    if (widget.children.isNotEmpty) {
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        decoration: BoxDecoration(
+          color: _expanded ? _activeBg : Colors.white,
+          border: Border.all(color: _expanded ? _activeBorder : FigmaTokens.cardBorders),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        // No clipBehavior here (unlike the leaf-item box below) - clipping
+        // a container whose height changes as ExpansionTile's internal
+        // animation runs is the same category of bug already ruled out
+        // for the sub-items row itself; a static-height leaf box is fine
+        // to clip, this animating one isn't worth the risk for a purely
+        // cosmetic ripple-corner trim.
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
-            key: ValueKey('drawer-group-$label-$selected'),
-            initiallyExpanded: selected,
-            clipBehavior: Clip.antiAlias,
-            backgroundColor: _activeBg,
-            collapsedBackgroundColor: Colors.white,
-            shape: expandedShape,
-            collapsedShape: collapsedShape,
+            key: ValueKey('drawer-group-${widget.label}-${widget.selected}'),
+            initiallyExpanded: widget.selected,
+            onExpansionChanged: (value) => setState(() => _expanded = value),
             tilePadding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             childrenPadding: EdgeInsets.zero,
-            leading: Icon(icon, size: 20, color: selected ? _purple : _navy),
+            leading: Icon(widget.icon, size: 20, color: widget.selected ? _purple : _navy),
             title: Text(
-              label,
+              widget.label,
               style: TextStyle(
-                color: selected ? _purple : const Color(0xFF23292F),
+                color: widget.selected ? _purple : const Color(0xFF23292F),
                 fontSize: 15,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w600,
               ),
             ),
             iconColor: _chevron,
@@ -371,7 +379,7 @@ class _DrawerItem extends StatelessWidget {
                     Expanded(
                       child: Column(
                         children: [
-                          for (final sub in children) _SubTile(sub: sub),
+                          for (final sub in widget.children) _SubTile(sub: sub),
                         ],
                       ),
                     ),
@@ -386,26 +394,27 @@ class _DrawerItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       decoration: BoxDecoration(
-        color: selected ? _activeBg : Colors.white,
-        border: Border.all(color: selected ? _activeBorder : FigmaTokens.cardBorders),
+        color: widget.selected ? _activeBg : Colors.white,
+        border: Border.all(
+            color: widget.selected ? _activeBorder : FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(10),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: selected ? _purple : _navy),
+              Icon(widget.icon, size: 20, color: widget.selected ? _purple : _navy),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
-                  label,
+                  widget.label,
                   style: TextStyle(
-                    color: selected ? _purple : const Color(0xFF23292F),
+                    color: widget.selected ? _purple : const Color(0xFF23292F),
                     fontSize: 15,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                    fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
               ),
