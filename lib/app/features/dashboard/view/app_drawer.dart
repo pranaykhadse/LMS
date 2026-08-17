@@ -299,7 +299,15 @@ class _SubItem {
 /// rounded box. A group's box fills with a light purple tint and its
 /// sub-items appear inline (behind a purple left accent line) instead of
 /// in a separate floating card, matching the reference design.
-class _DrawerItem extends StatefulWidget {
+///
+/// Groups use the real ExpansionTile (via its backgroundColor/shape
+/// properties for the box styling) rather than a hand-rolled expand/
+/// collapse - three different from-scratch approaches (instant
+/// conditional insert, AnimatedCrossFade, AnimatedSize) all produced the
+/// same semantics-tree corruption in this Column/Drawer nesting; only
+/// ExpansionTile's own internal (and separately battle-tested) animation
+/// avoids it.
+class _DrawerItem extends StatelessWidget {
   const _DrawerItem({
     required this.icon,
     required this.label,
@@ -314,110 +322,96 @@ class _DrawerItem extends StatefulWidget {
   final List<_SubItem> children;
 
   @override
-  State<_DrawerItem> createState() => _DrawerItemState();
-}
-
-class _DrawerItemState extends State<_DrawerItem> {
-  late bool _expanded = widget.selected;
-
-  @override
-  void didUpdateWidget(_DrawerItem old) {
-    super.didUpdateWidget(old);
-    // Mirrors the old ExpansionTile+ValueKey(selected) approach: expansion
-    // state fully resets to match `selected` whenever it changes, in
-    // either direction (auto-expand when navigated to, auto-collapse
-    // when navigated away from).
-    if (widget.selected != old.selected) {
-      setState(() => _expanded = widget.selected);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final hasChildren = widget.children.isNotEmpty;
-    final active = widget.selected;
-
+    if (children.isNotEmpty) {
+      final expandedShape = RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: _activeBorder),
+      );
+      final collapsedShape = RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: const BorderSide(color: FigmaTokens.cardBorders),
+      );
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            key: ValueKey('drawer-group-$label-$selected'),
+            initiallyExpanded: selected,
+            clipBehavior: Clip.antiAlias,
+            backgroundColor: _activeBg,
+            collapsedBackgroundColor: Colors.white,
+            shape: expandedShape,
+            collapsedShape: collapsedShape,
+            tilePadding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            childrenPadding: EdgeInsets.zero,
+            leading: Icon(icon, size: 20, color: selected ? _purple : _navy),
+            title: Text(
+              label,
+              style: TextStyle(
+                color: selected ? _purple : const Color(0xFF23292F),
+                fontSize: 15,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              ),
+            ),
+            iconColor: _chevron,
+            collapsedIconColor: _chevron,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      width: 2,
+                      margin: const EdgeInsets.only(right: 12),
+                      color: _purple,
+                    ),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          for (final sub in children) _SubTile(sub: sub),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       decoration: BoxDecoration(
-        color: active ? _activeBg : Colors.white,
-        border: Border.all(color: active ? _activeBorder : FigmaTokens.cardBorders),
+        color: selected ? _activeBg : Colors.white,
+        border: Border.all(color: selected ? _activeBorder : FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(10),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          InkWell(
-            onTap: hasChildren
-                ? () => setState(() => _expanded = !_expanded)
-                : widget.onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Icon(widget.icon, size: 20, color: active ? _purple : _navy),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Text(
-                      widget.label,
-                      style: TextStyle(
-                        color: active ? _purple : const Color(0xFF23292F),
-                        fontSize: 15,
-                        fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                      ),
-                    ),
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: selected ? _purple : _navy),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? _purple : const Color(0xFF23292F),
+                    fontSize: 15,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   ),
-                  if (hasChildren)
-                    Icon(
-                      _expanded
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      size: 20,
-                      color: _chevron,
-                    ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-          if (hasChildren)
-            // AnimatedSize instead of an instant conditional insert -
-            // toggling this InkWell used to swap a whole subtree into the
-            // tree within the same tap's hit-test frame, which corrupted
-            // the semantics tree ('!semantics.parentDataDirty' assertion
-            // flood + "Cannot hit test a render box with no size").
-            // AnimatedCrossFade was tried first but its internal Stack +
-            // AnimatedOpacity produced its own layout failure
-            // ("RenderAnimatedOpacity was not laid out") in this
-            // Column/Drawer context - AnimatedSize is the simpler
-            // single-child RenderObject ExpansionTile itself uses.
-            AnimatedSize(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeInOut,
-              alignment: Alignment.topCenter,
-              child: _expanded
-                  ? Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Container(
-                            width: 2,
-                            margin: const EdgeInsets.only(right: 12),
-                            color: _purple,
-                          ),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                for (final sub in widget.children) _SubTile(sub: sub),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : const SizedBox(width: double.infinity),
-            ),
-        ],
+        ),
       ),
     );
   }
