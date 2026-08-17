@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -105,26 +106,9 @@ class AppDrawer extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 child: Column(
                   children: [
-                    // Dashboard
-                    _NavCard(
-                      icon: Icons.dashboard_outlined,
-                      label: 'Dashboard',
-                      selected: sel == 'Dashboard',
-                      onTap: () {
-                        _close(context);
-                        resetToModularRoot(context);
-                        if (sel != 'Dashboard') {
-                          Modular.to.navigate(
-                            CoursesModule.construct(CoursesModule.dashboard),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 10),
-
                     // Course Catalog
                     _NavCard(
-                      icon: Icons.menu_book_outlined,
+                      icon: LucideIcons.library,
                       label: 'Course Catalog',
                       selected: sel == 'Course Catalog',
                       onTap: () {
@@ -141,12 +125,12 @@ class AppDrawer extends ConsumerWidget {
 
                     // My Courses (expandable)
                     _ExpandableNavCard(
-                      icon: Icons.library_books_outlined,
+                      icon: LucideIcons.bookOpen,
                       label: 'My Courses',
                       selected: myCoursesActive,
                       children: [
                         _SubNavItem(
-                          icon: Icons.school_outlined,
+                          icon: LucideIcons.award,
                           label: 'My Enrolled Courses',
                           selected: subSel == 'My Enrolled Courses',
                           onTap: () {
@@ -160,7 +144,7 @@ class AppDrawer extends ConsumerWidget {
                           },
                         ),
                         _SubNavItem(
-                          icon: Icons.task_alt,
+                          icon: LucideIcons.checkCircle,
                           label: 'My Completed Courses',
                           selected: subSel == 'My Completed Courses',
                           onTap: () {
@@ -174,7 +158,7 @@ class AppDrawer extends ConsumerWidget {
                           },
                         ),
                         _SubNavItem(
-                          icon: Icons.timeline_outlined,
+                          icon: LucideIcons.globe,
                           label: 'My Development Plan',
                           selected: subSel == 'My Development Plan',
                           onTap: () {
@@ -188,7 +172,7 @@ class AppDrawer extends ConsumerWidget {
                           },
                         ),
                         _SubNavItem(
-                          icon: Icons.assignment_outlined,
+                          icon: LucideIcons.clipboardList,
                           label: 'My Required Courses',
                           selected: subSel == 'My Required Courses',
                           onTap: () {
@@ -207,7 +191,7 @@ class AppDrawer extends ConsumerWidget {
 
                     // Learning Paths
                     _NavCard(
-                      icon: Icons.account_tree_outlined,
+                      icon: LucideIcons.map,
                       label: 'Learning Paths',
                       selected: sel == 'Learning Paths',
                       onTap: () {
@@ -222,12 +206,12 @@ class AppDrawer extends ConsumerWidget {
 
                     // Points & Badges (expandable)
                     _ExpandableNavCard(
-                      icon: Icons.workspace_premium_outlined,
+                      icon: LucideIcons.award,
                       label: 'Points & Badges',
                       selected: pointsBadgesActive,
                       children: [
                         _SubNavItem(
-                          icon: Icons.redeem_outlined,
+                          icon: LucideIcons.gift,
                           label: 'Redeem your Points',
                           selected: subSel == 'Redeem your Points',
                           onTap: () {
@@ -241,7 +225,7 @@ class AppDrawer extends ConsumerWidget {
                           },
                         ),
                         _SubNavItem(
-                          icon: Icons.military_tech_outlined,
+                          icon: LucideIcons.medal,
                           label: 'Badges',
                           selected: subSel == 'Badges',
                           onTap: () {
@@ -258,12 +242,12 @@ class AppDrawer extends ConsumerWidget {
 
                     // Contact a Coach (expandable)
                     _ExpandableNavCard(
-                      icon: Icons.support_agent_outlined,
+                      icon: LucideIcons.messageCircle,
                       label: 'Contact a Coach',
                       selected: false,
                       children: [
                         _SubNavItem(
-                          icon: Icons.person_outline_rounded,
+                          icon: LucideIcons.user,
                           label: 'Contact a Development Pro',
                           disabled: !isOnline,
                           onTap: () {
@@ -272,7 +256,7 @@ class AppDrawer extends ConsumerWidget {
                           },
                         ),
                         _SubNavItem(
-                          icon: Icons.smart_toy_outlined,
+                          icon: LucideIcons.bot,
                           label: 'Virtual Development Pro',
                           disabled: !isOnline,
                           onTap: () {
@@ -645,7 +629,7 @@ class _SubItemTile extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                item.disabled ? Icons.cloud_off_rounded : item.icon,
+                item.disabled ? LucideIcons.cloudOff : item.icon,
                 size: 18,
                 color: color,
               ),
