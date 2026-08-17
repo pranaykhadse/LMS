@@ -8,6 +8,7 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
+import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/courses/model/calendar_event.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -739,33 +740,18 @@ class _EventDetailsDialog extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  HoverBuilder(
-                    builder: (context, hovering) => ElevatedButton(
-                      onPressed: viewDisabled
-                          ? null
-                          : () {
-                              Navigator.pop(context);
-                              Modular.to.pushNamed(
-                                CoursesModule.construct(
-                                  '${CoursesModule.detail}/${event.courseId}',
-                                ),
-                              );
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            hovering ? FigmaTokens.purpleHover : _calPurple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-                      ),
-                      child: const Text(
-                        'View Course',
-                        style: TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
+                  ViewCourseButton(
+                    onPressed: viewDisabled
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                            Modular.to.pushNamed(
+                              CoursesModule.construct(
+                                '${CoursesModule.detail}/${event.courseId}',
+                              ),
+                            );
+                          },
+                    width: 140,
                   ),
                 ],
               ),

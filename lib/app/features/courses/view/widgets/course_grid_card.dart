@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 
@@ -123,28 +124,10 @@ class CourseGridCard extends StatelessWidget {
                   ),
                   // Spacer pushes button to 15px from bottom
                   const Spacer(),
-                  // Full-width filled button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: onPressed,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: FigmaTokens.primaryPurple,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            FigmaTokens.primaryPurple.withValues(alpha: 0.5),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        textStyle: GoogleFonts.roboto(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      child: Text(buttonLabel),
-                    ),
+                  // Full-width outlined View Course button
+                  ViewCourseButton(
+                    label: buttonLabel,
+                    onPressed: onPressed,
                   ),
                 ],
               ),
@@ -210,6 +193,81 @@ class _ImgFallback extends StatelessWidget {
       alignment: Alignment.center,
       child: const Icon(Icons.school_outlined,
           size: 54, color: FigmaTokens.primaryPurple),
+    );
+  }
+}
+
+// ── Shared View Course button ─────────────────────────────────────────────
+//
+// Figma spec:
+//   • Default  — bg #F8FAFC, border 0.65px #693D94 (radius 14px),
+//                text Inter 12px SemiBold #693D94, height 40px
+//   • Hover    — bg #693D94, text white
+//   • Disabled — 50 % opacity of default
+//
+// Used by CourseGridCard and every other "View Course" surface in the app.
+class ViewCourseButton extends StatelessWidget {
+  const ViewCourseButton({
+    super.key,
+    this.label = 'View Course',
+    this.onPressed,
+    this.width = double.infinity,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  /// Defaults to full-width; pass a fixed value for inline/narrow contexts.
+  final double width;
+
+  static const _purple = FigmaTokens.primaryPurple;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onPressed == null;
+
+    return HoverBuilder(
+      builder: (context, hovering) {
+        final bg = disabled
+            ? const Color(0xFFF8FAFC).withValues(alpha: 0.5)
+            : hovering
+                ? _purple
+                : const Color(0xFFF8FAFC);
+        final textColor = disabled
+            ? _purple.withValues(alpha: 0.4)
+            : hovering
+                ? Colors.white
+                : _purple;
+        final borderColor = disabled
+            ? _purple.withValues(alpha: 0.3)
+            : _purple;
+
+        return SizedBox(
+          width: width,
+          height: 40,
+          child: GestureDetector(
+            onTap: onPressed,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: borderColor, width: 0.65),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: textColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

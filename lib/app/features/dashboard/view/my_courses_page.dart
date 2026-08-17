@@ -5,13 +5,13 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
-import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
@@ -445,33 +445,14 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: HoverBuilder(
-                    builder: (context, hovering) => OutlinedButton(
-                      onPressed: viewDisabled
-                          ? null
-                          : () => Modular.to.pushNamed(
-                              CoursesModule.construct(
-                                '${CoursesModule.detail}/${course.courseId}',
-                              ),
-                            ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white),
-                        foregroundColor: Colors.white,
-                        backgroundColor: hovering
-                            ? Colors.white.withValues(alpha: 0.15)
-                            : Colors.transparent,
-                        elevation: 0,
-                        minimumSize: const Size.fromHeight(40),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(7)),
-                        textStyle: const TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 13),
-                      ),
-                      child: const Text('View Course'),
-                    ),
-                  ),
+                ViewCourseButton(
+                  onPressed: viewDisabled
+                      ? null
+                      : () => Modular.to.pushNamed(
+                          CoursesModule.construct(
+                            '${CoursesModule.detail}/${course.courseId}',
+                          ),
+                        ),
                 ),
               ],
             ),
