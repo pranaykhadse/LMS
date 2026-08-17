@@ -300,10 +300,9 @@ class DashboardBody extends ConsumerWidget {
                   Padding(
                     padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
                     child: isWide
-                        ? IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
+                        ? Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                                 Expanded(
                                   child: _RewardsPointsCard(
                                     rewards: data.extras.rewards,
@@ -316,8 +315,7 @@ class DashboardBody extends ConsumerWidget {
                                   ),
                                 ),
                               ],
-                            ),
-                          )
+                            )
                         : Column(
                             children: [
                               _RewardsPointsCard(
