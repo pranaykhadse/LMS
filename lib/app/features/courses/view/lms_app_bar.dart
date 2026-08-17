@@ -59,6 +59,11 @@ String _lastFirst(dynamic profile) {
 // breathe. NavBar matches its own Figma spec exactly (Height Hug 44px).
 const double _desktopTopBarHeight = 44;
 const double _desktopHeaderHeight = 45;
+// Phone gets a condensed version of the desktop purple TopBar (logo +
+// notification bell + profile avatar only - no date pill/refresh/offline
+// toggle/progress icon, too many to fit legibly on a narrow screen) above
+// the existing white "Menu" bar.
+const double _mobileTopBarHeight = 48;
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
@@ -116,7 +121,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        (isWide ? _desktopTopBarHeight + _desktopHeaderHeight : 49.0) +
+        (isWide
+                ? _desktopTopBarHeight + _desktopHeaderHeight
+                : _mobileTopBarHeight + 49.0) +
             (bottom?.preferredSize.height ?? 1.0), // 1px for the bottom divider
       );
 
@@ -327,6 +334,83 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }
 
   // ── Phone ────────────────────────────────────────────────────────────────
+  //
+  // Condensed version of the desktop purple TopBar (logo, notification
+  // bell, profile avatar - no date pill/refresh/offline toggle/progress
+  // icon), stacked above the existing white "Menu" bar.
+  Widget _buildMobileTopBar(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
+
+    return Container(
+      width: double.infinity,
+      height: _mobileTopBarHeight,
+      color: _appPurple,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () {
+              if (ShellMarker.isInShell(context)) {
+                navigateShell(ref, ShellDestination.dashboard);
+                return;
+              }
+              resetToModularRoot(context);
+              Modular.to.navigate(
+                CoursesModule.construct(CoursesModule.dashboard),
+              );
+            },
+            child: const Logo(size: 22),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 30,
+                height: 30,
+                child: Builder(
+                  builder: (bellContext) => Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      LmsAppBarButton(
+                        icon: Icons.notifications_none_rounded,
+                        iconSize: 14,
+                        boxSize: 30,
+                        onTap: () => showLmsNotifications(bellContext),
+                      ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              PopupMenuButton<String>(
+                offset: const Offset(0, 34),
+                constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                onSelected: (value) => _onProfileMenuSelected(context, ref, value),
+                itemBuilder: (context) => _profileMenuItems(profile),
+                padding: EdgeInsets.zero,
+                child: LmsAvatar(
+                  profile: profile,
+                  radius: 14,
+                  fallbackColor: const Color(0xFF6A7282),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMobile(BuildContext context, WidgetRef ref) {
     // Back navigation is always handled inline in the page body header
     // (← Back | Page Title) — the AppBar always shows "Menu" + hamburger.
@@ -336,7 +420,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     // "Menu" label: Inter SemiBold 600, 14px, line-height 20px, color #364153
     // Hamburger icon: 20×20px, color #6A7282
     // Background: white
-    return AppBar(
+    final menuBar = AppBar(
       automaticallyImplyLeading: false,
       toolbarHeight: 48,
       backgroundColor: Colors.white,
@@ -392,6 +476,14 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             preferredSize: const Size.fromHeight(1),
             child: Container(height: 1, color: FigmaTokens.cardBorders),
           ),
+    );
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildMobileTopBar(context, ref),
+        menuBar,
+      ],
     );
   }
 
