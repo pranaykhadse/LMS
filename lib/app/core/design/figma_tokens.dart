@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 abstract final class FigmaTokens {
   // ── Primary brand ────────────────────────────────────────────────────────
   static const primaryPurple = Color(0xFF693D94);
-  static const purpleHover = Color(0xFF5A3480);
+  static const purpleHover = Color(0xFF5A3488);
   static const gradientEnd = Color(0xFFAA399F);
   static const heroGradient = LinearGradient(
     colors: [primaryPurple, gradientEnd],
