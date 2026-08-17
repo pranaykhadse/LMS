@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -584,8 +585,11 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   }
 
   Widget _timeEntry(int value, String label) {
+    // Phone: 4 boxes at 5px padding each overflowed the countdown row by
+    // 6.1px on a narrow screen; tighten the gap there.
+    final hPad = Responsive.isTablet(context) ? 5.0 : 3.0;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 5),
+      padding: EdgeInsets.symmetric(horizontal: hPad),
       child: _TimeBox(value: value, label: label),
     );
   }
