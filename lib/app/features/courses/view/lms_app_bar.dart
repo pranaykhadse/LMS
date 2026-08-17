@@ -476,13 +476,19 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     // white bar from the page body.
     final bottomWidget = bottom ?? Container(height: 1, color: FigmaTokens.cardBorders);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildMobileTopBar(context, ref),
-        menuBar,
-        bottomWidget,
-      ],
+    // Neither of these plain widgets auto-insets for the status bar/notch
+    // the way a real AppBar does, so without this the purple bar paints
+    // straight from y=0, underneath the status bar.
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildMobileTopBar(context, ref),
+          menuBar,
+          bottomWidget,
+        ],
+      ),
     );
   }
 
