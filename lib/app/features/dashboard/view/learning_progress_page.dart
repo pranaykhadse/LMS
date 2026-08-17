@@ -109,9 +109,12 @@ class _ProgressBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Greeting ─────────────────────────────────────────────────
-          const Text(
+          Text(
             "Welcome back! Here's what's happening with your courses.",
-            style: TextStyle(fontSize: 13, color: _lpMuted, height: 1.4),
+            style: GoogleFonts.inter(
+              color: const Color(0xFF6B7280),
+              fontSize: 16,
+            ),
           ),
           const SizedBox(height: 16),
 
