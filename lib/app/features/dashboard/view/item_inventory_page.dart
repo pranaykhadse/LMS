@@ -275,13 +275,13 @@ class _Body extends ConsumerWidget {
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: Responsive.columns(
                           context,
-                          phone: 2,
+                          phone: 1,
                           tablet: 4,
                           desktop: 5,
                         ),
                         mainAxisSpacing: 14,
                         crossAxisSpacing: 14,
-                        childAspectRatio: 0.72,
+                        childAspectRatio: Responsive.isTablet(context) ? 0.72 : 1.4,
                       ),
                     ),
                     const SizedBox(height: 8),
