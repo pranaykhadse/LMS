@@ -123,7 +123,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   Size get preferredSize => Size.fromHeight(
         (isWide
                 ? _desktopTopBarHeight + _desktopHeaderHeight
-                : _mobileTopBarHeight + 49.0) +
+                : _mobileTopBarHeight + 48.0) +
             (bottom?.preferredSize.height ?? 1.0), // 1px for the bottom divider
       );
 
@@ -420,69 +420,68 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     // "Menu" label: Inter SemiBold 600, 14px, line-height 20px, color #364153
     // Hamburger icon: 20×20px, color #6A7282
     // Background: white
-    final menuBar = AppBar(
-      automaticallyImplyLeading: false,
-      toolbarHeight: 48,
-      backgroundColor: Colors.white,
-      foregroundColor: FigmaTokens.modalLabels,
-      elevation: 0,
-      shadowColor: Colors.transparent,
-      surfaceTintColor: Colors.transparent,
-      titleSpacing: 0,
-      leadingWidth: 0,
-      title: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Left: always "Menu" label
-            const Text(
-              'Menu',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                height: 20 / 14,
-                letterSpacing: 0,
-                color: FigmaTokens.modalLabels,
+    //
+    // Deliberately NOT a real AppBar here — nesting an actual AppBar inside
+    // the Column below (alongside the purple top bar) corrupted the
+    // semantics tree ('!semantics.parentDataDirty' assertion flood) and
+    // rendered a blank body. AppBar expects to be the sole widget handed
+    // to Scaffold's `appBar:` slot, not nested under another widget, so
+    // this replicates the same visuals with plain Material/Row instead.
+    final menuBar = Material(
+      color: Colors.white,
+      child: SizedBox(
+        height: 48,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Left: always "Menu" label
+              const Text(
+                'Menu',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 20 / 14,
+                  letterSpacing: 0,
+                  color: FigmaTokens.modalLabels,
+                ),
               ),
-            ),
-            // Right: always hamburger icon
-            Builder(
-              builder: (ctx) => GestureDetector(
-                onTap: () => Scaffold.of(ctx).openDrawer(),
-                child: SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: Center(
-                    child: Icon(
-                      Icons.menu_rounded,
-                      size: 20,
-                      color: FigmaTokens.noteBodyText,
+              // Right: always hamburger icon
+              Builder(
+                builder: (ctx) => GestureDetector(
+                  onTap: () => Scaffold.of(ctx).openDrawer(),
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Center(
+                      child: Icon(
+                        Icons.menu_rounded,
+                        size: 20,
+                        color: FigmaTokens.noteBodyText,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-      actions: const [],
-      // Use the caller's bottom widget if provided (e.g. a tab bar on the
-      // catalog page); otherwise render a thin 1px divider to separate the
-      // white bar from the page body.
-      bottom: bottom ??
-          PreferredSize(
-            preferredSize: const Size.fromHeight(1),
-            child: Container(height: 1, color: FigmaTokens.cardBorders),
-          ),
     );
+
+    // Use the caller's bottom widget if provided (e.g. a tab bar on the
+    // catalog page); otherwise render a thin 1px divider to separate the
+    // white bar from the page body.
+    final bottomWidget = bottom ?? Container(height: 1, color: FigmaTokens.cardBorders);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildMobileTopBar(context, ref),
         menuBar,
+        bottomWidget,
       ],
     );
   }
