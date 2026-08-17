@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -49,7 +50,8 @@ class _Body extends StatelessWidget {
         return const Center(child: CircularProgressIndicator(color: _purple));
       case DataProviderState.error:
         return _ErrorView(
-          message: friendlyErrorMessage(state.error, 'Unable to load in-progress courses.'),
+          message: friendlyErrorMessage(
+              state.error, 'Unable to load in-progress courses.'),
           onRetry: () => notifier.fetch(),
         );
       case DataProviderState.data:
@@ -58,7 +60,8 @@ class _Body extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-              child: _Header(count: state.totalCourses, title: 'In-Progress Courses'),
+              child: _Header(
+                  count: state.totalCourses, title: 'In-Progress Courses'),
             ),
             Expanded(
               child: RefreshIndicator(
@@ -171,20 +174,24 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ─── Table header row ───────────────────────────────────────────────────────
+// ─── Table header row ────────────────────────────────────────────────────────
+//
+// Mobile : #  |  BRIDGEWORK (title + class + date inline)  |  STATUS
+// Desktop: #  |  BRIDGEWORK (title + class only)  |  DUE DATE  |  STATUS
 
 class _TableHeaderRow extends StatelessWidget {
   const _TableHeaderRow();
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = Responsive.isTablet(context);
     final style = GoogleFonts.inter(
       color: const Color(0xFF9CA3AF),
       fontSize: 12,
       fontWeight: FontWeight.w600,
       letterSpacing: 0.5,
     );
-    // Design ref: grid-cols-[2rem_1fr_90px] "# | Bridgework | Status"
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: const BoxDecoration(
@@ -195,10 +202,19 @@ class _TableHeaderRow extends StatelessWidget {
         children: [
           SizedBox(width: 36, child: Text('#', style: style)),
           Expanded(child: Text('BRIDGEWORK', style: style)),
+          // Desktop only: separate DUE DATE column
+          if (isDesktop) ...[
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 140,
+              child: Text('DUE DATE', style: style),
+            ),
+          ],
           const SizedBox(width: 12),
           SizedBox(
-              width: 100,
-              child: Text('STATUS', style: style, textAlign: TextAlign.center)),
+            width: 100,
+            child: Text('STATUS', style: style, textAlign: TextAlign.center),
+          ),
         ],
       ),
     );
@@ -219,6 +235,8 @@ class _CourseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = Responsive.isTablet(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: showDivider
@@ -229,7 +247,7 @@ class _CourseRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // #
+          // ── # ──────────────────────────────────────────────────────
           SizedBox(
             width: 36,
             child: Text(
@@ -241,7 +259,10 @@ class _CourseRow extends StatelessWidget {
               ),
             ),
           ),
-          // Course Details: title + category · due date
+
+          // ── BRIDGEWORK ─────────────────────────────────────────────
+          // Mobile:  title + class type + date all inline
+          // Desktop: title + class type only (date moves to its own col)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,45 +278,66 @@ class _CourseRow extends StatelessWidget {
                     height: 1.35,
                   ),
                 ),
-                if (item.className.isNotEmpty || item.date.isNotEmpty) ...[
+                if (item.className.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
+                  Text(
+                    item.className,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF9CA3AF),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+                // Mobile only: date shown inline below class type
+                if (!isDesktop && item.date.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Row(
                     children: [
-                      if (item.className.isNotEmpty)
-                        Text(
-                          item.className,
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF9CA3AF),
-                            fontSize: 12,
-                          ),
+                      const Icon(Icons.calendar_today_rounded,
+                          size: 10, color: _purple),
+                      const SizedBox(width: 4),
+                      Text(
+                        item.date,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF6B7280),
+                          fontSize: 12,
                         ),
-                      if (item.className.isNotEmpty && item.date.isNotEmpty)
-                        Text(
-                          '  ·  ',
-                          style: GoogleFonts.inter(
-                              color: const Color(0xFFD1D5DB), fontSize: 12),
-                        ),
-                      if (item.date.isNotEmpty) ...[
-                        const Icon(Icons.calendar_today_rounded,
-                            size: 10, color: _purple),
-                        const SizedBox(width: 4),
-                        Text(
-                          item.date,
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF6B7280),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ],
               ],
             ),
           ),
+
+          // ── DUE DATE — desktop only, own column ────────────────────
+          if (isDesktop) ...[
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 140,
+              child: item.date.isNotEmpty
+                  ? Row(
+                      children: [
+                        const Icon(Icons.calendar_today_rounded,
+                            size: 12, color: _purple),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            item.date,
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF6B7280),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+
+          // ── STATUS pill ────────────────────────────────────────────
           const SizedBox(width: 12),
-          // Status pill — "In Progress" purple badge
           SizedBox(
             width: 100,
             child: Center(
@@ -344,12 +386,14 @@ class _EmptyState extends StatelessWidget {
                 color: const Color(0xFFF0ECFF),
                 borderRadius: BorderRadius.circular(50),
               ),
-              child: const Icon(Icons.play_circle_outline, color: _purple, size: 52),
+              child: const Icon(Icons.play_circle_outline,
+                  color: _purple, size: 52),
             ),
             const SizedBox(height: 24),
             const Text(
               'No In-Progress Courses',
-              style: TextStyle(color: _ink, fontSize: 20, fontWeight: FontWeight.w900),
+              style: TextStyle(
+                  color: _ink, fontSize: 20, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -379,7 +423,9 @@ class _ErrorView extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, color: _muted, size: 48),
             const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: _muted)),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: _muted)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               RetryButton(onRetry: onRetry!, errorMessage: message),
