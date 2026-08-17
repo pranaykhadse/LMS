@@ -113,16 +113,15 @@ class _Body extends StatelessWidget {
                                 SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: Responsive.columns(
                                 context,
-                                phone: 2,
+                                phone: 1,
                                 tablet: 3,
                                 desktop: 4,
                               ),
                               crossAxisSpacing: 14,
                               mainAxisSpacing: 14,
-                              // Phone: 340 overflowed by 14px on a 3-line
-                              // title + info row + button (same as the
-                              // enrolled/completed course cards).
-                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 354,
+                              // Phone: single-column — card is full-width
+                              // so less vertical space is needed.
+                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 320,
                             ),
                             itemCount: state.courses.length,
                             itemBuilder: (ctx, i) =>
