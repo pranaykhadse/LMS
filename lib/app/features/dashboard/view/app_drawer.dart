@@ -300,14 +300,18 @@ class _SubItem {
 /// sub-items appear inline (behind a purple left accent line) instead of
 /// in a separate floating card, matching the reference design.
 ///
-/// Groups use the real ExpansionTile completely unmodified (no
-/// backgroundColor/shape/clipBehavior on it - that combination, even
-/// with ExpansionTile's own internal animation, still produced the
-/// '!semantics.parentDataDirty' assertion flood). The box styling comes
-/// from a plain outer Container instead, colored via a simple bool state
-/// set from ExpansionTile's own onExpansionChanged callback - no custom
-/// RenderObject-affecting properties touch ExpansionTile itself.
-class _DrawerItem extends StatefulWidget {
+/// Groups use the real ExpansionTile completely unmodified - no
+/// decoration properties on it, and critically no onExpansionChanged
+/// callback calling setState on an ancestor either. That coupling (an
+/// outer widget reacting to ExpansionTile's own internal animation via
+/// setState mid-callback) was the actual cause of the repeated
+/// '!semantics.parentDataDirty' / "BoxConstraints forces an infinite
+/// height" crashes - a classic layout-during-layout reentrancy bug, not
+/// anything about the animation technique itself. The wrapping box's
+/// color now depends only on `selected` (the navigation prop, which
+/// doesn't change mid-tap) - zero feedback from ExpansionTile back to
+/// this widget.
+class _DrawerItem extends StatelessWidget {
   const _DrawerItem({
     required this.icon,
     required this.label,
@@ -322,45 +326,29 @@ class _DrawerItem extends StatefulWidget {
   final List<_SubItem> children;
 
   @override
-  State<_DrawerItem> createState() => _DrawerItemState();
-}
-
-class _DrawerItemState extends State<_DrawerItem> {
-  // Reinitialized fresh whenever ExpansionTile's key below changes (i.e.
-  // whenever `selected` changes), since that recreates this whole State.
-  late bool _expanded = widget.selected;
-
-  @override
   Widget build(BuildContext context) {
-    if (widget.children.isNotEmpty) {
+    if (children.isNotEmpty) {
       return Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
         decoration: BoxDecoration(
-          color: _expanded ? _activeBg : Colors.white,
-          border: Border.all(color: _expanded ? _activeBorder : FigmaTokens.cardBorders),
+          color: selected ? _activeBg : Colors.white,
+          border: Border.all(color: selected ? _activeBorder : FigmaTokens.cardBorders),
           borderRadius: BorderRadius.circular(10),
         ),
-        // No clipBehavior here (unlike the leaf-item box below) - clipping
-        // a container whose height changes as ExpansionTile's internal
-        // animation runs is the same category of bug already ruled out
-        // for the sub-items row itself; a static-height leaf box is fine
-        // to clip, this animating one isn't worth the risk for a purely
-        // cosmetic ripple-corner trim.
         child: Theme(
           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
-            key: ValueKey('drawer-group-${widget.label}-${widget.selected}'),
-            initiallyExpanded: widget.selected,
-            onExpansionChanged: (value) => setState(() => _expanded = value),
+            key: ValueKey('drawer-group-$label-$selected'),
+            initiallyExpanded: selected,
             tilePadding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             childrenPadding: EdgeInsets.zero,
-            leading: Icon(widget.icon, size: 20, color: widget.selected ? _purple : _navy),
+            leading: Icon(icon, size: 20, color: selected ? _purple : _navy),
             title: Text(
-              widget.label,
+              label,
               style: TextStyle(
-                color: widget.selected ? _purple : const Color(0xFF23292F),
+                color: selected ? _purple : const Color(0xFF23292F),
                 fontSize: 15,
-                fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w600,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
               ),
             ),
             iconColor: _chevron,
@@ -379,7 +367,7 @@ class _DrawerItemState extends State<_DrawerItem> {
                     Expanded(
                       child: Column(
                         children: [
-                          for (final sub in widget.children) _SubTile(sub: sub),
+                          for (final sub in children) _SubTile(sub: sub),
                         ],
                       ),
                     ),
@@ -394,27 +382,26 @@ class _DrawerItemState extends State<_DrawerItem> {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       decoration: BoxDecoration(
-        color: widget.selected ? _activeBg : Colors.white,
-        border: Border.all(
-            color: widget.selected ? _activeBorder : FigmaTokens.cardBorders),
+        color: selected ? _activeBg : Colors.white,
+        border: Border.all(color: selected ? _activeBorder : FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(10),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: widget.onTap,
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              Icon(widget.icon, size: 20, color: widget.selected ? _purple : _navy),
+              Icon(icon, size: 20, color: selected ? _purple : _navy),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
-                  widget.label,
+                  label,
                   style: TextStyle(
-                    color: widget.selected ? _purple : const Color(0xFF23292F),
+                    color: selected ? _purple : const Color(0xFF23292F),
                     fontSize: 15,
-                    fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w600,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                   ),
                 ),
               ),
