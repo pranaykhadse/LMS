@@ -402,6 +402,14 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       val ? 'Offline mode enabled' : 'Back to online mode');
                 },
               ),
+              LmsAppBarButton(
+                icon: Icons.play_arrow_rounded,
+                iconSize: 14,
+                boxSize: 30,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const LearningProgressPage()),
+                ),
+              ),
               SizedBox(
                 width: 30,
                 height: 30,

@@ -434,6 +434,15 @@ class _PointsBanner extends StatelessWidget {
 
 const _explainerTitle = Color(0xFFB0006D);
 
+// Fractional x-position and y-offset (0 = top, 1 = bottom) for each step,
+// forming the zigzag "staircase" layout on tablet/desktop.
+const _steps = [
+  _Step(Icons.how_to_reg_rounded, 'Register for\na course', 0.10, 0.78),
+  _Step(Icons.school_outlined, 'Complete learning\nevents', 0.37, 0.78),
+  _Step(Icons.emoji_events_outlined, 'Earn Points', 0.64, 0.18),
+  _Step(Icons.redeem_outlined, 'Get rewards for\nyour points', 0.90, 0.78),
+];
+
 class _PointSystemExplainer extends StatelessWidget {
   const _PointSystemExplainer();
 
@@ -457,49 +466,45 @@ class _PointSystemExplainer extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 36),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final width = constraints.maxWidth;
-                  const height = 190.0;
-                  // Fractional x-position and y-offset (0 = top, 1 = bottom)
-                  // for each step, forming the zigzag "staircase" layout.
-                  const steps = [
-                    _Step(Icons.how_to_reg_rounded, 'Register for\na course', 0.10, 0.78),
-                    _Step(Icons.school_outlined, 'Complete learning\nevents', 0.37, 0.78),
-                    _Step(Icons.emoji_events_outlined, 'Earn Points', 0.64, 0.18),
-                    _Step(Icons.redeem_outlined, 'Get rewards for\nyour points', 0.90, 0.78),
-                  ];
-                  final points = [
-                    for (final s in steps) Offset(s.xFraction * width, s.yFraction * height)
-                  ];
-                  return SizedBox(
-                    width: width,
-                    height: height,
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: CustomPaint(painter: _StepConnectorPainter(points)),
-                        ),
-                        for (var i = 0; i < steps.length; i++)
-                          Positioned(
-                            // Clamped so the 120px-wide label can't spill
-                            // past the available width on a narrow phone
-                            // screen (the 0.90-fraction step was getting
-                            // clipped on the right edge before this).
-                            left: (points[i].dx - 60).clamp(0.0, width - 120),
-                            top: points[i].dy - 28,
-                            width: 120,
-                            child: _StepBadge(
-                              icon: steps[i].icon,
-                              label: steps[i].label,
-                              labelAbove: steps[i].yFraction < 0.5,
-                            ),
+              if (!Responsive.isTablet(context))
+                // Phone: the zigzag diagram's 4 fixed-fraction, 120px-wide
+                // labels can't fit a ~300px-wide canvas without overlapping
+                // each other (not just clipping at the edges - the 0.10 and
+                // 0.37 steps' boxes overlapped directly). A simple vertical
+                // list sidesteps all of that.
+                const _PointSystemStepList(steps: _steps)
+              else
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth;
+                    const height = 190.0;
+                    final points = [
+                      for (final s in _steps) Offset(s.xFraction * width, s.yFraction * height)
+                    ];
+                    return SizedBox(
+                      width: width,
+                      height: height,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: CustomPaint(painter: _StepConnectorPainter(points)),
                           ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                          for (var i = 0; i < _steps.length; i++)
+                            Positioned(
+                              left: (points[i].dx - 60).clamp(0.0, width - 120),
+                              top: points[i].dy - 28,
+                              width: 120,
+                              child: _StepBadge(
+                                icon: _steps[i].icon,
+                                label: _steps[i].label,
+                                labelAbove: _steps[i].yFraction < 0.5,
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
             ],
           ),
         ),
@@ -514,6 +519,51 @@ class _Step {
   final String label;
   final double xFraction;
   final double yFraction;
+}
+
+/// Phone-only replacement for the zigzag diagram: a simple vertical list,
+/// icon left + label right, each step in sequence with no overlap risk.
+class _PointSystemStepList extends StatelessWidget {
+  const _PointSystemStepList({required this.steps});
+  final List<_Step> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < steps.length; i++) ...[
+          if (i > 0) const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE4D9EF), width: 1.5),
+                ),
+                alignment: Alignment.center,
+                child: Icon(steps[i].icon, color: _purple, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  steps[i].label.replaceAll('\n', ' '),
+                  style: const TextStyle(
+                    color: _ink,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _StepBadge extends StatelessWidget {
