@@ -433,10 +433,30 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 onSelected: (value) => _onProfileMenuSelected(context, ref, value),
                 itemBuilder: (context) => _profileMenuItems(profile),
                 padding: EdgeInsets.zero,
-                child: LmsAvatar(
-                  profile: profile,
-                  radius: 14,
-                  fallbackColor: _appPurple,
+                // Phone-only: avatar sits inside a small rounded box with a
+                // dropdown chevron, instead of desktop's bare avatar + name.
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 6, 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      LmsAvatar(
+                        profile: profile,
+                        radius: 12,
+                        fallbackColor: _appPurple,
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
