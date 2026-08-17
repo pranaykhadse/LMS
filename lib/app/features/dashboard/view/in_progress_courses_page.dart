@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
@@ -11,7 +10,6 @@ import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
-import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/dashboard/repository/continue_learning_list_repository.dart';
 import 'package:lms/app/features/dashboard/viewmodel/continue_learning_list_view_model.dart';
 
@@ -30,7 +28,7 @@ class InProgressCoursesPage extends ConsumerWidget {
 
     return AppScaffold(
       backgroundColor: _bg,
-      title: 'Course in Progress',
+      title: 'In-Progress Courses',
       selectedSubLabel: 'Continue Learning',
       onRefresh: () => notifier.fetch(page: state.page),
       body: _Body(state: state, notifier: notifier),
@@ -60,7 +58,7 @@ class _Body extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
-              child: _Header(count: state.totalCourses, title: 'Course in Progress'),
+              child: _Header(count: state.totalCourses, title: 'In-Progress Courses'),
             ),
             Expanded(
               child: RefreshIndicator(
@@ -186,7 +184,7 @@ class _TableHeaderRow extends StatelessWidget {
       fontWeight: FontWeight.w600,
       letterSpacing: 0.5,
     );
-    // Design ref: grid-cols-[2rem_1fr_90px_80px] "# | Bridgework | Status | Action"
+    // Design ref: grid-cols-[2rem_1fr_90px] "# | Bridgework | Status"
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: const BoxDecoration(
@@ -196,15 +194,11 @@ class _TableHeaderRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(width: 36, child: Text('#', style: style)),
-          Expanded(child: Text('COURSE DETAILS', style: style)),
+          Expanded(child: Text('BRIDGEWORK', style: style)),
           const SizedBox(width: 12),
           SizedBox(
               width: 100,
               child: Text('STATUS', style: style, textAlign: TextAlign.center)),
-          const SizedBox(width: 12),
-          SizedBox(
-              width: 90,
-              child: Text('ACTION', style: style, textAlign: TextAlign.center)),
         ],
       ),
     );
@@ -309,7 +303,7 @@ class _CourseRow extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEBEBFF), // bg-[#ebebff]
+                  color: const Color(0xFFEBEBFF),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -319,35 +313,6 @@ class _CourseRow extends StatelessWidget {
                     color: const Color(0xFF5B5BD6),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Resume action button
-          SizedBox(
-            width: 90,
-            child: Center(
-              child: GestureDetector(
-                onTap: () => Modular.to.pushNamed(
-                  CoursesModule.construct(
-                      '${CoursesModule.detail}/${item.courseId}'),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _purple,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'Resume',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
                   ),
                 ),
               ),
