@@ -291,7 +291,7 @@ class _DrawerHeader extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              'Training  Pipeline',
+              'Leadership Edge Live',
               style: TextStyle(
                 color: _purple,
                 fontSize: 20,
