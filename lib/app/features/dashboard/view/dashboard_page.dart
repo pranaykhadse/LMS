@@ -787,7 +787,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
       // content has no thumbnail so it needs far less height. Bumped to
       // 242 - 239 overflowed by 2px in the rendered app (font-metrics
       // rounding, same as the desktop 284 above).
-      height: isTablet ? 284 : 242,
+      height: isTablet ? 286 : 242,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -802,7 +802,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
           // border-b border-gray-100 - text-base font-semibold
           // text-gray-500 uppercase / text-xs font-semibold text-[#693D94]
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            padding: EdgeInsets.fromLTRB(20, isTablet ? 18 : 16, 20, 12),
             decoration: BoxDecoration(
               color: headerBg,
               border: Border(bottom: BorderSide(color: headerBorder)),
