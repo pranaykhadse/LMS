@@ -94,50 +94,67 @@ class _Body extends StatelessWidget {
                         children: [
                           Padding(
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'My Development Plan',
-                                  style: TextStyle(
-                                    color: _titleColor,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
+                            child: Builder(builder: (context) {
+                              final title = const Text(
+                                'My Development Plan',
+                                style: TextStyle(
+                                  color: _titleColor,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              );
+                              final addButton = HoverBuilder(
+                                builder: (context, hovering) =>
+                                    ElevatedButton.icon(
+                                  onPressed: () => _showAddPlanItemDialog(
+                                      context, notifier),
+                                  icon: const Icon(Icons.add_rounded,
+                                      size: 18),
+                                  label: Transform.translate(
+                                    offset: const Offset(0, -1),
+                                    child: const Text(
+                                        'Add Custom Plan Item'),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: hovering
+                                        ? FigmaTokens.purpleHover
+                                        : _purple,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    minimumSize: const Size(0, 40),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(8),
+                                    ),
+                                    textStyle: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13),
                                   ),
                                 ),
-                                HoverBuilder(
-                                  builder: (context, hovering) =>
-                                      ElevatedButton.icon(
-                                    onPressed: () => _showAddPlanItemDialog(
-                                        context, notifier),
-                                    icon: const Icon(Icons.add_rounded,
-                                        size: 18),
-                                    label: Transform.translate(
-                                      offset: const Offset(0, -1),
-                                      child: const Text(
-                                          'Add Custom Plan Item'),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: hovering
-                                          ? FigmaTokens.purpleHover
-                                          : _purple,
-                                      foregroundColor: Colors.white,
-                                      elevation: 0,
-                                      minimumSize: const Size(0, 40),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(8),
-                                      ),
-                                      textStyle: const TextStyle(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              );
+                              // Phone: "Add Custom Plan Item" doesn't fit
+                              // next to the title in a Row (overflowed by
+                              // 38px) - stack title above a full-width
+                              // button instead.
+                              if (!Responsive.isTablet(context)) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    title,
+                                    const SizedBox(height: 12),
+                                    SizedBox(
+                                        width: double.infinity,
+                                        child: addButton),
+                                  ],
+                                );
+                              }
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [title, addButton],
+                              );
+                            }),
                           ),
                           if (state.courses.isEmpty)
                             const Padding(
