@@ -380,37 +380,42 @@ class _DrawerItemState extends State<_DrawerItem> {
             ),
           ),
           if (hasChildren)
-            // AnimatedCrossFade instead of an instant conditional insert -
+            // AnimatedSize instead of an instant conditional insert -
             // toggling this InkWell used to swap a whole subtree into the
             // tree within the same tap's hit-test frame, which corrupted
             // the semantics tree ('!semantics.parentDataDirty' assertion
-            // flood + "Cannot hit test a render box with no size"). This
-            // is the same safe transition ExpansionTile uses internally.
-            AnimatedCrossFade(
+            // flood + "Cannot hit test a render box with no size").
+            // AnimatedCrossFade was tried first but its internal Stack +
+            // AnimatedOpacity produced its own layout failure
+            // ("RenderAnimatedOpacity was not laid out") in this
+            // Column/Drawer context - AnimatedSize is the simpler
+            // single-child RenderObject ExpansionTile itself uses.
+            AnimatedSize(
               duration: const Duration(milliseconds: 180),
-              crossFadeState:
-                  _expanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
-              firstChild: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      width: 2,
-                      margin: const EdgeInsets.only(right: 12),
-                      color: _purple,
-                    ),
-                    Expanded(
-                      child: Column(
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: _expanded
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          for (final sub in widget.children) _SubTile(sub: sub),
+                          Container(
+                            width: 2,
+                            margin: const EdgeInsets.only(right: 12),
+                            color: _purple,
+                          ),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                for (final sub in widget.children) _SubTile(sub: sub),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              secondChild: const SizedBox(width: double.infinity),
+                    )
+                  : const SizedBox(width: double.infinity),
             ),
         ],
       ),
