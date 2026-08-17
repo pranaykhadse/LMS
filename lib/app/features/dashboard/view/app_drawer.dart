@@ -13,6 +13,8 @@ const _purple = FigmaTokens.primaryPurple;
 const _muted = FigmaTokens.noteBodyText;
 const _navy = FigmaTokens.cardTitles;
 const _chevron = Color(0xFF98A2B3);
+const _activeBg = Color(0xFFF3ECFB);
+const _activeBorder = Color(0xFFDCC9F2);
 
 bool _watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -293,99 +295,112 @@ class _SubItem {
   final bool selected;
 }
 
-class _DrawerItem extends StatelessWidget {
+/// Every top-level item — group or leaf — sits in its own bordered,
+/// rounded box. A group's box fills with a light purple tint and its
+/// sub-items appear inline (behind a purple left accent line) instead of
+/// in a separate floating card, matching the reference design.
+class _DrawerItem extends StatefulWidget {
   const _DrawerItem({
     required this.icon,
     required this.label,
     this.selected = false,
-    this.trailing = false,
     this.onTap,
     this.children = const [],
   });
   final IconData icon;
   final String label;
   final bool selected;
-  final bool trailing;
   final VoidCallback? onTap;
   final List<_SubItem> children;
 
   @override
+  State<_DrawerItem> createState() => _DrawerItemState();
+}
+
+class _DrawerItemState extends State<_DrawerItem> {
+  late bool _expanded = widget.selected;
+
+  @override
+  void didUpdateWidget(_DrawerItem old) {
+    super.didUpdateWidget(old);
+    // Mirrors the old ExpansionTile+ValueKey(selected) approach: expansion
+    // state fully resets to match `selected` whenever it changes, in
+    // either direction (auto-expand when navigated to, auto-collapse
+    // when navigated away from).
+    if (widget.selected != old.selected) {
+      setState(() => _expanded = widget.selected);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (children.isNotEmpty) {
-      return Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          key: ValueKey('drawer-group-$label-$selected'),
-          initiallyExpanded: selected,
-          tilePadding: const EdgeInsets.fromLTRB(24, 0, 20, 0),
-          childrenPadding: EdgeInsets.zero,
-          leading: Icon(icon, size: 21, color: selected ? _purple : _navy),
-          title: Text(
-            label,
-            style: TextStyle(
-              color: selected ? _purple : const Color(0xFF23292F),
-              fontSize: 15,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+    final hasChildren = widget.children.isNotEmpty;
+    final active = widget.selected;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      decoration: BoxDecoration(
+        color: active ? _activeBg : Colors.white,
+        border: Border.all(color: active ? _activeBorder : FigmaTokens.cardBorders),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: hasChildren
+                ? () => setState(() => _expanded = !_expanded)
+                : widget.onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(widget.icon, size: 20, color: active ? _purple : _navy),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      widget.label,
+                      style: TextStyle(
+                        color: active ? _purple : const Color(0xFF23292F),
+                        fontSize: 15,
+                        fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  if (hasChildren)
+                    Icon(
+                      _expanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: _chevron,
+                    ),
+                ],
+              ),
             ),
           ),
-          iconColor: _chevron,
-          collapsedIconColor: _chevron,
-          children: [
-            Container(
-              margin: const EdgeInsets.fromLTRB(44, 2, 16, 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x26000000),
-                    blurRadius: 18,
-                    offset: Offset(0, 8),
+          if (hasChildren && _expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    width: 2,
+                    margin: const EdgeInsets.only(right: 12),
+                    color: _purple,
+                  ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        for (final sub in widget.children) _SubTile(sub: sub),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var i = 0; i < children.length; i++) ...[
-                    if (i > 0)
-                      const Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: Color(0xFFF0F1F4),
-                      ),
-                    _SubTile(sub: children[i]),
-                  ],
-                ],
-              ),
             ),
-          ],
-        ),
-      );
-    }
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 14, 20, 14),
-        child: Row(
-          children: [
-            Icon(icon, size: 21, color: selected ? _purple : _navy),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: selected ? _purple : const Color(0xFF23292F),
-                  fontSize: 15,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                ),
-              ),
-            ),
-            if (trailing)
-              const Icon(Icons.arrow_forward_ios, size: 13, color: _chevron),
-          ],
-        ),
+        ],
       ),
     );
   }
