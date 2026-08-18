@@ -17,7 +17,6 @@ import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/features/courses/repository/redirect_login_repository.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
@@ -996,19 +995,14 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     }
   }
 
-  /// GET user-profile/redirect-login-link?redirectUrl=<contentUrl> returns
-  /// a `login_link` that auto-logs the current user in and redirects to
-  /// contentUrl - loading that in the WebView instead of contentUrl
-  /// directly is what makes Attend Class open already authenticated rather
-  /// than showing the website's login form (LMS-LE-001).
+  /// Opens the virtual class URL in the in-app WebView, auto-logged in via
+  /// redirect-login-link so the learner doesn't see the website login form.
   Future<void> _attendClass(String contentUrl, String title) async {
-    final loginLink = await ref
-        .read(RedirectLoginRepository.provider)
-        .getLoginLink(contentUrl);
     if (!mounted) return;
-    await InAppWebViewPage.show(
+    await InAppWebViewPage.showWithAuth(
       context,
-      url: loginLink ?? contentUrl,
+      ref,
+      url: contentUrl,
       title: title,
     );
   }
