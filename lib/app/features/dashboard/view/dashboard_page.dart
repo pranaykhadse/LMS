@@ -135,13 +135,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         // Show supervisor first if it should be shown (or forced)
         if (forceShowModals || (supState.state == DataProviderState.data && supState.data != null && supState.data!.shouldShow)) {
             print('[DashboardPage] showing supervisor modal (force=$forceShowModals)');
-            final confirmed = await showGeneralDialog<bool?>(
+            print('[DashboardPage] calling showDialog for supervisor');
+            final confirmed = await showDialog<bool?>(
               context: context,
+              useRootNavigator: true,
               barrierDismissible: false,
               barrierLabel: 'supervisor-dialog',
               barrierColor: Colors.transparent,
-              transitionDuration: const Duration(milliseconds: 200),
-              pageBuilder: (ctx, anim1, anim2) {
+              builder: (ctx) {
                 return Stack(
                   children: [
                     Positioned.fill(
@@ -165,13 +166,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         // Then show mentor modal if it should be shown (or forced)
         if (forceShowModals || (mentState.state == DataProviderState.data && mentState.data != null && mentState.data!.shouldShow)) {
             print('[DashboardPage] showing mentor modal (force=$forceShowModals)');
-            final confirmed = await showGeneralDialog<bool?>(
+            print('[DashboardPage] calling showDialog for mentor');
+            final confirmed = await showDialog<bool?>(
               context: context,
+              useRootNavigator: true,
               barrierDismissible: false,
               barrierLabel: 'mentor-dialog',
               barrierColor: Colors.transparent,
-              transitionDuration: const Duration(milliseconds: 200),
-              pageBuilder: (ctx, anim1, anim2) {
+              builder: (ctx) {
                 return Stack(
                   children: [
                     Positioned.fill(
