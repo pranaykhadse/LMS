@@ -120,8 +120,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         final mentState = ref.read(MentorViewModel.provider);
         print('[DashboardPage] supervisor state=${supState.state}, mentor state=${mentState.state}');
 
+        // TESTING OVERRIDE: force modals to show irrespective of shouldShow
+        // Set to false to restore normal behavior
+        final forceShowModals = true;
+
         // Show supervisor first if it should be shown
-        if (supState.state == DataProviderState.data && supState.data != null && supState.data!.shouldShow) {
+        if (supState.state == DataProviderState.data && supState.data != null && (supState.data!.shouldShow || forceShowModals)) {
           if (ModalRoute.of(context)?.isCurrent ?? true) {
             final confirmed = await showGeneralDialog<bool?>(
               context: context,
@@ -153,7 +157,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         }
 
         // Then show mentor modal if it should be shown
-        if (mentState.state == DataProviderState.data && mentState.data != null && mentState.data!.shouldShow) {
+        if (mentState.state == DataProviderState.data && mentState.data != null && (mentState.data!.shouldShow || forceShowModals)) {
           if (ModalRoute.of(context)?.isCurrent ?? true) {
             final confirmed = await showGeneralDialog<bool?>(
               context: context,
