@@ -125,9 +125,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         print('[DashboardPage] mentor provider state after fetch: state=${mState.state}, data=${mState.data}');
         if (kDebugMode) debugPrint('[DashboardPage] mentor provider state after fetch: state=${mState.state}, data=${mState.data}');
 
-        if (mState.state == DataProviderState.data && mState.data != null && mState.data!.shouldShow) {
-          print('[DashboardPage] mentor modal shouldShow=true — showing dialog with data: ${mState.data!.toString()}');
-          if (kDebugMode) debugPrint('[DashboardPage] mentor modal shouldShow=true — showing dialog with data: ${mState.data!.toString()}');
+        // FORCE-SHOW FOR TESTING: show dialog whenever payload data is present
+        if (mState.state == DataProviderState.data && mState.data != null) {
+          print('[DashboardPage] (FORCE) showing mentor modal with data: ${mState.data!.toString()}');
+          if (kDebugMode) debugPrint('[DashboardPage] (FORCE) showing mentor modal with data: ${mState.data!.toString()}');
           // show dialog if not already showing
           if (ModalRoute.of(context)?.isCurrent ?? true) {
             showDialog(
@@ -137,8 +138,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             );
           }
         } else {
-          print('[DashboardPage] mentor modal not shown (shouldShow false or no data)');
-          if (kDebugMode) debugPrint('[DashboardPage] mentor modal not shown (shouldShow false or no data)');
+          print('[DashboardPage] mentor modal not shown (no data)');
+          if (kDebugMode) debugPrint('[DashboardPage] mentor modal not shown (no data)');
         }
       } catch (e) {
         print('[DashboardPage] error during mentor fetch/show flow: ${e.toString()}');
