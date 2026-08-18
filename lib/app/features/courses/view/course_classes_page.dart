@@ -17,6 +17,7 @@ import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/repository/redirect_login_repository.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
@@ -999,10 +1000,22 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
   /// redirect-login-link so the learner doesn't see the website login form.
   Future<void> _attendClass(String contentUrl, String title) async {
     if (!mounted) return;
-    await InAppWebViewPage.showWithAuth(
+    // Get the auto-login URL from the API. If it fails, fall back to the
+    // direct URL — the user may see a login form, but the class still opens.
+    String? loginLink;
+    try {
+      loginLink = await ref
+          .read(RedirectLoginRepository.provider)
+          .getLoginLink(contentUrl);
+    } catch (e) {
+      if (mounted) {
+        Toast.error(context, 'Could not get login link: $e');
+      }
+    }
+    if (!mounted) return;
+    await InAppWebViewPage.show(
       context,
-      ref,
-      url: contentUrl,
+      url: loginLink ?? contentUrl,
       title: title,
     );
   }
