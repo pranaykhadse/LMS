@@ -113,6 +113,7 @@ class UpcomingSession {
     required this.startTime,
     this.endTime,
     this.instructor,
+    this.virtualClassNumber,
   });
 
   final String courseId;
@@ -122,6 +123,8 @@ class UpcomingSession {
   final String? startTime;
   final String? endTime;
   final String? instructor;
+  /// e.g. 1 → shows "Virtual Class 1" badge next to the course name.
+  final int? virtualClassNumber;
 
   /// The API sends dates/times in UTC with no timezone marker, same as
   /// the Calendar endpoint - parsed as UTC and converted to local time so
@@ -142,6 +145,10 @@ class UpcomingSession {
         startTime: json['start_time']?.toString(),
         endTime: json['end_time']?.toString(),
         instructor: _nullableString(json['instructor']),
+        virtualClassNumber: json['virtual_class_number'] is int
+            ? json['virtual_class_number'] as int
+            : int.tryParse(
+                json['virtual_class_number']?.toString() ?? ''),
       );
 }
 

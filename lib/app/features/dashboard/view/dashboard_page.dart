@@ -1202,17 +1202,17 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final upcoming = widget.sessions
-        .map(_toCalendarEvent)
-        .whereType<CalendarEvent>()
-        .where((e) => e.startDateTime.isAfter(now))
+    // Keep UpcomingSession alongside its CalendarEvent so virtualClassNumber
+    // can be passed to _SessionRow without routing through CalendarEvent.
+    final upcomingPairs = widget.sessions
+        .map((s) => (session: s, event: _toCalendarEvent(s)))
+        .where((p) => p.event != null)
+        .where((p) => p.event!.startDateTime.isAfter(now))
         .toList()
-      ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
-    // No expand/collapse toggle - matches the reference (a fixed 2-session
-    // list, no arrow), and keeps this card's height matched to Continue
-    // Learning's fixed 284px instead of growing with the session count.
+      ..sort((a, b) =>
+          a.event!.startDateTime.compareTo(b.event!.startDateTime));
     const collapsedCount = 2;
-    final visible = upcoming.take(collapsedCount).toList();
+    final visible = upcomingPairs.take(collapsedCount).toList();
     final isTablet = Responsive.isTablet(context);
 
     return Container(
@@ -1250,7 +1250,10 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
           else
             for (var i = 0; i < visible.length; i++) ...[
               if (i > 0) const SizedBox(height: 12),
-              _SessionRow(event: visible[i]),
+              _SessionRow(
+                event: visible[i].event!,
+                virtualClassNumber: visible[i].session.virtualClassNumber,
+              ),
             ],
         ],
       ),
@@ -1259,8 +1262,9 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
 }
 
 class _SessionRow extends StatelessWidget {
-  const _SessionRow({required this.event});
+  const _SessionRow({required this.event, this.virtualClassNumber});
   final CalendarEvent event;
+  final int? virtualClassNumber;
 
   String _formatDate(DateTime dt) {
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -1287,7 +1291,7 @@ class _SessionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTablet = Responsive.isTablet(context);
-    final title = Text(
+    final titleText = Text(
       event.courseName.isNotEmpty ? event.courseName : event.title,
       style: GoogleFonts.inter(
         color: isTablet ? const Color(0xFF1F2937) : const Color(0xFF1E2939),
@@ -1296,6 +1300,41 @@ class _SessionRow extends StatelessWidget {
         height: isTablet ? 1.4 : 22 / 16,
       ),
     );
+
+    // "Virtual Class N" badge — shown only when virtualClassNumber is set
+    // Treat 0 and negative values as not-present to avoid showing an empty/invalid
+    // badge; ensure we convert to string safely.
+    final int? _vcNum = virtualClassNumber;
+    final bool _showBadge = _vcNum != null && _vcNum > 0;
+
+    final badge = _showBadge
+        ? Container(
+            margin: const EdgeInsets.only(left: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0E8F7),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Virtual Class ${_vcNum.toString()}',
+              style: GoogleFonts.inter(
+                color: _purple,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          )
+        : null;
+
+    final title = _showBadge
+        ? Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Flexible(child: titleText),
+              badge!,
+            ],
+          )
+        : titleText;
     final dateRow = Row(
       children: [
         const Icon(LucideIcons.calendarDays, size: 10, color: _purple),
