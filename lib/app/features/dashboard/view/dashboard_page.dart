@@ -47,6 +47,8 @@ class DashboardPage extends ConsumerStatefulWidget {
 
 class _DashboardPageState extends ConsumerState<DashboardPage> {
   bool _redirectingUnauthorized = false;
+  // Ensure mentor dialog is only shown once per app session
+  bool _mentorDialogShown = false;
 
   void _refetchAll() {
     ref.read(LearningProgressViewModel.provider.notifier).fetch();
@@ -103,14 +105,20 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       });
     }
 
-    // Fetch mentor modal once per session if needed. The MentorViewModel
-    // caches the fetched state so this call is idempotent.
+    // Fetch mentor modal once per session if needed. Force-show modal for UI validation.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
+        // Ensure we only show the dialog once per session
+        if (_mentorDialogShown) {
+          if (kDebugMode) debugPrint('[DashboardPage] mentor dialog already shown this session');
+          return;
+        }
+
         final mentorState = ref.read(MentorViewModel.provider);
         print('[DashboardPage] initial mentorState: ${mentorState.state}');
         if (kDebugMode) debugPrint('[DashboardPage] initial mentorState: ${mentorState.state}');
-        // only trigger fetch when we have not yet fetched anything
+
+        // Trigger fetch if not already fetched
         if (mentorState.state != DataProviderState.data && mentorState.state != DataProviderState.loading) {
           print('[DashboardPage] requesting mentor fetchIfNeeded()');
           if (kDebugMode) debugPrint('[DashboardPage] requesting mentor fetchIfNeeded()');
@@ -125,21 +133,25 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         print('[DashboardPage] mentor provider state after fetch: state=${mState.state}, data=${mState.data}');
         if (kDebugMode) debugPrint('[DashboardPage] mentor provider state after fetch: state=${mState.state}, data=${mState.data}');
 
-        // FORCE-SHOW FOR TESTING: show dialog whenever payload data is present
+        // ALWAYS show the dialog for UI validation. If provider returned no data,
+        // construct a lightweight placeholder so the dialog fields are editable.
+        MentorModalData dataToShow;
         if (mState.state == DataProviderState.data && mState.data != null) {
-          print('[DashboardPage] (FORCE) showing mentor modal with data: ${mState.data!.toString()}');
-          if (kDebugMode) debugPrint('[DashboardPage] (FORCE) showing mentor modal with data: ${mState.data!.toString()}');
-          // show dialog if not already showing
-          if (ModalRoute.of(context)?.isCurrent ?? true) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (ctx) => _MentorConfirmDialog(data: mState.data!),
-            );
-          }
+          dataToShow = mState.data!;
         } else {
-          print('[DashboardPage] mentor modal not shown (no data)');
-          if (kDebugMode) debugPrint('[DashboardPage] mentor modal not shown (no data)');
+          dataToShow = const MentorModalData(visible: true, popupMonth: null, shouldShow: true, email: null, firstname: null, lastname: null);
+        }
+
+        // Mark shown so we don't repeatedly show on rebuilds
+        _mentorDialogShown = true;
+        print('[DashboardPage] (ALWAYS) showing mentor modal for UI validation with data: ${dataToShow.toString()}');
+
+        if (ModalRoute.of(context)?.isCurrent ?? true) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => _MentorConfirmDialog(data: dataToShow),
+          );
         }
       } catch (e) {
         print('[DashboardPage] error during mentor fetch/show flow: ${e.toString()}');
