@@ -30,6 +30,16 @@ class NotificationsRepository with RepoNetworkHelper {
   /// either case (see RepoNetworkHelper.isOffline), so this falls straight
   /// through to the cache without waiting on a real timeout. Only surfaces
   /// the error if there's nothing cached to fall back to.
+  /// POST lms-screen/notifications/mark-all-read
+  /// Marks all notifications belonging to the authenticated user as read.
+  Future<void> markAllRead() async {
+    await postRequest(
+      'lms-screen/notifications/mark-all-read',
+      body: {},
+      cacheType: RequestCacheType.none,
+    );
+  }
+
   Future<List<NotificationItem>> fetch({required int userId}) async {
     try {
       final items = await fetchAllPages<NotificationItem>(

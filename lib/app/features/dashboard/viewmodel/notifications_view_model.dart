@@ -87,13 +87,21 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
     return merged;
   }
 
-  void markAllAsRead() {
+  Future<void> markAllAsRead() async {
+    // Optimistic update — flip all to read in UI immediately.
     final updated = state.notifications
         .map((n) => n.copyWith(isRead: true))
         .toList();
     state = state.copyWith(notifications: updated);
     for (var i = 0; i < _localNotifications.length; i++) {
       _localNotifications[i] = _localNotifications[i].copyWith(isRead: true);
+    }
+    // Persist to backend — fire-and-forget (no-op if offline).
+    try {
+      await repository.markAllRead();
+    } catch (_) {
+      // Offline or server error — the optimistic update stays; the server
+      // will reflect it on the next successful fetch.
     }
   }
 
