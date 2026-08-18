@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:lms/app/core/core.dart';
 
 class CourseJoinDetail {
@@ -315,6 +316,16 @@ class CourseStructureItem {
         : <String, dynamic>{};
     String? contentUrl;
     String? downloadUrl;
+    // Debug: print raw fields for Certificate and Watch Video
+    if (typeCode == '12' || typeCode == '4') {
+      debugPrint('=== STRUCTURE ITEM DEBUG typeCode=$typeCode ===');
+      debugPrint('classMap keys: ${classMap.keys.toList()}');
+      debugPrint('classMap: $classMap');
+      debugPrint('contentMap keys: ${contentMap.keys.toList()}');
+      debugPrint('contentMap: $contentMap');
+      debugPrint('json keys: ${json.keys.toList()}');
+      debugPrint('============================================');
+    }
     switch (typeCode) {
       case '4': // Watch Video — videoUploadUrl lives in classMap, not contentMap
         contentUrl = _url(classMap['video_upload_url'])
