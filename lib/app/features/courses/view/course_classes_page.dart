@@ -17,7 +17,6 @@ import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
-import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/features/courses/repository/redirect_login_repository.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
@@ -1001,28 +1000,14 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
   /// redirect-login-link so the learner doesn't see the website login form.
   Future<void> _attendClass(String contentUrl, String title) async {
     if (!mounted) return;
-
-    // Debug: print the domain and the content URL being used
-    debugPrint('=== ATTEND CLASS DEBUG ===');
-    debugPrint('Content URL (redirectUrl param): $contentUrl');
-    debugPrint('API base URL: ${ref.read(ServerProvider.repoConfigProvider).baseUrl}');
-
     String? loginLink;
     try {
       loginLink = await ref
           .read(RedirectLoginRepository.provider)
           .getLoginLink(contentUrl);
-      debugPrint('Login link returned: $loginLink');
     } catch (e) {
-      debugPrint('getLoginLink error: $e');
-      if (mounted) {
-        Toast.error(context, 'Could not get login link: $e');
-      }
+      if (mounted) Toast.error(context, 'Could not get login link: $e');
     }
-
-    debugPrint('Opening URL: ${loginLink ?? contentUrl}');
-    debugPrint('=========================');
-
     if (!mounted) return;
     await InAppWebViewPage.show(
       context,

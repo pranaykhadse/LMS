@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -21,24 +20,17 @@ class RedirectLoginRepository with RepoNetworkHelper {
   /// [redirectUrl] directly.
   Future<String?> getLoginLink(String redirectUrl) async {
     try {
-      debugPrint('=== REDIRECT LOGIN API ===');
-      debugPrint('Endpoint: ${baseUrl}user-profile/redirect-login-link');
-      debugPrint('redirectUrl param: $redirectUrl');
       final response = await getRequest(
         'user-profile/redirect-login-link',
         queryParameters: {'redirectUrl': redirectUrl},
         cacheType: RequestCacheType.none,
       );
-      debugPrint('Raw response: $response');
       final data = response is Map
           ? Map<String, dynamic>.from(response)
           : <String, dynamic>{};
       final link = data['login_link']?.toString();
-      debugPrint('Extracted login_link: $link');
-      debugPrint('=========================');
       return (link == null || link.isEmpty) ? null : link;
-    } catch (e) {
-      debugPrint('getLoginLink exception: $e');
+    } catch (_) {
       return null;
     }
   }
