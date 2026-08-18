@@ -352,12 +352,39 @@ class CourseStructureItem {
         contentUrl = _url(contentMap['article_file']);
         downloadUrl = contentUrl;
         break;
-      case '3': // Virtual Class — session link from first learning event
-        final rawEvents = (json['learning_events'] as List? ?? []);
-        for (final e in rawEvents) {
-          if (e is Map) {
-            final link = _url(e['training_session_link']?.toString());
-            if (link != null) { contentUrl = link; break; }
+      case '3': // Virtual Class — pick the nearest future session link;
+        // fall back to the nearest past session if all have ended.
+        final rawEvents3 = (json['learning_events'] as List? ?? []);
+        final now3 = DateTime.now();
+
+        // Collect events that have both a parseable start date and a link
+        final candidates = <({DateTime start, String link})>[];
+        for (final e in rawEvents3) {
+          if (e is! Map) continue;
+          final link = _url(e['training_session_link']?.toString());
+          if (link == null) continue;
+          // Try to parse start date + time
+          final startStr = e['start_date']?.toString() ?? '';
+          final timeStr  = e['start_time']?.toString() ?? '';
+          DateTime? dt;
+          if (startStr.isNotEmpty) {
+            dt = DateTime.tryParse('$startStr ${timeStr.isNotEmpty ? timeStr : '00:00:00'}');
+          }
+          candidates.add((start: dt ?? DateTime(0), link: link));
+        }
+
+        if (candidates.isNotEmpty) {
+          // Prefer nearest future; fall back to nearest past
+          final future = candidates
+              .where((c) => c.start.isAfter(now3))
+              .toList()
+            ..sort((a, b) => a.start.compareTo(b.start));
+          if (future.isNotEmpty) {
+            contentUrl = future.first.link;
+          } else {
+            final past = [...candidates]
+              ..sort((a, b) => b.start.compareTo(a.start));
+            contentUrl = past.first.link;
           }
         }
         break;
