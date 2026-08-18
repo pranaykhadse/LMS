@@ -124,9 +124,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         // Set to false to restore normal behavior
         final forceShowModals = true;
 
-        // Show supervisor first if it should be shown
-        if (supState.state == DataProviderState.data && supState.data != null && (supState.data!.shouldShow || forceShowModals)) {
+        // Prepare fallback data when forcing modals
+        final fallbackData = MentorModalData(visible: true, popupMonth: 1, shouldShow: true, firstname: '', lastname: '', email: '');
+        final supData = supState.data ?? fallbackData;
+        final mentData = mentState.data ?? fallbackData;
+
+        // Show supervisor first if it should be shown (or forced)
+        if (forceShowModals || (supState.state == DataProviderState.data && supState.data != null && supState.data!.shouldShow)) {
           if (ModalRoute.of(context)?.isCurrent ?? true) {
+            print('[DashboardPage] showing supervisor modal (force=$forceShowModals)');
             final confirmed = await showGeneralDialog<bool?>(
               context: context,
               barrierDismissible: false,
@@ -144,21 +150,21 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                         ),
                       ),
                     ),
-                    Center(child: _MentorConfirmDialog(data: supState.data!, title: 'Confirm Your Supervisor')),
+                    Center(child: _MentorConfirmDialog(data: supData, title: 'Confirm Your Supervisor')),
                   ],
                 );
               },
             );
-            // if not confirmed, still continue to mentor per requirements? We'll proceed only after confirm.
             if (confirmed != true) {
               // User couldn't confirm (unlikely since we block dismiss). Continue to next step.
             }
           }
         }
 
-        // Then show mentor modal if it should be shown
-        if (mentState.state == DataProviderState.data && mentState.data != null && (mentState.data!.shouldShow || forceShowModals)) {
+        // Then show mentor modal if it should be shown (or forced)
+        if (forceShowModals || (mentState.state == DataProviderState.data && mentState.data != null && mentState.data!.shouldShow)) {
           if (ModalRoute.of(context)?.isCurrent ?? true) {
+            print('[DashboardPage] showing mentor modal (force=$forceShowModals)');
             final confirmed = await showGeneralDialog<bool?>(
               context: context,
               barrierDismissible: false,
@@ -176,7 +182,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                         ),
                       ),
                     ),
-                    Center(child: _MentorConfirmDialog(data: mentState.data!, title: 'Confirm Your Mentor')),
+                    Center(child: _MentorConfirmDialog(data: mentData, title: 'Confirm Your Mentor')),
                   ],
                 );
               },
