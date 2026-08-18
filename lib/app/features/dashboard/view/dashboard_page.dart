@@ -110,6 +110,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
     // Fetch supervisor and mentor modal data once per session and show them in order.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      print('[DashboardPage] post-frame callback entered');
       if (_mentorDialogShown) return;
       try {
         // Trigger fetches for both supervisor and mentor (idempotent)
@@ -131,7 +132,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
         // Show supervisor first if it should be shown (or forced)
         if (forceShowModals || (supState.state == DataProviderState.data && supState.data != null && supState.data!.shouldShow)) {
-          if (ModalRoute.of(context)?.isCurrent ?? true) {
             print('[DashboardPage] showing supervisor modal (force=$forceShowModals)');
             final confirmed = await showGeneralDialog<bool?>(
               context: context,
@@ -158,12 +158,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             if (confirmed != true) {
               // User couldn't confirm (unlikely since we block dismiss). Continue to next step.
             }
-          }
         }
 
         // Then show mentor modal if it should be shown (or forced)
         if (forceShowModals || (mentState.state == DataProviderState.data && mentState.data != null && mentState.data!.shouldShow)) {
-          if (ModalRoute.of(context)?.isCurrent ?? true) {
             print('[DashboardPage] showing mentor modal (force=$forceShowModals)');
             final confirmed = await showGeneralDialog<bool?>(
               context: context,
@@ -190,7 +188,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             if (confirmed != true) {
               // Continue on
             }
-          }
         }
       } catch (e) {
         print('[DashboardPage] error during mentor/supervisor fetch/show flow: ${e.toString()}');
