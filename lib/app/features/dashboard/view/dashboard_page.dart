@@ -120,6 +120,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         final supState = ref.read(SupervisorViewModel.provider);
         final mentState = ref.read(MentorViewModel.provider);
         print('[DashboardPage] supervisor state=${supState.state}, mentor state=${mentState.state}');
+        print('[DashboardPage] supState.data=${supState.data}');
+        print('[DashboardPage] mentState.data=${mentState.data}');
 
         // TESTING OVERRIDE: force modals to show irrespective of shouldShow
         // Set to false to restore normal behavior

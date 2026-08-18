@@ -23,4 +23,7 @@ class MentorModalData {
         firstname: json['firstname']?.toString(),
         lastname: json['lastname']?.toString(),
       );
+
+  @override
+  String toString() => 'MentorModalData(visible:$visible,popupMonth:$popupMonth,shouldShow:$shouldShow,firstname:$firstname,lastname:$lastname,email:$email)';
 }
