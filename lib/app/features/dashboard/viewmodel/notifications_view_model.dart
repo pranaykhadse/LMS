@@ -105,7 +105,8 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
     }
   }
 
-  void markOneAsRead(String id) {
+  Future<void> markOneAsRead(String id) async {
+    // Optimistic update.
     final updated = state.notifications
         .map((n) => n.id == id ? n.copyWith(isRead: true) : n)
         .toList();
@@ -114,16 +115,22 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
     if (idx != -1) {
       _localNotifications[idx] = _localNotifications[idx].copyWith(isRead: true);
     }
+    // Persist to backend — fire-and-forget.
+    try {
+      await repository.markOneRead(id);
+    } catch (_) {}
   }
 
-  // Local-only, same as markOneAsRead above - there's no backend endpoint
-  // for this yet, so it just drops the item from the in-memory list (it
-  // reappears on the next fetch/refresh, unless it was itself a local-only
-  // notification, in which case it's gone for good).
-  void deleteOne(String id) {
+  // Removes the notification from the in-memory list and calls the delete
+  // API. On server failure the item stays removed from the UI (optimistic)
+  // and reappears on the next fetch — acceptable UX for a delete action.
+  Future<void> deleteOne(String id) async {
     final updated = state.notifications.where((n) => n.id != id).toList();
     state = state.copyWith(notifications: updated);
     _localNotifications.removeWhere((n) => n.id == id);
+    try {
+      await repository.deleteOne(id);
+    } catch (_) {}
   }
 
   /// Adds a client-generated notification (download status, learning-event

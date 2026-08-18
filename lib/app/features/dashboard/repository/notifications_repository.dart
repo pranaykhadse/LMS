@@ -40,6 +40,22 @@ class NotificationsRepository with RepoNetworkHelper {
     );
   }
 
+  /// POST lms-screen/notifications/{id}/read
+  /// Marks a specific notification as read.
+  Future<void> markOneRead(String id) async {
+    await postRequest(
+      'lms-screen/notifications/$id/read',
+      body: {},
+      cacheType: RequestCacheType.none,
+    );
+  }
+
+  /// DELETE lms-screen/notifications/{id}
+  /// Deletes a specific notification.
+  Future<void> deleteOne(String id) async {
+    await deleteRequest('lms-screen/notifications/$id');
+  }
+
   Future<List<NotificationItem>> fetch({required int userId}) async {
     try {
       final items = await fetchAllPages<NotificationItem>(
