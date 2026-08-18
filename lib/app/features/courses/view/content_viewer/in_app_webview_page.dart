@@ -103,6 +103,15 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                   initialSettings: InAppWebViewSettings(
                     javaScriptEnabled: true,
                     mediaPlaybackRequiresUserGesture: false,
+                    // Allow cross-domain redirects so the oauth-login on
+                    // staging.trainingpipeline.com can redirect to
+                    // test.login.trainingpipeline.com carrying the session.
+                    javaScriptCanOpenWindowsAutomatically: true,
+                    allowsInlineMediaPlayback: true,
+                    allowsBackForwardNavigationGestures: true,
+                    sharedCookiesEnabled: true,
+                    thirdPartyCookiesEnabled: true,
+                    domStorageEnabled: true,
                   ),
                   onWebViewCreated: (controller) => _controller = controller,
                   onLoadStart: (controller, url) {
