@@ -87,7 +87,7 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
     return merged;
   }
 
-  Future<void> markAllAsRead() async {
+  Future<String?> markAllAsRead() async {
     // Optimistic update — flip all to read in UI immediately.
     final updated = state.notifications
         .map((n) => n.copyWith(isRead: true))
@@ -96,16 +96,16 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
     for (var i = 0; i < _localNotifications.length; i++) {
       _localNotifications[i] = _localNotifications[i].copyWith(isRead: true);
     }
-    // Persist to backend — fire-and-forget (no-op if offline).
+    // Persist to backend.
     try {
       await repository.markAllRead();
+      return null;
     } catch (_) {
-      // Offline or server error — the optimistic update stays; the server
-      // will reflect it on the next successful fetch.
+      return 'Failed to mark all notifications as read. Please try again.';
     }
   }
 
-  Future<void> markOneAsRead(String id) async {
+  Future<String?> markOneAsRead(String id) async {
     // Optimistic update.
     final updated = state.notifications
         .map((n) => n.id == id ? n.copyWith(isRead: true) : n)
@@ -115,22 +115,25 @@ class NotificationsViewModel extends StateNotifier<NotificationsState> {
     if (idx != -1) {
       _localNotifications[idx] = _localNotifications[idx].copyWith(isRead: true);
     }
-    // Persist to backend — fire-and-forget.
+    // Persist to backend.
     try {
       await repository.markOneRead(id);
-    } catch (_) {}
+      return null;
+    } catch (_) {
+      return 'Failed to mark notification as read. Please try again.';
+    }
   }
 
-  // Removes the notification from the in-memory list and calls the delete
-  // API. On server failure the item stays removed from the UI (optimistic)
-  // and reappears on the next fetch — acceptable UX for a delete action.
-  Future<void> deleteOne(String id) async {
+  Future<String?> deleteOne(String id) async {
     final updated = state.notifications.where((n) => n.id != id).toList();
     state = state.copyWith(notifications: updated);
     _localNotifications.removeWhere((n) => n.id == id);
     try {
       await repository.deleteOne(id);
-    } catch (_) {}
+      return null;
+    } catch (_) {
+      return 'Failed to delete notification. Please try again.';
+    }
   }
 
   /// Adds a client-generated notification (download status, learning-event

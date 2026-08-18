@@ -126,7 +126,14 @@ class _StatsBar extends StatelessWidget {
           // Mark all read
           if (state.unreadCount > 0)
             GestureDetector(
-              onTap: () => ref.read(NotificationsViewModel.provider.notifier).markAllAsRead(),
+              onTap: () async {
+                final error = await ref
+                    .read(NotificationsViewModel.provider.notifier)
+                    .markAllAsRead();
+                if (error != null && context.mounted) {
+                  Toast.error(context, error);
+                }
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -195,8 +202,13 @@ class _NotifCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTap: () {
-          ref.read(NotificationsViewModel.provider.notifier).markOneAsRead(item.id);
+        onTap: () async {
+          final error = await ref
+              .read(NotificationsViewModel.provider.notifier)
+              .markOneAsRead(item.id);
+          if (error != null && context.mounted) {
+            Toast.error(context, error);
+          }
           final url = item.redirectUrl;
           if (url != null && url.isNotEmpty) {
             if (!readIsOnline(ref)) {
@@ -280,18 +292,20 @@ class _NotifCard extends StatelessWidget {
                   PopupMenuButton<String>(
                     padding: EdgeInsets.zero,
                     icon: Icon(Icons.more_vert, size: 18, color: Colors.grey.shade400),
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(
-                        value: 'read',
-                        child: Row(
-                          children: [
-                            Icon(Icons.check_circle_outline, size: 16, color: _nNavy),
-                            SizedBox(width: 10),
-                            Text('Mark Read'),
-                          ],
+                    itemBuilder: (context) => [
+                      // Only show Mark Read if not already read
+                      if (!item.isRead)
+                        const PopupMenuItem(
+                          value: 'read',
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle_outline, size: 16, color: _nNavy),
+                              SizedBox(width: 10),
+                              Text('Mark Read'),
+                            ],
+                          ),
                         ),
-                      ),
-                      PopupMenuItem(
+                      const PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [
@@ -302,12 +316,18 @@ class _NotifCard extends StatelessWidget {
                         ),
                       ),
                     ],
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       final notifier = ref.read(NotificationsViewModel.provider.notifier);
                       if (value == 'read') {
-                        notifier.markOneAsRead(item.id);
+                        final error = await notifier.markOneAsRead(item.id);
+                        if (error != null && context.mounted) {
+                          Toast.error(context, error);
+                        }
                       } else if (value == 'delete') {
-                        notifier.deleteOne(item.id);
+                        final error = await notifier.deleteOne(item.id);
+                        if (error != null && context.mounted) {
+                          Toast.error(context, error);
+                        }
                       }
                     },
                   ),
