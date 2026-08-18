@@ -2666,6 +2666,177 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
     if (mounted) Navigator.of(context).pop(true);
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final maxWidth = MediaQuery.of(context).size.width * 0.9;
+    final dialogWidth = maxWidth > 640 ? 640.0 : maxWidth;
+
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: dialogWidth,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 8), blurRadius: 10, spreadRadius: -6),
+              BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 20), blurRadius: 25, spreadRadius: -5),
+            ],
+            border: Border.all(color: const Color(0xFFD5E6FF).withOpacity(0.6)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Text(
+                    widget.title,
+                    style: GoogleFonts.inter(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w300,
+                      color: const Color(0xFF374151),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                Text(
+                  'First Name',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 50,
+                  child: TextField(
+                    controller: _firstController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Text(
+                  'Last Name',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 50,
+                  child: TextField(
+                    controller: _lastController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Text(
+                  'Email',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 50,
+                  child: TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Note: ',
+                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF374151)),
+                      ),
+                      TextSpan(
+                        text: widget.title.toLowerCase().contains('supervisor')
+                            ? "We ask that you confirm your supervisor's information every three months. If the above information is correct, click Confirm. You can edit your supervisor's information at anytime through your profile."
+                            : "We ask that you confirm your mentor's information every three months. If the above information is correct, click Confirm. You can edit your mentor's information at anytime through your profile.",
+                        style: GoogleFonts.inter(fontSize: 14, fontStyle: FontStyle.italic, color: const Color(0xFF6B7280)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Confirm button centered, styled to exact specs from design
+                Center(
+                  child: SizedBox(
+                    width: 159,
+                    height: 48,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: (!_valid || _submitting) ? null : _confirm,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _valid ? const Color(0xFF693D94) : const Color(0xFFE5E7EB),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(color: const Color(0xFF000000).withOpacity(0.08), offset: const Offset(0, 8), blurRadius: 10, spreadRadius: -6),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
+                          child: Text(
+                            _submitting ? 'Confirming...' : 'Confirm',
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _valid ? Colors.white : const Color(0xFF6B7280), fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
 }
 
 // Inline variant of the confirm dialog that doesn't use Navigator.pop — used when showDialog is not appearing on the device.
