@@ -30,6 +30,7 @@ import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/mentor_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/supervisor_view_model.dart';
 import 'package:lms/app/features/dashboard/model/mentor_modal.dart';
 
 const _purple = FigmaTokens.primaryPurple;
@@ -107,77 +108,85 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       });
     }
 
-    // Fetch mentor modal once per session if needed. Force-show modal for UI validation.
+    // Fetch supervisor and mentor modal data once per session and show them in order.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (_mentorDialogShown) return;
       try {
-        // Ensure we only show the dialog once per session
-        if (_mentorDialogShown) {
-          if (kDebugMode) debugPrint('[DashboardPage] mentor dialog already shown this session');
-          return;
-        }
+        // Trigger fetches for both supervisor and mentor (idempotent)
+        await ref.read(SupervisorViewModel.provider.notifier).fetchIfNeeded();
+        await ref.read(MentorViewModel.provider.notifier).fetchIfNeeded();
 
-        final mentorState = ref.read(MentorViewModel.provider);
-        print('[DashboardPage] initial mentorState: ${mentorState.state}');
-        if (kDebugMode) debugPrint('[DashboardPage] initial mentorState: ${mentorState.state}');
+        final supState = ref.read(SupervisorViewModel.provider);
+        final mentState = ref.read(MentorViewModel.provider);
+        print('[DashboardPage] supervisor state=${supState.state}, mentor state=${mentState.state}');
 
-        // Trigger fetch if not already fetched
-        if (mentorState.state != DataProviderState.data && mentorState.state != DataProviderState.loading) {
-          print('[DashboardPage] requesting mentor fetchIfNeeded()');
-          if (kDebugMode) debugPrint('[DashboardPage] requesting mentor fetchIfNeeded()');
-          await ref.read(MentorViewModel.provider.notifier).fetchIfNeeded();
-        } else {
-          print('[DashboardPage] mentorState already ${mentorState.state}');
-          if (kDebugMode) debugPrint('[DashboardPage] mentorState already ${mentorState.state}');
-        }
-
-        // Read updated state
-        final mState = ref.read(MentorViewModel.provider);
-        print('[DashboardPage] mentor provider state after fetch: state=${mState.state}, data=${mState.data}');
-        if (kDebugMode) debugPrint('[DashboardPage] mentor provider state after fetch: state=${mState.state}, data=${mState.data}');
-
-        // ALWAYS show the dialog for UI validation. If provider returned no data,
-        // construct a lightweight placeholder so the dialog fields are editable.
-        MentorModalData dataToShow;
-        if (mState.state == DataProviderState.data && mState.data != null) {
-          dataToShow = mState.data!;
-        } else {
-          dataToShow = const MentorModalData(visible: true, popupMonth: null, shouldShow: true, email: null, firstname: null, lastname: null);
-        }
-
-        // Mark shown so we don't repeatedly show on rebuilds
-        _mentorDialogShown = true;
-        print('[DashboardPage] (ALWAYS) showing mentor modal for UI validation with data: ${dataToShow.toString()}');
-
-        if (ModalRoute.of(context)?.isCurrent ?? true) {
-          // Use showGeneralDialog so we can blur and tint the background like the design.
-          showGeneralDialog(
-            context: context,
-            barrierDismissible: false,
-            barrierLabel: 'mentor-dialog',
-            barrierColor: Colors.transparent,
-            transitionDuration: const Duration(milliseconds: 200),
-            pageBuilder: (ctx, anim1, anim2) {
-              return Stack(
-                children: [
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                      child: Container(
-                        color: const Color(0xFF693D94).withOpacity(0.12),
+        // Show supervisor first if it should be shown
+        if (supState.state == DataProviderState.data && supState.data != null && supState.data!.shouldShow) {
+          if (ModalRoute.of(context)?.isCurrent ?? true) {
+            final confirmed = await showGeneralDialog<bool?>(
+              context: context,
+              barrierDismissible: false,
+              barrierLabel: 'supervisor-dialog',
+              barrierColor: Colors.transparent,
+              transitionDuration: const Duration(milliseconds: 200),
+              pageBuilder: (ctx, anim1, anim2) {
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        child: Container(
+                          color: const Color(0xFF693D94).withOpacity(0.12),
+                        ),
                       ),
                     ),
-                  ),
-                  Center(
-                    child: _MentorConfirmDialog(data: dataToShow),
-                  ),
-                ],
-              );
-            },
-          );
+                    Center(child: _MentorConfirmDialog(data: supState.data!, title: 'Confirm Your Supervisor')),
+                  ],
+                );
+              },
+            );
+            // if not confirmed, still continue to mentor per requirements? We'll proceed only after confirm.
+            if (confirmed != true) {
+              // User couldn't confirm (unlikely since we block dismiss). Continue to next step.
+            }
+          }
+        }
+
+        // Then show mentor modal if it should be shown
+        if (mentState.state == DataProviderState.data && mentState.data != null && mentState.data!.shouldShow) {
+          if (ModalRoute.of(context)?.isCurrent ?? true) {
+            final confirmed = await showGeneralDialog<bool?>(
+              context: context,
+              barrierDismissible: false,
+              barrierLabel: 'mentor-dialog',
+              barrierColor: Colors.transparent,
+              transitionDuration: const Duration(milliseconds: 200),
+              pageBuilder: (ctx, anim1, anim2) {
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        child: Container(
+                          color: const Color(0xFF693D94).withOpacity(0.12),
+                        ),
+                      ),
+                    ),
+                    Center(child: _MentorConfirmDialog(data: mentState.data!, title: 'Confirm Your Mentor')),
+                  ],
+                );
+              },
+            );
+            if (confirmed != true) {
+              // Continue on
+            }
+          }
         }
       } catch (e) {
-        print('[DashboardPage] error during mentor fetch/show flow: ${e.toString()}');
-        if (kDebugMode) debugPrint('[DashboardPage] error during mentor fetch/show flow: ${e.toString()}');
+        print('[DashboardPage] error during mentor/supervisor fetch/show flow: ${e.toString()}');
+        if (kDebugMode) debugPrint('[DashboardPage] error during mentor/supervisor fetch/show flow: ${e.toString()}');
+      } finally {
+        _mentorDialogShown = true;
       }
     });
 
@@ -2485,10 +2494,11 @@ class _ErrorView extends StatelessWidget {
   }
 }
 
-// Simple modal dialog to confirm mentor details. Skip button intentionally omitted per requirement.
+// Generic confirmation dialog for mentor/supervisor. Fields are required and the dialog returns `true` when confirmed.
 class _MentorConfirmDialog extends StatefulWidget {
-  const _MentorConfirmDialog({required this.data});
+  const _MentorConfirmDialog({required this.data, required this.title});
   final MentorModalData data;
+  final String title;
 
   @override
   State<_MentorConfirmDialog> createState() => _MentorConfirmDialogState();
@@ -2499,6 +2509,22 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
   final _lastController = TextEditingController();
   final _emailController = TextEditingController();
   bool _submitting = false;
+  bool _valid = false;
+  String? _firstError;
+  String? _lastError;
+  String? _emailError;
+
+  void _validate() {
+    final f = _firstController.text.trim().isNotEmpty;
+    final l = _lastController.text.trim().isNotEmpty;
+    final e = _emailController.text.trim().isNotEmpty;
+    setState(() {
+      _firstError = f ? null : 'Required';
+      _lastError = l ? null : 'Required';
+      _emailError = e ? null : 'Required';
+      _valid = f && l && e;
+    });
+  }
 
   @override
   void initState() {
@@ -2506,10 +2532,17 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
     _firstController.text = widget.data.firstname ?? '';
     _lastController.text = widget.data.lastname ?? '';
     _emailController.text = widget.data.email ?? '';
+    _firstController.addListener(_validate);
+    _lastController.addListener(_validate);
+    _emailController.addListener(_validate);
+    _validate();
   }
 
   @override
   void dispose() {
+    _firstController.removeListener(_validate);
+    _lastController.removeListener(_validate);
+    _emailController.removeListener(_validate);
     _firstController.dispose();
     _lastController.dispose();
     _emailController.dispose();
@@ -2517,15 +2550,15 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
   }
 
   Future<void> _confirm() async {
+    _validate();
+    if (!_valid) return;
     setState(() => _submitting = true);
-    // For now just close the dialog - API to save mentor can be added later.
     await Future.delayed(const Duration(milliseconds: 300));
-    if (mounted) Navigator.of(context).pop();
+    if (mounted) Navigator.of(context).pop(true);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Conform to design: fixed width, centered content, rounded, drop shadows
     final maxWidth = MediaQuery.of(context).size.width * 0.9;
     final dialogWidth = maxWidth > 640 ? 640.0 : maxWidth;
 
@@ -2551,7 +2584,7 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
               children: [
                 Center(
                   child: Text(
-                    'Confirm Your Mentor',
+                    widget.title,
                     style: GoogleFonts.inter(
                       fontSize: 24,
                       fontWeight: FontWeight.w300,
@@ -2561,7 +2594,6 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // First name
                 Text(
                   'First Name',
                   style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
@@ -2583,12 +2615,12 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
                       ),
+                      errorText: _firstError,
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
 
-                // Last name
                 Text(
                   'Last Name',
                   style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
@@ -2610,12 +2642,12 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
                       ),
+                      errorText: _lastError,
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
 
-                // Email
                 Text(
                   'Email',
                   style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
@@ -2638,12 +2670,12 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
                       ),
+                      errorText: _emailError,
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Note
                 RichText(
                   text: TextSpan(
                     children: [
