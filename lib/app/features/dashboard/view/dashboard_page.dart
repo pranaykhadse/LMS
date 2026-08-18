@@ -2607,18 +2607,20 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
   final _emailController = TextEditingController();
   bool _submitting = false;
   bool _valid = false;
-  String? _firstError;
-  String? _lastError;
-  String? _emailError;
+
+  // Simple email validation
+  bool _isValidEmail(String s) {
+    final email = s.trim();
+    if (email.isEmpty) return false;
+    final regex = RegExp(r"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+    return regex.hasMatch(email);
+  }
 
   void _validate() {
     final f = _firstController.text.trim().isNotEmpty;
     final l = _lastController.text.trim().isNotEmpty;
-    final e = _emailController.text.trim().isNotEmpty;
+    final e = _isValidEmail(_emailController.text);
     setState(() {
-      _firstError = f ? null : 'Required';
-      _lastError = l ? null : 'Required';
-      _emailError = e ? null : 'Required';
       _valid = f && l && e;
     });
   }
@@ -2673,18 +2675,19 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
   final _emailController = TextEditingController();
   bool _submitting = false;
   bool _valid = false;
-  String? _firstError;
-  String? _lastError;
-  String? _emailError;
+
+  bool _isValidEmail(String s) {
+    final email = s.trim();
+    if (email.isEmpty) return false;
+    final regex = RegExp(r"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+    return regex.hasMatch(email);
+  }
 
   void _validate() {
     final f = _firstController.text.trim().isNotEmpty;
     final l = _lastController.text.trim().isNotEmpty;
-    final e = _emailController.text.trim().isNotEmpty;
+    final e = _isValidEmail(_emailController.text);
     setState(() {
-      _firstError = f ? null : 'Required';
-      _lastError = l ? null : 'Required';
-      _emailError = e ? null : 'Required';
       _valid = f && l && e;
     });
   }
@@ -2777,8 +2780,7 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
-                      errorText: _firstError,
+                      ),
                     ),
                   ),
                 ),
@@ -2804,8 +2806,7 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
-                      errorText: _lastError,
+                      ),
                     ),
                   ),
                 ),
@@ -2832,8 +2833,7 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
-                      errorText: _emailError,
+                      ),
                     ),
                   ),
                 ),
@@ -2952,8 +2952,7 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
-                      errorText: _firstError,
+                      ),
                     ),
                   ),
                 ),
@@ -2979,8 +2978,7 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
-                      errorText: _lastError,
+                      ),
                     ),
                   ),
                 ),
@@ -3007,8 +3005,7 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
-                      errorText: _emailError,
+                      ),
                     ),
                   ),
                 ),
@@ -3073,3 +3070,4 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
     );
   }
 }
+
