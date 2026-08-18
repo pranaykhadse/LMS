@@ -52,6 +52,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   bool _redirectingUnauthorized = false;
   // Ensure mentor dialog is only shown once per app session
   bool _mentorDialogShown = false;
+  // Debug/testing flags to force inline overlays when dialogs fail to appear
+  final bool _forceShowModals = true;
+  bool _showSupervisorInline = false;
+  bool _showMentorInline = false;
 
   void _refetchAll() {
     ref.read(LearningProgressViewModel.provider.notifier).fetch();
@@ -132,10 +136,32 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         final supData = supState.data ?? fallbackData;
         final mentData = mentState.data ?? fallbackData;
 
-        // Show supervisor first if it should be shown (or forced)
-        if (forceShowModals || (supState.state == DataProviderState.data && supState.data != null && supState.data!.shouldShow)) {
-            print('[DashboardPage] showing supervisor modal (force=$forceShowModals)');
-            print('[DashboardPage] calling showDialog for supervisor');
+        // If forceShowModals is true, use inline overlays controlled by state variables
+        if (forceShowModals) {
+          print('[DashboardPage] starting inline supervisor->mentor overlay flow');
+          if (mounted) setState(() {
+            _showSupervisorInline = true;
+            _showMentorInline = false;
+          });
+
+          // Wait until supervisor overlay is dismissed
+          while (mounted && _showSupervisorInline) {
+            await Future.delayed(const Duration(milliseconds: 100));
+          }
+
+          if (mounted) setState(() {
+            _showMentorInline = true;
+          });
+
+          // Wait until mentor overlay is dismissed
+          while (mounted && _showMentorInline) {
+            await Future.delayed(const Duration(milliseconds: 100));
+          }
+
+        } else {
+          // Show supervisor via dialog when not forcing inline overlays
+          if (supState.state == DataProviderState.data && supState.data != null && supState.data!.shouldShow) {
+            print('[DashboardPage] showing supervisor modal (dialog)');
             final confirmed = await showDialog<bool?>(
               context: context,
               useRootNavigator: true,
@@ -159,14 +185,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               },
             );
             if (confirmed != true) {
-              // User couldn't confirm (unlikely since we block dismiss). Continue to next step.
+              // continue
             }
-        }
+          }
 
-        // Then show mentor modal if it should be shown (or forced)
-        if (forceShowModals || (mentState.state == DataProviderState.data && mentState.data != null && mentState.data!.shouldShow)) {
-            print('[DashboardPage] showing mentor modal (force=$forceShowModals)');
-            print('[DashboardPage] calling showDialog for mentor');
+          if (mentState.state == DataProviderState.data && mentState.data != null && mentState.data!.shouldShow) {
+            print('[DashboardPage] showing mentor modal (dialog)');
             final confirmed = await showDialog<bool?>(
               context: context,
               useRootNavigator: true,
@@ -190,8 +214,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
               },
             );
             if (confirmed != true) {
-              // Continue on
+              // continue
             }
+          }
         }
       } catch (e) {
         print('[DashboardPage] error during mentor/supervisor fetch/show flow: ${e.toString()}');
@@ -201,15 +226,76 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       }
     });
 
-    return AppScaffold(
-      backgroundColor: _bg,
-      title: 'Dashboard',
-      selectedLabel: 'Dashboard',
-      hideBack: true,
-      onRefresh: _refetchAll,
-      body: _redirectingUnauthorized
-          ? const Center(child: CircularProgressIndicator(color: _purple))
-          : DashboardBody(auth: auth, state: state, onRefetchAll: _refetchAll),
+    // Wrap scaffold in a Stack so we can render inline overlays above the page when needed.
+    return Stack(
+      children: [
+        AppScaffold(
+          backgroundColor: _bg,
+          title: 'Dashboard',
+          selectedLabel: 'Dashboard',
+          hideBack: true,
+          onRefresh: _refetchAll,
+          body: _redirectingUnauthorized
+              ? const Center(child: CircularProgressIndicator(color: _purple))
+              : DashboardBody(auth: auth, state: state, onRefetchAll: _refetchAll),
+        ),
+        // Inline overlays (fallback when showDialog is not visible on this platform)
+        if (_forceShowModals && _showSupervisorInline)
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(color: const Color(0xFF693D94).withOpacity(0.12)),
+                    ),
+                  ),
+                  Center(
+                    child: _InlineConfirmDialog(
+                      data: supState.data ?? MentorModalData(visible: true, popupMonth: 1, shouldShow: true, firstname: '', lastname: '', email: ''),
+                      title: 'Confirm Your Supervisor',
+                      onConfirmed: () {
+                        setState(() {
+                          _showSupervisorInline = false;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (_forceShowModals && _showMentorInline)
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(color: const Color(0xFF693D94).withOpacity(0.12)),
+                    ),
+                  ),
+                  Center(
+                    child: _InlineConfirmDialog(
+                      data: mentState.data ?? MentorModalData(visible: true, popupMonth: 1, shouldShow: true, firstname: '', lastname: '', email: ''),
+                      title: 'Confirm Your Mentor',
+                      onConfirmed: () {
+                        setState(() {
+                          _showMentorInline = false;
+                          _mentorDialogShown = true;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -2567,6 +2653,247 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
     await Future.delayed(const Duration(milliseconds: 300));
     if (mounted) Navigator.of(context).pop(true);
   }
+
+}
+
+// Inline variant of the confirm dialog that doesn't use Navigator.pop — used when showDialog is not appearing on the device.
+class _InlineConfirmDialog extends StatefulWidget {
+  const _InlineConfirmDialog({required this.data, required this.title, required this.onConfirmed});
+  final MentorModalData data;
+  final String title;
+  final VoidCallback onConfirmed;
+
+  @override
+  State<_InlineConfirmDialog> createState() => _InlineConfirmDialogState();
+}
+
+class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
+  final _firstController = TextEditingController();
+  final _lastController = TextEditingController();
+  final _emailController = TextEditingController();
+  bool _submitting = false;
+  bool _valid = false;
+  String? _firstError;
+  String? _lastError;
+  String? _emailError;
+
+  void _validate() {
+    final f = _firstController.text.trim().isNotEmpty;
+    final l = _lastController.text.trim().isNotEmpty;
+    final e = _emailController.text.trim().isNotEmpty;
+    setState(() {
+      _firstError = f ? null : 'Required';
+      _lastError = l ? null : 'Required';
+      _emailError = e ? null : 'Required';
+      _valid = f && l && e;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _firstController.text = widget.data.firstname ?? '';
+    _lastController.text = widget.data.lastname ?? '';
+    _emailController.text = widget.data.email ?? '';
+    _firstController.addListener(_validate);
+    _lastController.addListener(_validate);
+    _emailController.addListener(_validate);
+    _validate();
+  }
+
+  @override
+  void dispose() {
+    _firstController.removeListener(_validate);
+    _lastController.removeListener(_validate);
+    _emailController.removeListener(_validate);
+    _firstController.dispose();
+    _lastController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirm() async {
+    _validate();
+    if (!_valid) return;
+    setState(() => _submitting = true);
+    await Future.delayed(const Duration(milliseconds: 300));
+    widget.onConfirmed();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final maxWidth = MediaQuery.of(context).size.width * 0.9;
+    final dialogWidth = maxWidth > 640 ? 640.0 : maxWidth;
+
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: dialogWidth,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 8), blurRadius: 10, spreadRadius: -6),
+              BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 20), blurRadius: 25, spreadRadius: -5),
+            ],
+            border: Border.all(color: const Color(0xFFD5E6FF).withOpacity(0.6)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Text(
+                    widget.title,
+                    style: GoogleFonts.inter(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w300,
+                      color: const Color(0xFF374151),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                Text(
+                  'First Name',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 50,
+                  child: TextField(
+                    controller: _firstController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      errorText: _firstError,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Text(
+                  'Last Name',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 50,
+                  child: TextField(
+                    controller: _lastController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      errorText: _lastError,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Text(
+                  'Email',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 50,
+                  child: TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      errorText: _emailError,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Note: ',
+                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF374151)),
+                      ),
+                      TextSpan(
+                        text: widget.title.toLowerCase().contains('supervisor')
+                            ? "We ask that you confirm your supervisor's information every three months. If the above information is correct, click Confirm. You can edit your supervisor's information at anytime through your profile."
+                            : "We ask that you confirm your mentor's information every three months. If the above information is correct, click Confirm. You can edit your mentor's information at anytime through your profile.",
+                        style: GoogleFonts.inter(fontSize: 14, fontStyle: FontStyle.italic, color: const Color(0xFF6B7280)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Confirm button centered, styled to exact specs from design
+                Center(
+                  child: SizedBox(
+                    width: 159,
+                    height: 48,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: _submitting ? null : _confirm,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF693D94),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(color: const Color(0xFF000000).withOpacity(0.08), offset: const Offset(0, 8), blurRadius: 10, spreadRadius: -6),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
+                          child: Text(
+                            _submitting ? 'Confirming...' : 'Confirm',
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
