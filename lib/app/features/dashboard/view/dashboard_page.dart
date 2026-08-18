@@ -2661,18 +2661,32 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
                 ),
                 const SizedBox(height: 20),
 
-                // Confirm button centered, skip removed
+                // Confirm button centered, styled to exact specs from design
                 Center(
-                  child: ElevatedButton(
-                    onPressed: _submitting ? null : _confirm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF693D94),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
-                    ),
-                    child: Text(
-                      _submitting ? 'Confirming...' : 'Confirm',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white),
+                  child: SizedBox(
+                    width: 159,
+                    height: 48,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: _submitting ? null : _confirm,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF693D94),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(color: const Color(0xFF000000).withOpacity(0.08), offset: const Offset(0, 8), blurRadius: 10, spreadRadius: -6),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
+                          child: Text(
+                            _submitting ? 'Confirming...' : 'Confirm',
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
