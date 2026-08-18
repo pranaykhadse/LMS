@@ -173,9 +173,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   children: [
                     Positioned.fill(
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                         child: Container(
-                          color: const Color(0xFF693D94).withOpacity(0.12),
+                          color: const Color(0xFF693D94).withOpacity(0.06),
                         ),
                       ),
                     ),
@@ -202,9 +202,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   children: [
                     Positioned.fill(
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                         child: Container(
-                          color: const Color(0xFF693D94).withOpacity(0.12),
+                          color: const Color(0xFF693D94).withOpacity(0.06),
                         ),
                       ),
                     ),
@@ -248,8 +248,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 children: [
                   Positioned.fill(
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                      child: Container(color: const Color(0xFF693D94).withOpacity(0.12)),
+                      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                      child: Container(color: const Color(0xFF693D94).withOpacity(0.06)),
                     ),
                   ),
                   Center(
@@ -275,8 +275,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 children: [
                   Positioned.fill(
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                      child: Container(color: const Color(0xFF693D94).withOpacity(0.12)),
+                      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                      child: Container(color: const Color(0xFF693D94).withOpacity(0.06)),
                     ),
                   ),
                   Center(
@@ -2780,7 +2780,8 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
+                      ),
+
                     ),
                   ),
                 ),
@@ -2806,7 +2807,8 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
+                      ),
+
                     ),
                   ),
                 ),
@@ -2833,7 +2835,8 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
+                      ),
+
                     ),
                   ),
                 ),
@@ -2866,10 +2869,10 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(14),
-                        onTap: _submitting ? null : _confirm,
+                        onTap: (!_valid || _submitting) ? null : _confirm,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color(0xFF693D94),
+                            color: _valid ? const Color(0xFF693D94) : const Color(0xFFE5E7EB),
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(color: const Color(0xFF000000).withOpacity(0.08), offset: const Offset(0, 8), blurRadius: 10, spreadRadius: -6),
@@ -2879,7 +2882,7 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                           padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
                           child: Text(
                             _submitting ? 'Confirming...' : 'Confirm',
-                            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 16),
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _valid ? Colors.white : const Color(0xFF6B7280), fontSize: 16),
                           ),
                         ),
                       ),
@@ -2952,7 +2955,8 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
+                      ),
+
                     ),
                   ),
                 ),
@@ -2978,7 +2982,8 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
+                      ),
+
                     ),
                   ),
                 ),
@@ -3005,7 +3010,8 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
+                      ),
+
                     ),
                   ),
                 ),
@@ -3042,10 +3048,10 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(14),
-                        onTap: _submitting ? null : _confirm,
+                        onTap: (!_valid || _submitting) ? null : _confirm,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color(0xFF693D94),
+                            color: _valid ? const Color(0xFF693D94) : const Color(0xFFE5E7EB),
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(color: const Color(0xFF000000).withOpacity(0.08), offset: const Offset(0, 8), blurRadius: 10, spreadRadius: -6),
@@ -3055,7 +3061,7 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
                           padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
                           child: Text(
                             _submitting ? 'Confirming...' : 'Confirm',
-                            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 16),
+                            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _valid ? Colors.white : const Color(0xFF6B7280), fontSize: 16),
                           ),
                         ),
                       ),
