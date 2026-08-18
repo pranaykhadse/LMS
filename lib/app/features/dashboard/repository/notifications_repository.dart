@@ -33,20 +33,18 @@ class NotificationsRepository with RepoNetworkHelper {
   /// POST lms-screen/notifications/mark-all-read
   /// Marks all notifications belonging to the authenticated user as read.
   Future<void> markAllRead() async {
-    await postRequest(
+    await post(
       'lms-screen/notifications/mark-all-read',
-      body: {},
-      cacheType: RequestCacheType.none,
+      data: {},
     );
   }
 
   /// POST lms-screen/notifications/{id}/read
   /// Marks a specific notification as read.
   Future<void> markOneRead(String id) async {
-    await postRequest(
+    await post(
       'lms-screen/notifications/$id/read',
-      body: {},
-      cacheType: RequestCacheType.none,
+      data: {},
     );
   }
 
