@@ -57,6 +57,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   bool _showSupervisorInline = false;
   bool _showMentorInline = false;
 
+  // Stored data for inline overlays (populated in post-frame callback)
+  MentorModalData? _supData;
+  MentorModalData? _mentData;
+
   void _refetchAll() {
     ref.read(LearningProgressViewModel.provider.notifier).fetch();
   }
@@ -135,6 +139,12 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         final fallbackData = MentorModalData(visible: true, popupMonth: 1, shouldShow: true, firstname: '', lastname: '', email: '');
         final supData = supState.data ?? fallbackData;
         final mentData = mentState.data ?? fallbackData;
+
+        // Save for build-time overlays
+        if (mounted) setState(() {
+          _supData = supData;
+          _mentData = mentData;
+        });
 
         // If forceShowModals is true, use inline overlays controlled by state variables
         if (forceShowModals) {
@@ -254,7 +264,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ),
                   Center(
                     child: _InlineConfirmDialog(
-                      data: supState.data ?? MentorModalData(visible: true, popupMonth: 1, shouldShow: true, firstname: '', lastname: '', email: ''),
+                      data: _supData ?? MentorModalData(visible: true, popupMonth: 1, shouldShow: true, firstname: '', lastname: '', email: ''),
                       title: 'Confirm Your Supervisor',
                       onConfirmed: () {
                         setState(() {
@@ -281,7 +291,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ),
                   Center(
                     child: _InlineConfirmDialog(
-                      data: mentState.data ?? MentorModalData(visible: true, popupMonth: 1, shouldShow: true, firstname: '', lastname: '', email: ''),
+                      data: _mentData ?? MentorModalData(visible: true, popupMonth: 1, shouldShow: true, firstname: '', lastname: '', email: ''),
                       title: 'Confirm Your Mentor',
                       onConfirmed: () {
                         setState(() {
