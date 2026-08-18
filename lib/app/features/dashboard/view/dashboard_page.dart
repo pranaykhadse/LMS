@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_modular/flutter_modular.dart';
@@ -147,10 +149,30 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         print('[DashboardPage] (ALWAYS) showing mentor modal for UI validation with data: ${dataToShow.toString()}');
 
         if (ModalRoute.of(context)?.isCurrent ?? true) {
-          showDialog(
+          // Use showGeneralDialog so we can blur and tint the background like the design.
+          showGeneralDialog(
             context: context,
             barrierDismissible: false,
-            builder: (ctx) => _MentorConfirmDialog(data: dataToShow),
+            barrierLabel: 'mentor-dialog',
+            barrierColor: Colors.transparent,
+            transitionDuration: const Duration(milliseconds: 200),
+            pageBuilder: (ctx, anim1, anim2) {
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(
+                        color: const Color(0xFF693D94).withOpacity(0.12),
+                      ),
+                    ),
+                  ),
+                  Center(
+                    child: _MentorConfirmDialog(data: dataToShow),
+                  ),
+                ],
+              );
+            },
           );
         }
       } catch (e) {
@@ -2503,67 +2525,159 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Text(
-                  'Confirm Your Mentor',
-                  style: GoogleFonts.inter(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w300,
-                    color: const Color(0xFF374151),
+    // Conform to design: fixed width, centered content, rounded, drop shadows
+    final maxWidth = MediaQuery.of(context).size.width * 0.9;
+    final dialogWidth = maxWidth > 640 ? 640.0 : maxWidth;
+
+    return Center(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          width: dialogWidth,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 8), blurRadius: 10, spreadRadius: -6),
+              BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 20), blurRadius: 25, spreadRadius: -5),
+            ],
+            border: Border.all(color: const Color(0xFFD5E6FF).withOpacity(0.6)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Text(
+                    'Confirm Your Mentor',
+                    style: GoogleFonts.inter(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w300,
+                      color: const Color(0xFF374151),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _firstController,
-                decoration: const InputDecoration(labelText: 'First Name'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _lastController,
-                decoration: const InputDecoration(labelText: 'Last Name'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Note: We ask that you confirm your mentor\'s information every three months. If the above information is correct, click Confirm. You can edit your mentor\'s information at anytime through your profile.',
-                style: GoogleFonts.inter(color: const Color(0xFF6B7280), fontSize: 12),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Skip button intentionally omitted per request
-                  ElevatedButton(
+                const SizedBox(height: 16),
+
+                // First name
+                Text(
+                  'First Name',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 50,
+                  child: TextField(
+                    controller: _firstController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Last name
+                Text(
+                  'Last Name',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 50,
+                  child: TextField(
+                    controller: _lastController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Email
+                Text(
+                  'Email',
+                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 50,
+                  child: TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Note
+                RichText(
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'Note: ',
+                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF374151)),
+                      ),
+                      TextSpan(
+                        text:
+                            "We ask that you confirm your mentor's information every three months. If the above information is correct, click Confirm. You can edit your mentor's information at anytime through your profile.",
+                        style: GoogleFonts.inter(fontSize: 14, fontStyle: FontStyle.italic, color: const Color(0xFF6B7280)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Confirm button centered, skip removed
+                Center(
+                  child: ElevatedButton(
                     onPressed: _submitting ? null : _confirm,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF693D94),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
                     ),
                     child: Text(
                       _submitting ? 'Confirming...' : 'Confirm',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
