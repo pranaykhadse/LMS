@@ -2680,21 +2680,26 @@ class _MentorConfirmDialogState extends State<_MentorConfirmDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Note: ',
-                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF374151)),
-                      ),
-                      TextSpan(
-                        text:
-                            "We ask that you confirm your mentor's information every three months. If the above information is correct, click Confirm. You can edit your mentor's information at anytime through your profile.",
-                        style: GoogleFonts.inter(fontSize: 14, fontStyle: FontStyle.italic, color: const Color(0xFF6B7280)),
-                      ),
-                    ],
-                  ),
-                ),
+                // Note copy differs for supervisor vs mentor — use title to decide
+                Builder(builder: (context) {
+                  final isSupervisor = widget.title.toLowerCase().contains('supervisor');
+                  return RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Note: ',
+                          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF374151)),
+                        ),
+                        TextSpan(
+                          text: isSupervisor
+                              ? "We ask that you confirm your supervisor's information every three months. If the above information is correct, click Confirm. You can edit your supervisor's information at anytime through your profile."
+                              : "We ask that you confirm your mentor's information every three months. If the above information is correct, click Confirm. You can edit your mentor's information at anytime through your profile.",
+                          style: GoogleFonts.inter(fontSize: 14, fontStyle: FontStyle.italic, color: const Color(0xFF6B7280)),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
                 const SizedBox(height: 20),
 
                 // Confirm button centered, styled to exact specs from design
