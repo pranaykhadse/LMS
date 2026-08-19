@@ -49,7 +49,6 @@ class DashboardCourse {
     required this.averageRating,
     required this.ratingCount,
     this.isNonCourse = false,
-    this.notEnrolled = false,
     this.description,
     this.category,
     this.dueDate,
@@ -97,19 +96,8 @@ class DashboardCourse {
   // instead updated by percentage via lms-screen/non-course-development-plan.
   final bool isNonCourse;
 
-  // True when this is a real course the learner is on the development plan
-  // for but hasn't actually registered/enrolled in yet - the API reports no
-  // `progress` value at all for these (as opposed to a real 0, which means
-  // enrolled but not yet started). [progress] collapses that missing value
-  // to 0 for anywhere that just wants a percentage to display/compute with,
-  // so this is the only way to tell "0% done" and "not enrolled" apart -
-  // the Development Plan table shows "Not Enrolled" instead of "0%" for it,
-  // matching the website.
-  final bool notEnrolled;
-
   factory DashboardCourse.fromJson(Map<String, dynamic> json) {
     final hasCourseId = json['course_id'] != null;
-    final progressValue = json['progress'] ?? (hasCourseId ? null : json['status']);
     final nextSessionValue = (json['next_session'] ??
             json['nextSession'] ??
             json['start_date'] ??
@@ -142,8 +130,7 @@ class DashboardCourse {
               : null,
       // Non-course items report their completion percentage via `status`
       // instead of `progress` (which is always null for them).
-      progress: _asInt(progressValue),
-      notEnrolled: hasCourseId && progressValue == null,
+      progress: _asInt(json['progress'] ?? (hasCourseId ? null : json['status'])),
       displayRating:
           json['display_rating'] == true ||
           json['display_rating']?.toString() == '1',
