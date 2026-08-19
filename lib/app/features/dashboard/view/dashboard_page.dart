@@ -61,12 +61,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   // spawned a duplicate, concurrent copy of the whole flow.
   bool _supervisorMentorFlowStarted = false;
 
-  // TESTING OVERRIDE: both modals show regardless of the API's should_show
-  // value. Flip to false once should_show is reliable from the backend -
-  // real should_show gating (see _runSupervisorMentorFlow) already works
-  // correctly, this just short-circuits it for now.
-  static const _forceShowForTesting = true;
-
   bool _showSupervisorInline = false;
   bool _showMentorInline = false;
   MentorModalData? _supData;
@@ -83,7 +77,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
 
   /// Fetches supervisor then mentor data, and shows each one's confirm
   /// overlay in turn - supervisor first, then mentor - skipping any whose
-  /// should_show is false (unless _forceShowForTesting overrides it).
+  /// should_show is false.
   Future<void> _runSupervisorMentorFlow() async {
     if (_supervisorMentorFlowStarted || !mounted) return;
     _supervisorMentorFlowStarted = true;
@@ -100,8 +94,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         _mentData = mentData;
       });
 
-      final showSupervisor = supData != null && (_forceShowForTesting || supData.shouldShow);
-      final showMentor = mentData != null && (_forceShowForTesting || mentData.shouldShow);
+      final showSupervisor = supData != null && supData.shouldShow;
+      final showMentor = mentData != null && mentData.shouldShow;
 
       if (showSupervisor) {
         _supervisorCompleter = Completer<void>();
@@ -118,7 +112,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         if (!mounted) return;
       }
 
-      if (mentData != null && (_forceShowForTesting || mentData.shouldShow)) {
+      if (showMentor) {
         _mentorCompleter = Completer<void>();
         setState(() => _showMentorInline = true);
         await _mentorCompleter!.future;
