@@ -45,13 +45,13 @@ bool readIsOnline(WidgetRef ref) {
   return !isManualOffline && connectionVM.isConnected;
 }
 
-/// "Lastname, Firstname" for the desktop header's profile menu trigger.
+/// "Firstname Lastname" for the desktop header's profile menu trigger.
 String _lastFirst(dynamic profile) {
   final first = profile?.firstname?.toString() ?? '';
   final last = profile?.lastname?.toString() ?? '';
   if (last.isEmpty) return first;
   if (first.isEmpty) return last;
-  return '$last, $first';
+  return '$first $last';
 }
 
 // TopBar's Figma spec is Height Hug 44px, but that clipped the logo mark
