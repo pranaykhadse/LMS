@@ -9,7 +9,14 @@ class MentorViewModel extends StateNotifier<DataState<MentorModalData?>> {
   MentorViewModel({required this.repository, required this.userId})
       : super(DataState.idle<MentorModalData?>());
 
-  static final provider = StateNotifierProvider.autoDispose<MentorViewModel, DataState<MentorModalData?>>((ref) {
+  // Not autoDispose: nothing in the widget tree ref.watch()s this provider
+  // (only bare ref.read() calls from the one-time dashboard fetch flow),
+  // so with autoDispose the provider could be torn down and recreated
+  // (resetting to idle/null data) between the fetch completing and the
+  // flow reading its result back out - the fetched mentor data must
+  // survive for the whole app session, matching the "once per session"
+  // fetch semantics this is meant to have.
+  static final provider = StateNotifierProvider<MentorViewModel, DataState<MentorModalData?>>((ref) {
     final userId = ref.watch(AuthStateNotifier.provider)?.user?.id;
     return MentorViewModel(
       repository: ref.watch(MentorRepository.provider),
