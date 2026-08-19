@@ -348,7 +348,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
         return [
           _groupTitle('Available'),
           _catalogGrid(courses),
-          _perPageBadge(5),
+          _perPageBadge(4),
           _bottomSpacer,
           const SliverToBoxAdapter(child: AppFooter()),
         ];

@@ -109,7 +109,7 @@ class CatalogPagination {
     this.total = 0,
     this.page = 1,
     this.pages = 1,
-    this.perPage = 12,
+    this.perPage = 4,
   });
 
   final int total;
@@ -122,7 +122,7 @@ class CatalogPagination {
       total: _asInt(json['total']),
       page: _asInt(json['page'], fallback: 1),
       pages: _asInt(json['pages'], fallback: 1),
-      perPage: _asInt(json['per_page'], fallback: 12),
+      perPage: _asInt(json['per_page'], fallback: 4),
     );
   }
 }

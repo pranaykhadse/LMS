@@ -20,7 +20,10 @@ class CourseCatalogRepository with RepoNetworkHelper {
     Map<String, int> groupPages = const {},
     String? search,
     String? skillId,
-    int perPage = 5,
+    // Matches the catalog's 4-column desktop card grid (courses_page.dart)
+    // so a page always fills whole rows instead of leaving a dangling
+    // partial row (5 / 4 columns left one card stranded alone).
+    int perPage = 4,
   }) async {
     final queryParameters = {
       'user_id': userId,
@@ -54,7 +57,8 @@ class CourseCatalogRepository with RepoNetworkHelper {
       queryParameters: {
         'user_id': userId,
         'page': page,
-        'limit': 5,
+        // Same 4-column desktop grid as fetch() above.
+        'limit': 4,
         if (name != null && name.trim().isNotEmpty) 'name': name.trim(),
         if ((skillId ?? behaviorId) != null &&
             (skillId ?? behaviorId)!.isNotEmpty)
