@@ -100,12 +100,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         _mentData = mentData;
       });
 
-      if (supData != null && (_forceShowForTesting || supData.shouldShow)) {
+      final showSupervisor = supData != null && (_forceShowForTesting || supData.shouldShow);
+      final showMentor = mentData != null && (_forceShowForTesting || mentData.shouldShow);
+
+      if (showSupervisor) {
         _supervisorCompleter = Completer<void>();
         setState(() => _showSupervisorInline = true);
         await _supervisorCompleter!.future;
       }
       if (!mounted) return;
+
+      // When both modals are due, pause 2s between the supervisor modal
+      // closing and the mentor one opening instead of chaining them
+      // instantly - gives the confirm toast a moment to be seen.
+      if (showSupervisor && showMentor) {
+        await Future.delayed(const Duration(seconds: 2));
+        if (!mounted) return;
+      }
 
       if (mentData != null && (_forceShowForTesting || mentData.shouldShow)) {
         _mentorCompleter = Completer<void>();
@@ -204,6 +215,10 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ),
                   Center(
                     child: _InlineConfirmDialog(
+                      // Explicit key so this never gets mistaken for the
+                      // mentor dialog below and has its State reused across
+                      // them - see the mentor one's key comment.
+                      key: const ValueKey('supervisor-confirm-dialog'),
                       data: _supData!,
                       title: 'Confirm Your Supervisor',
                       type: 'supervisor',
@@ -234,6 +249,15 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   ),
                   Center(
                     child: _InlineConfirmDialog(
+                      // Without a distinct key from the supervisor dialog
+                      // above, Flutter can reconcile them as "the same
+                      // widget updated" (same runtimeType, same Stack slot)
+                      // once the supervisor overlay closes and the mentor
+                      // one opens - reusing the old State object instead of
+                      // creating a fresh one. That left _submitting stuck
+                      // at true from the supervisor confirm, permanently
+                      // disabling the mentor dialog's Confirm button.
+                      key: const ValueKey('mentor-confirm-dialog'),
                       data: _mentData!,
                       title: 'Confirm Your Mentor',
                       type: 'mentor',
