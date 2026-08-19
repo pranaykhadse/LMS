@@ -44,10 +44,11 @@ class DevelopmentPlanPage extends ConsumerWidget {
 }
 
 // The original card-grid layout (below, _CourseCard/GridView) is kept in
-// this file but no longer reachable from the UI - the table layout is now
-// the only design shown. Kept around in case the grid layout is needed
-// again later rather than deleted outright.
-const _kUseTableLayout = true;
+// this file but no longer reachable from the UI - the table layout (now
+// used on every device, phone included - see _DevelopmentPlanTable/
+// _TableDataRow's own phone/tablet+ split) is the only design shown. Kept
+// around in case the grid layout is needed again later rather than
+// deleted outright.
 
 class _Body extends StatelessWidget {
   const _Body({required this.state, required this.notifier});
@@ -161,11 +162,12 @@ class _Body extends StatelessWidget {
                               padding: EdgeInsets.only(top: 40, bottom: 40),
                               child: _EmptyState(),
                             )
-                          // The table layout's fixed multi-column rows don't
-                          // fit a phone screen, so phone keeps the card-grid
-                          // layout below regardless of _kUseTableLayout.
-                          else if (_kUseTableLayout &&
-                              Responsive.isTablet(context)) ...[
+                          // Same table on every device - _DevelopmentPlanTable
+                          // switches its own row layout between a stacked
+                          // phone card and the full multi-column row for
+                          // tablet+ (see _TableDataRow), instead of phone
+                          // getting an unrelated image-grid design.
+                          else ...[
                             _DevelopmentPlanTable(
                               courses: state.courses,
                               notifier: notifier,
@@ -174,36 +176,6 @@ class _Body extends StatelessWidget {
                             Padding(
                               padding:
                                   const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                              child: PerPageBadge(perPage: state.perPage),
-                            ),
-                          ] else ...[
-                            GridView.builder(
-                              padding: const EdgeInsets.all(16),
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: Responsive.columns(
-                                  context,
-                                  phone: 1,
-                                  tablet: 3,
-                                  desktop: 4,
-                                ),
-                                crossAxisSpacing: 14,
-                                mainAxisSpacing: 14,
-                                // Phone: single-column — card is full-width
-                                // so less vertical space is needed.
-                                mainAxisExtent:
-                                    Responsive.isTablet(context) ? 360 : 320,
-                              ),
-                              itemCount: state.courses.length,
-                              itemBuilder: (ctx, i) => _CourseCard(
-                                  course: state.courses[i],
-                                  notifier: notifier),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 0, 16, 16),
                               child: PerPageBadge(perPage: state.perPage),
                             ),
                           ],
@@ -490,18 +462,24 @@ class _DevelopmentPlanTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Phone: each row renders as its own bordered card (see _TableDataRow),
+    // so a shared column-header row and row dividers don't apply there -
+    // they only make sense for the full multi-column row tablet+ uses.
+    final isPhone = !Responsive.isTablet(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const _TableHeaderRow(),
-        const Divider(height: 1, color: FigmaTokens.cardBorders),
+        if (!isPhone) ...[
+          const _TableHeaderRow(),
+          const Divider(height: 1, color: FigmaTokens.cardBorders),
+        ],
         for (var i = 0; i < courses.length; i++) ...[
           _TableDataRow(
             index: startIndex + i,
             course: courses[i],
             notifier: notifier,
           ),
-          if (i != courses.length - 1)
+          if (!isPhone && i != courses.length - 1)
             const Divider(height: 1, color: FigmaTokens.cardBorders),
         ],
       ],
@@ -559,6 +537,76 @@ class _TableDataRow extends ConsumerWidget {
     final group = course.isNonCourse
         ? 'Non Course Development Plan'
         : (course.category?.isNotEmpty == true ? course.category! : 'Course');
+    final actionButton = TextButton(
+      onPressed: course.isNonCourse
+          ? () => _showUpdatePlanItemDialog(context, notifier, course)
+          : viewDisabled
+              ? null
+              : () => Modular.to.pushNamed(
+                  CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+                ),
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.zero,
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        foregroundColor: _purple,
+      ),
+      child: Text(
+        course.isNonCourse ? 'Update' : 'View Course',
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+      ),
+    );
+
+    if (!Responsive.isTablet(context)) {
+      // Same fields as the tablet+ table row (#, Group, Course, Status,
+      // action) - just stacked instead of laid out in fixed columns, which
+      // don't fit a phone's width.
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          border: Border.all(color: FigmaTokens.cardBorders),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '#$index',
+                  style: const TextStyle(color: _purple, fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    group,
+                    style: const TextStyle(color: _muted, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              course.name,
+              style: const TextStyle(color: _ink, fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Status: ${course.progress}%',
+                  style: const TextStyle(color: _ink, fontSize: 13),
+                ),
+                actionButton,
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
@@ -591,28 +639,7 @@ class _TableDataRow extends ConsumerWidget {
           ),
           SizedBox(
             width: 110,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: course.isNonCourse
-                    ? () => _showUpdatePlanItemDialog(context, notifier, course)
-                    : viewDisabled
-                        ? null
-                        : () => Modular.to.pushNamed(
-                            CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
-                          ),
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  foregroundColor: _purple,
-                ),
-                child: Text(
-                  course.isNonCourse ? 'Update' : 'View Course',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ),
+            child: Align(alignment: Alignment.centerRight, child: actionButton),
           ),
         ],
       ),
