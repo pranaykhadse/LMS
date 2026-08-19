@@ -97,6 +97,13 @@ dependencies:
   # ------------------------------------------------------------------------------
   image_picker: ^1.1.2
 
+  # ------------------------------------------------------------------------------
+  # Country flags (Account Settings phone country picker) - regional-indicator
+  # emoji flags don't reliably render as actual flag glyphs across desktop
+  # platforms in Flutter, so real flag graphics are used instead.
+  # ------------------------------------------------------------------------------
+  country_flags: ^3.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

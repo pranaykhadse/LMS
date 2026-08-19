@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:country_flags/country_flags.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lms/app/core/data/countries.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
@@ -1183,10 +1184,16 @@ class _CountryCodePicker extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              country?.flag ?? '🌐',
-              style: const TextStyle(fontSize: 16),
-            ),
+            country != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: CountryFlag.fromCountryCode(
+                      country!.iso2,
+                      height: 14,
+                      width: 20,
+                    ),
+                  )
+                : const Icon(Icons.public_rounded, size: 16, color: _asMuted),
             const SizedBox(width: 6),
             Text(
               country != null ? '+${country!.dialCode}' : 'Code',
@@ -1270,8 +1277,14 @@ class _CountryPickerDialogState extends State<_CountryPickerDialog> {
                           final c = results[i];
                           return ListTile(
                             dense: true,
-                            leading: Text(c.flag,
-                                style: const TextStyle(fontSize: 18)),
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(2),
+                              child: CountryFlag.fromCountryCode(
+                                c.iso2,
+                                height: 16,
+                                width: 22,
+                              ),
+                            ),
                             title: Text(c.name,
                                 style: const TextStyle(
                                     fontSize: 13, color: _asInk)),
