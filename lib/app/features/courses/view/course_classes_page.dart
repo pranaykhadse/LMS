@@ -8,6 +8,7 @@ import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
@@ -998,21 +999,41 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
 
   /// Opens the virtual class URL in the in-app WebView, auto-logged in via
   /// redirect-login-link so the learner doesn't see the website login form.
-  Future<void> _attendClass(String contentUrl, String title) async {
+  ///
+  /// A class can carry multiple session links (one per learning_event).
+  /// Picked fresh at click time - not from a value cached at the last
+  /// fetch - so a link that expired while the learner was looking at the
+  /// screen doesn't still get sent to redirect-login-link: only a link on
+  /// this app's own domain, whose session hasn't ended, and (among those)
+  /// the one starting soonest is eligible. If nothing qualifies, this stops
+  /// before ever calling redirect-login-link or opening the WebView and
+  /// tells the learner why instead.
+  Future<void> _attendClass(CourseStructureItem item) async {
     if (!mounted) return;
+    final appHost = Uri.parse(ref.read(ServerProvider.serverUrl)).host;
+    final event = _selectAttendClassEvent(item.learningEvents, appHost);
+    final sessionLink = event?.sessionLink;
+    if (sessionLink == null) {
+      Toast.error(
+        context,
+        'No active session link is available for this class right now.',
+      );
+      return;
+    }
+
     String? loginLink;
     try {
       loginLink = await ref
           .read(RedirectLoginRepository.provider)
-          .getLoginLink(contentUrl);
+          .getLoginLink(sessionLink);
     } catch (e) {
       if (mounted) Toast.error(context, 'Could not get login link: $e');
     }
     if (!mounted) return;
     await InAppWebViewPage.show(
       context,
-      url: loginLink ?? contentUrl,
-      title: title,
+      url: loginLink ?? sessionLink,
+      title: item.title,
     );
   }
 
@@ -1093,11 +1114,16 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
       // Registered Virtual Class or In Person class: Attend Class
       // (Virtual only, via contentUrl) + optional recordings + Cancel
       if ((item.typeCode == '3' || item.typeCode == '2') && item.isEnrolledInClass) ...[
-        if (item.contentUrl != null)
+        // Shown for any enrolled Virtual Class regardless of whether a
+        // qualifying session link currently exists - the domain/expiry
+        // filtering happens at click time in _attendClass, which tells the
+        // learner why via a toast when nothing qualifies, instead of the
+        // button just silently disappearing.
+        if (item.typeCode == '3')
           _OnlineActionButton(
             icon: Icons.send_rounded,
             label: 'Attend Class',
-            onPressed: () => _attendClass(item.contentUrl!, item.title),
+            onPressed: () => _attendClass(item),
           ),
         // Recordings — Watch (browser) or Download (offline) + play in
         // the in-app player. Watching in the browser has no way to
@@ -1630,6 +1656,36 @@ LearningEvent? _earliestUpcomingEvent(List<LearningEvent> events) {
     // through end - not just before it starts, matching the website.
     final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
     if (!stillOpen) continue;
+    if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
+  }
+  return earliest;
+}
+
+/// Picks which session Attend Class should open: among this class's
+/// learning events, only those whose training_session_link host matches
+/// [appHost] (this app's own configured server domain) are eligible at
+/// all - any link pointing somewhere else is ignored outright. Of the
+/// remaining candidates, an already-ended one (its end time, or start time
+/// if it has no end, has passed) is dropped too - there's no fallback to an
+/// expired link. Whatever's left, the one starting soonest wins - whether
+/// it's already in progress (started but not yet ended) or hasn't started
+/// yet. Returns null when nothing qualifies.
+LearningEvent? _selectAttendClassEvent(List<LearningEvent> events, String appHost) {
+  final now = DateTime.now();
+  LearningEvent? earliest;
+  for (final event in events) {
+    final link = event.sessionLink;
+    if (link == null) continue;
+    final uri = Uri.tryParse(link);
+    if (uri == null || uri.host.isEmpty) continue;
+    if (uri.host.toLowerCase() != appHost.toLowerCase()) continue;
+
+    final start = event.startDateTime;
+    if (start == null) continue;
+    final end = event.endDateTime;
+    final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
+    if (!stillOpen) continue;
+
     if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
   }
   return earliest;
