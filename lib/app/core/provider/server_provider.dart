@@ -29,6 +29,11 @@ class ServerProvider {
       // wiping already-loaded screens back to a loading/error state the
       // instant the toggle flips, before the user even navigates anywhere).
       isManualOffline: () => ref.read(OfflineModeNotifier.provider),
+      // Deliberately ref.read for the same reason as isManualOffline above -
+      // a closure that always calls through to the current notifier
+      // instance, not a value frozen at the time this config was built.
+      refreshToken: () =>
+          ref.read(AuthStateNotifier.provider.notifier).refreshAccessToken(),
     );
   });
 }
