@@ -32,6 +32,8 @@ import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.da
 import 'package:lms/app/features/dashboard/viewmodel/mentor_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/supervisor_view_model.dart';
 import 'package:lms/app/features/dashboard/model/mentor_modal.dart';
+import 'package:lms/app/features/dashboard/repository/mentor_repository.dart';
+import 'package:lms/app/core/views/elements/toast.dart';
 
 const _purple = FigmaTokens.primaryPurple;
 const _ink = FigmaTokens.cardTitles;
@@ -204,6 +206,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     child: _InlineConfirmDialog(
                       data: _supData!,
                       title: 'Confirm Your Supervisor',
+                      type: 'supervisor',
                       onConfirmed: () {
                         if (kDebugMode) debugPrint('[DashboardPage] supervisor onConfirmed');
                         setState(() => _showSupervisorInline = false);
@@ -233,6 +236,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     child: _InlineConfirmDialog(
                       data: _mentData!,
                       title: 'Confirm Your Mentor',
+                      type: 'mentor',
                       onConfirmed: () {
                         if (kDebugMode) debugPrint('[DashboardPage] mentor onConfirmed');
                         setState(() => _showMentorInline = false);
@@ -2543,17 +2547,20 @@ class _ErrorView extends StatelessWidget {
 }
 
 // Inline variant of the confirm dialog that doesn't use Navigator.pop — used when showDialog is not appearing on the device.
-class _InlineConfirmDialog extends StatefulWidget {
-  const _InlineConfirmDialog({required this.data, required this.title, required this.onConfirmed});
+class _InlineConfirmDialog extends ConsumerStatefulWidget {
+  const _InlineConfirmDialog({required this.data, required this.title, required this.type, required this.onConfirmed});
   final MentorModalData data;
   final String title;
+
+  /// 'mentor' or 'supervisor' - sent as-is to the confirm-mentor-supervisor API.
+  final String type;
   final VoidCallback onConfirmed;
 
   @override
-  State<_InlineConfirmDialog> createState() => _InlineConfirmDialogState();
+  ConsumerState<_InlineConfirmDialog> createState() => _InlineConfirmDialogState();
 }
 
-class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
+class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
   final _firstController = TextEditingController();
   final _lastController = TextEditingController();
   final _emailController = TextEditingController();
@@ -2601,10 +2608,29 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
 
   Future<void> _confirm() async {
     _validate();
-    if (!_valid) return;
+    if (!_valid || _submitting) return;
     if (kDebugMode) debugPrint('[_InlineConfirmDialog] confirm tapped: ${widget.title}');
     if (mounted) setState(() => _submitting = true);
-    await Future.delayed(const Duration(milliseconds: 300));
+
+    try {
+      await ref.read(MentorRepository.provider).confirm(
+            type: widget.type,
+            firstname: _firstController.text.trim(),
+            lastname: _lastController.text.trim(),
+            email: _emailController.text.trim(),
+          );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[_InlineConfirmDialog] confirm API error: $e');
+      if (mounted) {
+        setState(() => _submitting = false);
+        Toast.error(context, e);
+      }
+      return;
+    }
+
+    if (mounted && context.mounted) {
+      Toast.success(context, '${widget.title.replaceFirst('Confirm Your ', '')} details confirmed.');
+    }
     // NOTE: intentionally NOT gated on `mounted` past this point -
     // onConfirmed() only invokes the callback closure supplied by the
     // parent (which does setState on the *parent's* own State, not this

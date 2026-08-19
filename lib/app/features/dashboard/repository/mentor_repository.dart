@@ -47,4 +47,29 @@ class MentorRepository with RepoNetworkHelper {
     }
     return MentorModalData.fromJson(payload);
   }
+
+  /// Confirms/updates the mentor or supervisor info the user reviewed in
+  /// the dashboard's confirm modal.
+  Future<void> confirm({
+    required String type,
+    required String firstname,
+    required String lastname,
+    required String email,
+  }) async {
+    final response = await post(
+      'lms-screen/confirm-mentor-supervisor',
+      data: {
+        'type': type,
+        'firstname': firstname,
+        'lastname': lastname,
+        'email': email,
+      },
+      cacheType: RequestCacheType.none,
+    );
+
+    final data = Map<String, dynamic>.from(response as Map);
+    if (data['status']?.toString() != '1') {
+      throw Exception(data['message']?.toString() ?? 'Unable to confirm $type details.');
+    }
+  }
 }
