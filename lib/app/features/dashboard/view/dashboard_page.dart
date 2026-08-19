@@ -2603,9 +2603,18 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
     _validate();
     if (!_valid) return;
     if (kDebugMode) debugPrint('[_InlineConfirmDialog] confirm tapped: ${widget.title}');
-    setState(() => _submitting = true);
+    if (mounted) setState(() => _submitting = true);
     await Future.delayed(const Duration(milliseconds: 300));
-    if (!mounted) return;
+    // NOTE: intentionally NOT gated on `mounted` past this point -
+    // onConfirmed() only invokes the callback closure supplied by the
+    // parent (which does setState on the *parent's* own State, not this
+    // dialog's). If this dialog's Element got torn down and rebuilt
+    // during the delay (this shell rebuilds fairly often - see
+    // AppScaffold's shellHeaderConfigProvider post-frame write),
+    // `mounted` here can be false while the parent is still very much
+    // alive and still needs to hear about the confirmation - bailing
+    // out here would silently drop the tap and freeze the flow with
+    // the dialog stuck on screen.
     if (kDebugMode) debugPrint('[_InlineConfirmDialog] calling onConfirmed: ${widget.title}');
     widget.onConfirmed();
   }
