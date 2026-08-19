@@ -205,8 +205,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       data: _supData!,
                       title: 'Confirm Your Supervisor',
                       onConfirmed: () {
+                        if (kDebugMode) debugPrint('[DashboardPage] supervisor onConfirmed');
                         setState(() => _showSupervisorInline = false);
-                        _supervisorCompleter?.complete();
+                        if (_supervisorCompleter?.isCompleted == false) {
+                          _supervisorCompleter!.complete();
+                        }
                       },
                     ),
                   ),
@@ -231,8 +234,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       data: _mentData!,
                       title: 'Confirm Your Mentor',
                       onConfirmed: () {
+                        if (kDebugMode) debugPrint('[DashboardPage] mentor onConfirmed');
                         setState(() => _showMentorInline = false);
-                        _mentorCompleter?.complete();
+                        if (_mentorCompleter?.isCompleted == false) {
+                          _mentorCompleter!.complete();
+                        }
                       },
                     ),
                   ),
@@ -2596,8 +2602,11 @@ class _InlineConfirmDialogState extends State<_InlineConfirmDialog> {
   Future<void> _confirm() async {
     _validate();
     if (!_valid) return;
+    if (kDebugMode) debugPrint('[_InlineConfirmDialog] confirm tapped: ${widget.title}');
     setState(() => _submitting = true);
     await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+    if (kDebugMode) debugPrint('[_InlineConfirmDialog] calling onConfirmed: ${widget.title}');
     widget.onConfirmed();
   }
 
