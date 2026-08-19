@@ -2572,7 +2572,7 @@ class _ErrorView extends StatelessWidget {
 
 // Inline variant of the confirm dialog that doesn't use Navigator.pop — used when showDialog is not appearing on the device.
 class _InlineConfirmDialog extends ConsumerStatefulWidget {
-  const _InlineConfirmDialog({required this.data, required this.title, required this.type, required this.onConfirmed});
+  const _InlineConfirmDialog({super.key, required this.data, required this.title, required this.type, required this.onConfirmed});
   final MentorModalData data;
   final String title;
 
