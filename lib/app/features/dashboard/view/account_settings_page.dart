@@ -1113,20 +1113,36 @@ class _PhoneFieldRow extends StatelessWidget {
                     border: Border.all(
                         color: const Color(0xFFD1D5DB), width: 1),
                   ),
-                  child: Text(
-                    (value ?? '').trim().isNotEmpty
-                        ? [
-                            if (country != null) '+${country.dialCode}',
-                            value!.trim(),
-                          ].join(' ')
-                        : 'Not provided',
-                    style: TextStyle(
-                      color: (value ?? '').trim().isNotEmpty
-                          ? _asInk
-                          : _asMuted,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  child: Row(
+                    children: [
+                      if (country != null &&
+                          (value ?? '').trim().isNotEmpty) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: CountryFlag.fromCountryCode(
+                            country.iso2,
+                            height: 14,
+                            width: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        (value ?? '').trim().isNotEmpty
+                            ? [
+                                if (country != null) '+${country.dialCode}',
+                                value!.trim(),
+                              ].join(' ')
+                            : 'Not provided',
+                        style: TextStyle(
+                          color: (value ?? '').trim().isNotEmpty
+                              ? _asInk
+                              : _asMuted,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 );
 
