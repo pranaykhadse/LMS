@@ -596,7 +596,7 @@ class _TableDataRow extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Status: ${course.progress}%',
+                  'Status: ${course.notEnrolled ? 'Not Enrolled' : '${course.progress}%'}',
                   style: const TextStyle(color: _ink, fontSize: 13),
                 ),
                 actionButton,
@@ -633,7 +633,7 @@ class _TableDataRow extends ConsumerWidget {
           Expanded(
             flex: 2,
             child: Text(
-              '${course.progress}%',
+              course.notEnrolled ? 'Not Enrolled' : '${course.progress}%',
               style: const TextStyle(color: _ink, fontSize: 13),
             ),
           ),
