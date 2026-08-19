@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart' show Headers, Options;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -53,6 +54,11 @@ class DevelopmentPlanRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
     );
     final data = Map<String, dynamic>.from(response as Map);
+    if (kDebugMode) {
+      // Temporary: figure out which raw field actually distinguishes
+      // "not enrolled" from "0% complete" - see DashboardCourse.notEnrolled.
+      debugPrint('[DevelopmentPlanRepository] raw response: $data');
+    }
     if (data['status']?.toString() != '1') {
       throw Exception(data['message']?.toString() ?? 'Unable to load development plan.');
     }
