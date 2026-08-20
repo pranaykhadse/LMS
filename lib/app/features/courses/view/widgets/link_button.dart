@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
@@ -33,43 +32,20 @@ class LinkButton extends ConsumerWidget {
 
     final isOnline = !isManualOffline && connectionVM.isConnected;
     final primary = context.appColorScheme.primary;
-    final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
 
     if (!isOnline) {
       return Tooltip(
         message: "Internet required — not available offline",
-        child: isMacOS
-            ? appActionChip(
-                icon: icon,
-                label: label,
-                fgColor: Colors.white,
-                bgColor: Colors.grey.shade500,
-                borderColor: Colors.grey.shade500,
-                disabledColor: Colors.grey.shade500,
-                onPressed: null,
-                trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.white),
-              )
-            : SizedBox(
-                height: 30,
-                child: ElevatedButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.cloud_off, size: 13, color: Colors.white),
-                  label: Text(label),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade500,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.grey.shade500,
-                    disabledForegroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    textStyle: context.textTheme.bodySmall
-                        ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
-                ),
-              ),
+        child: appActionChip(
+          icon: icon,
+          label: label,
+          fgColor: Colors.white,
+          bgColor: Colors.grey.shade500,
+          borderColor: Colors.grey.shade500,
+          disabledColor: Colors.grey.shade500,
+          onPressed: null,
+          trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.white),
+        ),
       );
     }
 
@@ -84,41 +60,18 @@ class LinkButton extends ConsumerWidget {
           url: url!, title: label);
     };
 
-    if (isMacOS) {
-      return appActionChip(
-        icon: icon,
-        label: label,
-        fgColor: primary,
-        bgColor: Colors.transparent,
-        borderColor: primary,
-        onPressed: onTap,
-      );
-    }
-
-    // ── iOS / other platforms: filled action button ───────────────────────────
-    return SizedBox(
-      height: 30,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, size: 13),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          textStyle: context.textTheme.bodySmall
-              ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        ),
-      ),
+    return appActionChip(
+      icon: icon,
+      label: label,
+      fgColor: primary,
+      bgColor: Colors.transparent,
+      borderColor: primary,
+      onPressed: onTap,
     );
   }
 }
 
-/// ActionChip with custom colors — macOS-only action button style.
+/// ActionChip with custom colors — same style on every platform.
 Widget appActionChip({
   required IconData icon,
   required String label,

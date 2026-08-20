@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
@@ -172,16 +171,6 @@ class _DownloadTriggerButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = FigmaTokens.primaryPurple;
-    if (!fullWidth && defaultTargetPlatform == TargetPlatform.macOS) {
-      return appActionChip(
-        icon: Icons.download_outlined,
-        label: "Download $label",
-        fgColor: primary,
-        bgColor: Colors.transparent,
-        borderColor: primary,
-        onPressed: onTap,
-      );
-    }
     if (fullWidth) {
       return SizedBox(
         width: double.infinity,
@@ -200,24 +189,15 @@ class _DownloadTriggerButton extends StatelessWidget {
         ),
       );
     }
-    return SizedBox(
-      height: 30,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.download_outlined, size: 13),
-        label: Text("Download $label"),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          textStyle: context.textTheme.bodySmall
-              ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
+    // Same outlined chip style on every platform - previously macOS-only,
+    // with mobile/tablet falling back to a solid ElevatedButton instead.
+    return appActionChip(
+      icon: Icons.download_outlined,
+      label: "Download $label",
+      fgColor: primary,
+      bgColor: Colors.transparent,
+      borderColor: primary,
+      onPressed: onTap,
     );
   }
 }
@@ -345,35 +325,17 @@ class _DownloadedRow extends StatelessWidget {
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        if (defaultTargetPlatform == TargetPlatform.macOS)
-          appActionChip(
-            icon: playIcon,
-            label: playLabel,
-            fgColor: Colors.white,
-            bgColor: primary,
-            borderColor: primary,
-            onPressed: onOpen,
-          )
-        else
-          SizedBox(
-            height: 30,
-            child: ElevatedButton.icon(
-              onPressed: onOpen,
-              icon: Icon(playIcon, size: 13),
-              label: Text(playLabel),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                textStyle: context.textTheme.bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-          ),
+        // Same filled chip style on every platform - previously macOS-only,
+        // with mobile/tablet falling back to a visually-similar
+        // ElevatedButton instead.
+        appActionChip(
+          icon: playIcon,
+          label: playLabel,
+          fgColor: Colors.white,
+          bgColor: primary,
+          borderColor: primary,
+          onPressed: onOpen,
+        ),
         Tooltip(
           message: "Remove offline copy",
           child: InkWell(
