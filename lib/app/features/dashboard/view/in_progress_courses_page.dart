@@ -248,29 +248,39 @@ class _CourseRow extends ConsumerWidget {
             height: 1.35,
           ),
         ),
-        if (item.className.isNotEmpty) ...[
-          const SizedBox(height: 2),
-          Text(
-            item.className,
-            style: GoogleFonts.inter(
-              color: const Color(0xFF9CA3AF),
-              fontSize: 12,
-            ),
-          ),
-        ],
-        if (item.date.isNotEmpty) ...[
+        // Class type and date sit on one line, separated by a dot - not
+        // stacked on separate lines.
+        if (item.className.isNotEmpty || item.date.isNotEmpty) ...[
           const SizedBox(height: 2),
           Row(
             children: [
-              const Icon(Icons.calendar_today_rounded, size: 10, color: _purple),
-              const SizedBox(width: 4),
-              Text(
-                item.date,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF6B7280),
-                  fontSize: 12,
+              if (item.className.isNotEmpty)
+                Text(
+                  item.className,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF9CA3AF),
+                    fontSize: 12,
+                  ),
                 ),
-              ),
+              if (item.className.isNotEmpty && item.date.isNotEmpty)
+                Text(
+                  '  ·  ',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF9CA3AF),
+                    fontSize: 12,
+                  ),
+                ),
+              if (item.date.isNotEmpty) ...[
+                const Icon(Icons.calendar_today_rounded, size: 10, color: _purple),
+                const SizedBox(width: 4),
+                Text(
+                  item.date,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -334,18 +344,19 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // px-2 py-1 rounded-full text-[10px] font-semibold, #693D94 on #F0E8F7.
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDE9FE),
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFFF0E8F7),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         status.isNotEmpty ? status : 'In Progress',
         textAlign: TextAlign.center,
         style: GoogleFonts.inter(
-          color: const Color(0xFF5B21B6),
-          fontSize: 12,
+          color: _purple,
+          fontSize: 10,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -366,16 +377,17 @@ class _ResumeButton extends StatelessWidget {
           : () => Modular.to.pushNamed(
                 CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
               ),
+      // px-3 py-1 rounded-xl text-[11px] font-semibold, white on #693D94.
       style: ElevatedButton.styleFrom(
         backgroundColor: _purple,
         disabledBackgroundColor: _purple.withValues(alpha: 0.4),
         foregroundColor: Colors.white,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
       ),
       child: const Text('Resume'),
     );
