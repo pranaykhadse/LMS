@@ -3,7 +3,6 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -155,18 +154,11 @@ class _Header extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            '$count courses',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF9CA3AF),
-              fontSize: 12,
-            ),
+        Text(
+          '$count courses',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF9CA3AF),
+            fontSize: 14,
           ),
         ),
       ],
@@ -176,15 +168,13 @@ class _Header extends StatelessWidget {
 
 // ─── Table header row ────────────────────────────────────────────────────────
 //
-// Desktop: #  |  COURSE  |  CATEGORY  |  DUE DATE
-// Mobile:  #  |  COURSE / CATEGORY / DUE DATE  (combined sub-label)
+// #  |  COURSE / CATEGORY / DUE DATE  (combined, every size)  |  PROGRESS
 
 class _TableHeaderRow extends StatelessWidget {
   const _TableHeaderRow();
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = Responsive.isTablet(context);
     final style = GoogleFonts.inter(
       color: const Color(0xFF9CA3AF),
       fontSize: 12,
@@ -202,23 +192,10 @@ class _TableHeaderRow extends StatelessWidget {
         children: [
           SizedBox(width: 36, child: Text('#', style: style)),
           Expanded(
-            child: Text(
-              isDesktop ? 'COURSE' : 'COURSE / CATEGORY / DUE DATE',
-              style: style,
-            ),
+            child: Text('COURSE / CATEGORY / DUE DATE', style: style),
           ),
-          if (isDesktop) ...[
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 160,
-              child: Text('CATEGORY', style: style),
-            ),
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 130,
-              child: Text('DUE DATE', style: style),
-            ),
-          ],
+          const SizedBox(width: 12),
+          SizedBox(width: 160, child: Text('PROGRESS', style: style)),
         ],
       ),
     );
@@ -239,8 +216,6 @@ class _CourseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = Responsive.isTablet(context);
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: showDivider
@@ -264,135 +239,104 @@ class _CourseRow extends StatelessWidget {
             ),
           ),
 
-          // ── COURSE ─────────────────────────────────────────────────
-          // Desktop: course name only (clickable)
-          // Mobile:  course name + category · date inline below
+          // ── COURSE / CATEGORY / DUE DATE ───────────────────────────
           Expanded(
-            child: isDesktop
-                ? MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () => Modular.to.pushNamed(
-                        CoursesModule.construct(
-                            '${CoursesModule.detail}/${item.courseId}'),
-                      ),
-                      child: Text(
-                        item.courseName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF1F2937),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          height: 1.4,
-                        ),
-                      ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () => Modular.to.pushNamed(
+                    CoursesModule.construct(
+                        '${CoursesModule.detail}/${item.courseId}'),
+                  ),
+                  child: Text(
+                    item.courseName,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF1F2937),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 1.35,
                     ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                ),
+                if (item.category.isNotEmpty || item.dueDate.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      GestureDetector(
-                        onTap: () => Modular.to.pushNamed(
-                          CoursesModule.construct(
-                              '${CoursesModule.detail}/${item.courseId}'),
-                        ),
-                        child: Text(
-                          item.courseName,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                      if (item.category.isNotEmpty)
+                        Text(
+                          item.category,
                           style: GoogleFonts.inter(
-                            color: const Color(0xFF1F2937),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            height: 1.35,
+                            color: const Color(0xFF9CA3AF),
+                            fontSize: 12,
                           ),
                         ),
-                      ),
-                      if (item.category.isNotEmpty || item.dueDate.isNotEmpty) ...[
-                        const SizedBox(height: 3),
-                        Wrap(
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            if (item.category.isNotEmpty)
-                              Text(
-                                item.category,
-                                style: GoogleFonts.inter(
-                                  color: const Color(0xFF9CA3AF),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            if (item.category.isNotEmpty &&
-                                item.dueDate.isNotEmpty)
-                              Text(
-                                '  ·  ',
-                                style: GoogleFonts.inter(
-                                    color: const Color(0xFFD1D5DB),
-                                    fontSize: 12),
-                              ),
-                            if (item.dueDate.isNotEmpty) ...[
-                              const Icon(Icons.calendar_today_rounded,
-                                  size: 10, color: _purple),
-                              const SizedBox(width: 4),
-                              Text(
-                                item.dueDate,
-                                style: GoogleFonts.inter(
-                                  color: const Color(0xFF6B7280),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ],
+                      if (item.category.isNotEmpty && item.dueDate.isNotEmpty)
+                        Text(
+                          '  ·  ',
+                          style: GoogleFonts.inter(
+                              color: const Color(0xFFD1D5DB), fontSize: 12),
+                        ),
+                      if (item.dueDate.isNotEmpty) ...[
+                        const Icon(Icons.calendar_today_rounded,
+                            size: 10, color: _purple),
+                        const SizedBox(width: 4),
+                        Text(
+                          item.dueDate,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF6B7280),
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ],
                   ),
+                ],
+              ],
+            ),
           ),
 
-          // ── CATEGORY — desktop only ────────────────────────────────
-          if (isDesktop) ...[
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 160,
-              child: Text(
-                item.category,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF9CA3AF),
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ],
-
-          // ── DUE DATE — desktop only ────────────────────────────────
-          if (isDesktop) ...[
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 130,
-              child: item.dueDate.isNotEmpty
-                  ? Row(
-                      children: [
-                        const Icon(Icons.calendar_today_rounded,
-                            size: 12, color: _purple),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            item.dueDate,
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF6B7280),
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
+          // ── PROGRESS ────────────────────────────────────────────────
+          const SizedBox(width: 12),
+          SizedBox(width: 160, child: _ProgressCell(percent: item.progress)),
         ],
       ),
+    );
+  }
+}
+
+class _ProgressCell extends StatelessWidget {
+  const _ProgressCell({required this.percent});
+  final int percent;
+
+  @override
+  Widget build(BuildContext context) {
+    final fraction = (percent.clamp(0, 100)) / 100;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$percent%',
+          style: GoogleFonts.inter(
+            color: _purple,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: fraction,
+            minHeight: 6,
+            backgroundColor: const Color(0xFFF3F4F6),
+            valueColor: const AlwaysStoppedAnimation<Color>(_purple),
+          ),
+        ),
+      ],
     );
   }
 }
