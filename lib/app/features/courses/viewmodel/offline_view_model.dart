@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
+import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
+import 'package:lms/app/features/courses/repository/course_join_detail_repository.dart';
 import 'package:lms/app/features/courses/repository/offline_course_repository.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
@@ -83,9 +87,18 @@ class OfflineViewModel extends ChangeNotifier {
       if (_validUrl(pgUrl)) urls.add(pgUrl!);
       if (_validUrl(wmUrl)) urls.add(wmUrl!);
 
+      // Certificates are raw HTML content, not a downloadable file URL -
+      // allcourse/events (used for everything above) doesn't carry them at
+      // all, only a certificate id reference. Fetched separately from
+      // join-course-detail, the same source the live course detail page
+      // uses for these.
+      final certificates = await _certificateContents(course.id);
+
       _progress[course.id ?? -1] = _CourseDownloadProgress(
         completed: 0,
-        total: urls.isEmpty ? 1 : urls.length,
+        total: urls.isEmpty && certificates.isEmpty
+            ? 1
+            : urls.length + certificates.length,
       );
       notifyListeners();
 
@@ -97,7 +110,15 @@ class OfflineViewModel extends ChangeNotifier {
         _progress[course.id ?? -1]?.completed = completed;
         notifyListeners();
       }
-      if (urls.isEmpty) _progress[course.id ?? -1]?.completed = 1;
+      for (final entry in certificates.entries) {
+        await fileVM.saveContent(entry.key, utf8.encode(entry.value));
+        completed++;
+        _progress[course.id ?? -1]?.completed = completed;
+        notifyListeners();
+      }
+      if (urls.isEmpty && certificates.isEmpty) {
+        _progress[course.id ?? -1]?.completed = 1;
+      }
     } catch (e) {
       _notifyDownload(
         title: 'Download Failed',
@@ -178,8 +199,44 @@ class OfflineViewModel extends ChangeNotifier {
       fileVM.delete(wmUrl!);
     }
 
+    // Delete any cached certificates too - same lookup as download().
+    // Best-effort: if this fails (e.g. genuinely offline with nothing
+    // cached for join-course-detail either), any downloaded certificate
+    // cache entries are simply left orphaned rather than actively cleaned
+    // up - not worth blocking removal of everything else over.
+    final certificates = await _certificateContents(course.id);
+    for (final key in certificates.keys) {
+      fileVM.delete(key);
+    }
+
     await repository.removeCourse(course);
     await _fetch();
+  }
+
+  /// classId → certificate HTML for every class in [courseId] that carries
+  /// one - see the comment in [download] for why this needs its own fetch.
+  /// Returns an empty map (not an error) on any failure; a missing
+  /// certificate shouldn't block the rest of the course from downloading
+  /// or being removed.
+  Future<Map<String, String>> _certificateContents(int? courseId) async {
+    if (courseId == null) return {};
+    final userId = ref.read(AuthStateNotifier.provider)?.user?.id;
+    if (userId == null) return {};
+    try {
+      final detail = await ref
+          .read(CourseJoinDetailRepository.provider)
+          .fetch(userId: userId, courseId: courseId);
+      final result = <String, String>{};
+      for (final item in detail.structures) {
+        final html = item.certificateHtml;
+        final classId = item.classId;
+        if (html == null || html.isEmpty || classId == null) continue;
+        result['certificate_class_$classId'] = html;
+      }
+      return result;
+    } catch (_) {
+      return {};
+    }
   }
 
   /// Same as [removeOffline], but by courseId - for callers (e.g. cancelling
