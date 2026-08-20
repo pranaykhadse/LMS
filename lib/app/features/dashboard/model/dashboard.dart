@@ -49,6 +49,7 @@ class DashboardCourse {
     required this.averageRating,
     required this.ratingCount,
     this.isNonCourse = false,
+    this.notEnrolled = false,
     this.description,
     this.category,
     this.dueDate,
@@ -96,8 +97,18 @@ class DashboardCourse {
   // instead updated by percentage via lms-screen/non-course-development-plan.
   final bool isNonCourse;
 
+  // True when the API reports this course as not enrolled - it sends the
+  // literal string "Not Enrolled" in the `progress` field for these
+  // (instead of a number), rather than a separate flag. [progress] can't
+  // represent that (_asInt collapses it to 0, indistinguishable from a
+  // real 0% for an enrolled-but-unstarted course), so this is the only way
+  // to tell the two apart - the Development Plan table shows "Not
+  // Enrolled" instead of "0%" for it, matching the website.
+  final bool notEnrolled;
+
   factory DashboardCourse.fromJson(Map<String, dynamic> json) {
     final hasCourseId = json['course_id'] != null;
+    final progressValue = json['progress'] ?? (hasCourseId ? null : json['status']);
     final nextSessionValue = (json['next_session'] ??
             json['nextSession'] ??
             json['start_date'] ??
@@ -130,7 +141,9 @@ class DashboardCourse {
               : null,
       // Non-course items report their completion percentage via `status`
       // instead of `progress` (which is always null for them).
-      progress: _asInt(json['progress'] ?? (hasCourseId ? null : json['status'])),
+      progress: _asInt(progressValue),
+      notEnrolled:
+          progressValue?.toString().trim().toLowerCase() == 'not enrolled',
       displayRating:
           json['display_rating'] == true ||
           json['display_rating']?.toString() == '1',
