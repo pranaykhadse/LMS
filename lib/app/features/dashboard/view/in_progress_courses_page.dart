@@ -64,7 +64,14 @@ class _Body extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
               child: _Header(
-                  count: state.totalCourses, title: 'Course in Progress'),
+                count: state.totalCourses,
+                // Phone drops the ACTION/Resume column entirely (tapping
+                // the course name already navigates there) and reverts to
+                // the shorter title - see _TableHeaderRow/_CourseRow.
+                title: Responsive.isTablet(context)
+                    ? 'Course in Progress'
+                    : 'In-Progress Courses',
+              ),
             ),
             Expanded(
               child: RefreshIndicator(
@@ -197,14 +204,15 @@ class _TableHeaderRow extends StatelessWidget {
         children: [
           SizedBox(width: 36, child: Text('#', style: style)),
           Expanded(child: Text('BRIDGEWORK', style: style)),
-          // Status/Action move into the Bridgework cell on phone (see
-          // _CourseRow) - no separate columns to head there.
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 120,
+            child: Text('STATUS', style: style, textAlign: TextAlign.center),
+          ),
+          // ACTION (Resume) is tablet+ only - phone drops it entirely
+          // rather than stacking it elsewhere, since tapping the course
+          // name already navigates there.
           if (isDesktop) ...[
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 120,
-              child: Text('STATUS', style: style, textAlign: TextAlign.center),
-            ),
             const SizedBox(width: 12),
             SizedBox(
               width: 120,
@@ -237,15 +245,26 @@ class _CourseRow extends ConsumerWidget {
     final bridgework = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          item.courseName,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.inter(
-            color: const Color(0xFF1F2937),
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            height: 1.35,
+        GestureDetector(
+          // On phone the course name is the only way to reach the course -
+          // there's no Resume button there (see below); on tablet+ it's a
+          // shortcut alongside the ACTION column's own Resume button.
+          onTap: viewDisabled
+              ? null
+              : () => Modular.to.pushNamed(
+                    CoursesModule.construct(
+                        '${CoursesModule.detail}/${item.courseId}'),
+                  ),
+          child: Text(
+            item.courseName,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF1F2937),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              height: 1.35,
+            ),
           ),
         ),
         // Class type and date sit on one line, separated by a dot - not
@@ -290,20 +309,6 @@ class _CourseRow extends ConsumerWidget {
     final statusPill = _StatusPill(status: item.status);
     final resumeButton = _ResumeButton(item: item, disabled: viewDisabled);
 
-    // Fixed-width Status/Action columns only fit alongside a narrow
-    // Bridgework cell on tablet+ - on phone they're appended below
-    // Bridgework instead, to avoid the row overflowing.
-    final leftColumn = isDesktop
-        ? bridgework
-        : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              bridgework,
-              const SizedBox(height: 10),
-              Row(children: [statusPill, const SizedBox(width: 10), resumeButton]),
-            ],
-          );
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: showDivider
@@ -325,10 +330,13 @@ class _CourseRow extends ConsumerWidget {
               ),
             ),
           ),
-          Expanded(child: leftColumn),
+          Expanded(child: bridgework),
+          const SizedBox(width: 12),
+          SizedBox(width: 120, child: Center(child: statusPill)),
+          // ACTION (Resume) is tablet+ only - tapping the course name
+          // already navigates there on phone, so it's dropped entirely
+          // rather than stacked elsewhere in the row.
           if (isDesktop) ...[
-            const SizedBox(width: 12),
-            SizedBox(width: 120, child: Center(child: statusPill)),
             const SizedBox(width: 12),
             SizedBox(width: 120, child: Center(child: resumeButton)),
           ],
