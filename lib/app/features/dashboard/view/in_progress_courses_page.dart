@@ -21,6 +21,12 @@ const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
 
+// # (36) + gap (12) + BRIDGEWORK (240 min, enough for a course title on two
+// lines) + gap (12) + STATUS (120) + gap (12) + ACTION (120) + the table
+// row's own horizontal padding (24 each side) - the narrowest the table can
+// go before it needs to scroll horizontally instead of squeezing columns.
+const _minTableWidth = 600.0;
+
 class InProgressCoursesPage extends ConsumerWidget {
   const InProgressCoursesPage({super.key});
 
@@ -79,16 +85,38 @@ class _Body extends StatelessWidget {
                         border: Border.all(color: const Color(0xFFE5E7EB)),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: Column(
-                        children: [
-                          const _TableHeaderRow(),
-                          for (var i = 0; i < state.courses.length; i++)
-                            _CourseRow(
-                              index: (state.page - 1) * 10 + i + 1,
-                              item: state.courses[i],
-                              showDivider: i < state.courses.length - 1,
+                      // The BRIDGEWORK column needs real room for a course
+                      // title + type + date - squeezing it into whatever's
+                      // left after the fixed-width STATUS/ACTION columns on
+                      // a phone-narrow screen (as Expanded did) collapsed it
+                      // to near-zero width, wrapping "BRIDGEWORK" one letter
+                      // per line and overflowing every row. Below the
+                      // table's real minimum width, this scrolls
+                      // horizontally instead - same columns, same widths,
+                      // just pannable - rather than compressing them.
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final tableWidth = constraints.maxWidth < _minTableWidth
+                              ? _minTableWidth
+                              : constraints.maxWidth;
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SizedBox(
+                              width: tableWidth,
+                              child: Column(
+                                children: [
+                                  const _TableHeaderRow(),
+                                  for (var i = 0; i < state.courses.length; i++)
+                                    _CourseRow(
+                                      index: (state.page - 1) * 10 + i + 1,
+                                      item: state.courses[i],
+                                      showDivider: i < state.courses.length - 1,
+                                    ),
+                                ],
+                              ),
                             ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                     const AppFooter(),
