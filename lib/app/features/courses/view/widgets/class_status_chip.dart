@@ -64,6 +64,8 @@ class ClassStatusChip extends ConsumerWidget {
       ),
       child: Text(
         label,
+        softWrap: false,
+        overflow: TextOverflow.visible,
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,

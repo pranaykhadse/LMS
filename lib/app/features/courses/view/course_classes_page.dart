@@ -1298,8 +1298,12 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   : const SizedBox.shrink(),
             ),
           ),
-          Expanded(
-            flex: 1,
+          // Fixed width, not Expanded(flex: 1) - that squeezed down to
+          // ~68px within the row's 900px minimum width (shared across 4
+          // flex sections), wrapping "Registered"/"Completed" onto two
+          // lines. 120px comfortably fits either on one.
+          SizedBox(
+            width: 120,
             child: item.status.isEmpty
                 ? const SizedBox.shrink()
                 : Align(
@@ -1315,11 +1319,22 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                         : _StatusChip(status: item.status),
                   ),
           ),
+          const SizedBox(width: 16),
           Expanded(
             flex: 6,
             child: actions.isEmpty
                 ? const SizedBox.shrink()
-                : Wrap(spacing: 8, runSpacing: 8, children: actions),
+                // center, not the default start - Details (an
+                // OutlinedButton) and the chip-styled action buttons don't
+                // render at quite the same height, so top-aligning them in
+                // the Wrap made Details look shifted upward relative to
+                // its neighbors.
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: actions,
+                  ),
           ),
         ],
       ),
@@ -2694,6 +2709,8 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         status,
+        softWrap: false,
+        overflow: TextOverflow.visible,
         style: TextStyle(
           color: isCompleted ? const Color(0xFF2E7D32) : _detailPurple,
           fontSize: 12,
