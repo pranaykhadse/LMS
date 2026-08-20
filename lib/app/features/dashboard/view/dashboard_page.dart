@@ -928,10 +928,11 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
     final current = widget.courses.isEmpty ? null : widget.courses[_index];
     final overdue = current != null && _isOverdue(current);
     final accentColor = overdue ? const Color(0xFFDC2626) : _purple;
-    final borderColor = overdue ? const Color(0xFFFECACA) : const Color(0xFFE5E7EB);
-    // Header background stays plain white regardless of overdue status -
-    // only the accent (button, dots, due-date text) and outer card border
-    // turn red for an overdue course, matching the reference design.
+    // Header background and outer card border stay their normal, non-red
+    // colors regardless of overdue status - only the accent (button, dots,
+    // due-date text) turns red for an overdue course, matching the
+    // reference design.
+    const borderColor = Color(0xFFE5E7EB);
     const headerBg = Colors.white;
     final headerBorder = overdue ? const Color(0xFFFEE2E2) : const Color(0xFFF3F4F6);
 
