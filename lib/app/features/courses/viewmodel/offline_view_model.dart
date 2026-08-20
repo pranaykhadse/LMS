@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
@@ -68,10 +69,12 @@ class OfflineViewModel extends ChangeNotifier {
       );
       notifyListeners();
 
+      if (kDebugMode) debugPrint('[OfflineViewModel] download(${course.id}): fetching class list…');
       // Save the course + lesson metadata first (legacy allcourse/events +
       // roster pipeline - kept for the offline course list/metadata index
       // this populates, see repository.getCachedClasses/getCachedCourses).
       final classes = await repository.download(course);
+      if (kDebugMode) debugPrint('[OfflineViewModel] download(${course.id}): got ${classes.length} classes');
 
       // The actual course page (course_classes_page.dart) is built
       // entirely on join-course-detail, not on allcourse/events - and
@@ -86,7 +89,9 @@ class OfflineViewModel extends ChangeNotifier {
       // this once here also happens to warm join-course-detail's own
       // offline cache (see CourseJoinDetailRepository.fetch), which is
       // what actually lets the course page open with no connection at all.
+      if (kDebugMode) debugPrint('[OfflineViewModel] download(${course.id}): fetching join-course-detail…');
       final detail = await _fetchJoinDetail(course.id);
+      if (kDebugMode) debugPrint('[OfflineViewModel] download(${course.id}): join-course-detail ${detail == null ? 'FAILED/null' : 'ok (${detail.structures.length} items)'}');
 
       // Then download every lesson's actual content (video/PDF/article/
       // agreement/peer-coaching/recording) too - a "saved offline" course
@@ -125,9 +130,14 @@ class OfflineViewModel extends ChangeNotifier {
       );
       notifyListeners();
 
+      if (kDebugMode) {
+        debugPrint('[OfflineViewModel] download(${course.id}): ${urls.length} file(s) + '
+            '${certificates.length} certificate(s) queued');
+      }
       final fileVM = ref.read(FileCacheViewModel.provider);
       var completed = 0;
       for (final url in urls) {
+        if (kDebugMode) debugPrint('[OfflineViewModel] download(${course.id}): downloading $url');
         await fileVM.downloadFile(url);
         completed++;
         _progress[course.id ?? -1]?.completed = completed;
@@ -257,9 +267,15 @@ class OfflineViewModel extends ChangeNotifier {
     final userId = ref.read(AuthStateNotifier.provider)?.user?.id;
     if (userId == null) return null;
     try {
+      // Explicit bound on top of whatever the underlying Dio client's own
+      // timeouts are - guarantees Save Offline can never sit stuck on this
+      // one call indefinitely regardless of what the actual cause turns
+      // out to be, since any timeout here just falls through to the catch
+      // below and the caller's own allcourse/events fallback.
       return await ref
           .read(CourseJoinDetailRepository.provider)
-          .fetch(userId: userId, courseId: courseId);
+          .fetch(userId: userId, courseId: courseId)
+          .timeout(const Duration(seconds: 25));
     } catch (_) {
       return null;
     }

@@ -39,7 +39,13 @@ class OfflineCourseRepository {
     final keys = await _getCachedKeys();
     final updatedKeys = {...keys, course.id?.toString()}.toList();
 
-    // Fetch all pages of course classes.
+    // Fetch all pages of course classes. Bounded defensively on two
+    // fronts - an unreliable/stale `pages` count from the server (or a
+    // response that stops returning data without `pages` ever catching up)
+    // previously had no way to end the loop early, so "Save Offline" could
+    // sit fetching page after page for a very long time with nothing to
+    // show for it.
+    const maxPages = 100;
     int totalPages = 1;
     int currentPage = -1;
     List<CourseClass> classes = [];
@@ -49,9 +55,10 @@ class OfflineCourseRepository {
         currentPage,
         queryParams: <String, dynamic>{"course_id": course.id.toString()},
       );
+      if (response.data.isEmpty) break;
       classes.addAll(response.data);
       totalPages = response.pageInfo.pages ?? 1;
-    } while (currentPage < totalPages);
+    } while (currentPage < totalPages && currentPage < maxPages);
 
     // Fetch roaster data and build classId → recording_local_url map so that
     // Virtual Class recording files are included in the offline download.
