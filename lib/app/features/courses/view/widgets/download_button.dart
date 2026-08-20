@@ -29,6 +29,7 @@ class DownloadButton extends ConsumerWidget {
     required this.builder,
     required this.courseClass,
     this.fullWidth = false,
+    this.rawContent,
   });
 
   final String? url;
@@ -38,6 +39,13 @@ class DownloadButton extends ConsumerWidget {
   final CourseClass? courseClass;
   final Widget Function(BuildContext context, FileCacheState file) builder;
   final bool fullWidth;
+
+  /// When set, [url] is used only as the cache key/identifier - "Download"
+  /// saves these bytes directly (FileCacheViewModel.saveContent) instead of
+  /// fetching [url] over the network. For content the app already has in
+  /// hand from an API response (e.g. a certificate's raw HTML) rather than
+  /// a real downloadable file URL.
+  final List<int> Function()? rawContent;
 
   Future<void> _open(BuildContext context, WidgetRef ref, FileCacheState file) async {
     if (courseClass != null) {
@@ -130,14 +138,18 @@ class DownloadButton extends ConsumerWidget {
     }
 
     // ── ④ OFFLINE + NOT DOWNLOADED ───────────────────────────────────────
-    if (!isOnline) {
+    // Doesn't apply to rawContent - that's already in memory from the API
+    // response that got us here, so saving it to disk needs no network.
+    if (!isOnline && rawContent == null) {
       return const _NotAvailableOfflinePill();
     }
 
     // ── ① ONLINE + NOT DOWNLOADED ────────────────────────────────────────
     return _DownloadTriggerButton(
       label: label,
-      onTap: () => fileCacheVM.downloadFile(url!),
+      onTap: () => rawContent != null
+          ? fileCacheVM.saveContent(url!, rawContent!())
+          : fileCacheVM.downloadFile(url!),
       fullWidth: fullWidth,
     );
   }

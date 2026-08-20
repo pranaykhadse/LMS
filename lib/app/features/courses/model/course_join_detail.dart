@@ -221,6 +221,8 @@ class CourseStructureItem {
     this.classId,
     this.contentUrl,
     this.downloadUrl,
+    this.videoLinkUrl,
+    this.certificateHtml,
   });
 
   final String title;
@@ -239,6 +241,18 @@ class CourseStructureItem {
   final int? classId;
   final String? contentUrl;
   final String? downloadUrl;
+
+  /// Watch Video (typeCode '4') only - the external link (e.g. YouTube) from
+  /// content.watch_video_link, separate from [downloadUrl] (the actual
+  /// uploaded file from content.video_upload_url, used by the Download
+  /// button). A class can have either, both, or neither.
+  final String? videoLinkUrl;
+
+  /// Certificate (typeCode '12') only - the raw printable-certificate HTML
+  /// from content.learning_certificate.certificate. There's no file URL for
+  /// this at all; the Download button saves this string directly instead of
+  /// fetching from a URL.
+  final String? certificateHtml;
 
   factory CourseStructureItem.fromJson(Map<String, dynamic> json) {
     final classMap =
@@ -315,12 +329,28 @@ class CourseStructureItem {
         : <String, dynamic>{};
     String? contentUrl;
     String? downloadUrl;
+    String? videoLinkUrl;
+    String? certificateHtml;
     switch (typeCode) {
       case '4': // Watch Video — videoUploadUrl lives in classMap, not contentMap
         contentUrl = _url(classMap['video_upload_url'])
             ?? _url(contentMap['video_upload_url'])
             ?? _url(json['video_upload_url']);
         downloadUrl = contentUrl;
+        // The external link (e.g. YouTube) a class can carry alongside - or
+        // instead of - an actually-uploaded file.
+        videoLinkUrl = _url(contentMap['watch_video_link'])
+            ?? _url(classMap['watch_video_link'])
+            ?? _url(json['watch_video_link']);
+        break;
+      case '12': // Certificate — raw printable-certificate HTML, no file URL.
+        // Not _clean() - that strips HTML tags, which would destroy the
+        // actual certificate markup this is meant to preserve as-is.
+        final learningCert = contentMap['learning_certificate'];
+        if (learningCert is Map) {
+          final raw = learningCert['certificate']?.toString().trim();
+          certificateHtml = (raw == null || raw.isEmpty) ? null : raw;
+        }
         break;
       case '5': // Read Article
         contentUrl = _url(contentMap['article_file']);
@@ -460,6 +490,8 @@ class CourseStructureItem {
       ),
       contentUrl: contentUrl,
       downloadUrl: downloadUrl,
+      videoLinkUrl: videoLinkUrl,
+      certificateHtml: certificateHtml,
     );
   }
 }

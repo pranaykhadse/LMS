@@ -1,4 +1,5 @@
 ﻿import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
@@ -20,6 +21,7 @@ import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/repository/redirect_login_repository.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
+import 'package:lms/app/features/courses/view/content_viewer/certificate_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
@@ -1158,13 +1160,15 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           onPressed: () => _showCancelConfirmationDialog(context, onConfirm: _cancelClass),
         ),
       ] else if (item.typeCode == '4') ...[
-        // Watch Video — "Watch" opens browser (handles HLS/VP9 on iOS);
-        // "Download" is handled by DownloadButton below for offline MP4.
-        if (item.contentUrl != null)
+        // Watch Video — the external link (e.g. YouTube, content.
+        // watch_video_link) and the actually-uploaded file (content.
+        // video_upload_url, handled by the DownloadButton below) are
+        // independent - a class can have either, both, or neither.
+        if (item.videoLinkUrl != null)
           _OnlineActionButton(
             icon: Icons.play_circle_outline_rounded,
             label: 'Watch Video',
-            onPressed: () => _openUrl(context, ref, item.contentUrl!, title: item.title),
+            onPressed: () => _openUrl(context, ref, item.videoLinkUrl!, title: item.title),
           ),
       ] else
         // A Virtual Class or In Person class with no live open session left
@@ -1209,6 +1213,19 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             courseClass: null,
             builder: (ctx, file) => PdfContentViewer(file: file),
           ),
+      // Certificate (typeCode '12') has no downloadUrl at all - the API
+      // gives back the certificate's raw HTML directly instead of a file
+      // URL, so this uses `url` purely as a cache key (the actual save
+      // uses rawContent, not a network fetch - see DownloadButton).
+      if (item.typeCode == '12' && item.certificateHtml != null && isEnrolled)
+        DownloadButton(
+          url: 'certificate_class_${item.classId}',
+          rawContent: () => utf8.encode(item.certificateHtml!),
+          label: 'Certificate',
+          icon: Icons.workspace_premium_rounded,
+          courseClass: null,
+          builder: (ctx, file) => CertificateContentViewer(file: file),
+        ),
     ];
 
     return Container(
