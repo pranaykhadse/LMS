@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -45,6 +46,11 @@ class AccountSettingsRepository with RepoNetworkHelper {
       cacheType: RequestCacheType.none,
     );
     final json = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+    if (kDebugMode) {
+      // Temporary: checking whether country_iso round-trips through a save.
+      debugPrint('[AccountSettingsRepository] GET user-profile/$userId -> '
+          'country_code=${json['country_code']}, country_iso=${json['country_iso']}');
+    }
     return UserProfileDetail.fromJson(json);
   }
 
@@ -52,6 +58,11 @@ class AccountSettingsRepository with RepoNetworkHelper {
     required int userId,
     required Map<String, dynamic> body,
   }) async {
+    if (kDebugMode) {
+      // Temporary: checking whether country_iso round-trips through a save.
+      debugPrint('[AccountSettingsRepository] PUT user-profile/$userId body '
+          'country_code=${body['country_code']}, country_iso=${body['country_iso']}');
+    }
     try {
       final raw = await put(
         'user-profile/$userId',
@@ -60,6 +71,12 @@ class AccountSettingsRepository with RepoNetworkHelper {
       );
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+      if (kDebugMode) {
+        debugPrint('[AccountSettingsRepository] PUT response: '
+            'status=${data['status']}, message=${data['message']}, '
+            'country_code=${data['country_code']}, country_iso=${data['country_iso']}, '
+            'payload=${data['payload']}');
+      }
       if (data['status']?.toString() == '0') {
         return AccountSettingsUpdateResult(
           success: false,
