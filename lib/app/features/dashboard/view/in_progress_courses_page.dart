@@ -371,25 +371,38 @@ class _ResumeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: disabled
-          ? null
-          : () => Modular.to.pushNamed(
-                CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
-              ),
-      // px-3 py-1 rounded-xl text-[11px] font-semibold, white on #693D94.
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _purple,
-        disabledBackgroundColor: _purple.withValues(alpha: 0.4),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        textStyle: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600),
+    // Plain InkWell + Container (not ElevatedButton) - Material's button
+    // widgets impose their own minimum tap-target/padding defaults on top
+    // of whatever style is passed in, which kept rendering this visibly
+    // larger than the inspected 80x24.5px spec no matter what padding was
+    // set. This mirrors _StatusPill's own implementation so both chips are
+    // sized purely by their own padding/text, guaranteed.
+    // px-3 py-1 rounded-xl text-[11px] font-semibold, white on #693D94.
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: disabled
+            ? null
+            : () => Modular.to.pushNamed(
+                  CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
+                ),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: disabled ? _purple.withValues(alpha: 0.4) : _purple,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            'Resume',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
       ),
-      child: const Text('Resume'),
     );
   }
 }
