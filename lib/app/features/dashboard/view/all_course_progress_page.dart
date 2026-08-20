@@ -7,9 +7,11 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/horizontal_scroll_hint.dart';
+import 'package:lms/app/core/views/elements/linked_scroll_controllers.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
+import 'package:lms/app/core/views/elements/sticky_header_delegate.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -29,6 +31,11 @@ const _bg = FigmaTokens.pageBackground;
 // subtitle on a phone-narrow screen).
 const _minTableWidth = 520.0;
 
+// _TableHeaderRow's own rendered height (12px vertical padding each side +
+// ~12px text line) - the pinned sliver header needs an exact height, not
+// just "however tall its child happens to be".
+const _tableHeaderHeight = 44.0;
+
 class AllCourseProgressPage extends ConsumerWidget {
   const AllCourseProgressPage({super.key});
 
@@ -47,13 +54,32 @@ class AllCourseProgressPage extends ConsumerWidget {
   }
 }
 
-class _Body extends StatelessWidget {
+class _Body extends StatefulWidget {
   const _Body({required this.state, required this.notifier});
   final AllCourseProgressState state;
   final AllCourseProgressViewModel notifier;
 
   @override
+  State<_Body> createState() => _BodyState();
+}
+
+class _BodyState extends State<_Body> {
+  // Header and rows are two separate horizontally-scrolling widgets (the
+  // header is pinned in its own sliver, independent of the row list below
+  // it) that need to pan together as one table - see
+  // LinkedScrollControllers.
+  final _scroll = LinkedScrollControllers();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
+    final notifier = widget.notifier;
     switch (state.providerState) {
       case DataProviderState.loading:
       case DataProviderState.idle:
@@ -73,55 +99,93 @@ class _Body extends StatelessWidget {
               child: _Header(count: state.totalCourses),
             ),
             Expanded(
-              child: RefreshIndicator(
-                color: _purple,
-                onRefresh: () async => notifier.fetch(page: state.page),
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                  children: [
-                    const HorizontalScrollHint(),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      // Squeezing the course column's Expanded into
-                      // whatever's left after the fixed-width PROGRESS
-                      // column on a phone-narrow screen collapsed it far
-                      // enough to silently hide the category/date subtitle
-                      // line entirely. Below the table's real minimum
-                      // width, this scrolls horizontally instead - same
-                      // columns, same widths, just pannable.
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final tableWidth = constraints.maxWidth < _minTableWidth
-                              ? _minTableWidth
-                              : constraints.maxWidth;
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SizedBox(
-                              width: tableWidth,
-                              child: Column(
-                                children: [
-                                  const _TableHeaderRow(),
-                                  for (var i = 0; i < state.courses.length; i++)
-                                    _CourseRow(
-                                      index: (state.page - 1) * 10 + i + 1,
-                                      item: state.courses[i],
-                                      showDivider: i < state.courses.length - 1,
-                                    ),
-                                ],
-                              ),
+              // Captured once for the whole table rather than re-measured
+              // per sliver - the pinned header sliver and the row list
+              // sliver both need the identical table width to stay in
+              // sync as the user pans horizontally.
+              child: LayoutBuilder(
+                builder: (context, outerConstraints) {
+                  final availableWidth = outerConstraints.maxWidth - 48;
+                  final tableWidth = availableWidth < _minTableWidth
+                      ? _minTableWidth
+                      : availableWidth;
+                  return RefreshIndicator(
+                    color: _purple,
+                    onRefresh: () async => notifier.fetch(page: state.page),
+                    child: CustomScrollView(
+                      slivers: [
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                          sliver: const SliverToBoxAdapter(
+                              child: HorizontalScrollHint()),
+                        ),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                          // The bordered/rounded card frame - drawn once
+                          // behind the whole group below rather than per
+                          // sliver, since a SliverPersistentHeader and a
+                          // SliverToBoxAdapter can't share one Container.
+                          sliver: DecoratedSliver(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: const Color(0xFFE5E7EB)),
                             ),
-                          );
-                        },
-                      ),
+                            sliver: SliverMainAxisGroup(
+                              slivers: [
+                                SliverPersistentHeader(
+                                  pinned: true,
+                                  delegate: StickyHeaderDelegate(
+                                    height: _tableHeaderHeight,
+                                    child: SingleChildScrollView(
+                                      controller: _scroll.header,
+                                      scrollDirection: Axis.horizontal,
+                                      physics: const ClampingScrollPhysics(),
+                                      child: SizedBox(
+                                        width: tableWidth,
+                                        child: const _TableHeaderRow(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SliverToBoxAdapter(
+                                  child: SingleChildScrollView(
+                                    controller: _scroll.body,
+                                    scrollDirection: Axis.horizontal,
+                                    physics: const ClampingScrollPhysics(),
+                                    child: SizedBox(
+                                      width: tableWidth,
+                                      child: Column(
+                                        children: [
+                                          for (var i = 0;
+                                              i < state.courses.length;
+                                              i++)
+                                            _CourseRow(
+                                              index: (state.page - 1) * 10 +
+                                                  i +
+                                                  1,
+                                              item: state.courses[i],
+                                              showDivider: i <
+                                                  state.courses.length - 1,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SliverPadding(
+                          padding: EdgeInsets.fromLTRB(24, 0, 24, 32),
+                          sliver: SliverToBoxAdapter(child: AppFooter()),
+                        ),
+                      ],
                     ),
-                    const AppFooter(),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
             Padding(
@@ -219,6 +283,15 @@ class _TableHeaderRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: const BoxDecoration(
         color: Color(0xFFF9FAFB),
+        // Top corners rounded to match the outer card frame - this header
+        // is now pinned in its own sliver (see StickyHeaderDelegate),
+        // painted directly against the card's top edge rather than clipped
+        // into it by a shared ClipRRect the way the old single-Container
+        // table was.
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(12),
+          topRight: Radius.circular(12),
+        ),
         border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
       ),
       child: Row(
