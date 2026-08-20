@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
@@ -11,6 +12,8 @@ import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
+import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/dashboard/repository/continue_learning_list_repository.dart';
 import 'package:lms/app/features/dashboard/viewmodel/continue_learning_list_view_model.dart';
 
@@ -29,7 +32,7 @@ class InProgressCoursesPage extends ConsumerWidget {
 
     return AppScaffold(
       backgroundColor: _bg,
-      title: 'In-Progress Courses',
+      title: 'Course in Progress',
       selectedSubLabel: 'Continue Learning',
       onRefresh: () => notifier.fetch(page: state.page),
       body: _Body(state: state, notifier: notifier),
@@ -61,7 +64,7 @@ class _Body extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
               child: _Header(
-                  count: state.totalCourses, title: 'In-Progress Courses'),
+                  count: state.totalCourses, title: 'Course in Progress'),
             ),
             Expanded(
               child: RefreshIndicator(
@@ -155,18 +158,11 @@ class _Header extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            '$count courses',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF9CA3AF),
-              fontSize: 12,
-            ),
+        Text(
+          '$count courses',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF9CA3AF),
+            fontSize: 14,
           ),
         ),
       ],
@@ -176,8 +172,7 @@ class _Header extends StatelessWidget {
 
 // ─── Table header row ────────────────────────────────────────────────────────
 //
-// Mobile : #  |  BRIDGEWORK (title + class + date inline)  |  STATUS
-// Desktop: #  |  BRIDGEWORK (title + class only)  |  DUE DATE  |  STATUS
+// #  |  BRIDGEWORK (title + class + date, all inline)  |  STATUS  |  ACTION
 
 class _TableHeaderRow extends StatelessWidget {
   const _TableHeaderRow();
@@ -202,19 +197,20 @@ class _TableHeaderRow extends StatelessWidget {
         children: [
           SizedBox(width: 36, child: Text('#', style: style)),
           Expanded(child: Text('BRIDGEWORK', style: style)),
-          // Desktop only: separate DUE DATE column
+          // Status/Action move into the Bridgework cell on phone (see
+          // _CourseRow) - no separate columns to head there.
           if (isDesktop) ...[
             const SizedBox(width: 12),
             SizedBox(
-              width: 140,
-              child: Text('DUE DATE', style: style),
+              width: 120,
+              child: Text('STATUS', style: style, textAlign: TextAlign.center),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 120,
+              child: Text('ACTION', style: style, textAlign: TextAlign.center),
             ),
           ],
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 100,
-            child: Text('STATUS', style: style, textAlign: TextAlign.center),
-          ),
         ],
       ),
     );
@@ -223,7 +219,7 @@ class _TableHeaderRow extends StatelessWidget {
 
 // ─── Course row ───────────────────────────────────────────────────────────────
 
-class _CourseRow extends StatelessWidget {
+class _CourseRow extends ConsumerWidget {
   const _CourseRow({
     required this.index,
     required this.item,
@@ -234,8 +230,69 @@ class _CourseRow extends StatelessWidget {
   final bool showDivider;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = Responsive.isTablet(context);
+    final viewDisabled = isViewCourseDisabled(ref, item.courseId);
+
+    final bridgework = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          item.courseName,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            color: const Color(0xFF1F2937),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            height: 1.35,
+          ),
+        ),
+        if (item.className.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            item.className,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF9CA3AF),
+              fontSize: 12,
+            ),
+          ),
+        ],
+        if (item.date.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_rounded, size: 10, color: _purple),
+              const SizedBox(width: 4),
+              Text(
+                item.date,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF6B7280),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+
+    final statusPill = _StatusPill(status: item.status);
+    final resumeButton = _ResumeButton(item: item, disabled: viewDisabled);
+
+    // Fixed-width Status/Action columns only fit alongside a narrow
+    // Bridgework cell on tablet+ - on phone they're appended below
+    // Bridgework instead, to avoid the row overflowing.
+    final leftColumn = isDesktop
+        ? bridgework
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              bridgework,
+              const SizedBox(height: 10),
+              Row(children: [statusPill, const SizedBox(width: 10), resumeButton]),
+            ],
+          );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -247,7 +304,6 @@ class _CourseRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ── # ──────────────────────────────────────────────────────
           SizedBox(
             width: 36,
             child: Text(
@@ -259,109 +315,69 @@ class _CourseRow extends StatelessWidget {
               ),
             ),
           ),
-
-          // ── BRIDGEWORK ─────────────────────────────────────────────
-          // Mobile:  title + class type + date all inline
-          // Desktop: title + class type only (date moves to its own col)
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.courseName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF1F2937),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.35,
-                  ),
-                ),
-                if (item.className.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    item.className,
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF9CA3AF),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-                // Mobile only: date shown inline below class type
-                if (!isDesktop && item.date.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today_rounded,
-                          size: 10, color: _purple),
-                      const SizedBox(width: 4),
-                      Text(
-                        item.date,
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF6B7280),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          // ── DUE DATE — desktop only, own column ────────────────────
+          Expanded(child: leftColumn),
           if (isDesktop) ...[
             const SizedBox(width: 12),
-            SizedBox(
-              width: 140,
-              child: item.date.isNotEmpty
-                  ? Row(
-                      children: [
-                        const Icon(Icons.calendar_today_rounded,
-                            size: 12, color: _purple),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            item.date,
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF6B7280),
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
-            ),
+            SizedBox(width: 120, child: Center(child: statusPill)),
+            const SizedBox(width: 12),
+            SizedBox(width: 120, child: Center(child: resumeButton)),
           ],
-
-          // ── STATUS pill ────────────────────────────────────────────
-          const SizedBox(width: 12),
-          SizedBox(
-            width: 100,
-            child: Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEBEBFF),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'In Progress',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF5B5BD6),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.status});
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEDE9FE),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status.isNotEmpty ? status : 'In Progress',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.inter(
+          color: const Color(0xFF5B21B6),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _ResumeButton extends StatelessWidget {
+  const _ResumeButton({required this.item, required this.disabled});
+  final ContinueLearningListItem item;
+  final bool disabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: disabled
+          ? null
+          : () => Modular.to.pushNamed(
+                CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
+              ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _purple,
+        disabledBackgroundColor: _purple.withValues(alpha: 0.4),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        textStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700),
+      ),
+      child: const Text('Resume'),
     );
   }
 }
