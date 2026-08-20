@@ -3,7 +3,6 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
@@ -64,14 +63,7 @@ class _Body extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
               child: _Header(
-                count: state.totalCourses,
-                // Phone drops the ACTION/Resume column entirely (tapping
-                // the course name already navigates there) and reverts to
-                // the shorter title - see _TableHeaderRow/_CourseRow.
-                title: Responsive.isTablet(context)
-                    ? 'Course in Progress'
-                    : 'In-Progress Courses',
-              ),
+                  count: state.totalCourses, title: 'Course in Progress'),
             ),
             Expanded(
               child: RefreshIndicator(
@@ -186,7 +178,6 @@ class _TableHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = Responsive.isTablet(context);
     final style = GoogleFonts.inter(
       color: const Color(0xFF9CA3AF),
       fontSize: 12,
@@ -209,16 +200,11 @@ class _TableHeaderRow extends StatelessWidget {
             width: 120,
             child: Text('STATUS', style: style, textAlign: TextAlign.center),
           ),
-          // ACTION (Resume) is tablet+ only - phone drops it entirely
-          // rather than stacking it elsewhere, since tapping the course
-          // name already navigates there.
-          if (isDesktop) ...[
-            const SizedBox(width: 12),
-            SizedBox(
-              width: 120,
-              child: Text('ACTION', style: style, textAlign: TextAlign.center),
-            ),
-          ],
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 120,
+            child: Text('ACTION', style: style, textAlign: TextAlign.center),
+          ),
         ],
       ),
     );
@@ -239,16 +225,14 @@ class _CourseRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDesktop = Responsive.isTablet(context);
     final viewDisabled = isViewCourseDisabled(ref, item.courseId);
 
     final bridgework = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
-          // On phone the course name is the only way to reach the course -
-          // there's no Resume button there (see below); on tablet+ it's a
-          // shortcut alongside the ACTION column's own Resume button.
+          // A tap shortcut to the course alongside the ACTION column's own
+          // Resume button.
           onTap: viewDisabled
               ? null
               : () => Modular.to.pushNamed(
@@ -333,13 +317,8 @@ class _CourseRow extends ConsumerWidget {
           Expanded(child: bridgework),
           const SizedBox(width: 12),
           SizedBox(width: 120, child: Center(child: statusPill)),
-          // ACTION (Resume) is tablet+ only - tapping the course name
-          // already navigates there on phone, so it's dropped entirely
-          // rather than stacked elsewhere in the row.
-          if (isDesktop) ...[
-            const SizedBox(width: 12),
-            SizedBox(width: 120, child: Center(child: resumeButton)),
-          ],
+          const SizedBox(width: 12),
+          SizedBox(width: 120, child: Center(child: resumeButton)),
         ],
       ),
     );
