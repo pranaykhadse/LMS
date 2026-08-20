@@ -90,6 +90,7 @@ class AccountSettingsViewModel
     String? avatarUrl,
     String? phoneNumber,
     String? countryCode,
+    String? countryIso,
   }) async {
     final current = state.data;
     if (userId == null || current == null) {
@@ -105,6 +106,7 @@ class AccountSettingsViewModel
       department: department,
       avatarPath: avatarUrl,
       countryCode: countryCode,
+      countryIso: countryIso,
     );
     // Not part of the documented PUT schema — included as a best-effort
     // guess (it's the key the GET response returns this value under).
@@ -123,6 +125,7 @@ class AccountSettingsViewModel
       department: department,
       avatarPath: avatarUrl,
       countryCode: countryCode,
+      countryIso: countryIso,
     );
     if (mounted) {
       state = DataState.onData(

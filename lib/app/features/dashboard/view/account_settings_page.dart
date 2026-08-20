@@ -117,6 +117,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   late final TextEditingController _departmentCtrl;
   late final TextEditingController _phoneCtrl;
   String? _countryCode;
+  String? _countryIso;
 
   @override
   void initState() {
@@ -131,6 +132,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _departmentCtrl = TextEditingController(text: p.department ?? '');
     _phoneCtrl = TextEditingController(text: widget.detail.phoneNumber ?? '');
     _countryCode = p.countryCode?.toString();
+    _countryIso = p.countryIso?.toString();
   }
 
   @override
@@ -157,6 +159,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _departmentCtrl.text = p.department ?? '';
     _phoneCtrl.text = widget.detail.phoneNumber ?? '';
     _countryCode = p.countryCode?.toString();
+    _countryIso = p.countryIso?.toString();
   }
 
   void _startEditing() => setState(() => _isEditing = true);
@@ -219,6 +222,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           department: _departmentCtrl.text.trim(),
           phoneNumber: _phoneCtrl.text.trim(),
           countryCode: _countryCode,
+          countryIso: _countryIso,
         );
     if (!mounted) return;
     setState(() {
@@ -311,8 +315,12 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                     value: widget.detail.phoneNumber,
                     controller: _isEditing ? _phoneCtrl : null,
                     countryCode: _countryCode,
+                    countryIso: _countryIso,
                     onCountryChanged: _isEditing
-                        ? (code) => setState(() => _countryCode = code)
+                        ? (country) => setState(() {
+                              _countryCode = country.dialCode;
+                              _countryIso = country.iso2;
+                            })
                         : null,
                   ),
                   _ToggleRow(
@@ -1038,6 +1046,7 @@ class _PhoneFieldRow extends StatelessWidget {
     this.value,
     this.controller,
     this.countryCode,
+    this.countryIso,
     this.onCountryChanged,
   });
 
@@ -1045,12 +1054,17 @@ class _PhoneFieldRow extends StatelessWidget {
   final String? value;
   final TextEditingController? controller;
   final String? countryCode;
-  final ValueChanged<String>? onCountryChanged;
+  final String? countryIso;
+  final ValueChanged<Country>? onCountryChanged;
 
   @override
   Widget build(BuildContext context) {
     final isEditing = controller != null;
-    final country = countryForDialCode(countryCode);
+    // countryIso is unambiguous; countryCode (dial code) alone is not -
+    // many countries share one (every NANP country is "+1"), so it's only
+    // a fallback for when no iso2 is known yet.
+    final country =
+        countryForIso2(countryIso) ?? countryForDialCode(countryCode);
 
     final labelText = Text(
       '$label:',
@@ -1065,7 +1079,7 @@ class _PhoneFieldRow extends StatelessWidget {
                   children: [
                     _CountryCodePicker(
                       country: country,
-                      onSelected: (c) => onCountryChanged?.call(c.dialCode),
+                      onSelected: (c) => onCountryChanged?.call(c),
                     ),
                     const SizedBox(width: 8),
                     Expanded(

@@ -210,13 +210,28 @@ const List<Country> kCountries = [
   Country(name: 'Zimbabwe', iso2: 'ZW', dialCode: '263'),
 ];
 
-/// Looks up a country by dial code (digits only, no '+'). Returns null if
-/// no match is found (e.g. the profile has no country_code set yet).
+/// Looks up a country by dial code (digits only, no '+'). Many countries
+/// share a dial code (e.g. every NANP country is "+1") - prefer
+/// [countryForIso2] when an ISO2 code is available, and use this only as a
+/// fallback for it, or when no ISO2 is known at all (e.g. the profile has
+/// neither set yet).
 Country? countryForDialCode(String? dialCode) {
   final code = dialCode?.trim();
   if (code == null || code.isEmpty) return null;
   for (final c in kCountries) {
     if (c.dialCode == code) return c;
+  }
+  return null;
+}
+
+/// Looks up a country by its ISO 3166-1 alpha-2 code (case-insensitive) -
+/// unambiguous, unlike [countryForDialCode]. Returns null if no match is
+/// found.
+Country? countryForIso2(String? iso2) {
+  final code = iso2?.trim().toUpperCase();
+  if (code == null || code.isEmpty) return null;
+  for (final c in kCountries) {
+    if (c.iso2 == code) return c;
   }
   return null;
 }
