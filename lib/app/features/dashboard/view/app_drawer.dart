@@ -250,19 +250,30 @@ class AppDrawer extends ConsumerWidget {
                           icon: LucideIcons.user,
                           label: 'Contact a Development Pro',
                           disabled: !isOnline,
-                          onTap: () {
-                            _close(context);
-                            launchContactCoachUrl(ref, context);
-                          },
+                          // Deliberately NOT calling _close(context) first
+                          // here - pushing the WebView route already
+                          // dismisses the drawer on its own, and closing it
+                          // explicitly beforehand unmounts `context` before
+                          // launchVirtualDevUrl below gets a chance to use
+                          // it (see that one's comment - this one just
+                          // happens to run fast enough today not to hit it,
+                          // but relies on the same unmounted context).
+                          onTap: () => launchContactCoachUrl(ref, context),
                         ),
                         _SubNavItem(
                           icon: LucideIcons.bot,
                           label: 'Virtual Development Pro',
                           disabled: !isOnline,
-                          onTap: () {
-                            _close(context);
-                            launchVirtualDevUrl(context, ref);
-                          },
+                          // Bug: this awaits a network call
+                          // (redirect-login-link) before ever touching
+                          // `context` - closing the drawer first (Navigator
+                          // .pop) meant `context` was already unmounted by
+                          // the time that response came back, so
+                          // showWithAuth's `if (!context.mounted) return;`
+                          // silently did nothing. Let the route push itself
+                          // dismiss the drawer instead of doing it manually
+                          // beforehand.
+                          onTap: () => launchVirtualDevUrl(context, ref),
                         ),
                       ],
                     ),
