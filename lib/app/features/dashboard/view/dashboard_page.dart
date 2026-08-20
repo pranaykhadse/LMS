@@ -929,7 +929,10 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
     final overdue = current != null && _isOverdue(current);
     final accentColor = overdue ? const Color(0xFFDC2626) : _purple;
     final borderColor = overdue ? const Color(0xFFFECACA) : const Color(0xFFE5E7EB);
-    final headerBg = overdue ? const Color(0xFFFEF2F2) : Colors.white;
+    // Header background stays plain white regardless of overdue status -
+    // only the accent (button, dots, due-date text) and outer card border
+    // turn red for an overdue course, matching the reference design.
+    const headerBg = Colors.white;
     final headerBorder = overdue ? const Color(0xFFFEE2E2) : const Color(0xFFF3F4F6);
 
     final isTablet = Responsive.isTablet(context);
