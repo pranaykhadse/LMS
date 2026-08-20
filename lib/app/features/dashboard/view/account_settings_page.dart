@@ -107,6 +107,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   bool _isEditing = false;
   bool _isSaving = false;
   bool _isUploadingAvatar = false;
+  bool _isSavingReminders = false;
 
   late final TextEditingController _firstnameCtrl;
   late final TextEditingController _lastnameCtrl;
@@ -205,6 +206,28 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
       _showErrorOrRedirect(error);
     } else {
       Toast.success(context, 'Avatar updated successfully.');
+    }
+  }
+
+  /// Immediate save (not part of the Edit/Save flow) - flips right away on
+  /// toggle, same pattern as [_pickAndUploadAvatar].
+  Future<void> _toggleTextReminders(bool value) async {
+    if (_isSavingReminders) return;
+    setState(() => _isSavingReminders = true);
+    final error = await ref
+        .read(AccountSettingsViewModel.provider.notifier)
+        .setEnableTextMessages(value);
+    if (!mounted) return;
+    setState(() => _isSavingReminders = false);
+    if (error != null) {
+      _showErrorOrRedirect(error);
+    } else {
+      Toast.success(
+        context,
+        value
+            ? 'Text message reminders enabled.'
+            : 'Text message reminders disabled.',
+      );
     }
   }
 
@@ -326,6 +349,8 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                   _ToggleRow(
                     label: 'Receive Text Message Reminders',
                     value: widget.detail.enableTextMessages,
+                    onChanged:
+                        _isSavingReminders ? null : _toggleTextReminders,
                   ),
                 ],
               ),
@@ -1337,10 +1362,18 @@ class _CountryPickerDialogState extends State<_CountryPickerDialog> {
 }
 
 class _ToggleRow extends StatelessWidget {
-  const _ToggleRow({required this.label, this.sublabel, required this.value});
+  const _ToggleRow({
+    required this.label,
+    this.sublabel,
+    required this.value,
+    this.onChanged,
+  });
   final String label;
   final String? sublabel;
   final bool value;
+  // Null keeps the old placeholder behavior (a "Coming soon" toast) for
+  // toggles not wired to a real save yet, e.g. Two-Factor Auth.
+  final ValueChanged<bool>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -1373,7 +1406,7 @@ class _ToggleRow extends StatelessWidget {
           ),
           Switch(
             value: value,
-            onChanged: (_) => Toast.info(context, 'Coming soon.'),
+            onChanged: onChanged ?? (_) => Toast.info(context, 'Coming soon.'),
             activeColor: _asPurple,
           ),
         ],

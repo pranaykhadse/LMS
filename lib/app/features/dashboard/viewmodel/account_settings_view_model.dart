@@ -145,6 +145,35 @@ class AccountSettingsViewModel
     return null;
   }
 
+  /// Flips "Receive Text Message Reminders" immediately on toggle, outside
+  /// the Edit/Save flow - same immediate-save pattern as [uploadAvatar].
+  /// enable_text_messages isn't part of the documented PUT schema either
+  /// (same caveat as phone_number in [update]) - included as a best-effort
+  /// guess matching the key the GET response returns this value under.
+  Future<String?> setEnableTextMessages(bool value) async {
+    final current = state.data;
+    if (userId == null || current == null) {
+      return 'Unable to save — profile not loaded.';
+    }
+    final body = current.profile.toUpdateJson();
+    body['enable_text_messages'] = value ? 1 : 0;
+    final result = await repository.update(userId: userId!, body: body);
+    if (!result.success) {
+      return result.message ?? 'Unable to update reminders. Please try again.';
+    }
+    if (mounted) {
+      state = DataState.onData(
+        UserProfileDetail(
+          profile: current.profile,
+          user: current.user,
+          phoneNumber: current.phoneNumber,
+          enableTextMessages: value,
+        ),
+      );
+    }
+    return null;
+  }
+
   /// Uploads a new avatar via POST user-profile/upload-avatar, then patches
   /// just the avatar_path/avatar_base_url the upload response itself
   /// returns onto the profile already in state - deliberately not a full
