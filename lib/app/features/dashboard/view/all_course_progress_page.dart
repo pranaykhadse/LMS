@@ -124,10 +124,13 @@ class _Body extends StatelessWidget {
                 ),
               ),
             ),
-            PaginationWidget(
-              page: state.page,
-              pages: state.totalPages,
-              onPage: (page) => _goToPage(context, page),
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: PaginationWidget(
+                page: state.page,
+                pages: state.totalPages,
+                onPage: (page) => _goToPage(context, page),
+              ),
             ),
           ],
         );
