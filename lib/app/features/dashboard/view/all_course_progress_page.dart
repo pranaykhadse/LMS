@@ -6,6 +6,7 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/horizontal_scroll_hint.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
@@ -19,6 +20,14 @@ const _purple = FigmaTokens.primaryPurple;
 const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
+
+// # (36) + gap (12) + COURSE/CATEGORY/DUE DATE (240 min, enough for a
+// course title on two lines) + gap (12) + PROGRESS (160) + the table row's
+// own horizontal padding (24 each side) - the narrowest the table can go
+// before it needs to scroll horizontally instead of squeezing the course
+// column down to nothing (which is what silently hid its category/date
+// subtitle on a phone-narrow screen).
+const _minTableWidth = 520.0;
 
 class AllCourseProgressPage extends ConsumerWidget {
   const AllCourseProgressPage({super.key});
@@ -70,6 +79,7 @@ class _Body extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                   children: [
+                    const HorizontalScrollHint(),
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -77,16 +87,36 @@ class _Body extends StatelessWidget {
                         border: Border.all(color: const Color(0xFFE5E7EB)),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: Column(
-                        children: [
-                          const _TableHeaderRow(),
-                          for (var i = 0; i < state.courses.length; i++)
-                            _CourseRow(
-                              index: (state.page - 1) * 10 + i + 1,
-                              item: state.courses[i],
-                              showDivider: i < state.courses.length - 1,
+                      // Squeezing the course column's Expanded into
+                      // whatever's left after the fixed-width PROGRESS
+                      // column on a phone-narrow screen collapsed it far
+                      // enough to silently hide the category/date subtitle
+                      // line entirely. Below the table's real minimum
+                      // width, this scrolls horizontally instead - same
+                      // columns, same widths, just pannable.
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final tableWidth = constraints.maxWidth < _minTableWidth
+                              ? _minTableWidth
+                              : constraints.maxWidth;
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SizedBox(
+                              width: tableWidth,
+                              child: Column(
+                                children: [
+                                  const _TableHeaderRow(),
+                                  for (var i = 0; i < state.courses.length; i++)
+                                    _CourseRow(
+                                      index: (state.page - 1) * 10 + i + 1,
+                                      item: state.courses[i],
+                                      showDivider: i < state.courses.length - 1,
+                                    ),
+                                ],
+                              ),
                             ),
-                        ],
+                          );
+                        },
                       ),
                     ),
                     const AppFooter(),

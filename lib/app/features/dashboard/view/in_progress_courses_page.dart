@@ -6,6 +6,7 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/horizontal_scroll_hint.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
@@ -78,6 +79,7 @@ class _Body extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
                   children: [
+                    const HorizontalScrollHint(),
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
