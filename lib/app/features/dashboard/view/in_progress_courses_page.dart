@@ -251,7 +251,7 @@ class _CourseRow extends ConsumerWidget {
         // Class type and date sit on one line, separated by a dot - not
         // stacked on separate lines.
         if (item.className.isNotEmpty || item.date.isNotEmpty) ...[
-          const SizedBox(height: 2),
+          const SizedBox(height: 6),
           Row(
             children: [
               if (item.className.isNotEmpty)
