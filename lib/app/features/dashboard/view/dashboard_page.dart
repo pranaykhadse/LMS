@@ -1795,7 +1795,7 @@ class _OverallProgressCard extends StatelessWidget {
           end: Alignment.centerRight,
           colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
         ),
-        borderRadius: BorderRadius.circular(isTablet ? 12 : 14),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1813,7 +1813,7 @@ class _OverallProgressCard extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: isTablet ? 16 : 12,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: isTablet ? 0.5 : 0.3,
+                  letterSpacing: isTablet ? 0.4 : 0.3,
                   height: isTablet ? 24 / 16 : 16 / 12,
                 ),
               ),
