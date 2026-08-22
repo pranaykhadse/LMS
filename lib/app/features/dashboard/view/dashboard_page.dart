@@ -2699,8 +2699,10 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                     widget.title,
                     style: GoogleFonts.inter(
                       fontSize: 24,
+                      height: 32 / 24,
                       fontWeight: FontWeight.w300,
-                      color: const Color(0xFF374151),
+                      letterSpacing: 0.6,
+                      color: const Color(0xFF364153),
                     ),
                   ),
                 ),
