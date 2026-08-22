@@ -1863,7 +1863,7 @@ class _DiscussionBoardsCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -1875,7 +1875,7 @@ class _DiscussionBoardsCard extends StatelessWidget {
                 child: Text(
                   'Discussion Board',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF374151),
+                    color: const Color(0xFF533641),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     height: 24 / 16,
@@ -1897,6 +1897,7 @@ class _DiscussionBoardsCard extends StatelessWidget {
                     style: GoogleFonts.inter(
                       color: _purple,
                       fontSize: 12,
+                      height: 16 / 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1936,8 +1937,8 @@ class _DiscussionBoardRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: hovering
             ? const Color(0xFFF0E8F7).withValues(alpha: 0.3)
-            : const Color(0xFFF9FAFB), // gray-50
-        borderRadius: BorderRadius.circular(8),
+            : const Color(0xFFFBF9FA),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: hovering
               ? _purple.withValues(alpha: 0.3)
@@ -1956,9 +1957,10 @@ class _DiscussionBoardRow extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF1F2937),
+                  color: const Color(0xFF391E29),
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
+                  height: 19.25 / 14,
                 ),
               ),
               // Design ref: mt-0.5 (2px)
