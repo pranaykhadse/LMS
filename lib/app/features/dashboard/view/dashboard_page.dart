@@ -734,7 +734,7 @@ class _StatCard extends StatelessWidget {
           : const EdgeInsets.fromLTRB(12, 16, 12, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -749,7 +749,7 @@ class _StatCard extends StatelessWidget {
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: isTablet ? const Color(0xFF9CA3AF) : const Color(0xFF99A1AF),
+                    color: isTablet ? const Color(0xFFAF99A1) : const Color(0xFF99A1AF),
                     fontSize: isTablet ? 12 : 10,
                     fontWeight: FontWeight.w600,
                     letterSpacing: isTablet ? 0.6 : 0.5,
@@ -763,12 +763,12 @@ class _StatCard extends StatelessWidget {
           _AnimatedCounter(
             value: value,
             style: GoogleFonts.inter(
-              color: isTablet ? const Color(0xFF1F2937) : const Color(0xFF1E2939),
+              color: isTablet ? const Color(0xFF391E29) : const Color(0xFF1E2939),
               fontSize: isTablet ? 36 : 30,
               // Design ref: font-semibold (600) on tablet/desktop, bold
               // (700) on phone per the mobile spec.
               fontWeight: isTablet ? FontWeight.w600 : FontWeight.w700,
-              height: isTablet ? 1.1 : 1.2,
+              height: isTablet ? 40 / 36 : 1.2,
             ),
           ),
         ],
