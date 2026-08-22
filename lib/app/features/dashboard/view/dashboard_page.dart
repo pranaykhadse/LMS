@@ -2791,8 +2791,6 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
-
                 RichText(
                   text: TextSpan(
                     children: [
