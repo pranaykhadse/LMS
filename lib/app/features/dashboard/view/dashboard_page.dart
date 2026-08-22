@@ -1288,6 +1288,7 @@ class _ContinueLearningItem extends ConsumerWidget {
                           style: GoogleFonts.inter(
                             color: accentColor,
                             fontSize: 16,
+                            height: 24 / 16,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -1319,6 +1320,7 @@ class _ContinueLearningItem extends ConsumerWidget {
                   textStyle: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: 16,
+                    height: 24 / 16,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
