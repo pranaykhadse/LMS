@@ -1389,7 +1389,7 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -1399,10 +1399,10 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
           Text(
             'Upcoming Virtual Classes',
             style: GoogleFonts.inter(
-              color: const Color(0xFF374151), // gray-700
+              color: const Color(0xFF533641),
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              height: isTablet ? null : 24 / 16,
+              height: 24 / 16,
             ),
           ),
           const SizedBox(height: 16),
@@ -1461,10 +1461,10 @@ class _SessionRow extends StatelessWidget {
     final titleText = Text(
       event.courseName.isNotEmpty ? event.courseName : event.title,
       style: GoogleFonts.inter(
-        color: isTablet ? const Color(0xFF1F2937) : const Color(0xFF1E2939),
+        color: isTablet ? const Color(0xFF391E29) : const Color(0xFF1E2939),
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        height: isTablet ? 1.4 : 22 / 16,
+        height: 22 / 16,
       ),
     );
 
@@ -1487,6 +1487,7 @@ class _SessionRow extends StatelessWidget {
               style: GoogleFonts.inter(
                 color: _purple,
                 fontSize: 11,
+                height: 15.125 / 11,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -1557,8 +1558,8 @@ class _SessionRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: hovering
             ? _purple.withValues(alpha: 0.05)
-            : const Color(0xFFF9FAFB), // gray-50
-        borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
+            : const Color(0xFFFBF9FA),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: hovering
               ? _purple.withValues(alpha: 0.3)
@@ -1585,13 +1586,14 @@ class _SessionRow extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
                           color: _purple,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Text(
                           'Join',
                           style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 12,
+                            height: 18 / 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
