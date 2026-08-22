@@ -2722,7 +2722,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                     style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF533641)),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: const Color(0xFFF4F5F7),
+                      fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -2750,7 +2750,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                     style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF533641)),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: const Color(0xFFF4F5F7),
+                      fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -2779,7 +2779,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                     style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF533641)),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: const Color(0xFFF4F5F7),
+                      fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
