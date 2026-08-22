@@ -94,10 +94,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         _mentData = mentData;
       });
 
-      // TEMP: forced true for CSS-matching testing - revert to the
-      // shouldShow-gated version below once styling work is done.
-      final showSupervisor = true; // supData != null && supData.shouldShow;
-      final showMentor = true; // mentData != null && mentData.shouldShow;
+      final showSupervisor = supData != null && supData.shouldShow;
+      final showMentor = mentData != null && mentData.shouldShow;
 
       if (showSupervisor) {
         _supervisorCompleter = Completer<void>();
