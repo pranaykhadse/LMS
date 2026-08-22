@@ -2256,7 +2256,7 @@ class _RequiredForYouCard extends StatelessWidget {
           Text(
             'Required For You',
             style: GoogleFonts.inter(
-              color: const Color(0xFF374151),
+              color: const Color(0xFF533641),
               fontSize: 16,
               fontWeight: FontWeight.w600,
               height: 24 / 16,
@@ -2296,6 +2296,7 @@ class _RequiredForYouCard extends StatelessWidget {
                 textStyle: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 16,
+                  height: 24 / 16,
                   fontWeight: isTablet ? FontWeight.w500 : FontWeight.w600,
                 ),
               ),
@@ -2325,7 +2326,7 @@ class _RequiredRow extends ConsumerWidget {
             '$index',
             textAlign: TextAlign.right,
             style: GoogleFonts.inter(
-              color: const Color(0xFF9CA3AF),
+              color: const Color(0xFFAF99A1),
               fontSize: 16,
               fontWeight: FontWeight.w400,
               height: 24 / 16,
@@ -2340,7 +2341,7 @@ class _RequiredRow extends ConsumerWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              color: const Color(0xFF374151),
+              color: const Color(0xFF533641),
               fontSize: 16,
               fontWeight: FontWeight.w400,
               height: 24 / 16,
