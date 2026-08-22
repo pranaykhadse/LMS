@@ -1385,7 +1385,10 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
     return Container(
       // Design ref (phone): the two cards stack instead of sitting side by
       // side, so there's no need to match Continue Learning's fixed height.
-      height: isTablet ? 284 : null,
+      // Bumped 284 -> 286: the exact line-heights added to the row's
+      // due-date/hosted-by text (matching live inspection) render a couple
+      // px taller than the earlier estimate, overflowing the old value.
+      height: isTablet ? 286 : null,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
