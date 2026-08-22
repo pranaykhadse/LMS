@@ -1512,20 +1512,20 @@ class _SessionRow extends StatelessWidget {
           style: GoogleFonts.inter(
             color: const Color(0xFF9CA3AF),
             fontSize: 12,
-            height: 1.4,
+            height: 18 / 12,
           ),
         ),
         if (event.startTime != null && event.startTime!.isNotEmpty) ...[
           Text(
             ' • ',
-            style: GoogleFonts.inter(color: const Color(0xFFD1D5DB), fontSize: 12),
+            style: GoogleFonts.inter(color: const Color(0xFFDCD1D5), fontSize: 12, height: 18 / 12),
           ),
           Text(
             _formatTime(event.startDateTime),
             style: GoogleFonts.inter(
               color: const Color(0xFF9CA3AF),
               fontSize: 12,
-              height: 1.4,
+              height: 18 / 12,
             ),
           ),
         ],
@@ -1536,13 +1536,14 @@ class _SessionRow extends StatelessWidget {
             TextSpan(children: [
               TextSpan(
                 text: 'Hosted by ',
-                style: GoogleFonts.inter(color: const Color(0xFF9CA3AF), fontSize: 12),
+                style: GoogleFonts.inter(color: const Color(0xFFAF99A1), fontSize: 12, height: 18 / 12),
               ),
               TextSpan(
                 text: event.instructor,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF4B5563),
+                  color: const Color(0xFF654A55),
                   fontSize: 12,
+                  height: 18 / 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
