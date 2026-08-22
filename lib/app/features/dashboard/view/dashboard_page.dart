@@ -2669,12 +2669,6 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
     widget.onConfirmed();
   }
 
-  void _skip() {
-    if (_submitting) return;
-    if (kDebugMode) debugPrint('[_InlineConfirmDialog] skip tapped: ${widget.title}');
-    widget.onConfirmed();
-  }
-
   @override
   Widget build(BuildContext context) {
     final maxWidth = MediaQuery.of(context).size.width * 0.9;
@@ -2695,12 +2689,10 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
             border: Border.all(color: const Color(0xFFD5E6FF).withOpacity(0.6)),
           ),
           clipBehavior: Clip.antiAlias,
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: SingleChildScrollView(
-                  child: Column(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: SingleChildScrollView(
+              child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -2832,19 +2824,18 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(24),
-                            onTap: _submitting ? null : _skip,
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: null, // Skip is intentionally disabled.
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: const Color(0xFFE5E7EB)),
+                                color: const Color(0xFFF4F5F7),
+                                borderRadius: BorderRadius.circular(20),
                               ),
                               alignment: Alignment.center,
                               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                               child: Text(
                                 'Skip',
-                                style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: const Color(0xFF364153), fontSize: 16),
+                                style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: const Color(0xFF826A72)),
                               ),
                             ),
                           ),
@@ -2881,24 +2872,10 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                 ),
               ],
             ),
-                ),
               ),
-              Positioned(
-                top: 16,
-                right: 16,
-                child: InkWell(
-                  onTap: _submitting ? null : _skip,
-                  borderRadius: BorderRadius.circular(999),
-                  child: const Padding(
-                    padding: EdgeInsets.all(4),
-                    child: Icon(Icons.close, size: 20, color: Color(0xFF9CA3AF)),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
-      ),
     );
   }
 }
