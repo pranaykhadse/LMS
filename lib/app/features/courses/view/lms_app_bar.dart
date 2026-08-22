@@ -890,7 +890,7 @@ class _ProfileMenuButtonState extends State<_ProfileMenuButton> {
           LmsAvatar(
             profile: widget.profile,
             radius: 10,
-            fallbackColor: const Color(0xFF6A7282),
+            fallbackColor: const Color(0xFF693D94),
           ),
           const SizedBox(width: 6),
           Text(
@@ -1446,31 +1446,36 @@ class LmsAvatar extends StatelessWidget {
   final dynamic profile;
   final double radius;
 
-  /// Background color shown when there's no photo (an initial/icon
-  /// instead) — defaults to the app purple; the desktop header's TopBar
-  /// pill uses the Figma spec's own #6A7282 instead.
+  /// Initial letter color shown when there's no photo (background is
+  /// always white in that case) — defaults to the app purple.
   final Color fallbackColor;
 
   @override
   Widget build(BuildContext context) {
     final url = profile?.avatarUrl?.toString() ?? '';
+    if (url.isNotEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: radius - 2,
+          backgroundImage: NetworkImage(url),
+        ),
+      );
+    }
+    // No photo: flat white circle with the initial in fallbackColor -
+    // matches reference (bg #FFFFFF, text #693D94), not a filled/ringed
+    // circle with white text.
     return CircleAvatar(
       radius: radius,
       backgroundColor: Colors.white,
-      child: CircleAvatar(
-        radius: radius - 2,
-        backgroundColor: fallbackColor,
-        backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
-        child: url.isEmpty
-            ? Text(
-                _initial(profile),
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: radius * 1.1,
-                ),
-              )
-            : null,
+      child: Text(
+        _initial(profile),
+        style: GoogleFonts.inter(
+          color: fallbackColor,
+          fontWeight: FontWeight.w600,
+          fontSize: radius * 1.1,
+        ),
       ),
     );
   }
