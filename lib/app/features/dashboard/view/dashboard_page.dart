@@ -641,6 +641,7 @@ class _BannerSection extends StatelessWidget {
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: attributionSize,
+                        height: 20 / 14,
                         fontWeight: FontWeight.w500,
                         letterSpacing: 0.35,
                       ),
