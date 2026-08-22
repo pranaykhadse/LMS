@@ -377,8 +377,9 @@ class DashboardBody extends ConsumerWidget {
                       child: Text(
                         "Welcome back! Here's what's happening with your courses.",
                         style: GoogleFonts.inter(
-                          color: const Color(0xFF6B7280),
+                          color: const Color(0xFF826A72),
                           fontSize: Responsive.isTablet(context) ? 16 : 13,
+                          height: 24 / 16,
                         ),
                       ),
                     ),
