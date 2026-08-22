@@ -902,7 +902,7 @@ class _ProfileMenuButtonState extends State<_ProfileMenuButton> {
               height: 16 / 12,
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 6),
           Transform.translate(
             offset: const Offset(0, 1.0),
             child: Icon(
