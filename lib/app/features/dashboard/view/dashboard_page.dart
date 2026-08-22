@@ -2710,7 +2710,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
 
                 Text(
                   'First Name',
-                  style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF1A1A2E)),
+                  style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
                 ),
                 const SizedBox(height: 6),
                 SizedBox(
@@ -2737,7 +2737,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
 
                 Text(
                   'Last Name',
-                  style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF1A1A2E)),
+                  style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
                 ),
                 const SizedBox(height: 6),
                 SizedBox(
@@ -2764,7 +2764,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
 
                 Text(
                   'Email',
-                  style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF1A1A2E)),
+                  style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
                 ),
                 const SizedBox(height: 6),
                 SizedBox(
