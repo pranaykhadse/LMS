@@ -976,11 +976,10 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                   child: Text(
                     'CONTINUE LEARNING',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF6B7280),
+                      color: const Color(0xFF826A72),
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      // Design ref (phone): letter-spacing 0.4
-                      letterSpacing: isTablet ? 0.5 : 0.4,
+                      letterSpacing: 0.4,
                       // Design ref: text-base default line-height = 24px
                       height: 24 / 16,
                     ),
@@ -1238,8 +1237,9 @@ class _ContinueLearningItem extends ConsumerWidget {
                     style: GoogleFonts.inter(
                       color: accentColor,
                       fontSize: 13,
+                      height: 19.5 / 13,
                       fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.325,
                     ),
                   ),
                 const SizedBox(height: 2),
@@ -1250,10 +1250,10 @@ class _ContinueLearningItem extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF1F2937),
+                    color: const Color(0xFF391E29),
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    height: 1.35,
+                    height: 22 / 16,
                   ),
                 ),
 
@@ -1265,7 +1265,7 @@ class _ContinueLearningItem extends ConsumerWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF9CA3AF),
+                      color: const Color(0xFFAF99A1),
                       fontSize: 16,
                       // Design ref: leading-relaxed = 1.625
                       height: 1.625,
