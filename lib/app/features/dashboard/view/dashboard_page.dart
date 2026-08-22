@@ -1656,7 +1656,7 @@ class _CourseProgressCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -1668,7 +1668,7 @@ class _CourseProgressCard extends StatelessWidget {
                 child: Text(
                   'Course Progress',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF374151), // gray-700
+                    color: const Color(0xFF533641),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     height: 24 / 16,
@@ -1735,7 +1735,7 @@ class _CourseProgressRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF4B5563), // gray-600
+                  color: const Color(0xFF1A1A2E),
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                   height: 24 / 16,
@@ -1747,7 +1747,7 @@ class _CourseProgressRow extends StatelessWidget {
               value: course.progress,
               suffix: '%',
               style: GoogleFonts.inter(
-                color: const Color(0xFF9CA3AF),
+                color: const Color(0xFFAF99A1),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 height: 24 / 16,
