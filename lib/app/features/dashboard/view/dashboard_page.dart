@@ -2791,20 +2791,23 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                     ),
                   ),
                 ),
-                RichText(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+                  child: RichText(
                   text: TextSpan(
                     children: [
                       TextSpan(
                         text: 'Note: ',
-                        style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF374151)),
+                        style: GoogleFonts.inter(fontSize: 12, height: 20 / 12, fontWeight: FontWeight.w700, color: const Color(0xFF6A7282)),
                       ),
                       TextSpan(
                         text: widget.title.toLowerCase().contains('supervisor')
                             ? "We ask that you confirm your supervisor's information every three months. If the above information is correct, click Confirm. You can edit your supervisor's information at anytime through your profile."
                             : "We ask that you confirm your mentor's information every three months. If the above information is correct, click Confirm. You can edit your mentor's information at anytime through your profile.",
-                        style: GoogleFonts.inter(fontSize: 14, fontStyle: FontStyle.italic, color: const Color(0xFF6B7280)),
+                        style: GoogleFonts.inter(fontSize: 12, height: 20 / 12, fontWeight: FontWeight.w400, color: const Color(0xFF6A7282)),
                       ),
                     ],
+                  ),
                   ),
                 ),
                 const SizedBox(height: 20),
