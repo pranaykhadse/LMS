@@ -1762,7 +1762,7 @@ class _CourseProgressRow extends StatelessWidget {
           child: LinearProgressIndicator(
             value: pct,
             minHeight: 6,
-            backgroundColor: const Color(0xFFF3F4F6),
+            backgroundColor: const Color(0xFFF6F3F4),
             valueColor: const AlwaysStoppedAnimation<Color>(_purple),
           ),
         ),
