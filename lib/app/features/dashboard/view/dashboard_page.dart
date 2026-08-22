@@ -631,7 +631,7 @@ class _BannerSection extends StatelessWidget {
                         color: Colors.white,
                         fontSize: quoteSize,
                         fontWeight: FontWeight.w400,
-                        height: 1.4,
+                        height: 22 / 16,
                       ),
                     ),
                     SizedBox(height: isTablet ? 14 : 4),
