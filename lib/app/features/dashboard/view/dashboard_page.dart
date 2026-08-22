@@ -2669,6 +2669,12 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
     widget.onConfirmed();
   }
 
+  void _skip() {
+    if (_submitting) return;
+    if (kDebugMode) debugPrint('[_InlineConfirmDialog] skip tapped: ${widget.title}');
+    widget.onConfirmed();
+  }
+
   @override
   Widget build(BuildContext context) {
     final maxWidth = MediaQuery.of(context).size.width * 0.9;
@@ -2688,9 +2694,13 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
             ],
             border: Border.all(color: const Color(0xFFD5E6FF).withOpacity(0.6)),
           ),
-          padding: const EdgeInsets.all(24),
-          child: SingleChildScrollView(
-            child: Column(
+          clipBehavior: Clip.antiAlias,
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -2810,39 +2820,82 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                   ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                // Confirm button centered, styled to exact specs from design
+                // Skip + Confirm buttons, centered as a pair
                 Center(
-                  child: SizedBox(
-                    width: 159,
-                    height: 48,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: (!_valid || _submitting) ? null : _confirm,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: _valid ? const Color(0xFF693D94) : const Color(0xFFE5E7EB),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(color: const Color(0xFF000000).withOpacity(0.08), offset: const Offset(0, 8), blurRadius: 10, spreadRadius: -6),
-                            ],
-                          ),
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
-                          child: Text(
-                            _submitting ? 'Confirming...' : 'Confirm',
-                            style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _valid ? Colors.white : const Color(0xFF6B7280), fontSize: 16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: 48,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(24),
+                            onTap: _submitting ? null : _skip,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: const Color(0xFFE5E7EB)),
+                              ),
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                              child: Text(
+                                'Skip',
+                                style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: const Color(0xFF364153), fontSize: 16),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      SizedBox(
+                        height: 48,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(24),
+                            onTap: (!_valid || _submitting) ? null : _confirm,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: _valid ? const Color(0xFF693D94) : const Color(0xFFE5E7EB),
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(color: const Color(0xFF000000).withOpacity(0.08), offset: const Offset(0, 8), blurRadius: 10, spreadRadius: -6),
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                              child: Text(
+                                _submitting ? 'Confirming...' : 'Confirm',
+                                style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _valid ? Colors.white : const Color(0xFF6B7280), fontSize: 16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
+                ),
+              ),
+              Positioned(
+                top: 16,
+                right: 16,
+                child: InkWell(
+                  onTap: _submitting ? null : _skip,
+                  borderRadius: BorderRadius.circular(999),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.close, size: 20, color: Color(0xFF9CA3AF)),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
