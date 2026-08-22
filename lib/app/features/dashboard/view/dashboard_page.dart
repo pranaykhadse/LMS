@@ -2009,7 +2009,7 @@ class _RewardsPointsCard extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -2022,7 +2022,7 @@ class _RewardsPointsCard extends ConsumerWidget {
                 child: Text(
                   'Rewards & Points',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF374151),
+                    color: const Color(0xFF533641),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     height: 24 / 16,
@@ -2047,6 +2047,7 @@ class _RewardsPointsCard extends ConsumerWidget {
                     style: GoogleFonts.inter(
                       color: _purple,
                       fontSize: 12,
+                      height: 16 / 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -2103,7 +2104,7 @@ class _RewardsPointsCard extends ConsumerWidget {
                     Text(
                       'Great progress${firstName != null && firstName.isNotEmpty ? ', $firstName' : ''}!',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF1F2937),
+                        color: const Color(0xFF391E29),
                         fontSize: 14,
                         // Design ref: font-semibold (600), was 700
                         fontWeight: FontWeight.w600,
@@ -2114,7 +2115,7 @@ class _RewardsPointsCard extends ConsumerWidget {
                     Text(
                       "You've earned points by completing courses and attending virtual classes.",
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF9CA3AF), // gray-400
+                        color: const Color(0xFFAF99A1),
                         fontSize: 12,
                         // Design ref: leading-relaxed = 1.625
                         height: 1.625,
@@ -2153,8 +2154,8 @@ class _RewardsPointsCard extends ConsumerWidget {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF9FAFB),
-                                    borderRadius: BorderRadius.circular(8),
+                                    color: const Color(0xFFFBF9FA),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Row(
                                     children: [
