@@ -171,7 +171,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         LmsOfflineToggle(
           isOffline: isOffline,
           iconSize: 14,
-          switchScale: 0.8,
+          switchScale: 0.65,
           onChanged: (val) {
             ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
             if (!val) ref.read(SyncViewModel.provider).onManualOnline();
@@ -200,14 +200,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ),
               ],
             ),
-          ),
-        ),
-        const SizedBox(width: 4),
-        LmsAppBarButton(
-          icon: Icons.play_arrow_rounded,
-          iconSize: 14,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const LearningProgressPage()),
           ),
         ),
         const SizedBox(width: 6),
