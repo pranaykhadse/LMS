@@ -688,9 +688,8 @@ class _StatRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            // Design ref: <AlertCircle size={13} className="text-amber-500" />
             icon: LucideIcons.alertCircle,
-            iconColor: const Color(0xFFF59E0B),
+            iconColor: const Color(0xFF00FE9A),
             label: 'REQUIRED',
             value: required,
           ),
@@ -698,9 +697,8 @@ class _StatRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            // Design ref: <CheckCircle size={13} className="text-green-500" />
             icon: LucideIcons.checkCircle,
-            iconColor: const Color(0xFF22C55E),
+            iconColor: const Color(0xFF5000C9),
             label: 'COMPLETED',
             value: completed,
           ),
