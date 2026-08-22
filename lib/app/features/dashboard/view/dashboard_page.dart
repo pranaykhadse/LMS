@@ -2712,15 +2712,16 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                   'First Name',
                   style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 SizedBox(
                   height: 50,
                   child: TextField(
                     controller: _firstController,
+                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF533641)),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      fillColor: const Color(0xFFF4F5F7),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
@@ -2739,15 +2740,16 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                   'Last Name',
                   style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 SizedBox(
                   height: 50,
                   child: TextField(
                     controller: _lastController,
+                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF533641)),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      fillColor: const Color(0xFFF4F5F7),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
@@ -2766,16 +2768,17 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                   'Email',
                   style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 SizedBox(
                   height: 50,
                   child: TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF533641)),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      fillColor: const Color(0xFFF4F5F7),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
