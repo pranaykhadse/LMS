@@ -1965,16 +1965,51 @@ class _DiscussionBoardRow extends StatelessWidget {
               ),
               // Design ref: mt-0.5 (2px)
               const SizedBox(height: 2),
-              Text(
-                [
-                  if (item.lastRepliedBy.isNotEmpty) item.lastRepliedBy,
-                  if (item.lastReply.isNotEmpty) item.lastReply,
-                  '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
-                ].join(' • '),
-                style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF),
-                    fontSize: 12,
-                    height: 16 / 12),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    if (item.lastRepliedBy.isNotEmpty) ...[
+                      TextSpan(
+                        text: item.lastRepliedBy,
+                        style: GoogleFonts.inter(
+                            color: const Color(0xFFAF99A1),
+                            fontSize: 12,
+                            height: 16 / 12),
+                      ),
+                      TextSpan(
+                        text: ' • ',
+                        style: GoogleFonts.inter(
+                            color: const Color(0xFFDCD1D5),
+                            fontSize: 12,
+                            height: 16 / 12),
+                      ),
+                    ],
+                    if (item.lastReply.isNotEmpty) ...[
+                      TextSpan(
+                        text: item.lastReply,
+                        style: GoogleFonts.inter(
+                            color: const Color(0xFF9CA3AF),
+                            fontSize: 12,
+                            height: 16 / 12),
+                      ),
+                      TextSpan(
+                        text: ' • ',
+                        style: GoogleFonts.inter(
+                            color: const Color(0xFFDCD1D5),
+                            fontSize: 12,
+                            height: 16 / 12),
+                      ),
+                    ],
+                    TextSpan(
+                      text:
+                          '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
+                      style: GoogleFonts.inter(
+                          color: const Color(0xFF9CA3AF),
+                          fontSize: 12,
+                          height: 16 / 12),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -2351,9 +2386,9 @@ class _ViewButton extends StatelessWidget {
     return HoverBuilder(
       builder: (context, hovering) {
         final filled = hovering && onPressed != null;
-        // Design ref (>=700px): rounded-xl (12px). Design ref (phone): 4px.
+        // Design ref (>=700px): rounded-xl (14px). Design ref (phone): 4px.
         final borderRadius = BorderRadius.all(
-          Radius.circular(Responsive.isTablet(context) ? 12 : 4),
+          Radius.circular(Responsive.isTablet(context) ? 14 : 4),
         );
         return Material(
           color: filled ? _purple : Colors.transparent,
@@ -2372,6 +2407,7 @@ class _ViewButton extends StatelessWidget {
                 style: GoogleFonts.inter(
                   color: filled ? Colors.white : _purple,
                   fontSize: fontSize,
+                  height: 16 / 12,
                   fontWeight: fontWeight,
                 ),
               ),
