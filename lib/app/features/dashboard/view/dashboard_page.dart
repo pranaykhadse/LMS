@@ -2847,21 +2847,21 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(24),
+                            borderRadius: BorderRadius.circular(20),
                             onTap: (!_valid || _submitting) ? null : _confirm,
                             child: Container(
                               decoration: BoxDecoration(
                                 color: _valid ? const Color(0xFF693D94) : const Color(0xFFE5E7EB),
-                                borderRadius: BorderRadius.circular(24),
+                                borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(color: const Color(0xFF000000).withOpacity(0.08), offset: const Offset(0, 8), blurRadius: 10, spreadRadius: -6),
                                 ],
                               ),
                               alignment: Alignment.center,
-                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
                               child: Text(
                                 _submitting ? 'Confirming...' : 'Confirm',
-                                style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _valid ? Colors.white : const Color(0xFF6B7280), fontSize: 16),
+                                style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: _valid ? Colors.white : const Color(0xFF6B7280)),
                               ),
                             ),
                           ),
