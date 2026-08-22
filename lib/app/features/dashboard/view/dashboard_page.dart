@@ -2686,7 +2686,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
             ],
             border: Border.all(color: const Color(0xFFD5E6FF).withOpacity(0.6)),
           ),
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+          padding: const EdgeInsets.all(24),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
