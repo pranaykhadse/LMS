@@ -83,12 +83,26 @@ class Toast {
     );
   }
 
+  /// Red, shield icon, dismissible with an explicit close button - matches
+  /// the reference site's "Course has been deleted by the Admin." banner.
+  static void danger(BuildContext context, String message) {
+    _showTopToast(
+      context: context,
+      message: message,
+      icon: Icons.shield_outlined,
+      color: const Color(0xFFDC2626),
+      dismissible: true,
+      duration: const Duration(seconds: 8),
+    );
+  }
+
   static void _showTopToast({
     required BuildContext context,
     required String message,
     required IconData icon,
     required Color color,
     Duration duration = const Duration(seconds: 3),
+    bool dismissible = false,
   }) {
     showToastWidget(
       SafeArea(
@@ -116,6 +130,13 @@ class Toast {
                   ),
                 ),
               ),
+              if (dismissible) ...[
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: () => dismissAllToast(),
+                  child: const Icon(Icons.close, color: Colors.white, size: 18),
+                ),
+              ],
             ],
           ),
         ),

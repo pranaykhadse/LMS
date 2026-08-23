@@ -175,6 +175,15 @@ int? _loggedInUserId(AuthState? auth) {
   return auth?.userProfile?.userId ?? auth?.user?.id;
 }
 
+/// True when [error] represents a 404/"not found" response - e.g. the
+/// course was deleted by an admin. Shared with the view so it can trigger
+/// the "Course has been deleted by the Admin." toast.
+bool isCourseNotFoundError(Object? error) {
+  if (error == null) return false;
+  final msg = error.toString().toLowerCase();
+  return msg.contains('404') || msg.contains('not found');
+}
+
 String _friendlyError(Object error) {
   final msg = error.toString().toLowerCase();
   if (msg.contains('500') || msg.contains('server error')) {

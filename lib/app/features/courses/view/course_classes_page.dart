@@ -57,6 +57,7 @@ class CourseClassesPage extends ConsumerStatefulWidget {
 
 class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
   bool _redirectingUnauthorized = false;
+  bool _shownNotFoundToast = false;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +69,14 @@ class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         redirectToLoginOnSessionExpired(context, ref);
+      });
+    }
+
+    if (!_shownNotFoundToast && isCourseNotFoundError(state.error)) {
+      _shownNotFoundToast = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Toast.danger(context, 'Course has been deleted by the Admin.');
       });
     }
 
