@@ -743,7 +743,7 @@ class _StatCard extends StatelessWidget {
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: isTablet ? const Color(0xFFAF99A1) : const Color(0xFF99A1AF),
+                    color: const Color(0xFFAF99A1),
                     fontSize: isTablet ? 12 : 10,
                     fontWeight: FontWeight.w600,
                     letterSpacing: isTablet ? 0.6 : 0.5,
@@ -757,11 +757,12 @@ class _StatCard extends StatelessWidget {
           _AnimatedCounter(
             value: value,
             style: GoogleFonts.inter(
-              color: isTablet ? const Color(0xFF391E29) : const Color(0xFF1E2939),
+              color: const Color(0xFF391E29),
               fontSize: isTablet ? 36 : 30,
-              // Design ref: font-semibold (600) on tablet/desktop, bold
-              // (700) on phone per the mobile spec.
-              fontWeight: isTablet ? FontWeight.w600 : FontWeight.w700,
+              // Design ref: font-semibold (600) confirmed on both tablet/
+              // desktop and mobile via live inspection (mobile was
+              // previously assumed to be Bold 700 - corrected).
+              fontWeight: FontWeight.w600,
               height: isTablet ? 40 / 36 : 1.2,
             ),
           ),
