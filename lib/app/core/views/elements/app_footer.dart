@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/responsive.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const _footerText = Color(0xFF6B7280);
+// Design ref: a.hover:text-gray-600 - the footer links' hover color.
+const _footerTextHover = Color(0xFF1A1A2E);
+
+const _footerText = Color(0xFFAF99A1);
 // Design ref (phone): footer link/icon color is a lighter gray than
 // desktop's _footerText.
 const _footerTextPhone = Color(0xFF99A1AF);
@@ -90,11 +94,17 @@ class _FooterLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Text(
-        label,
-        style: GoogleFonts.inter(color: color, fontSize: 13),
+    return HoverBuilder(
+      builder: (context, hovering) => InkWell(
+        onTap: onTap,
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            color: hovering ? _footerTextHover : color,
+            fontSize: 13,
+            height: 19.5 / 13,
+          ),
+        ),
       ),
     );
   }

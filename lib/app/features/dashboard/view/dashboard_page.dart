@@ -2351,12 +2351,10 @@ class _RequiredRow extends ConsumerWidget {
         // Design ref: mr-8 (32px) on the number+title group, before the
         // View button
         const SizedBox(width: 32),
-        // View button — outlined purple, fills on hover. Design ref:
-        // text-[13px] font-medium here (Discussion Board's View button is
-        // a different 12px/font-semibold spec, despite sharing this widget)
+        // View button — outlined purple, fills on hover. Same 13px/Medium
+        // spec as Discussion Board's View button (both confirmed via live
+        // inspection) - uses _ViewButton's default styling.
         _ViewButton(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
           onPressed: viewDisabled
               ? null
               : () => Modular.to.pushNamed(
@@ -2374,9 +2372,9 @@ class _RequiredRow extends ConsumerWidget {
 class _ViewButton extends StatelessWidget {
   const _ViewButton({
     required this.onPressed,
-    // Design ref default: Discussion Board's text-xs font-semibold (12/600)
-    this.fontSize = 12,
-    this.fontWeight = FontWeight.w600,
+    // Design ref default: Discussion Board's button.shrink-0 (13/500)
+    this.fontSize = 13,
+    this.fontWeight = FontWeight.w500,
   });
   final VoidCallback? onPressed;
   final double fontSize;
@@ -2408,7 +2406,7 @@ class _ViewButton extends StatelessWidget {
                 style: GoogleFonts.inter(
                   color: filled ? Colors.white : _purple,
                   fontSize: fontSize,
-                  height: 16 / 12,
+                  height: 19.5 / 13,
                   fontWeight: fontWeight,
                 ),
               ),
