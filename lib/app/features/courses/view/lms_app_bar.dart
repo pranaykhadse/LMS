@@ -402,8 +402,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 },
               ),
               SizedBox(
-                width: 30,
-                height: 30,
+                // Reference utility group: bell (14px) + 11px gap +
+                // profile trigger (38px) = 63px wide, 20px high.
+                width: 14,
+                height: 20,
                 child: Builder(
                   builder:
                       (bellContext) => Stack(
@@ -414,7 +416,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                             // Mobile header utility icons are all white.
                             iconColor: Colors.white,
                             iconSize: 14,
-                            boxSize: 30,
+                            boxSize: 14,
                             onTap: () => showLmsNotifications(bellContext),
                           ),
                           if (unreadCount > 0)
@@ -429,9 +431,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 11),
               PopupMenuButton<String>(
-                offset: const Offset(0, 34),
+                offset: const Offset(0, 24),
                 constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
@@ -443,20 +445,20 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 // Phone-only: avatar sits inside a small rounded box with a
                 // dropdown chevron, instead of desktop's bare avatar + name.
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(4, 4, 6, 4),
+                  height: 20,
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.zero,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       LmsAvatar(
                         profile: profile,
-                        radius: 12,
+                        radius: 10,
                         fallbackColor: _appPurple,
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: 4),
                       const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: Colors.white,
