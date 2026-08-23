@@ -8,13 +8,14 @@ import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // Design ref: a.hover:text-gray-600 - the footer links' hover color.
-const _footerTextHover = Color(0xFF1A1A2E);
-
-const _footerText = Color(0xFFAF99A1);
-// Design ref (phone): footer link/icon color is a lighter gray than
-// desktop's _footerText.
-const _footerTextPhone = Color(0xFF99A1AF);
-const _footerBorder = Color(0xFFE4E7EC);
+const _footerTextHover = Color(0xFF4B5563); // gray-600
+// Desktop/tablet footer text
+const _footerText = Color(0xFF9CA3AF); // gray-400
+// Mobile footer text — gray-400 = #9CA3AF (matches reference)
+const _footerTextPhone = Color(0xFF9CA3AF); // gray-400
+// LinkedIn icon on mobile — gray-500 = #6B7280
+const _footerLinkedInPhone = Color(0xFF6B7280);
+const _footerBorder = Color(0xFFE5E7EB); // gray-200
 
 /// Matches the website's global footer (Terms of Use / Your Profile /
 /// Support + LinkedIn) — shown at the bottom of every main screen.
@@ -25,6 +26,8 @@ class AppFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTablet = Responsive.isTablet(context);
     final color = isTablet ? _footerText : _footerTextPhone;
+    // LinkedIn icon: gray-500 on mobile, same as links on tablet
+    final linkedInColor = isTablet ? _footerText : _footerLinkedInPhone;
     final links = Wrap(
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -57,17 +60,15 @@ class AppFooter extends StatelessWidget {
         ),
       ],
     );
-    final linkedIn = _LinkedInBadge(color: color);
+    final linkedIn = _LinkedInBadge(color: linkedInColor);
 
     return Column(
       children: [
         const Divider(height: 1, color: _footerBorder),
-        // Design ref: flex ... gap-3 py-3 border-t border-gray-200
-        // text-[13px] text-gray-400. Phone: links + icon stack centered
-        // instead of a space-between row, and the gutter matches the
-        // page's own outer padding (12px) instead of a flat 20px.
+        // Mobile: py-3 (12px) top/bottom, no horizontal padding (outer
+        // page wrapper provides it). Column centered. gap-3 (12px).
         Padding(
-          padding: EdgeInsets.fromLTRB(isTablet ? 20 : 12, 12, isTablet ? 20 : 12, 12),
+          padding: EdgeInsets.fromLTRB(isTablet ? 20 : 0, 12, isTablet ? 20 : 0, 12),
           child: isTablet
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
