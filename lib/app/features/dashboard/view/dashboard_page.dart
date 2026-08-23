@@ -1903,11 +1903,13 @@ class _DiscussionBoardsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final shown = boards.take(4).toList();
+    final isTablet = Responsive.isTablet(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        // rounded-lg = 8px on mobile
+        borderRadius: BorderRadius.circular(isTablet ? 10 : 8),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -1919,7 +1921,8 @@ class _DiscussionBoardsCard extends StatelessWidget {
                 child: Text(
                   'Discussion Board',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF533641),
+                    // text-gray-700 = #374151
+                    color: const Color(0xFF374151),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     height: 24 / 16,
@@ -1981,12 +1984,14 @@ class _DiscussionBoardRow extends ConsumerWidget {
       decoration: BoxDecoration(
         color: hovering
             ? const Color(0xFFF0E8F7).withValues(alpha: 0.3)
-            : const Color(0xFFFBF9FA),
-        borderRadius: BorderRadius.circular(10),
+            // bg-gray-50 = #F9FAFB
+            : const Color(0xFFF9FAFB),
+        // rounded-lg = 8px
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: hovering
               ? _purple.withValues(alpha: 0.3)
-              : const Color(0xFFF3F4F6), // gray-100
+              : const Color(0xFFF3F4F6),
         ),
       ),
       child: Row(
@@ -2001,13 +2006,13 @@ class _DiscussionBoardRow extends ConsumerWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF391E29),
+                  // text-gray-800 = #1F2937
+                  color: const Color(0xFF1F2937),
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                   height: 19.25 / 14,
                 ),
               ),
-              // Design ref: mt-0.5 (2px)
               const SizedBox(height: 2),
               Text.rich(
                 TextSpan(
@@ -2016,14 +2021,16 @@ class _DiscussionBoardRow extends ConsumerWidget {
                       TextSpan(
                         text: item.lastRepliedBy,
                         style: GoogleFonts.inter(
-                            color: const Color(0xFFAF99A1),
+                            // text-gray-400 = #9CA3AF
+                            color: const Color(0xFF9CA3AF),
                             fontSize: 12,
                             height: 16 / 12),
                       ),
                       TextSpan(
                         text: ' • ',
                         style: GoogleFonts.inter(
-                            color: const Color(0xFFDCD1D5),
+                            // text-gray-300 = #D1D5DB
+                            color: const Color(0xFFD1D5DB),
                             fontSize: 12,
                             height: 16 / 12),
                       ),
@@ -2039,7 +2046,7 @@ class _DiscussionBoardRow extends ConsumerWidget {
                       TextSpan(
                         text: ' • ',
                         style: GoogleFonts.inter(
-                            color: const Color(0xFFDCD1D5),
+                            color: const Color(0xFFD1D5DB),
                             fontSize: 12,
                             height: 16 / 12),
                       ),
@@ -2058,7 +2065,6 @@ class _DiscussionBoardRow extends ConsumerWidget {
             ],
           ),
         ),
-        // Design ref: gap-2 (8px)
         const SizedBox(width: 8),
         _ViewButton(
           onPressed: () {
@@ -2086,6 +2092,7 @@ class _RewardsPointsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isTablet = Responsive.isTablet(context);
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final points = rewards?.totalPoints ?? profile?.points ?? 0;
     final firstName = profile?.firstname?.trim();
@@ -2095,7 +2102,8 @@ class _RewardsPointsCard extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        // rounded-lg = 8px on mobile
+        borderRadius: BorderRadius.circular(isTablet ? 10 : 8),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -2108,7 +2116,8 @@ class _RewardsPointsCard extends ConsumerWidget {
                 child: Text(
                   'Rewards & Points',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF533641),
+                    // text-gray-700 = #374151
+                    color: const Color(0xFF374151),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     height: 24 / 16,
@@ -2190,9 +2199,9 @@ class _RewardsPointsCard extends ConsumerWidget {
                     Text(
                       'Great progress${firstName != null && firstName.isNotEmpty ? ', $firstName' : ''}!',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF391E29),
+                        // text-gray-800 = #1F2937
+                        color: const Color(0xFF1F2937),
                         fontSize: 14,
-                        // Design ref: font-semibold (600), was 700
                         fontWeight: FontWeight.w600,
                         height: 20 / 14,
                       ),
@@ -2201,9 +2210,9 @@ class _RewardsPointsCard extends ConsumerWidget {
                     Text(
                       "You've earned points by completing courses and attending virtual classes.",
                       style: GoogleFonts.inter(
-                        color: const Color(0xFFAF99A1),
+                        // text-gray-400 = #9CA3AF
+                        color: const Color(0xFF9CA3AF),
                         fontSize: 12,
-                        // Design ref: leading-relaxed = 1.625
                         height: 1.625,
                       ),
                     ),
@@ -2240,8 +2249,10 @@ class _RewardsPointsCard extends ConsumerWidget {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFBF9FA),
-                                    borderRadius: BorderRadius.circular(10),
+                                    // bg-gray-50 = #F9FAFB
+                                    color: const Color(0xFFF9FAFB),
+                                    // rounded-lg = 8px
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Row(
                                     children: [
@@ -2434,9 +2445,9 @@ class _ViewButton extends StatelessWidget {
     return HoverBuilder(
       builder: (context, hovering) {
         final filled = hovering && onPressed != null;
-        // Design ref (>=700px): rounded-xl (14px). Design ref (phone): 4px.
+        // Design ref: rounded-xl = 12px on mobile, 14px on tablet/desktop
         final borderRadius = BorderRadius.all(
-          Radius.circular(Responsive.isTablet(context) ? 14 : 4),
+          Radius.circular(Responsive.isTablet(context) ? 14 : 12),
         );
         return Material(
           color: filled ? _purple : Colors.transparent,
