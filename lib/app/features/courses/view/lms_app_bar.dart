@@ -1132,20 +1132,20 @@ class LmsNotifBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        constraints: const BoxConstraints(minWidth: 13, minHeight: 13),
+        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
         padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
         alignment: Alignment.center,
         decoration: const BoxDecoration(
           color: Colors.red,
-          borderRadius: BorderRadius.all(Radius.circular(5)),
+          shape: BoxShape.circle,
         ),
         child: Text(
           count > 99 ? '99+' : '$count',
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 7,
+            fontSize: 8,
             fontWeight: FontWeight.w800,
-            height: 1.0,
+            height: 12 / 8,
           ),
           textAlign: TextAlign.center,
         ),
