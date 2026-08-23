@@ -426,6 +426,15 @@ class DashboardBody extends ConsumerWidget {
                               _ContinueLearningCard(
                                 courses: _continueLearningCourses(data),
                               ),
+                              // Mobile only: Overall Progress sits between
+                              // Continue Learning and Upcoming Sessions,
+                              // matching the reference's md:hidden card order.
+                              if (!isTablet) ...[
+                                const SizedBox(height: 16),
+                                _OverallProgressCard(
+                                  overallProgress: data.summary.overallProgress,
+                                ),
+                              ],
                               const SizedBox(height: 16),
                               _UpcomingSessionsCard(sessions: data.upcomingSessions),
                             ],
@@ -455,10 +464,15 @@ class DashboardBody extends ConsumerWidget {
                         : Column(
                             children: [
                               _CourseProgressCard(courses: _progressCourses(data)),
-                              const SizedBox(height: 16),
-                              _OverallProgressCard(
-                                overallProgress: data.summary.overallProgress,
-                              ),
+                              // Overall Progress already rendered above on
+                              // mobile (between Continue Learning and
+                              // Upcoming Sessions) — only show here on tablet.
+                              if (isTablet) ...[
+                                const SizedBox(height: 16),
+                                _OverallProgressCard(
+                                  overallProgress: data.summary.overallProgress,
+                                ),
+                              ],
                             ],
                           ),
                   ),
