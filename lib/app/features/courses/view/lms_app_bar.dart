@@ -503,7 +503,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   fontWeight: FontWeight.w600,
                   height: 20 / 14,
                   letterSpacing: 0,
-                  color: FigmaTokens.modalLabels,
+                  color: Color(0xFF533641),
                 ),
               ),
               // Right: always hamburger icon
