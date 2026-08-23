@@ -483,59 +483,52 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     // Back navigation is always handled inline in the page body header
     // (← Back | Page Title) — the AppBar always shows "Menu" + hamburger.
 
-    // Figma mobile app bar spec:
-    // Container: horizontal, space-between, padding top 8 / right 16 / bottom 8 / left 16
-    // "Menu" label: Inter SemiBold 600, 14px, line-height 20px, color #364153
-    // Hamburger icon: 20×20px, color #6A7282
-    // Background: white
-    //
-    // Deliberately NOT a real AppBar here — nesting an actual AppBar inside
-    // the Column below (alongside the purple top bar) corrupted the
-    // semantics tree ('!semantics.parentDataDirty' assertion flood) and
-    // rendered a blank body. AppBar expects to be the sole widget handed
-    // to Scaffold's `appBar:` slot, not nested under another widget, so
-    // this replicates the same visuals with plain Material/Row instead.
+    // Figma mobile app bar spec (matched from reference HTML/CSS):
+    // Container: bg-white, border-bottom 1px #E5E7EB, height ~48px
+    // Padding: px-3 (12px) left/right, flex items-center justify-between
+    // "Menu" label: Inter SemiBold 600, text-sm 14px, color gray-700 #374151
+    // Hamburger button: p-1.5 (6px), icon 20×20, color gray-500 #6B7280
     final menuBar = Material(
       color: Colors.white,
-      child: SizedBox(
+      child: Container(
         height: 48,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Left: always "Menu" label
-              const Text(
-                'Menu',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  height: 20 / 14,
-                  letterSpacing: 0,
-                  color: Color(0xFF533641),
+        decoration: const BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Left: "Menu" label — text-sm font-semibold text-gray-700
+            const Text(
+              'Menu',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                height: 20 / 14,
+                letterSpacing: 0,
+                color: Color(0xFF374151),
+              ),
+            ),
+            // Right: hamburger — p-1.5 text-gray-500
+            Builder(
+              builder: (ctx) => GestureDetector(
+                onTap: () => Scaffold.of(ctx).openDrawer(),
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(
+                    Icons.menu_rounded,
+                    size: 20,
+                    color: const Color(0xFF6B7280),
+                  ),
                 ),
               ),
-              // Right: always hamburger icon
-              Builder(
-                builder:
-                    (ctx) => GestureDetector(
-                      onTap: () => Scaffold.of(ctx).openDrawer(),
-                      child: SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: Center(
-                          child: Icon(
-                            Icons.menu_rounded,
-                            size: 20,
-                            color: FigmaTokens.noteBodyText,
-                          ),
-                        ),
-                      ),
-                    ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
