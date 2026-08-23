@@ -457,12 +457,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         profile: profile,
                         radius: 10,
                         fallbackColor: _appPurple,
-                        initialTextStyle: GoogleFonts.inter(
-                          color: FigmaTokens.primaryPurple,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          height: 16.5 / 11,
-                        ),
                       ),
                       // 20px avatar + 3px gap + 14px chevron = 37px.
                       const SizedBox(width: 3),
@@ -1515,7 +1509,6 @@ class LmsAvatar extends StatelessWidget {
     required this.profile,
     required this.radius,
     this.fallbackColor = _appPurple,
-    this.initialTextStyle,
   });
   final dynamic profile;
   final double radius;
@@ -1523,7 +1516,6 @@ class LmsAvatar extends StatelessWidget {
   /// Initial letter color shown when there's no photo (background is
   /// always white in that case) — defaults to the app purple.
   final Color fallbackColor;
-  final TextStyle? initialTextStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -1546,13 +1538,11 @@ class LmsAvatar extends StatelessWidget {
       backgroundColor: Colors.white,
       child: Text(
         _initial(profile),
-        style:
-            initialTextStyle ??
-            GoogleFonts.inter(
-              color: fallbackColor,
-              fontWeight: FontWeight.w600,
-              fontSize: radius * 1.1,
-            ),
+        style: GoogleFonts.inter(
+          color: fallbackColor,
+          fontWeight: FontWeight.w600,
+          fontSize: radius * 1.1,
+        ),
       ),
     );
   }
