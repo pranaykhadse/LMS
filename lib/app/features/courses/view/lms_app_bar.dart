@@ -63,6 +63,7 @@ const double _desktopHeaderHeight = 45;
 // toggle/progress icon, too many to fit legibly on a narrow screen) above
 // the existing white "Menu" bar.
 const double _mobileTopBarHeight = 48;
+const double _dashboardMobileTopBarHeight = 44;
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
@@ -78,6 +79,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.hideBack = false,
     this.selectedLabel,
     this.selectedSubLabel,
+    this.mobileDashboardHeaderStyle = false,
   });
 
   /// Responsive wide-screen layout (catalog page only).
@@ -94,6 +96,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   /// The nav sub-item to highlight within its dropdown (isWide only) —
   /// same values as AppDrawer's `selectedSubLabel`.
   final String? selectedSubLabel;
+
+  /// Uses the reference website's compact header only for the Dashboard on
+  /// phones. Other mobile screens retain their existing header treatment.
+  final bool mobileDashboardHeaderStyle;
 
   /// If provided, a back button is shown that calls this. If null and
   /// `Navigator.canPop` is true, standard pop is used instead.
@@ -122,7 +128,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   Size get preferredSize => Size.fromHeight(
     (isWide
             ? _desktopTopBarHeight + _desktopHeaderHeight
-            : _mobileTopBarHeight + 48.0) +
+            : (mobileDashboardHeaderStyle
+                      ? _dashboardMobileTopBarHeight
+                      : _mobileTopBarHeight) +
+                  48.0) +
         (bottom?.preferredSize.height ?? 1.0), // 1px for the bottom divider
   );
 
@@ -342,9 +351,13 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     return Container(
       width: double.infinity,
-      height: _mobileTopBarHeight,
+      height: mobileDashboardHeaderStyle
+          ? _dashboardMobileTopBarHeight
+          : _mobileTopBarHeight,
       color: _appPurple,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: mobileDashboardHeaderStyle
+          ? const EdgeInsets.symmetric(horizontal: 16, vertical: 10)
+          : const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -369,40 +382,44 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                     ),
                   ),
                 ),
-              GestureDetector(
-                onTap: () {
-                  if (ShellMarker.isInShell(context)) {
-                    navigateShell(ref, ShellDestination.dashboard);
-                    return;
-                  }
-                  resetToModularRoot(context);
-                  Modular.to.navigate(
-                    CoursesModule.construct(CoursesModule.dashboard),
-                  );
-                },
-                child: const Logo(size: 22),
+              Padding(
+                padding: EdgeInsets.only(left: mobileDashboardHeaderStyle ? 4 : 0),
+                child: GestureDetector(
+                  onTap: () {
+                    if (ShellMarker.isInShell(context)) {
+                      navigateShell(ref, ShellDestination.dashboard);
+                      return;
+                    }
+                    resetToModularRoot(context);
+                    Modular.to.navigate(
+                      CoursesModule.construct(CoursesModule.dashboard),
+                    );
+                  },
+                  child: Logo(size: mobileDashboardHeaderStyle ? 24 : 22),
+                ),
               ),
             ],
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              LmsOfflineToggle(
-                isOffline: isOffline,
-                iconSize: 16,
-                switchScale: 0.65,
-                onChanged: (val) {
-                  ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
-                  if (!val) ref.read(SyncViewModel.provider).onManualOnline();
-                  Toast.info(
-                    context,
-                    val ? 'Offline mode enabled' : 'Back to online mode',
-                  );
-                },
-              ),
+              if (!mobileDashboardHeaderStyle)
+                LmsOfflineToggle(
+                  isOffline: isOffline,
+                  iconSize: 16,
+                  switchScale: 0.65,
+                  onChanged: (val) {
+                    ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
+                    if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+                    Toast.info(
+                      context,
+                      val ? 'Offline mode enabled' : 'Back to online mode',
+                    );
+                  },
+                ),
               SizedBox(
-                width: 30,
-                height: 30,
+                width: mobileDashboardHeaderStyle ? 14 : 30,
+                height: mobileDashboardHeaderStyle ? 24 : 30,
                 child: Builder(
                   builder:
                       (bellContext) => Stack(
@@ -411,7 +428,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                           LmsAppBarButton(
                             icon: Icons.notifications_none_rounded,
                             iconSize: 14,
-                            boxSize: 30,
+                            boxSize: mobileDashboardHeaderStyle ? 14 : 30,
                             onTap: () => showLmsNotifications(bellContext),
                           ),
                           if (unreadCount > 0)
@@ -426,9 +443,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       ),
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: mobileDashboardHeaderStyle ? 12 : 10),
               PopupMenuButton<String>(
-                offset: const Offset(0, 34),
+                offset: Offset(0, mobileDashboardHeaderStyle ? 24 : 34),
                 constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
@@ -437,23 +454,27 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                     (value) => _onProfileMenuSelected(context, ref, value),
                 itemBuilder: (context) => _profileMenuItems(profile),
                 padding: EdgeInsets.zero,
-                // Phone-only: avatar sits inside a small rounded box with a
-                // dropdown chevron, instead of desktop's bare avatar + name.
+                // The dashboard's reference header keeps this as a bare
+                // 20px avatar + 6px gap + 11px chevron (no pill container).
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(4, 4, 6, 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  padding: mobileDashboardHeaderStyle
+                      ? EdgeInsets.zero
+                      : const EdgeInsets.fromLTRB(4, 4, 6, 4),
+                  decoration: mobileDashboardHeaderStyle
+                      ? null
+                      : BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       LmsAvatar(
                         profile: profile,
-                        radius: 12,
+                        radius: mobileDashboardHeaderStyle ? 10 : 12,
                         fallbackColor: _appPurple,
                       ),
-                      const SizedBox(width: 2),
+                      SizedBox(width: mobileDashboardHeaderStyle ? 6 : 2),
                       const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: Colors.white,
