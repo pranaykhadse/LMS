@@ -367,7 +367,7 @@ class DashboardBody extends ConsumerWidget {
               return ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  if (showBanner) _BannerSection(auth: auth, quote: state.data?.extras.quote),
+                  if (showBanner) _BannerSection(quote: state.data?.extras.quote),
                   // Design ref: <p className="hidden sm:block ..."> - shown
                   // at the sm breakpoint (isTablet), not lg (isWide/
                   // isDesktop) - and as the first child in the wrapper, its
@@ -552,32 +552,12 @@ List<DashboardCourse> _progressCourses(LearningProgressData data) {
 // ─── Banner ───────────────────────────────────────────────────────────────────
 
 class _BannerSection extends StatelessWidget {
-  const _BannerSection({required this.auth, this.quote});
-  final AuthState? auth;
+  const _BannerSection({this.quote});
 
   /// From the API's payload.dashboard.quote block - greeting/name/quote/
-  /// banner image are all sourced from here when present, falling back to
-  /// locally-computed values only if the API didn't send them.
+  /// banner image are all sourced from here, with nothing hardcoded as a
+  /// fallback - if the API doesn't send a field, it's simply blank.
   final DashboardQuote? quote;
-
-  /// "Good Morning"/"Good Afternoon"/"Good Evening" - only used as a
-  /// fallback when the API doesn't send its own `greeting` string.
-  String _fallbackGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  }
-
-  String _userName() {
-    final apiName = quote?.userName;
-    if (apiName != null && apiName.isNotEmpty) return apiName;
-    final p = auth?.userProfile;
-    final first = p?.firstname?.trim() ?? '';
-    final last = p?.lastname?.trim() ?? '';
-    final name = [first, last].where((s) => s.isNotEmpty).join(' ');
-    return name.isNotEmpty ? name : auth?.user?.username ?? '';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -604,14 +584,7 @@ class _BannerSection extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           if (quote?.bannerImage != null)
-            Image.network(
-              quote!.bannerImage!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  Image.asset('assets/images/dashboard-hero.jpg', fit: BoxFit.cover),
-            )
-          else
-            Image.asset('assets/images/dashboard-hero.jpg', fit: BoxFit.cover),
+            Image.network(quote!.bannerImage!, fit: BoxFit.cover),
           // Design ref: solid #693D94 tint at 82% opacity (not a two-tone
           // gradient - both linear-gradient stops are the same color).
           Container(
@@ -630,9 +603,9 @@ class _BannerSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Greeting
+                    // Greeting — entirely API-sourced, nothing hardcoded.
                     Text(
-                      '${quote?.greeting ?? _fallbackGreeting()}, ${_userName()}!',
+                      '${quote?.greeting ?? ''}, ${quote?.userName ?? ''}!',
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: greetingSize,
@@ -645,9 +618,7 @@ class _BannerSection extends StatelessWidget {
                     SizedBox(height: isTablet ? 7 : 8),
                     // Quote body
                     Text(
-                      quote?.quote ??
-                          'A leader is best when people barely know he exists...when his '
-                              'work is done, his aim fulfilled, they will all say: We did it ourselves."',
+                      quote?.quote ?? '',
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: quoteSize,
@@ -657,16 +628,17 @@ class _BannerSection extends StatelessWidget {
                     ),
                     SizedBox(height: isTablet ? 14 : 4),
                     // Attribution
-                    Text(
-                      '- ${quote?.author ?? 'Lao-Tzu'}',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: attributionSize,
-                        height: 20 / 14,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.35,
+                    if (quote?.author != null)
+                      Text(
+                        '- ${quote!.author}',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: attributionSize,
+                          height: 20 / 14,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.35,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
