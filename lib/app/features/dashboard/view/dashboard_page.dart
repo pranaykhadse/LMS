@@ -612,13 +612,14 @@ class _BannerSection extends StatelessWidget {
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: greetingSize,
-                        height: 36 / 22,
+                        height: isTablet ? 36 / 22 : 20 / 16,
                         fontWeight: FontWeight.w500,
                         letterSpacing: -0.75,
                       ),
                     ),
                     // Design ref: greeting -> gap-8 -> (quote -> gap-4 -> attribution)
-                    SizedBox(height: isTablet ? 7 : 8),
+                    // Mobile only (confirmed via live inspection): 4px, not 8.
+                    SizedBox(height: isTablet ? 7 : 4),
                     // Quote body
                     Text(
                       quote?.quote ?? '',
@@ -626,7 +627,7 @@ class _BannerSection extends StatelessWidget {
                         color: Colors.white,
                         fontSize: quoteSize,
                         fontWeight: FontWeight.w400,
-                        height: 22 / 16,
+                        height: isTablet ? 22 / 16 : 18 / 11,
                       ),
                     ),
                     SizedBox(height: isTablet ? 14 : 4),
