@@ -464,12 +464,12 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                           height: 16.5 / 11,
                         ),
                       ),
-                      // 20px avatar + 6px gap + 11px chevron = 37px.
-                      const SizedBox(width: 6),
+                      // 20px avatar + 3px gap + 14px chevron = 37px.
+                      const SizedBox(width: 3),
                       const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: Colors.white,
-                        size: 11,
+                        size: 14,
                       ),
                     ],
                   ),
