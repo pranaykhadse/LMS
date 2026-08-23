@@ -220,7 +220,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       width: double.infinity,
       height: _desktopTopBarHeight,
       color: _appPurple,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      // Horizontal padding matches the dashboard banner's own outer
+      // margin (outerH = 24 at this tablet+ width) so the logo/avatar
+      // line up with the banner card's left/right edges below.
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
