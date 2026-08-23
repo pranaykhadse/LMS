@@ -2717,6 +2717,10 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
   Widget build(BuildContext context) {
     final maxWidth = MediaQuery.of(context).size.width * 0.9;
     final dialogWidth = maxWidth > 640 ? 640.0 : maxWidth;
+    // Design ref (mobile only, desktop unchanged): 16px gap between field
+    // groups (was 12px everywhere).
+    final isTablet = Responsive.isTablet(context);
+    final fieldGap = isTablet ? 12.0 : 16.0;
 
     return Center(
       child: Material(
@@ -2780,7 +2784,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: fieldGap),
 
                 Text(
                   'Last Name',
@@ -2808,7 +2812,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: fieldGap),
 
                 Text(
                   'Email',
