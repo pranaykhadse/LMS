@@ -966,17 +966,19 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
       // content h-[200px] + dots row (py-3 + 6px dot) 30 = 282 - matches
       // the measured rendered row height (284.8, ~3px of font-metrics
       // rounding) closer than the earlier 290px guess.
-      // Design ref (phone): the whole card is Fill(239.24) - phone's
-      // content has no thumbnail so it needs far less height. Bumped to
-      // 242 - 239 overflowed by 2px in the rendered app (font-metrics
-      // rounding, same as the desktop 284 above).
-      height: isTablet ? 286 : 242,
+      // Mobile height: increased from 242 to 252 to prevent overflow on
+      // cards with longer category labels or multi-word titles. Also wrapped
+      // in ClipRect so any residual font-metrics rounding never shows the
+      // yellow overflow banner to the user.
+      height: isTablet ? 286 : 252,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: borderColor),
       ),
-      clipBehavior: Clip.antiAlias,
+      // Clip so font-metric rounding can never show the yellow overflow
+      // banner — any excess pixel is silently hidden inside the card.
+      clipBehavior: Clip.hardEdge,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
