@@ -62,6 +62,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(AuthStateNotifier.provider);
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
 
     // Dashboard's own fetch has no offline fallback (it always needs live
     // data - banner, resources, etc.), so it used to fail outright with a
@@ -101,7 +102,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                 ),
                 IconButton(
                   onPressed: messenger.hideCurrentSnackBar,
-                  icon: const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -119,14 +124,19 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
     }
 
     return AppScaffold(
-      backgroundColor: _bg,
-      title: 'Dashboard',
+      backgroundColor: isMobile ? const Color(0xFFF5F5F7) : _bg,
+      title: isMobile ? 'Menu' : 'Dashboard',
       selectedLabel: 'Dashboard',
       hideBack: true,
       onRefresh: _refetchAll,
-      body: _redirectingUnauthorized
-          ? const Center(child: CircularProgressIndicator(color: _purple))
-          : _DashboardBody(auth: auth, state: state, onRefetchAll: _refetchAll),
+      body:
+          _redirectingUnauthorized
+              ? const Center(child: CircularProgressIndicator(color: _purple))
+              : _DashboardBody(
+                auth: auth,
+                state: state,
+                onRefetchAll: _refetchAll,
+              ),
     );
   }
 }
@@ -170,22 +180,29 @@ class _DashboardBody extends ConsumerWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 900;
+              final isMobile = constraints.maxWidth < 600;
               return ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _BannerSection(auth: auth),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
-                    child: Text(
-                      "Welcome back! Here's what's happening with your courses.",
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF4A5565),
-                        fontSize: 15.2,
+                  _BannerSection(auth: auth, isMobile: isMobile),
+                  if (!isMobile)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
+                      child: Text(
+                        "Welcome back! Here's what's happening with your courses.",
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF4A5565),
+                          fontSize: 15.2,
+                        ),
                       ),
                     ),
-                  ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    padding: EdgeInsets.fromLTRB(
+                      isMobile ? 16 : 20,
+                      isMobile ? 14 : 16,
+                      isMobile ? 16 : 20,
+                      4,
+                    ),
                     child: _StatRow(
                       isWide: isWide,
                       enrolled: enrolled.totalCourses,
@@ -195,76 +212,87 @@ class _DashboardBody extends ConsumerWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-                    child: isWide
-                        ? IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  child: _ContinueLearningCard(
-                                    courses: data.ongoingCourses,
+                    child:
+                        isWide
+                            ? IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(
+                                    child: _ContinueLearningCard(
+                                      courses: data.ongoingCourses,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _UpcomingSessionsCard(calendar: calendar),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Column(
-                            children: [
-                              _ContinueLearningCard(courses: data.ongoingCourses),
-                              const SizedBox(height: 16),
-                              _UpcomingSessionsCard(calendar: calendar),
-                            ],
-                          ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-                    child: isWide
-                        ? IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _UpcomingSessionsCard(
+                                      calendar: calendar,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            : Column(
                               children: [
-                                Expanded(
-                                  child: _CourseProgressCard(enrolled: enrolled),
+                                _ContinueLearningCard(
+                                  courses: data.ongoingCourses,
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _OverallProgressCard(enrolled: enrolled),
-                                ),
+                                const SizedBox(height: 16),
+                                _UpcomingSessionsCard(calendar: calendar),
                               ],
                             ),
-                          )
-                        : Column(
-                            children: [
-                              _CourseProgressCard(enrolled: enrolled),
-                              const SizedBox(height: 16),
-                              _OverallProgressCard(enrolled: enrolled),
-                            ],
-                          ),
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-                    child: isWide
-                        ? IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: const [
-                                Expanded(child: _DiscussionBoardsCard()),
-                                SizedBox(width: 16),
-                                Expanded(child: _RewardsPointsCard()),
+                    child:
+                        isWide
+                            ? IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(
+                                    child: _CourseProgressCard(
+                                      enrolled: enrolled,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _OverallProgressCard(
+                                      enrolled: enrolled,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            : Column(
+                              children: [
+                                _CourseProgressCard(enrolled: enrolled),
+                                const SizedBox(height: 16),
+                                _OverallProgressCard(enrolled: enrolled),
                               ],
                             ),
-                          )
-                        : const Column(
-                            children: [
-                              _DiscussionBoardsCard(),
-                              SizedBox(height: 16),
-                              _RewardsPointsCard(),
-                            ],
-                          ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+                    child:
+                        isWide
+                            ? IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: const [
+                                  Expanded(child: _DiscussionBoardsCard()),
+                                  SizedBox(width: 16),
+                                  Expanded(child: _RewardsPointsCard()),
+                                ],
+                              ),
+                            )
+                            : const Column(
+                              children: [
+                                _DiscussionBoardsCard(),
+                                SizedBox(height: 16),
+                                _RewardsPointsCard(),
+                              ],
+                            ),
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
@@ -283,8 +311,9 @@ class _DashboardBody extends ConsumerWidget {
 // ─── Banner ───────────────────────────────────────────────────────────────────
 
 class _BannerSection extends StatelessWidget {
-  const _BannerSection({required this.auth});
+  const _BannerSection({required this.auth, this.isMobile = false});
   final AuthState? auth;
+  final bool isMobile;
 
   String _greeting() {
     final hour = DateTime.now().hour;
@@ -303,27 +332,54 @@ class _BannerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      decoration: BoxDecoration(
-        gradient: FigmaTokens.heroGradient,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Good ${_greeting()}, ${_userName()}!',
-            style: const TextStyle(
+    final textStyle =
+        isMobile
+            ? const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+            )
+            : const TextStyle(
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.w800,
               height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 16),
+            );
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.fromLTRB(
+        isMobile ? 16 : 20,
+        isMobile ? 14 : 16,
+        isMobile ? 16 : 20,
+        0,
+      ),
+      decoration: BoxDecoration(
+        gradient: FigmaTokens.heroGradient,
+        borderRadius: BorderRadius.circular(isMobile ? 18 : 16),
+        boxShadow:
+            isMobile
+                ? [
+                  BoxShadow(
+                    color: const Color(0xFF693D94).withValues(alpha: 0.20),
+                    blurRadius: 14,
+                    offset: const Offset(0, 8),
+                  ),
+                ]
+                : null,
+      ),
+      padding: EdgeInsets.fromLTRB(
+        isMobile ? 20 : 24,
+        isMobile ? 20 : 32,
+        isMobile ? 20 : 24,
+        isMobile ? 24 : 32,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Good ${_greeting()}, ${_userName()}!', style: textStyle),
+          const SizedBox(height: 12),
           const Text(
             '"A leader is best when people barely know he exists; '
             'when his work is done, his aim fulfilled, '
@@ -366,34 +422,51 @@ class _StatRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.sizeOf(context).width < 600;
+    final cards = [
+      _StatCard(
+        icon: Icons.menu_book_rounded,
+        iconColor: _purple,
+        label: 'ENROLLED',
+        value: enrolled,
+      ),
+      _StatCard(
+        icon: Icons.error_outline_rounded,
+        iconColor: const Color(0xFFD97706),
+        label: 'REQUIRED',
+        value: required,
+      ),
+      _StatCard(
+        icon: Icons.check_circle_outline_rounded,
+        iconColor: const Color(0xFF16A34A),
+        label: 'COMPLETED',
+        value: completed,
+      ),
+    ];
+
+    if (isMobile) {
+      return Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children:
+            cards
+                .map(
+                  (card) => SizedBox(
+                    width: (MediaQuery.sizeOf(context).width - 48) / 2,
+                    child: card,
+                  ),
+                )
+                .toList(),
+      );
+    }
+
     return Row(
       children: [
-        Expanded(
-          child: _StatCard(
-            icon: Icons.menu_book_rounded,
-            iconColor: _purple,
-            label: 'ENROLLED',
-            value: enrolled,
-          ),
-        ),
+        Expanded(child: cards[0]),
         const SizedBox(width: 12),
-        Expanded(
-          child: _StatCard(
-            icon: Icons.error_outline_rounded,
-            iconColor: const Color(0xFFD97706),
-            label: 'REQUIRED',
-            value: required,
-          ),
-        ),
+        Expanded(child: cards[1]),
         const SizedBox(width: 12),
-        Expanded(
-          child: _StatCard(
-            icon: Icons.check_circle_outline_rounded,
-            iconColor: const Color(0xFF16A34A),
-            label: 'COMPLETED',
-            value: completed,
-          ),
-        ),
+        Expanded(child: cards[2]),
       ],
     );
   }
@@ -592,9 +665,10 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
           _CardHeader(
             title: 'Continue Learning',
             actionLabel: widget.courses.isEmpty ? null : 'View All',
-            onAction: widget.courses.isEmpty
-                ? null
-                : () => Modular.to.pushNamed(
+            onAction:
+                widget.courses.isEmpty
+                    ? null
+                    : () => Modular.to.pushNamed(
                       CoursesModule.construct(CoursesModule.myCourses),
                     ),
           ),
@@ -604,7 +678,10 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
           if (widget.courses.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('No courses in progress.', style: TextStyle(color: _muted)),
+              child: Text(
+                'No courses in progress.',
+                style: TextStyle(color: _muted),
+              ),
             )
           else ...[
             SizedBox(
@@ -613,8 +690,9 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                 controller: _controller,
                 onPageChanged: (i) => setState(() => _index = i),
                 itemCount: widget.courses.length,
-                itemBuilder: (context, i) =>
-                    _ContinueLearningItem(course: widget.courses[i]),
+                itemBuilder:
+                    (context, i) =>
+                        _ContinueLearningItem(course: widget.courses[i]),
               ),
             ),
             if (widget.courses.length > 1) ...[
@@ -678,10 +756,10 @@ class _ContinueLearningItem extends ConsumerWidget {
               children: [
                 course.logo != null
                     ? Image.network(
-                        course.logo!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImgFallback(),
-                      )
+                      course.logo!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const _ImgFallback(),
+                    )
                     : const _ImgFallback(),
                 Positioned(
                   top: 4,
@@ -727,9 +805,10 @@ class _ContinueLearningItem extends ConsumerWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: viewDisabled
-                      ? null
-                      : () => Modular.to.pushNamed(
+                  onPressed:
+                      viewDisabled
+                          ? null
+                          : () => Modular.to.pushNamed(
                             CoursesModule.construct(
                               '${CoursesModule.detail}/${course.id}',
                             ),
@@ -774,10 +853,11 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final upcoming = (widget.calendar.data?.events ?? const <CalendarEvent>[])
-        .where((e) => e.startDateTime.isAfter(now))
-        .toList()
-      ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
+    final upcoming =
+        (widget.calendar.data?.events ?? const <CalendarEvent>[])
+            .where((e) => e.startDateTime.isAfter(now))
+            .toList()
+          ..sort((a, b) => a.startDateTime.compareTo(b.startDateTime));
     final shown = upcoming.take(8).toList();
     const collapsedCount = 3;
     final visible = _expanded ? shown : shown.take(collapsedCount).toList();
@@ -799,7 +879,10 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
           else if (shown.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('No upcoming sessions.', style: TextStyle(color: _muted)),
+              child: Text(
+                'No upcoming sessions.',
+                style: TextStyle(color: _muted),
+              ),
             )
           else ...[
             for (var i = 0; i < visible.length; i++) ...[
@@ -838,8 +921,18 @@ class _SessionRow extends StatelessWidget {
   String _formatDate(DateTime dt) {
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final weekday = weekdays[dt.weekday - 1];
     final month = months[dt.month - 1];
@@ -870,7 +963,9 @@ class _SessionRow extends StatelessWidget {
                   runSpacing: 4,
                   children: [
                     Text(
-                      event.courseName.isNotEmpty ? event.courseName : event.title,
+                      event.courseName.isNotEmpty
+                          ? event.courseName
+                          : event.title,
                       style: GoogleFonts.inter(
                         color: const Color(0xFF1E293B),
                         fontWeight: FontWeight.w700,
@@ -879,7 +974,10 @@ class _SessionRow extends StatelessWidget {
                     ),
                     if (event.className.isNotEmpty)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: FigmaTokens.badgeBackground,
                           borderRadius: BorderRadius.circular(20),
@@ -899,22 +997,33 @@ class _SessionRow extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.calendar_today_rounded, size: 12, color: Color(0xFF6A7282)),
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 12,
+                      color: Color(0xFF6A7282),
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       _formatDate(event.startDateTime),
-                      style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF6A7282),
+                        fontSize: 12.48,
+                      ),
                     ),
                   ],
                 ),
-                if (event.instructor != null && event.instructor!.isNotEmpty) ...[
+                if (event.instructor != null &&
+                    event.instructor!.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text.rich(
                     TextSpan(
                       children: [
                         TextSpan(
                           text: 'Hosted by ',
-                          style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 12.48),
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF6A7282),
+                            fontSize: 12.48,
+                          ),
                         ),
                         TextSpan(
                           text: event.instructor,
@@ -933,9 +1042,12 @@ class _SessionRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           ElevatedButton(
-            onPressed: () => Modular.to.pushNamed(
-              CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
-            ),
+            onPressed:
+                () => Modular.to.pushNamed(
+                  CoursesModule.construct(
+                    '${CoursesModule.detail}/${event.courseId}',
+                  ),
+                ),
             style: ElevatedButton.styleFrom(
               backgroundColor: _purple,
               foregroundColor: Colors.white,
@@ -944,7 +1056,10 @@ class _SessionRow extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 12.8),
+              textStyle: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                fontSize: 12.8,
+              ),
             ),
             child: const Text('Join'),
           ),
@@ -971,9 +1086,10 @@ class _CourseProgressCard extends StatelessWidget {
             title: 'Course Progress',
             large: true,
             actionLabel: shown.isEmpty ? null : 'View All',
-            onAction: shown.isEmpty
-                ? null
-                : () => Modular.to.pushNamed(
+            onAction:
+                shown.isEmpty
+                    ? null
+                    : () => Modular.to.pushNamed(
                       CoursesModule.construct(CoursesModule.enrolledCourses),
                     ),
           ),
@@ -988,7 +1104,10 @@ class _CourseProgressCard extends StatelessWidget {
           else if (shown.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('No enrolled courses yet.', style: TextStyle(color: _muted)),
+              child: Text(
+                'No enrolled courses yet.',
+                style: TextStyle(color: _muted),
+              ),
             )
           else
             for (var i = 0; i < shown.length; i++) ...[
@@ -1061,9 +1180,10 @@ class _OverallProgressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progresses = enrolled.courses.map((c) => c.progress).toList();
-    final overall = progresses.isEmpty
-        ? 0
-        : (progresses.reduce((a, b) => a + b) / progresses.length).round();
+    final overall =
+        progresses.isEmpty
+            ? 0
+            : (progresses.reduce((a, b) => a + b) / progresses.length).round();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -1076,7 +1196,11 @@ class _OverallProgressCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.star_border_rounded, color: Colors.white, size: 16),
+              const Icon(
+                Icons.star_border_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
               const SizedBox(width: 6),
               Text(
                 'OVERALL LEARNING PROGRESS',
@@ -1111,7 +1235,9 @@ class _OverallProgressCard extends StatelessWidget {
                       value: overall / 100,
                       minHeight: 8,
                       backgroundColor: Colors.white24,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -1146,7 +1272,10 @@ class _DiscussionBoardsCard extends StatelessWidget {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               'No discussion threads yet.',
-              style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6A7282),
+                fontSize: 13.6,
+              ),
             ),
           ),
         ],
@@ -1174,9 +1303,10 @@ class _RewardsPointsCard extends ConsumerWidget {
             title: 'Rewards & Points',
             large: true,
             actionLabel: 'This Month',
-            onAction: () => Modular.to.pushNamed(
-              CoursesModule.construct(CoursesModule.redeemPoints),
-            ),
+            onAction:
+                () => Modular.to.pushNamed(
+                  CoursesModule.construct(CoursesModule.redeemPoints),
+                ),
           ),
           const SizedBox(height: 12),
           const Divider(height: 1, color: _border),
@@ -1231,7 +1361,10 @@ class _RewardsPointsCard extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       "You've earned points by completing courses and attending virtual classes.",
-                      style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF6A7282),
+                        fontSize: 13.6,
+                      ),
                     ),
                   ],
                 ),
@@ -1242,7 +1375,10 @@ class _RewardsPointsCard extends ConsumerWidget {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               'No reward points earned this month yet.',
-              style: GoogleFonts.inter(color: const Color(0xFF6A7282), fontSize: 13.6),
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6A7282),
+                fontSize: 13.6,
+              ),
             ),
           ),
         ],
@@ -1276,7 +1412,10 @@ class _RequiredForYouCard extends StatelessWidget {
           else if (shown.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text('No required courses.', style: TextStyle(color: _muted)),
+              child: Text(
+                'No required courses.',
+                style: TextStyle(color: _muted),
+              ),
             )
           else ...[
             for (var i = 0; i < shown.length; i++) ...[
@@ -1286,18 +1425,25 @@ class _RequiredForYouCard extends StatelessWidget {
             const SizedBox(height: 18),
             Center(
               child: ElevatedButton(
-                onPressed: () => Modular.to.pushNamed(
-                  CoursesModule.construct(CoursesModule.requiredCourses),
-                ),
+                onPressed:
+                    () => Modular.to.pushNamed(
+                      CoursesModule.construct(CoursesModule.requiredCourses),
+                    ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF693D94),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 20,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 14.4),
+                  textStyle: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14.4,
+                  ),
                 ),
                 child: const Text('View All Required Courses'),
               ),
@@ -1343,17 +1489,25 @@ class _RequiredRow extends ConsumerWidget {
           ),
         ),
         OutlinedButton(
-          onPressed: viewDisabled
-              ? null
-              : () => Modular.to.pushNamed(
-                    CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+          onPressed:
+              viewDisabled
+                  ? null
+                  : () => Modular.to.pushNamed(
+                    CoursesModule.construct(
+                      '${CoursesModule.detail}/${course.id}',
+                    ),
                   ),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF693D94),
             side: const BorderSide(color: Color(0xFF693D94)),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13.12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            textStyle: GoogleFonts.inter(
+              fontWeight: FontWeight.w700,
+              fontSize: 13.12,
+            ),
           ),
           child: const Text('View'),
         ),
