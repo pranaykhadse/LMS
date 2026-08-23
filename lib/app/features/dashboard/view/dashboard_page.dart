@@ -729,13 +729,18 @@ class _StatCard extends StatelessWidget {
           : const EdgeInsets.fromLTRB(12, 16, 12, 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        // rounded-lg = 8px on mobile, keep existing on tablet/desktop
+        borderRadius: BorderRadius.circular(isTablet ? 10 : 8),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        // items-center on mobile (centered), start on tablet/desktop
+        crossAxisAlignment: isTablet
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.center,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 13, color: iconColor),
               const SizedBox(width: 6),
@@ -744,7 +749,10 @@ class _StatCard extends StatelessWidget {
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFFAF99A1),
+                    // text-gray-400 = #9CA3AF on mobile
+                    color: isTablet
+                        ? const Color(0xFF9CA3AF)
+                        : const Color(0xFF9CA3AF),
                     fontSize: isTablet ? 12 : 10,
                     fontWeight: FontWeight.w600,
                     letterSpacing: isTablet ? 0.6 : 0.5,
@@ -758,11 +766,11 @@ class _StatCard extends StatelessWidget {
           _AnimatedCounter(
             value: value,
             style: GoogleFonts.inter(
-              color: const Color(0xFF391E29),
+              // text-gray-800 = #1F2937 on mobile
+              color: isTablet
+                  ? const Color(0xFF1F2937)
+                  : const Color(0xFF1F2937),
               fontSize: isTablet ? 36 : 30,
-              // Design ref: font-semibold (600) confirmed on both tablet/
-              // desktop and mobile via live inspection (mobile was
-              // previously assumed to be Bold 700 - corrected).
               fontWeight: FontWeight.w600,
               height: isTablet ? 40 / 36 : 1.2,
             ),
