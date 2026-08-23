@@ -188,12 +188,7 @@ class _ImgFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF1EFFB),
-      alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined,
-          size: 54, color: FigmaTokens.primaryPurple),
-    );
+    return Image.asset('assets/images/login-bg.png', fit: BoxFit.cover);
   }
 }
 

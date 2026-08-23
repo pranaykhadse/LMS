@@ -610,11 +610,7 @@ class _ImgFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF0ECFF),
-      alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, color: _purple, size: 60),
-    );
+    return Image.asset('assets/images/login-bg.png', fit: BoxFit.cover);
   }
 }
 
