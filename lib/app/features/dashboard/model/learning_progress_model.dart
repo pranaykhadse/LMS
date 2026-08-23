@@ -201,11 +201,13 @@ class DashboardExtras {
     required this.continueLearning,
     required this.discussionBoards,
     required this.rewards,
+    required this.quote,
   });
 
   final List<DashboardContinueLearningItem> continueLearning;
   final List<DashboardDiscussionBoardItem> discussionBoards;
   final DashboardRewards? rewards;
+  final DashboardQuote? quote;
 
   factory DashboardExtras.fromJson(Map<String, dynamic> json) => DashboardExtras(
         continueLearning: (json['continue_learning'] as List? ?? const [])
@@ -219,7 +221,44 @@ class DashboardExtras {
         rewards: json['rewards'] is Map
             ? DashboardRewards.fromJson(Map<String, dynamic>.from(json['rewards'] as Map))
             : null,
+        quote: json['quote'] is Map
+            ? DashboardQuote.fromJson(Map<String, dynamic>.from(json['quote'] as Map))
+            : null,
       );
+}
+
+/// The hero banner's greeting/quote/background — Design ref: payload
+/// .dashboard.quote {greeting, user_name, banner_image, quotes: [{quote,
+/// author}]}. Only the first entry of `quotes` is shown (a rotating quote
+/// list exists API-side, but the banner only has room for one).
+class DashboardQuote {
+  const DashboardQuote({
+    required this.greeting,
+    required this.userName,
+    required this.bannerImage,
+    required this.quote,
+    required this.author,
+  });
+
+  final String? greeting;
+  final String? userName;
+  final String? bannerImage;
+  final String? quote;
+  final String? author;
+
+  factory DashboardQuote.fromJson(Map<String, dynamic> json) {
+    final quotes = json['quotes'] as List? ?? const [];
+    final first = quotes.isNotEmpty && quotes.first is Map
+        ? Map<String, dynamic>.from(quotes.first as Map)
+        : const <String, dynamic>{};
+    return DashboardQuote(
+      greeting: _nullableString(json['greeting']),
+      userName: _nullableString(json['user_name']),
+      bannerImage: _nullableString(json['banner_image']),
+      quote: _nullableString(first['quote']),
+      author: _nullableString(first['author']),
+    );
+  }
 }
 
 class DashboardContinueLearningItem {

@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -26,9 +23,6 @@ class LearningProgressRepository with RepoNetworkHelper {
     );
     final json =
         raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
-    // TEMP: dump the raw learning-progress response to check whether the
-    // API sends any quote/motivational-text field.
-    if (kDebugMode) debugPrint('[LearningProgressRepository] raw response: ${jsonEncode(json)}');
     return LearningProgressData.fromJson(json);
   }
 }
