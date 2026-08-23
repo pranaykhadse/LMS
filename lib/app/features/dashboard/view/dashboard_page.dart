@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
@@ -21,6 +22,7 @@ import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/courses/model/calendar_event.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
@@ -1923,12 +1925,12 @@ class _DiscussionBoardsCard extends StatelessWidget {
   }
 }
 
-class _DiscussionBoardRow extends StatelessWidget {
+class _DiscussionBoardRow extends ConsumerWidget {
   const _DiscussionBoardRow({required this.item});
   final DashboardDiscussionBoardItem item;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Design ref: rounded-lg border border-gray-100 bg-gray-50 p-3
     // hover:border-[#693D94]/30 hover:bg-[#f0e8f7]/30
     return HoverBuilder(
@@ -2017,10 +2019,15 @@ class _DiscussionBoardRow extends StatelessWidget {
         // Design ref: gap-2 (8px)
         const SizedBox(width: 8),
         _ViewButton(
-          onPressed: () => Modular.to.pushNamed(
-            CoursesModule.construct(
-                '${CoursesModule.detail}/${item.courseId}'),
-          ),
+          onPressed: () {
+            final origin = Uri.parse(ref.read(ServerProvider.serverUrl)).origin;
+            InAppWebViewPage.showWithAuth(
+              context,
+              ref,
+              url: '$origin/backend/web/forum/index?id=${item.learningEventId}',
+              title: item.title,
+            );
+          },
         ),
       ],
       ),
