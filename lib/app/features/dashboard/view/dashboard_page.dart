@@ -355,38 +355,41 @@ class DashboardBody extends ConsumerWidget {
           child: Builder(
             builder: (context) {
               final isWide = Responsive.isDesktop(context);
+              final isTablet = Responsive.isTablet(context);
               // Design ref: px-3 sm:px-6 (outer) / space-y-4 sm:space-y-5 (gaps)
-              final outerH = Responsive.isTablet(context) ? 24.0 : 12.0;
-              final gapV = Responsive.isTablet(context) ? 20.0 : 16.0;
+              final outerH = isTablet ? 24.0 : 12.0;
+              final gapV = isTablet ? 20.0 : 16.0;
               // Design ref: the whole section list sits in a single
               // px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-5 wrapper -
               // py-6/py-4 is this wrapper's OWN top/bottom padding
               // (applies once, before the first child), separate from the
               // smaller space-y-5/4 gap between children.
-              final containerV = Responsive.isTablet(context) ? 24.0 : 16.0;
+              final containerV = isTablet ? 24.0 : 16.0;
               return ListView(
                 padding: EdgeInsets.zero,
                 children: [
                   if (showBanner) _BannerSection(quote: state.data?.extras.quote),
-                  // Design ref: <p className="hidden sm:block ..."> - shown
-                  // at the sm breakpoint (isTablet), not lg (isWide/
-                  // isDesktop) - and as the first child in the wrapper, its
-                  // top spacing is the wrapper's own py-6/py-4 (containerV),
-                  // not the smaller space-y-5/4 gap (gapV) used between
-                  // later siblings.
-                  Padding(
+                  // Design ref: <p className="hidden sm:block ..."> - the
+                  // reference site genuinely hides this on mobile (confirmed
+                  // via live inspection - it doesn't render below the sm
+                  // breakpoint at all, not just a smaller font size).
+                  if (isTablet)
+                    Padding(
                       padding: EdgeInsets.fromLTRB(outerH, containerV, outerH, 0),
                       child: Text(
                         "Welcome back! Here's what's happening with your courses.",
                         style: GoogleFonts.inter(
                           color: const Color(0xFF826A72),
-                          fontSize: Responsive.isTablet(context) ? 16 : 13,
+                          fontSize: 16,
                           height: 24 / 16,
                         ),
                       ),
                     ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
+                    // On mobile this is the first child (the welcome text
+                    // above is hidden), so it takes the wrapper's own top
+                    // padding (containerV) instead of the inter-sibling gap.
+                    padding: EdgeInsets.fromLTRB(outerH, isTablet ? gapV : containerV, outerH, 0),
                     child: _StatRow(
                       isWide: isWide,
                       enrolled: data.summary.enrolledCourses,
