@@ -78,7 +78,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.hideBack = false,
     this.selectedLabel,
     this.selectedSubLabel,
-    this.useDashboardMobileHeaderActions = false,
   });
 
   /// Responsive wide-screen layout (catalog page only).
@@ -95,10 +94,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   /// The nav sub-item to highlight within its dropdown (isWide only) —
   /// same values as AppDrawer's `selectedSubLabel`.
   final String? selectedSubLabel;
-
-  /// Applies the website's compact action cluster only to the Dashboard on
-  /// phones. Other screens preserve their existing utility controls.
-  final bool useDashboardMobileHeaderActions;
 
   /// If provided, a back button is shown that calls this. If null and
   /// `Navigator.canPop` is true, standard pop is used instead.
@@ -345,42 +340,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
     final isOffline = ref.watch(OfflineModeNotifier.provider);
 
-    final profileTrigger = PopupMenuButton<String>(
-      offset: Offset(0, useDashboardMobileHeaderActions ? 24 : 34),
-      constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      onSelected: (value) => _onProfileMenuSelected(context, ref, value),
-      itemBuilder: (context) => _profileMenuItems(profile),
-      padding: EdgeInsets.zero,
-      child: Container(
-        padding: useDashboardMobileHeaderActions
-            ? EdgeInsets.zero
-            : const EdgeInsets.fromLTRB(4, 4, 6, 4),
-        decoration: useDashboardMobileHeaderActions
-            ? null
-            : BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            LmsAvatar(
-              profile: profile,
-              radius: useDashboardMobileHeaderActions ? 10 : 12,
-              fallbackColor: _appPurple,
-            ),
-            SizedBox(width: useDashboardMobileHeaderActions ? 6 : 2),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              color: Colors.white,
-              size: 11,
-            ),
-          ],
-        ),
-      ),
-    );
-
     return Container(
       width: double.infinity,
       height: _mobileTopBarHeight,
@@ -428,86 +387,82 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (useDashboardMobileHeaderActions)
-                SizedBox(
-                  // 14px bell + 12px gap + (20px avatar + 6px + 11px) = 63px.
-                  width: 63,
-                  height: 20,
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 14,
-                        height: 20,
-                        child: Builder(
-                          builder: (bellContext) => Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              LmsAppBarButton(
-                                icon: Icons.notifications_none_rounded,
-                                iconSize: 14,
-                                boxSize: 14,
-                                onTap: () => showLmsNotifications(bellContext),
-                              ),
-                              if (unreadCount > 0)
-                                Positioned(
-                                  top: -4,
-                                  right: -8,
-                                  child: IgnorePointer(
-                                    child: LmsNotifBadge(count: unreadCount),
-                                  ),
-                                ),
-                            ],
+              LmsOfflineToggle(
+                isOffline: isOffline,
+                iconSize: 16,
+                switchScale: 0.65,
+                onChanged: (val) {
+                  ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
+                  if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+                  Toast.info(
+                    context,
+                    val ? 'Offline mode enabled' : 'Back to online mode',
+                  );
+                },
+              ),
+              SizedBox(
+                width: 30,
+                height: 30,
+                child: Builder(
+                  builder:
+                      (bellContext) => Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          LmsAppBarButton(
+                            icon: Icons.notifications_none_rounded,
+                            iconSize: 14,
+                            boxSize: 30,
+                            onTap: () => showLmsNotifications(bellContext),
                           ),
-                        ),
+                          if (unreadCount > 0)
+                            Positioned(
+                              top: -2,
+                              right: -2,
+                              child: IgnorePointer(
+                                child: LmsNotifBadge(count: unreadCount),
+                              ),
+                            ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      profileTrigger,
+                ),
+              ),
+              const SizedBox(width: 10),
+              PopupMenuButton<String>(
+                offset: const Offset(0, 34),
+                constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                onSelected:
+                    (value) => _onProfileMenuSelected(context, ref, value),
+                itemBuilder: (context) => _profileMenuItems(profile),
+                padding: EdgeInsets.zero,
+                // Phone-only: avatar sits inside a small rounded box with a
+                // dropdown chevron, instead of desktop's bare avatar + name.
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 6, 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      LmsAvatar(
+                        profile: profile,
+                        radius: 12,
+                        fallbackColor: _appPurple,
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white,
+                        size: 11,
+                      ),
                     ],
                   ),
-                )
-              else ...[
-                LmsOfflineToggle(
-                  isOffline: isOffline,
-                  iconSize: 16,
-                  switchScale: 0.65,
-                  onChanged: (val) {
-                    ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
-                    if (!val) ref.read(SyncViewModel.provider).onManualOnline();
-                    Toast.info(
-                      context,
-                      val ? 'Offline mode enabled' : 'Back to online mode',
-                    );
-                  },
                 ),
-                SizedBox(
-                  width: 30,
-                  height: 30,
-                  child: Builder(
-                    builder:
-                        (bellContext) => Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            LmsAppBarButton(
-                              icon: Icons.notifications_none_rounded,
-                              iconSize: 14,
-                              boxSize: 30,
-                              onTap: () => showLmsNotifications(bellContext),
-                            ),
-                            if (unreadCount > 0)
-                              Positioned(
-                                top: -2,
-                                right: -2,
-                                child: IgnorePointer(
-                                  child: LmsNotifBadge(count: unreadCount),
-                                ),
-                              ),
-                          ],
-                        ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                profileTrigger,
-              ],
+              ),
             ],
           ),
         ],

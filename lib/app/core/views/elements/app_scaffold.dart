@@ -30,7 +30,6 @@ class AppScaffold extends ConsumerWidget {
     this.bottom,
     this.backgroundColor,
     this.onRefresh,
-    this.useDashboardMobileHeaderActions = false,
   });
 
   final Widget body;
@@ -52,9 +51,6 @@ class AppScaffold extends ConsumerWidget {
   /// Optional app-bar bottom widget (e.g. a nav-tab bar or calendar toolbar).
   final PreferredSizeWidget? bottom;
   final Color? backgroundColor;
-
-  /// Applies the website's compact action cluster only to Dashboard phones.
-  final bool useDashboardMobileHeaderActions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -84,7 +80,6 @@ class AppScaffold extends ConsumerWidget {
           hideBack: hideBack,
           bottom: bottom,
           onRefresh: onRefresh,
-          useDashboardMobileHeaderActions: useDashboardMobileHeaderActions,
         ),
         body: content,
       );
