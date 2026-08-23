@@ -982,11 +982,11 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                   child: Text(
                     'CONTINUE LEARNING',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF826A72),
+                      // text-gray-500 = #6B7280
+                      color: const Color(0xFF6B7280),
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.4,
-                      // Design ref: text-base default line-height = 24px
                       height: 24 / 16,
                     ),
                   ),
@@ -1096,7 +1096,8 @@ class _ContinueLearningItem extends ConsumerWidget {
         margin: const EdgeInsets.fromLTRB(12, 8, 12, 12),
         decoration: BoxDecoration(
           color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(10),
+          // rounded-lg = 8px
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFFF3F4F6)),
         ),
         child: Column(
@@ -1121,14 +1122,16 @@ class _ContinueLearningItem extends ConsumerWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.inter(
-                color: const Color(0xFF1E2939),
+                // text-gray-800 = #1F2937
+                color: const Color(0xFF1F2937),
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 height: 22 / 16,
               ),
             ),
             if (course.dueDate != null) ...[
-              const SizedBox(height: 4),
+              // mb-2 = 8px gap above date
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Icon(LucideIcons.calendarDays, size: 10, color: accentColor),
@@ -1163,7 +1166,8 @@ class _ContinueLearningItem extends ConsumerWidget {
                 hoverColor: accentColor == const Color(0xFFDC2626)
                     ? const Color(0xFFB91C1C)
                     : FigmaTokens.purpleHover,
-                borderRadius: 14,
+                // rounded-xl = 12px
+                borderRadius: 12,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 textStyle: GoogleFonts.inter(
                   color: Colors.white,
@@ -1402,17 +1406,19 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
+        // rounded-lg = 8px on mobile
+        borderRadius: BorderRadius.circular(isTablet ? 10 : 8),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header — "Upcoming Virtual Classes" plain title, no action
+          // Header — "Upcoming Virtual Classes" — text-gray-700 = #374151
           Text(
             'Upcoming Virtual Classes',
             style: GoogleFonts.inter(
-              color: const Color(0xFF533641),
+              // text-gray-700 = #374151
+              color: const Color(0xFF374151),
               fontSize: 16,
               fontWeight: FontWeight.w600,
               height: 24 / 16,
@@ -1474,7 +1480,8 @@ class _SessionRow extends StatelessWidget {
     final titleText = Text(
       event.courseName.isNotEmpty ? event.courseName : event.title,
       style: GoogleFonts.inter(
-        color: isTablet ? const Color(0xFF391E29) : const Color(0xFF1E2939),
+        // text-gray-800 = #1F2937 on both mobile and tablet
+        color: const Color(0xFF1F2937),
         fontSize: 16,
         fontWeight: FontWeight.w600,
         height: 22 / 16,
@@ -1531,7 +1538,7 @@ class _SessionRow extends StatelessWidget {
         if (event.startTime != null && event.startTime!.isNotEmpty) ...[
           Text(
             ' • ',
-            style: GoogleFonts.inter(color: const Color(0xFFDCD1D5), fontSize: 12, height: 18 / 12),
+            style: GoogleFonts.inter(color: const Color(0xFFD1D5DB), fontSize: 12, height: 18 / 12),
           ),
           Text(
             event.endDateTime != null
@@ -1551,12 +1558,18 @@ class _SessionRow extends StatelessWidget {
             TextSpan(children: [
               TextSpan(
                 text: 'Hosted by ',
-                style: GoogleFonts.inter(color: const Color(0xFFAF99A1), fontSize: 12, height: 18 / 12),
+                style: GoogleFonts.inter(
+                  // text-gray-400 = #9CA3AF
+                  color: const Color(0xFF9CA3AF),
+                  fontSize: 12,
+                  height: 18 / 12,
+                ),
               ),
               TextSpan(
                 text: event.instructor,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF654A55),
+                  // text-gray-600 = #4B5563
+                  color: const Color(0xFF4B5563),
                   fontSize: 12,
                   height: 18 / 12,
                   fontWeight: FontWeight.w500,
@@ -1574,12 +1587,13 @@ class _SessionRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: hovering
             ? _purple.withValues(alpha: 0.05)
-            : const Color(0xFFFBF9FA),
-        borderRadius: BorderRadius.circular(10),
+            : const Color(0xFFF9FAFB),
+        // rounded-lg = 8px on mobile
+        borderRadius: BorderRadius.circular(isTablet ? 10 : 8),
         border: Border.all(
           color: hovering
               ? _purple.withValues(alpha: 0.3)
-              : const Color(0xFFF3F4F6), // gray-100
+              : const Color(0xFFF3F4F6),
         ),
       ),
       child: Column(
@@ -1636,7 +1650,8 @@ class _SessionRow extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: _purple,
-                        borderRadius: BorderRadius.circular(14),
+                        // rounded-xl = 12px on mobile
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         'Join',
@@ -1807,7 +1822,8 @@ class _OverallProgressCard extends StatelessWidget {
           end: Alignment.centerRight,
           colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
         ),
-        borderRadius: BorderRadius.circular(14),
+        // rounded-xl = 12px on mobile
+        borderRadius: BorderRadius.circular(isTablet ? 14 : 12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1839,8 +1855,8 @@ class _OverallProgressCard extends StatelessWidget {
             style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: isTablet ? 48 : 30,
-              // Design ref: font-semibold (600), was 700
-              fontWeight: FontWeight.w600,
+            // text-3xl font-bold = 30px/700 on mobile
+            fontWeight: isTablet ? FontWeight.w600 : FontWeight.w700,
               height: isTablet ? 1 : 36 / 30,
             ),
           ),
