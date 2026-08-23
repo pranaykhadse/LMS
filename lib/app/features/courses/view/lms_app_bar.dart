@@ -456,7 +456,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: Colors.white,
-                        size: 16,
+                        size: 11,
                       ),
                     ],
                   ),
