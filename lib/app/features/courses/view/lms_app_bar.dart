@@ -194,8 +194,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 ),
                 if (unreadCount > 0)
                   Positioned(
-                    top: 0,
-                    right: 0,
+                    top: -2,
+                    left: -2,
                     child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
                   ),
               ],
@@ -420,8 +420,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       ),
                       if (unreadCount > 0)
                         Positioned(
-                          top: 0,
-                          right: 0,
+                          top: -2,
+                          left: -2,
                           child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
                         ),
                     ],
@@ -1135,9 +1135,10 @@ class LmsNotifBadge extends StatelessWidget {
         constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
         padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
         alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: Colors.red,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
           shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 1),
         ),
         child: Text(
           count > 99 ? '99+' : '$count',
