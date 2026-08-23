@@ -364,7 +364,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       child: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         color: Colors.white,
-                        size: 14,
+                        size: 16,
                       ),
                     ),
                   ),
@@ -389,7 +389,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             children: [
               LmsOfflineToggle(
                 isOffline: isOffline,
-                iconSize: 14,
+                iconSize: 16,
                 switchScale: 0.65,
                 onChanged: (val) {
                   ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
@@ -460,7 +460,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: Colors.white,
-                        size: 14,
+                        size: 11,
                       ),
                     ],
                   ),
