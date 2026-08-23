@@ -195,7 +195,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 if (unreadCount > 0)
                   Positioned(
                     top: -2,
-                    left: -2,
+                    right: -2,
                     child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
                   ),
               ],
@@ -421,7 +421,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       if (unreadCount > 0)
                         Positioned(
                           top: -2,
-                          left: -2,
+                          right: -2,
                           child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
                         ),
                     ],
@@ -1132,8 +1132,11 @@ class LmsNotifBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+        // Fixed square (not min-constraints + padding) so the circle stays
+        // perfectly round and the count stays exactly centered regardless
+        // of digit count.
+        width: 16,
+        height: 16,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: Colors.transparent,
@@ -1146,7 +1149,7 @@ class LmsNotifBadge extends StatelessWidget {
             color: Colors.white,
             fontSize: 8,
             fontWeight: FontWeight.w800,
-            height: 12 / 8,
+            height: 1,
           ),
           textAlign: TextAlign.center,
         ),
