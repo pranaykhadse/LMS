@@ -1333,6 +1333,9 @@ CalendarEvent? _toCalendarEvent(UpcomingSession session) {
   if (rawDate == null) return null;
   final startDate = DateTime.tryParse(rawDate);
   if (startDate == null) return null;
+  // Falls back to startDate when the API doesn't send its own end_date -
+  // virtual classes are same-day, so this is a safe default.
+  final endDate = DateTime.tryParse(session.endDate ?? '') ?? startDate;
   return CalendarEvent(
     courseId: int.tryParse(session.courseId) ?? 0,
     courseName: session.courseName,
@@ -1342,6 +1345,7 @@ CalendarEvent? _toCalendarEvent(UpcomingSession session) {
     title: session.courseName,
     startDate: startDate,
     startTime: session.startTime,
+    endDate: endDate,
     endTime: session.endTime,
     registrationStatus: '',
     description: '',
@@ -1516,7 +1520,9 @@ class _SessionRow extends StatelessWidget {
             style: GoogleFonts.inter(color: const Color(0xFFDCD1D5), fontSize: 12, height: 18 / 12),
           ),
           Text(
-            _formatTime(event.startDateTime),
+            event.endDateTime != null
+                ? '${_formatTime(event.startDateTime)} - ${_formatTime(event.endDateTime!)}'
+                : _formatTime(event.startDateTime),
             style: GoogleFonts.inter(
               color: const Color(0xFF9CA3AF),
               fontSize: 12,

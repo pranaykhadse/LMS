@@ -111,6 +111,7 @@ class UpcomingSession {
     required this.courseName,
     required this.startDate,
     required this.startTime,
+    this.endDate,
     this.endTime,
     this.instructor,
     this.virtualClassNumber,
@@ -121,6 +122,7 @@ class UpcomingSession {
   final String courseName;
   final String? startDate;
   final String? startTime;
+  final String? endDate;
   final String? endTime;
   final String? instructor;
   /// e.g. 1 → shows "Virtual Class 1" badge next to the course name.
@@ -143,6 +145,7 @@ class UpcomingSession {
         courseName: json['course_name']?.toString() ?? '',
         startDate: json['start_date']?.toString(),
         startTime: json['start_time']?.toString(),
+        endDate: json['end_date']?.toString(),
         endTime: json['end_time']?.toString(),
         instructor: _nullableString(json['instructor']),
         virtualClassNumber: json['virtual_class_number'] is int
