@@ -120,9 +120,8 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
         await _mentorCompleter!.future;
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('[DashboardPage] supervisor/mentor flow error: $e');
-      }
+      // Intentionally silent in production; the flow handles failed fetches
+      // gracefully and surfaces UI feedback without noisy console output.
     }
   }
 
@@ -219,7 +218,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       title: 'Confirm Your Supervisor',
                       type: 'supervisor',
                       onConfirmed: () {
-                        if (kDebugMode) debugPrint('[DashboardPage] supervisor onConfirmed');
                         setState(() => _showSupervisorInline = false);
                         if (_supervisorCompleter?.isCompleted == false) {
                           _supervisorCompleter!.complete();
@@ -258,7 +256,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                       title: 'Confirm Your Mentor',
                       type: 'mentor',
                       onConfirmed: () {
-                        if (kDebugMode) debugPrint('[DashboardPage] mentor onConfirmed');
                         setState(() => _showMentorInline = false);
                         if (_mentorCompleter?.isCompleted == false) {
                           _mentorCompleter!.complete();
@@ -2682,7 +2679,6 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
   Future<void> _confirm() async {
     _validate();
     if (!_valid || _submitting) return;
-    if (kDebugMode) debugPrint('[_InlineConfirmDialog] confirm tapped: ${widget.title}');
     if (mounted) setState(() => _submitting = true);
 
     try {
@@ -2693,7 +2689,6 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
             email: _emailController.text.trim(),
           );
     } catch (e) {
-      if (kDebugMode) debugPrint('[_InlineConfirmDialog] confirm API error: $e');
       if (mounted) {
         setState(() => _submitting = false);
         Toast.error(context, e);
@@ -2714,7 +2709,6 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
     // alive and still needs to hear about the confirmation - bailing
     // out here would silently drop the tap and freeze the flow with
     // the dialog stuck on screen.
-    if (kDebugMode) debugPrint('[_InlineConfirmDialog] calling onConfirmed: ${widget.title}');
     widget.onConfirmed();
   }
 
