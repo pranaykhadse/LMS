@@ -19,7 +19,6 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
-import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
 import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
@@ -121,11 +120,11 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        (isWide
-                ? _desktopTopBarHeight + _desktopHeaderHeight
-                : _mobileTopBarHeight + 48.0) +
-            (bottom?.preferredSize.height ?? 1.0), // 1px for the bottom divider
-      );
+    (isWide
+            ? _desktopTopBarHeight + _desktopHeaderHeight
+            : _mobileTopBarHeight + 48.0) +
+        (bottom?.preferredSize.height ?? 1.0), // 1px for the bottom divider
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -175,31 +174,36 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           onChanged: (val) {
             ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
             if (!val) ref.read(SyncViewModel.provider).onManualOnline();
-            Toast.info(context,
-                val ? 'Offline mode enabled' : 'Back to online mode');
+            Toast.info(
+              context,
+              val ? 'Offline mode enabled' : 'Back to online mode',
+            );
           },
         ),
         SizedBox(
           width: 34,
           height: 34,
           child: Builder(
-            builder: (bellContext) => Stack(
-              clipBehavior: Clip.none,
-              children: [
-                LmsAppBarButton(
-                  icon: Icons.notifications_none_rounded,
-                  iconSize: 14,
-                  boxSize: 34,
-                  onTap: () => showLmsNotifications(bellContext),
+            builder:
+                (bellContext) => Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    LmsAppBarButton(
+                      icon: Icons.notifications_none_rounded,
+                      iconSize: 14,
+                      boxSize: 34,
+                      onTap: () => showLmsNotifications(bellContext),
+                    ),
+                    if (unreadCount > 0)
+                      Positioned(
+                        top: -2,
+                        right: -2,
+                        child: IgnorePointer(
+                          child: LmsNotifBadge(count: unreadCount),
+                        ),
+                      ),
+                  ],
                 ),
-                if (unreadCount > 0)
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
-                  ),
-              ],
-            ),
           ),
         ),
         const SizedBox(width: 6),
@@ -285,10 +289,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
     final header = Container(
       color: FigmaTokens.pageBackground,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [topBar, navBar],
-      ),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [topBar, navBar]),
     );
     final headerHeight = _desktopTopBarHeight + _desktopHeaderHeight;
     if (bottom == null) {
@@ -393,47 +394,47 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 onChanged: (val) {
                   ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
                   if (!val) ref.read(SyncViewModel.provider).onManualOnline();
-                  Toast.info(context,
-                      val ? 'Offline mode enabled' : 'Back to online mode');
+                  Toast.info(
+                    context,
+                    val ? 'Offline mode enabled' : 'Back to online mode',
+                  );
                 },
-              ),
-              LmsAppBarButton(
-                icon: Icons.play_arrow_rounded,
-                iconSize: 14,
-                boxSize: 30,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const LearningProgressPage()),
-                ),
               ),
               SizedBox(
                 width: 30,
                 height: 30,
                 child: Builder(
-                  builder: (bellContext) => Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      LmsAppBarButton(
-                        icon: Icons.notifications_none_rounded,
-                        iconSize: 14,
-                        boxSize: 30,
-                        onTap: () => showLmsNotifications(bellContext),
+                  builder:
+                      (bellContext) => Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          LmsAppBarButton(
+                            icon: Icons.notifications_none_rounded,
+                            iconSize: 14,
+                            boxSize: 30,
+                            onTap: () => showLmsNotifications(bellContext),
+                          ),
+                          if (unreadCount > 0)
+                            Positioned(
+                              top: -2,
+                              right: -2,
+                              child: IgnorePointer(
+                                child: LmsNotifBadge(count: unreadCount),
+                              ),
+                            ),
+                        ],
                       ),
-                      if (unreadCount > 0)
-                        Positioned(
-                          top: -2,
-                          right: -2,
-                          child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
-                        ),
-                    ],
-                  ),
                 ),
               ),
               const SizedBox(width: 10),
               PopupMenuButton<String>(
                 offset: const Offset(0, 34),
                 constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                onSelected: (value) => _onProfileMenuSelected(context, ref, value),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                onSelected:
+                    (value) => _onProfileMenuSelected(context, ref, value),
                 itemBuilder: (context) => _profileMenuItems(profile),
                 padding: EdgeInsets.zero,
                 // Phone-only: avatar sits inside a small rounded box with a
@@ -508,20 +509,21 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
               // Right: always hamburger icon
               Builder(
-                builder: (ctx) => GestureDetector(
-                  onTap: () => Scaffold.of(ctx).openDrawer(),
-                  child: SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: Center(
-                      child: Icon(
-                        Icons.menu_rounded,
-                        size: 20,
-                        color: FigmaTokens.noteBodyText,
+                builder:
+                    (ctx) => GestureDetector(
+                      onTap: () => Scaffold.of(ctx).openDrawer(),
+                      child: SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: Center(
+                          child: Icon(
+                            Icons.menu_rounded,
+                            size: 20,
+                            color: FigmaTokens.noteBodyText,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
               ),
             ],
           ),
@@ -532,7 +534,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     // Use the caller's bottom widget if provided (e.g. a tab bar on the
     // catalog page); otherwise render a thin 1px divider to separate the
     // white bar from the page body.
-    final bottomWidget = bottom ?? Container(height: 1, color: FigmaTokens.cardBorders);
+    final bottomWidget =
+        bottom ?? Container(height: 1, color: FigmaTokens.cardBorders);
 
     // Neither of these plain widgets auto-insets for the status bar/notch
     // the way a real AppBar does, so without this the purple bar paints
@@ -541,57 +544,54 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       bottom: false,
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildMobileTopBar(context, ref),
-          menuBar,
-          bottomWidget,
-        ],
+        children: [_buildMobileTopBar(context, ref), menuBar, bottomWidget],
       ),
     );
   }
 
-  void _onProfileMenuSelected(BuildContext context, WidgetRef ref, String value) {
+  void _onProfileMenuSelected(
+    BuildContext context,
+    WidgetRef ref,
+    String value,
+  ) {
     if (value == 'logout') {
       ref.read(AuthStateNotifier.provider.notifier).logout();
       Modular.to.navigate('/');
     } else if (value == 'settings') {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const AccountSettingsPage()));
     } else if (value == 'points') {
       Modular.to.pushNamed(CoursesModule.construct(CoursesModule.redeemPoints));
     }
   }
 
   List<PopupMenuEntry<String>> _profileMenuItems(dynamic profile) => [
-        PopupMenuItem<String>(
-          enabled: false,
-          padding: EdgeInsets.zero,
-          child: _ProfileHeader(profile: profile),
-        ),
-        const PopupMenuItem<String>(
-          value: 'settings',
-          padding: EdgeInsets.zero,
-          child: _ProfileMenuRow(
-            icon: Icons.settings,
-            label: 'Account Settings',
-          ),
-        ),
-        PopupMenuItem<String>(
-          value: 'points',
-          padding: EdgeInsets.zero,
-          child: _ProfileMenuRow(
-            icon: Icons.workspace_premium_outlined,
-            label: 'My Points: ${profile?.points ?? 0}',
-          ),
-        ),
-        const PopupMenuDivider(),
-        const PopupMenuItem<String>(
-          value: 'logout',
-          padding: EdgeInsets.zero,
-          child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
-        ),
-      ];
+    PopupMenuItem<String>(
+      enabled: false,
+      padding: EdgeInsets.zero,
+      child: _ProfileHeader(profile: profile),
+    ),
+    const PopupMenuItem<String>(
+      value: 'settings',
+      padding: EdgeInsets.zero,
+      child: _ProfileMenuRow(icon: Icons.settings, label: 'Account Settings'),
+    ),
+    PopupMenuItem<String>(
+      value: 'points',
+      padding: EdgeInsets.zero,
+      child: _ProfileMenuRow(
+        icon: Icons.workspace_premium_outlined,
+        label: 'My Points: ${profile?.points ?? 0}',
+      ),
+    ),
+    const PopupMenuDivider(),
+    const PopupMenuItem<String>(
+      value: 'logout',
+      padding: EdgeInsets.zero,
+      child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
+    ),
+  ];
 }
 
 // ── Desktop nav bar ──────────────────────────────────────────────────────────
@@ -637,9 +637,11 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
       'My Required Courses',
     ];
     const pointsBadgesChildren = ['Redeem your Points', 'Badges'];
-    final myCoursesActive = selectedLabel == 'My Courses' ||
+    final myCoursesActive =
+        selectedLabel == 'My Courses' ||
         myCoursesChildren.contains(selectedSubLabel);
-    final pointsBadgesActive = selectedLabel == 'Points & Badges' ||
+    final pointsBadgesActive =
+        selectedLabel == 'Points & Badges' ||
         pointsBadgesChildren.contains(selectedSubLabel);
 
     return Container(
@@ -657,128 +659,148 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
-          children: [
-            _NavItem(
-            icon: LucideIcons.library,
-            label: 'Course Catalog',
-            selected: selectedLabel == 'Course Catalog',
-            onTap: () => _goTo(
-              context,
-              ref,
-              ShellDestination.courseCatalog,
-              CoursesModule.construct(CoursesModule.root),
+                  children: [
+                    _NavItem(
+                      icon: LucideIcons.library,
+                      label: 'Course Catalog',
+                      selected: selectedLabel == 'Course Catalog',
+                      onTap:
+                          () => _goTo(
+                            context,
+                            ref,
+                            ShellDestination.courseCatalog,
+                            CoursesModule.construct(CoursesModule.root),
+                          ),
+                    ),
+                    const SizedBox(width: 48),
+                    _NavDropdown(
+                      icon: LucideIcons.bookOpen,
+                      label: 'My Courses',
+                      selected: myCoursesActive,
+                      items: [
+                        _NavSubItem(
+                          label: 'My Enrolled Courses',
+                          selected: selectedSubLabel == 'My Enrolled Courses',
+                          onTap:
+                              () => _goTo(
+                                context,
+                                ref,
+                                ShellDestination.myEnrolledCourses,
+                                CoursesModule.construct(
+                                  CoursesModule.enrolledCourses,
+                                ),
+                              ),
+                        ),
+                        _NavSubItem(
+                          label: 'My Completed Courses',
+                          selected: selectedSubLabel == 'My Completed Courses',
+                          onTap:
+                              () => _goTo(
+                                context,
+                                ref,
+                                ShellDestination.myCompletedCourses,
+                                CoursesModule.construct(
+                                  CoursesModule.completedCourses,
+                                ),
+                              ),
+                        ),
+                        _NavSubItem(
+                          label: 'My Development Plan',
+                          selected: selectedSubLabel == 'My Development Plan',
+                          onTap:
+                              () => _goTo(
+                                context,
+                                ref,
+                                ShellDestination.myDevelopmentPlan,
+                                CoursesModule.construct(
+                                  CoursesModule.developmentPlan,
+                                ),
+                              ),
+                        ),
+                        _NavSubItem(
+                          label: 'My Required Courses',
+                          selected: selectedSubLabel == 'My Required Courses',
+                          onTap:
+                              () => _goTo(
+                                context,
+                                ref,
+                                ShellDestination.myRequiredCourses,
+                                CoursesModule.construct(
+                                  CoursesModule.requiredCourses,
+                                ),
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 48),
+                    _NavItem(
+                      icon: LucideIcons.map,
+                      label: 'Learning Paths',
+                      selected: selectedLabel == 'Learning Paths',
+                      onTap:
+                          () => _goTo(
+                            context,
+                            ref,
+                            ShellDestination.learningPaths,
+                            CoursesModule.construct(
+                              CoursesModule.learningPaths,
+                            ),
+                          ),
+                    ),
+                    const SizedBox(width: 48),
+                    _NavDropdown(
+                      icon: LucideIcons.award,
+                      label: 'Points & Badges',
+                      selected: pointsBadgesActive,
+                      items: [
+                        _NavSubItem(
+                          label: 'Redeem your Points',
+                          selected: selectedSubLabel == 'Redeem your Points',
+                          onTap:
+                              () => _goTo(
+                                context,
+                                ref,
+                                ShellDestination.redeemPoints,
+                                CoursesModule.construct(
+                                  CoursesModule.redeemPoints,
+                                ),
+                              ),
+                        ),
+                        _NavSubItem(
+                          label: 'Badges',
+                          selected: selectedSubLabel == 'Badges',
+                          onTap:
+                              () => _goTo(
+                                context,
+                                ref,
+                                ShellDestination.badges,
+                                CoursesModule.construct(CoursesModule.badges),
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 48),
+                    _NavDropdown(
+                      icon: LucideIcons.messageCircle,
+                      label: 'Contact a Coach',
+                      selected: false,
+                      items: [
+                        _NavSubItem(
+                          label: 'Contact a Development Pro',
+                          disabled: !isOnline,
+                          onTap: () => launchContactCoachUrl(ref, context),
+                        ),
+                        _NavSubItem(
+                          label: 'Virtual Development Pro',
+                          disabled: !isOnline,
+                          onTap: () => launchVirtualDevUrl(context, ref),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 48),
-          _NavDropdown(
-            icon: LucideIcons.bookOpen,
-            label: 'My Courses',
-            selected: myCoursesActive,
-            items: [
-              _NavSubItem(
-                label: 'My Enrolled Courses',
-                selected: selectedSubLabel == 'My Enrolled Courses',
-                onTap: () => _goTo(
-                  context,
-                  ref,
-                  ShellDestination.myEnrolledCourses,
-                  CoursesModule.construct(CoursesModule.enrolledCourses),
-                ),
-              ),
-              _NavSubItem(
-                label: 'My Completed Courses',
-                selected: selectedSubLabel == 'My Completed Courses',
-                onTap: () => _goTo(
-                  context,
-                  ref,
-                  ShellDestination.myCompletedCourses,
-                  CoursesModule.construct(CoursesModule.completedCourses),
-                ),
-              ),
-              _NavSubItem(
-                label: 'My Development Plan',
-                selected: selectedSubLabel == 'My Development Plan',
-                onTap: () => _goTo(
-                  context,
-                  ref,
-                  ShellDestination.myDevelopmentPlan,
-                  CoursesModule.construct(CoursesModule.developmentPlan),
-                ),
-              ),
-              _NavSubItem(
-                label: 'My Required Courses',
-                selected: selectedSubLabel == 'My Required Courses',
-                onTap: () => _goTo(
-                  context,
-                  ref,
-                  ShellDestination.myRequiredCourses,
-                  CoursesModule.construct(CoursesModule.requiredCourses),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 48),
-          _NavItem(
-            icon: LucideIcons.map,
-            label: 'Learning Paths',
-            selected: selectedLabel == 'Learning Paths',
-            onTap: () => _goTo(
-              context,
-              ref,
-              ShellDestination.learningPaths,
-              CoursesModule.construct(CoursesModule.learningPaths),
-            ),
-          ),
-          const SizedBox(width: 48),
-          _NavDropdown(
-            icon: LucideIcons.award,
-            label: 'Points & Badges',
-            selected: pointsBadgesActive,
-            items: [
-              _NavSubItem(
-                label: 'Redeem your Points',
-                selected: selectedSubLabel == 'Redeem your Points',
-                onTap: () => _goTo(
-                  context,
-                  ref,
-                  ShellDestination.redeemPoints,
-                  CoursesModule.construct(CoursesModule.redeemPoints),
-                ),
-              ),
-              _NavSubItem(
-                label: 'Badges',
-                selected: selectedSubLabel == 'Badges',
-                onTap: () => _goTo(
-                  context,
-                  ref,
-                  ShellDestination.badges,
-                  CoursesModule.construct(CoursesModule.badges),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 48),
-          _NavDropdown(
-            icon: LucideIcons.messageCircle,
-            label: 'Contact a Coach',
-            selected: false,
-            items: [
-              _NavSubItem(
-                label: 'Contact a Development Pro',
-                disabled: !isOnline,
-                onTap: () => launchContactCoachUrl(ref, context),
-              ),
-              _NavSubItem(
-                label: 'Virtual Development Pro',
-                disabled: !isOnline,
-                onTap: () => launchVirtualDevUrl(context, ref),
-              ),
-            ],
-          ),
-        ],
-              ),
-            ),
-          ),
           ),
         ],
       ),
@@ -950,40 +972,45 @@ class _NavDropdownState extends State<_NavDropdown> {
         final item = items[index];
         if (!item.disabled) item.onTap();
       },
-      itemBuilder: (context) => [
-        // Matches the reference site's #navbarMenu .sub-nav-item a exactly:
-        // 14px, #64748b, 10px/15px padding, 8px radius.
-        for (var i = 0; i < items.length; i++)
-          PopupMenuItem<int>(
-            value: i,
-            enabled: !items[i].disabled,
-            padding: EdgeInsets.zero,
-            child: HoverBuilder(
-              builder: (context, hovering) {
-                final highlighted =
-                    !items[i].disabled && (hovering || items[i].selected);
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: highlighted ? FigmaTokens.badgeBackground : null,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    items[i].label,
-                    style: GoogleFonts.inter(
-                      color: items[i].disabled
-                          ? FigmaTokens.noteBodyText
-                          : (highlighted ? _navActive : _navDefault),
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-      ],
+      itemBuilder:
+          (context) => [
+            // Matches the reference site's #navbarMenu .sub-nav-item a exactly:
+            // 14px, #64748b, 10px/15px padding, 8px radius.
+            for (var i = 0; i < items.length; i++)
+              PopupMenuItem<int>(
+                value: i,
+                enabled: !items[i].disabled,
+                padding: EdgeInsets.zero,
+                child: HoverBuilder(
+                  builder: (context, hovering) {
+                    final highlighted =
+                        !items[i].disabled && (hovering || items[i].selected);
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: highlighted ? FigmaTokens.badgeBackground : null,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        items[i].label,
+                        style: GoogleFonts.inter(
+                          color:
+                              items[i].disabled
+                                  ? FigmaTokens.noteBodyText
+                                  : (highlighted ? _navActive : _navDefault),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
         child: Row(
@@ -1132,28 +1159,28 @@ class LmsNotifBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        // Fixed square (not min-constraints + padding) so the circle stays
-        // perfectly round and the count stays exactly centered regardless
-        // of digit count.
-        width: 16,
-        height: 16,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 1),
-        ),
-        child: Text(
-          count > 99 ? '99+' : '$count',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 8,
-            fontWeight: FontWeight.w800,
-            height: 1,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      );
+    // Fixed square (not min-constraints + padding) so the circle stays
+    // perfectly round and the count stays exactly centered regardless
+    // of digit count.
+    width: 16,
+    height: 16,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: Colors.transparent,
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white, width: 1),
+    ),
+    child: Text(
+      count > 99 ? '99+' : '$count',
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 8,
+        fontWeight: FontWeight.w800,
+        height: 1,
+      ),
+      textAlign: TextAlign.center,
+    ),
+  );
 }
 
 // ── Shared notifications dialog ───────────────────────────────────────────────
@@ -1170,21 +1197,24 @@ void showLmsNotifications(BuildContext context) {
   if (renderBox != null && renderBox.attached) {
     final topLeft = renderBox.localToGlobal(Offset.zero);
     topInset = topLeft.dy + renderBox.size.height + 8;
-    rightInset =
-        (screenSize.width - (topLeft.dx + renderBox.size.width) - 40)
-            .clamp(8.0, screenSize.width);
+    rightInset = (screenSize.width - (topLeft.dx + renderBox.size.width) - 40)
+        .clamp(8.0, screenSize.width);
   }
 
   showDialog<void>(
     context: context,
     barrierColor: Colors.black26,
-    builder: (ctx) =>
-        _NotificationsDialog(topInset: topInset, rightInset: rightInset),
+    builder:
+        (ctx) =>
+            _NotificationsDialog(topInset: topInset, rightInset: rightInset),
   );
 }
 
 class _NotificationsDialog extends ConsumerWidget {
-  const _NotificationsDialog({required this.topInset, required this.rightInset});
+  const _NotificationsDialog({
+    required this.topInset,
+    required this.rightInset,
+  });
   final double topInset;
   final double rightInset;
 
@@ -1216,9 +1246,13 @@ class _NotificationsDialog extends ConsumerWidget {
                   const Spacer(),
                   if (notifState.unreadCount > 0)
                     TextButton(
-                      onPressed: () => ref
-                          .read(NotificationsViewModel.provider.notifier)
-                          .markAllAsRead(),
+                      onPressed:
+                          () =>
+                              ref
+                                  .read(
+                                    NotificationsViewModel.provider.notifier,
+                                  )
+                                  .markAllAsRead(),
                       style: TextButton.styleFrom(
                         foregroundColor: _appPurple,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -1268,11 +1302,13 @@ class _NotificationsDialog extends ConsumerWidget {
                 child: ListView.separated(
                   shrinkWrap: true,
                   padding: EdgeInsets.zero,
-                  itemCount: notifState.notifications.length > 5
-                      ? 5
-                      : notifState.notifications.length,
-                  separatorBuilder: (_, __) =>
-                      const Divider(height: 1, indent: 56, endIndent: 16),
+                  itemCount:
+                      notifState.notifications.length > 5
+                          ? 5
+                          : notifState.notifications.length,
+                  separatorBuilder:
+                      (_, __) =>
+                          const Divider(height: 1, indent: 56, endIndent: 16),
                   itemBuilder: (ctx, i) {
                     final item = notifState.notifications[i];
                     return _NotifRow(
@@ -1284,14 +1320,23 @@ class _NotificationsDialog extends ConsumerWidget {
                         final url = item.redirectUrl;
                         if (url != null && url.isNotEmpty) {
                           if (!readIsOnline(ref)) {
-                            Toast.info(context, 'Internet required to open this link.');
+                            Toast.info(
+                              context,
+                              'Internet required to open this link.',
+                            );
                             return;
                           }
                           final uri = Uri.tryParse(url);
                           if (uri != null) {
-                            InAppWebViewPage.showWithAuth(context, ref,
-                                url: url,
-                                title: item.title.isNotEmpty ? item.title : 'Notification');
+                            InAppWebViewPage.showWithAuth(
+                              context,
+                              ref,
+                              url: url,
+                              title:
+                                  item.title.isNotEmpty
+                                      ? item.title
+                                      : 'Notification',
+                            );
                           }
                         }
                       },
@@ -1304,19 +1349,20 @@ class _NotificationsDialog extends ConsumerWidget {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const NotificationsPage()),
+                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
                 );
               },
-              borderRadius:
-                  const BorderRadius.vertical(bottom: Radius.circular(18)),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(18),
+              ),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: const BoxDecoration(
                   color: Color(0xFFFAFBFD),
-                  borderRadius:
-                      BorderRadius.vertical(bottom: Radius.circular(18)),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(18),
+                  ),
                 ),
                 child: Center(
                   child: Text(
@@ -1349,8 +1395,18 @@ class _NotifRow extends StatelessWidget {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}';
   }
@@ -1387,9 +1443,7 @@ class _NotifRow extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
-                      color: item.isRead
-                          ? _appMuted
-                          : const Color(0xFF1E293B),
+                      color: item.isRead ? _appMuted : const Color(0xFF1E293B),
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -1408,7 +1462,9 @@ class _NotifRow extends StatelessWidget {
                     Text(
                       _timeAgo(item.createdAt!),
                       style: const TextStyle(
-                          fontSize: 11, color: Color(0xFFABB6C8)),
+                        fontSize: 11,
+                        color: Color(0xFFABB6C8),
+                      ),
                     ),
                   ],
                 ],
@@ -1546,21 +1602,21 @@ class _ProfileMenuRow extends StatelessWidget {
   // since PopupMenuItem has no separate margin concept).
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
-        child: Row(
-          children: [
-            Icon(icon, size: 18, color: const Color(0xFF4A5568)),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                color: const Color(0xFF4A5568),
-                fontSize: 14,
-              ),
-            ),
-          ],
+    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+    child: Row(
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF4A5568)),
+        const SizedBox(width: 12),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            color: const Color(0xFF4A5568),
+            fontSize: 14,
+          ),
         ),
-      );
+      ],
+    ),
+  );
 }
 
 // ── Date pill (wide mode only) ────────────────────────────────────────────────
@@ -1605,11 +1661,27 @@ class _DatePillState extends State<_DatePill> {
 }
 
 const _datePillWeekdays = [
-  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
 ];
 const _datePillMonths = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 String _formatDatePill(DateTime dt) {
