@@ -616,9 +616,9 @@ class _BannerSection extends StatelessWidget {
                         letterSpacing: -0.75,
                       ),
                     ),
-                    // Design ref: greeting -> gap-8 -> (quote -> gap-4 -> attribution)
-                    // Mobile only (confirmed via live inspection): 4px, not 8.
-                    SizedBox(height: isTablet ? 7 : 4),
+                    // Design ref: gap-2 (8px) on mobile between greeting
+                    // and quote body.
+                    SizedBox(height: isTablet ? 7 : 8),
                     // Quote body
                     Text(
                       quote?.quote ?? '',
@@ -629,7 +629,9 @@ class _BannerSection extends StatelessWidget {
                         height: isTablet ? 22 / 16 : 18 / 11,
                       ),
                     ),
-                    SizedBox(height: isTablet ? 14 : 4),
+                    // Design ref: gap-2 (8px) on mobile between quote and
+                    // attribution.
+                    SizedBox(height: isTablet ? 14 : 8),
                     // Attribution
                     if (quote?.author != null)
                       Text(
