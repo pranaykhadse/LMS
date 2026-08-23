@@ -410,6 +410,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         children: [
                           LmsAppBarButton(
                             icon: Icons.notifications_none_rounded,
+                            // Mobile dashboard reference: 14px bell in
+                            // #1A1A2E. Desktop retains its existing styling.
+                            iconColor: const Color(0xFF1A1A2E),
                             iconSize: 14,
                             boxSize: 30,
                             onTap: () => showLmsNotifications(bellContext),
@@ -1067,6 +1070,7 @@ class LmsAppBarButton extends StatelessWidget {
     required this.onTap,
     this.iconSize,
     this.boxSize,
+    this.iconColor,
   });
   final IconData icon;
   final VoidCallback onTap;
@@ -1079,6 +1083,9 @@ class LmsAppBarButton extends StatelessWidget {
   /// Overrides the default responsive tap-target box size — needed
   /// whenever [iconSize] is pushed past the default box's own size.
   final double? boxSize;
+
+  /// Defaults to white so existing desktop header actions stay unchanged.
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1095,7 +1102,7 @@ class LmsAppBarButton extends StatelessWidget {
             onTap: onTap,
             child: Icon(
               icon,
-              color: Colors.white,
+              color: iconColor ?? Colors.white,
               size: iconSize ?? (isWide ? 24 : 23),
             ),
           ),
