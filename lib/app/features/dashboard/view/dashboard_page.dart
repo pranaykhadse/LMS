@@ -208,7 +208,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   Positioned.fill(
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                      child: Container(color: const Color(0xFF693D94).withOpacity(0.06)),
+                      child: Container(color: const Color(0xFFF4F5F7).withOpacity(0.7)),
                     ),
                   ),
                   Center(
@@ -242,7 +242,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                   Positioned.fill(
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                      child: Container(color: const Color(0xFF693D94).withOpacity(0.06)),
+                      child: Container(color: const Color(0xFFF4F5F7).withOpacity(0.7)),
                     ),
                   ),
                   Center(
