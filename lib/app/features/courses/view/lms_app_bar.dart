@@ -78,6 +78,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     this.hideBack = false,
     this.selectedLabel,
     this.selectedSubLabel,
+    this.useDashboardMobileProfileStyle = false,
   });
 
   /// Responsive wide-screen layout (catalog page only).
@@ -94,6 +95,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   /// The nav sub-item to highlight within its dropdown (isWide only) —
   /// same values as AppDrawer's `selectedSubLabel`.
   final String? selectedSubLabel;
+
+  /// Applies the website's 37x20 profile trigger only to the Dashboard on
+  /// phones; all other headers retain their existing profile control.
+  final bool useDashboardMobileProfileStyle;
 
   /// If provided, a back button is shown that calls this. If null and
   /// `Navigator.canPop` is true, standard pop is used instead.
@@ -440,20 +445,24 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 // Phone-only: avatar sits inside a small rounded box with a
                 // dropdown chevron, instead of desktop's bare avatar + name.
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(4, 4, 6, 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  padding: useDashboardMobileProfileStyle
+                      ? EdgeInsets.zero
+                      : const EdgeInsets.fromLTRB(4, 4, 6, 4),
+                  decoration: useDashboardMobileProfileStyle
+                      ? null
+                      : BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       LmsAvatar(
                         profile: profile,
-                        radius: 12,
+                        radius: useDashboardMobileProfileStyle ? 10 : 12,
                         fallbackColor: _appPurple,
                       ),
-                      const SizedBox(width: 2),
+                      SizedBox(width: useDashboardMobileProfileStyle ? 6 : 2),
                       const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: Colors.white,
