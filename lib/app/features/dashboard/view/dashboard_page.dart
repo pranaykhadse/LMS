@@ -2316,7 +2316,8 @@ class _RequiredForYouCard extends StatelessWidget {
           Text(
             'Required For You',
             style: GoogleFonts.inter(
-              color: const Color(0xFF533641),
+              // text-gray-700 = #374151
+              color: const Color(0xFF374151),
               fontSize: 16,
               fontWeight: FontWeight.w600,
               height: 24 / 16,
@@ -2350,14 +2351,16 @@ class _RequiredForYouCard extends StatelessWidget {
                 onPressed: () => Modular.to.pushNamed(
                   CoursesModule.construct(CoursesModule.requiredCourses),
                 ),
-                borderRadius: isTablet ? 20 : 14,
+                // rounded-[20px] = 20px on both mobile and tablet
+                borderRadius: 20,
                 padding: const EdgeInsets.symmetric(
                     horizontal: 24, vertical: 10),
                 textStyle: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 16,
                   height: 24 / 16,
-                  fontWeight: isTablet ? FontWeight.w500 : FontWeight.w600,
+                  // font-medium = 500
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -2386,7 +2389,8 @@ class _RequiredRow extends ConsumerWidget {
             '$index',
             textAlign: TextAlign.right,
             style: GoogleFonts.inter(
-              color: const Color(0xFFAF99A1),
+              // text-gray-400 = #9CA3AF
+              color: const Color(0xFF9CA3AF),
               fontSize: 16,
               fontWeight: FontWeight.w400,
               height: 24 / 16,
@@ -2394,14 +2398,14 @@ class _RequiredRow extends ConsumerWidget {
           ),
         ),
         const SizedBox(width: 12),
-        // Course name — Design ref: line-clamp-2
         Expanded(
           child: Text(
             item.courseName,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              color: const Color(0xFF533641),
+              // text-gray-700 = #374151
+              color: const Color(0xFF374151),
               fontSize: 16,
               fontWeight: FontWeight.w400,
               height: 24 / 16,
