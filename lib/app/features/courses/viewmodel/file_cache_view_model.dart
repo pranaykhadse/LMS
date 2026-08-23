@@ -59,6 +59,22 @@ class FileCacheViewModel extends ChangeNotifier {
     }
   }
 
+  /// Saves [bytes] directly to the same encrypted on-disk cache
+  /// [downloadFile] uses, without fetching anything over the network -
+  /// for content the app already has in hand from an API response (e.g. a
+  /// certificate's raw HTML), where [key] is a synthetic identifier rather
+  /// than a real fetchable URL. Same DownloadButton UI (progress/open/
+  /// delete) works unmodified either way since both paths converge on the
+  /// same [cachedState] entry.
+  Future<void> saveContent(String key, List<int> bytes) async {
+    if (key.isEmpty) return;
+    final file = await _regularFile(key);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(_OfflineCipher.apply(bytes));
+    cachedState[key] = FileCacheState(url: key, file: file);
+    notifyListeners();
+  }
+
   void delete(String url) {
     if (_isHls(url)) {
       _hlsLocalDir(url).then((d) {

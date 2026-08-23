@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
 import 'package:lms/app/features/dashboard/view/redeem_history_page.dart';
@@ -15,10 +18,10 @@ import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.
     show isEffectivelyOffline;
 import 'package:lms/app/features/dashboard/viewmodel/item_inventory_view_model.dart';
 
-const _purple = Color(0xFF5756C9);
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
+const _purple = FigmaTokens.primaryPurple;
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
 
 class ItemInventoryPage extends ConsumerStatefulWidget {
   const ItemInventoryPage({super.key});
@@ -94,7 +97,9 @@ class _Body extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (state.result == null) {
       if (state.providerState == DataProviderState.error) {
-        return _ErrorView(message: state.error ?? 'Unable to load inventory.', onRetry: onRetry);
+        return _ErrorView(
+            message: friendlyErrorMessage(state.error, 'Unable to load inventory.'),
+            onRetry: onRetry);
       }
       return const Center(child: CircularProgressIndicator(color: _purple));
     }
@@ -112,138 +117,182 @@ class _Body extends ConsumerWidget {
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(child: _PointsBanner(points: result.userPoints)),
+        // ── White card: title + search + item grid, all in one box ──────────
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Inventory',
-                  style: TextStyle(
-                    color: _ink,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Items available to redeem with your points',
-                  style: TextStyle(color: _muted, fontSize: 12),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 36,
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const RedeemHistoryPage()),
-                    ),
-                    icon: const Icon(Icons.history_rounded, size: 16),
-                    label: const Text('Redeem History'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _purple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: searchController,
-                        enabled: !offline,
-                        onSubmitted: (_) => onSearch(),
-                        decoration: InputDecoration(
-                          hintText: offline ? "You're offline" : 'Search items...',
-                          hintStyle: const TextStyle(color: _muted, fontSize: 14),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 0,
-                            horizontal: 14,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: Color(0xFFE3E7EF)),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Title row: folder icon + title + subtitle + Redeem History ──
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // folder icon
+                      const Icon(Icons.folder_outlined, color: _purple, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Inventory',
+                              style: TextStyle(
+                                color: _ink,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            const Text(
+                              'Items available to redeem with your points',
+                              style: TextStyle(color: _muted, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Redeem History button
+                      SizedBox(
+                        height: 36,
+                        child: HoverBuilder(
+                          builder: (context, hovering) => ElevatedButton.icon(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => const RedeemHistoryPage()),
+                            ),
+                            icon: const Icon(Icons.history_rounded, size: 15),
+                            label: const Text('Redeem History'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  hovering ? FigmaTokens.purpleHover : _purple,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                              textStyle: const TextStyle(
+                                  fontWeight: FontWeight.w700, fontSize: 13),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: ElevatedButton(
-                        onPressed: offline ? null : onSearch,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _purple,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  // ── Search bar with prefix icon ──
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: searchController,
+                          enabled: !offline,
+                          onSubmitted: (_) => onSearch(),
+                          decoration: InputDecoration(
+                            hintText:
+                                offline ? "You're offline" : 'Search items...',
+                            hintStyle:
+                                const TextStyle(color: _muted, fontSize: 14),
+                            filled: true,
+                            fillColor: Colors.white,
+                            // prefix search icon
+                            prefixIcon: const Icon(Icons.search_rounded,
+                                color: _muted, size: 20),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 0,
+                              horizontal: 14,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: FigmaTokens.cardBorders),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: FigmaTokens.cardBorders),
+                            ),
                           ),
                         ),
-                        child: const Icon(Icons.search_rounded, size: 20),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: HoverBuilder(
+                          builder: (context, hovering) => ElevatedButton(
+                            onPressed: offline ? null : onSearch,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  hovering ? FigmaTokens.purpleHover : _purple,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: EdgeInsets.zero,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            child:
+                                const Icon(Icons.search_rounded, size: 20),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (state.query.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _ResetButton(onTap: offline ? null : onClearSearch),
                   ],
-                ),
-                if (state.query.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  _ResetButton(onTap: offline ? null : onClearSearch),
+                  if (items.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: state.query.isNotEmpty
+                          ? const _NoSearchResults()
+                          : const _EmptyState(),
+                    )
+                  else ...[
+                    const SizedBox(height: 16),
+                    GridView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) => _ItemCard(
+                        item: items[index],
+                        isRedeeming: state.redeemingId == items[index].id,
+                        onRedeem: () =>
+                            _showRedeemDialog(context, items[index], notifier),
+                        onView: () => _showDetail(context, items[index]),
+                      ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: Responsive.columns(
+                          context,
+                          phone: 1,
+                          tablet: 4,
+                          desktop: 5,
+                        ),
+                        mainAxisSpacing: 14,
+                        crossAxisSpacing: 14,
+                        childAspectRatio: Responsive.isTablet(context) ? 0.72 : 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    PerPageBadge(perPage: _perPage),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
-        if (items.isEmpty)
-          SliverFillRemaining(
-            child: state.query.isNotEmpty
-                ? const _NoSearchResults()
-                : const _EmptyState(),
-          )
-        else ...[
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            sliver: SliverGrid(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _ItemCard(
-                  item: items[index],
-                  isRedeeming: state.redeemingId == items[index].id,
-                  onRedeem: () => _showRedeemDialog(context, items[index], notifier),
-                  onView: () => _showDetail(context, items[index]),
-                ),
-                childCount: items.length,
-              ),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: Responsive.columns(
-                  context,
-                  phone: 2,
-                  tablet: 4,
-                  desktop: 5,
-                ),
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 0.72,
-              ),
-            ),
-          ),
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: PerPageBadge(perPage: _perPage),
-            ),
-          ),
+        if (items.isNotEmpty)
           SliverToBoxAdapter(
             child: PaginationWidget(
               page: state.page,
@@ -251,7 +300,7 @@ class _Body extends ConsumerWidget {
               onPage: onPageChanged,
             ),
           ),
-        ],
+        const SliverToBoxAdapter(child: _PointSystemExplainer()),
         const SliverToBoxAdapter(child: AppFooter()),
       ],
     );
@@ -327,12 +376,14 @@ class _PointsBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF6B5FD6), Color(0xFF4845B0)],
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
@@ -374,8 +425,247 @@ class _PointsBanner extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
+}
+
+// ─── Point system explainer ───────────────────────────────────────────────────
+
+const _explainerTitle = Color(0xFFB0006D);
+
+// Fractional x-position and y-offset (0 = top, 1 = bottom) for each step,
+// forming the zigzag "staircase" layout on tablet/desktop.
+const _steps = [
+  _Step(Icons.how_to_reg_rounded, 'Register for\na course', 0.10, 0.78),
+  _Step(Icons.school_outlined, 'Complete learning\nevents', 0.37, 0.78),
+  _Step(Icons.emoji_events_outlined, 'Earn Points', 0.64, 0.18),
+  _Step(Icons.redeem_outlined, 'Get rewards for\nyour points', 0.90, 0.78),
+];
+
+class _PointSystemExplainer extends StatelessWidget {
+  const _PointSystemExplainer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+      child: CustomPaint(
+        painter: _DashedBorderPainter(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+          child: Column(
+            children: [
+              const Text(
+                'How does the point system work?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: _explainerTitle,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 36),
+              if (!Responsive.isTablet(context))
+                // Phone: the zigzag diagram's 4 fixed-fraction, 120px-wide
+                // labels can't fit a ~300px-wide canvas without overlapping
+                // each other (not just clipping at the edges - the 0.10 and
+                // 0.37 steps' boxes overlapped directly). A simple vertical
+                // list sidesteps all of that.
+                const _PointSystemStepList(steps: _steps)
+              else
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth;
+                    const height = 240.0;
+                    final points = [
+                      for (final s in _steps) Offset(s.xFraction * width, s.yFraction * height)
+                    ];
+                    return SizedBox(
+                      width: width,
+                      height: height,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: CustomPaint(painter: _StepConnectorPainter(points)),
+                          ),
+                          for (var i = 0; i < _steps.length; i++)
+                            Positioned(
+                              left: (points[i].dx - 60).clamp(0.0, width - 120),
+                              top: points[i].dy - 28,
+                              width: 120,
+                              child: _StepBadge(
+                                icon: _steps[i].icon,
+                                label: _steps[i].label,
+                                labelAbove: _steps[i].yFraction < 0.5,
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Step {
+  const _Step(this.icon, this.label, this.xFraction, this.yFraction);
+  final IconData icon;
+  final String label;
+  final double xFraction;
+  final double yFraction;
+}
+
+/// Phone-only replacement for the zigzag diagram: a simple vertical list,
+/// icon left + label right, each step in sequence with no overlap risk.
+class _PointSystemStepList extends StatelessWidget {
+  const _PointSystemStepList({required this.steps});
+  final List<_Step> steps;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < steps.length; i++) ...[
+          if (i > 0) const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFE4D9EF), width: 1.5),
+                ),
+                alignment: Alignment.center,
+                child: Icon(steps[i].icon, color: _purple, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  steps[i].label.replaceAll('\n', ' '),
+                  style: const TextStyle(
+                    color: _ink,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StepBadge extends StatelessWidget {
+  const _StepBadge({required this.icon, required this.label, required this.labelAbove});
+  final IconData icon;
+  final String label;
+  final bool labelAbove;
+
+  @override
+  Widget build(BuildContext context) {
+    final circle = Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFFE4D9EF), width: 1.5),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, color: _purple, size: 24),
+    );
+    final text = Text(
+      label,
+      textAlign: TextAlign.center,
+      style: const TextStyle(color: _ink, fontSize: 12, fontWeight: FontWeight.w700, height: 1.3),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: labelAbove
+          ? [text, const SizedBox(height: 8), circle]
+          : [circle, const SizedBox(height: 8), text],
+    );
+  }
+}
+
+/// Right-angle dashed connectors between consecutive step centers, matching
+/// the staircase layout of the reference diagram.
+class _StepConnectorPainter extends CustomPainter {
+  _StepConnectorPainter(this.points);
+  final List<Offset> points;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFD9CBEA)
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    for (var i = 0; i < points.length - 1; i++) {
+      final a = points[i];
+      final b = points[i + 1];
+      final corner = Offset(b.dx, a.dy);
+      _drawDashedLine(canvas, paint, a, corner);
+      _drawDashedLine(canvas, paint, corner, b);
+    }
+  }
+
+  void _drawDashedLine(Canvas canvas, Paint paint, Offset a, Offset b) {
+    const dashWidth = 5.0;
+    const gapWidth = 4.0;
+    final total = (b - a).distance;
+    if (total == 0) return;
+    final direction = (b - a) / total;
+    var drawn = 0.0;
+    while (drawn < total) {
+      final segmentEnd = (drawn + dashWidth).clamp(0.0, total);
+      canvas.drawLine(a + direction * drawn, a + direction * segmentEnd, paint);
+      drawn += dashWidth + gapWidth;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _StepConnectorPainter oldDelegate) => oldDelegate.points != points;
+}
+
+/// Dashed rounded-rectangle border used around the explainer panel, since
+/// Flutter has no built-in dashed BoxBorder.
+class _DashedBorderPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      Offset.zero & size,
+      const Radius.circular(6),
+    );
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..color = FigmaTokens.cardBorders
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    for (final metric in path.computeMetrics()) {
+      var distance = 0.0;
+      const dashWidth = 5.0;
+      const gapWidth = 4.0;
+      while (distance < metric.length) {
+        final segmentEnd = (distance + dashWidth).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, segmentEnd), paint);
+        distance += dashWidth + gapWidth;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) => false;
 }
 
 // ─── Item card ────────────────────────────────────────────────────────────────
@@ -413,6 +703,7 @@ class _ItemCard extends StatelessWidget {
           Expanded(
             child: _ItemImage(imageUrl: item.image),
           ),
+          // ── Item name ──
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
             child: Text(
@@ -427,36 +718,45 @@ class _ItemCard extends StatelessWidget {
               ),
             ),
           ),
+          // ── Points chip (task 5) ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 4, 10, 10),
-            child: Text(
-              '${item.points} pts',
-              style: const TextStyle(
-                color: _purple,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+            padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: _purple.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '${item.points} pts',
+                style: const TextStyle(
+                  color: _purple,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
+          // ── View / Redeem buttons (task 4) ──
           Padding(
             padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
             child: Row(
               children: [
+                // View button — outlined with eye icon
                 Expanded(
-                  child: OutlinedButton(
+                  child: OutlinedButton.icon(
                     onPressed: onView,
+                    icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
+                    label: const Text('View'),
                     style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.zero,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
                       minimumSize: const Size(0, 32),
-                      side: const BorderSide(color: Color(0xFFD0CFE8)),
+                      foregroundColor: _muted,
+                      side: const BorderSide(color: FigmaTokens.cardBorders),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                    ),
-                    child: const Text(
-                      'View',
-                      style: TextStyle(
-                        color: _muted,
+                      textStyle: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -464,48 +764,59 @@ class _ItemCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 6),
+                // Redeem button — filled with redeem icon; disabled when redeemed
                 Expanded(
                   child: Consumer(
                     builder: (context, ref, _) {
                       final isOnline = watchIsOnline(ref);
-                      return ElevatedButton(
-                        onPressed: item.canRedeem &&
-                                !item.isRedeemed &&
-                                !isRedeeming &&
-                                isOnline
-                            ? onRedeem
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: const Size(0, 32),
-                          backgroundColor: _purple,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: const Color(0xFFB0AFD4),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                      final canAct = item.canRedeem &&
+                          !item.isRedeemed &&
+                          !isRedeeming &&
+                          isOnline;
+                      return HoverBuilder(
+                        builder: (context, hovering) => ElevatedButton.icon(
+                          onPressed: canAct ? onRedeem : null,
+                          icon: isRedeeming
+                              ? const SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Icon(
+                                  item.isRedeemed
+                                      ? Icons.check_circle_outline_rounded
+                                      : Icons.redeem_rounded,
+                                  size: 14,
+                                ),
+                          label: Text(
+                            item.isRedeemed
+                                ? 'Redeemed'
+                                : (!isOnline && item.canRedeem
+                                    ? 'Offline'
+                                    : 'Redeem'),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            minimumSize: const Size(0, 32),
+                            backgroundColor:
+                                hovering ? FigmaTokens.purpleHover : _purple,
+                            foregroundColor: Colors.white,
+                            // greyed out when redeemed / offline / can't redeem
+                            disabledBackgroundColor: const Color(0xFFB0AFD4),
+                            disabledForegroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
-                        child: isRedeeming
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                item.isRedeemed
-                                    ? 'Redeemed'
-                                    : (!isOnline && item.canRedeem
-                                        ? 'Offline'
-                                        : 'Redeem'),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
                       );
                     },
                   ),
@@ -622,7 +933,7 @@ class _ItemDetailDialog extends StatelessWidget {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD0CFE8)),
+                  side: const BorderSide(color: FigmaTokens.cardBorders),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -747,11 +1058,11 @@ class _RedeemDialogState extends State<_RedeemDialog> {
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                   ),
                 ),
               ),
@@ -769,52 +1080,55 @@ class _RedeemDialogState extends State<_RedeemDialog> {
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submitting
-                      ? null
-                      : () async {
-                          if (!_formKey.currentState!.validate()) return;
-                          setState(() => _submitting = true);
-                          await widget.onConfirm(
-                            _addressCtrl.text.trim(),
-                            _noteCtrl.text.trim(),
-                          );
-                          if (mounted) setState(() => _submitting = false);
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _purple,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    disabledBackgroundColor: _purple.withValues(alpha: 0.6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                child: HoverBuilder(
+                  builder: (context, hovering) => ElevatedButton(
+                    onPressed: _submitting
+                        ? null
+                        : () async {
+                            if (!_formKey.currentState!.validate()) return;
+                            setState(() => _submitting = true);
+                            await widget.onConfirm(
+                              _addressCtrl.text.trim(),
+                              _noteCtrl.text.trim(),
+                            );
+                            if (mounted) setState(() => _submitting = false);
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          hovering ? FigmaTokens.purpleHover : _purple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      disabledBackgroundColor: _purple.withValues(alpha: 0.6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      minimumSize: const Size(0, 44),
                     ),
-                    minimumSize: const Size(0, 44),
-                  ),
-                  child: _submitting
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                    child: _submitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Confirm',
+                            style: TextStyle(fontWeight: FontWeight.w700),
                           ),
-                        )
-                      : const Text(
-                          'Confirm',
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
+                  ),
                 ),
               ),
             ],
@@ -907,10 +1221,7 @@ class _ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(
-                onRetry: onRetry!,
-                style: ElevatedButton.styleFrom(backgroundColor: _purple),
-              ),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),

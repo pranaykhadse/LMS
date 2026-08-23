@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/dashboard/model/redeem_history_item.dart';
 import 'package:lms/app/features/dashboard/viewmodel/redeem_history_view_model.dart';
 
-const _rhPurple = Color(0xFF5756C9);
-const _rhInk = Color(0xFF172033);
-const _rhMuted = Color(0xFF7C879D);
-const _rhBg = Color(0xFFF5F7FC);
+const _rhPurple = FigmaTokens.primaryPurple;
+const _rhInk = FigmaTokens.cardTitles;
+const _rhMuted = FigmaTokens.noteBodyText;
+const _rhBg = FigmaTokens.pageBackground;
 
 class RedeemHistoryPage extends ConsumerWidget {
   const RedeemHistoryPage({super.key});
@@ -29,7 +31,7 @@ class RedeemHistoryPage extends ConsumerWidget {
         DataProviderState.loading =>
           const Center(child: CircularProgressIndicator(color: _rhPurple)),
         DataProviderState.error => _ErrorView(
-            message: state.error ?? 'Unable to load your redeem history.',
+            message: friendlyErrorMessage(state.error, 'Unable to load your redeem history.'),
             onRetry: () =>
                 ref.read(RedeemHistoryViewModel.provider.notifier).fetch(),
           ),
@@ -306,7 +308,7 @@ class _RedeemedItemDetailDialog extends StatelessWidget {
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFFD0CFE8)),
+                  side: const BorderSide(color: FigmaTokens.cardBorders),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
                 ),
@@ -403,10 +405,7 @@ class _ErrorView extends StatelessWidget {
             Text(message, textAlign: TextAlign.center, style: const TextStyle(color: _rhMuted)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(
-                onRetry: onRetry!,
-                style: ElevatedButton.styleFrom(backgroundColor: _rhPurple),
-              ),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),

@@ -55,14 +55,17 @@ class AppScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isTablet = Responsive.isTablet(context);
+    final isDesktop = Responsive.isDesktop(context);
+    // iPad tier: 700 – 1023 px (tablet but not desktop).
+    final isTabletOnly = isTablet && !isDesktop;
 
+    // Desktop/tablet body gets a small top padding to breathe below the
+    // taller header; phone body spans full height.
     final content = isTablet
-        ? Padding(
-            padding: const EdgeInsets.only(top: 14),
-            child: body,
-          )
+        ? Padding(padding: const EdgeInsets.only(top: 14), child: body)
         : body;
 
+    // ── Phone (< 700 px): hamburger drawer + purple mobile AppBar ──────────
     if (!isTablet) {
       return Scaffold(
         backgroundColor: backgroundColor,
@@ -82,10 +85,11 @@ class AppScaffold extends ConsumerWidget {
       );
     }
 
-    if (isTablet && ShellMarker.isInShell(context)) {
-      // Publish this tab's header params for MainShell's single persistent
-      // LmsAppBar to pick up, instead of building our own. Deferred to next
-      // frame since providers can't be written mid-build.
+    // ── Inside MainShell (iPad or Desktop tab body) ─────────────────────────
+    // Publish header params to the shell's single persistent LmsAppBar
+    // instead of building our own. Deferred to next frame since providers
+    // can't be written mid-build.
+    if (ShellMarker.isInShell(context)) {
       final config = ShellHeaderConfig(
         title: title,
         centerTitle: centerTitle,
@@ -103,8 +107,29 @@ class AppScaffold extends ConsumerWidget {
       return Container(color: backgroundColor, child: content);
     }
 
-    // Desktop/tablet navigate via LmsAppBar's own horizontal nav bar
-    // (isWide) instead of a persistent sidebar.
+    // ── iPad / Tablet standalone (push route outside the shell) ────────────
+    // Purple mobile-style AppBar (no horizontal nav bar), no bottom bar
+    // (that lives only in MainShell for the primary destinations).
+    if (isTabletOnly) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: LmsAppBar(
+          title: title,
+          centerTitle: centerTitle,
+          onBack: onBack,
+          hideBack: hideBack,
+          bottom: bottom,
+          onRefresh: onRefresh,
+          // isWide: false  →  purple mobile-style bar, same look as phone
+          // but without the hamburger (back button shows instead when
+          // Navigator.canPop is true, which it is for drill-down pages).
+        ),
+        body: content,
+      );
+    }
+
+    // ── Desktop standalone (push route outside the shell) ──────────────────
+    // Two-row header with horizontal nav bar.
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: LmsAppBar(

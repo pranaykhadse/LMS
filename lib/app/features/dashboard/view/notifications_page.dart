@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart';
+import 'package:lms/app/features/courses/view/lms_app_bar.dart' show readIsOnline;
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 
-const _nPurple = Color(0xFF5756C9);
-const _nPurple2 = Color(0xFF775FE8);
-const _nNavy = Color(0xFF172033);
-const _nMuted = Color(0xFF7C879D);
-const _nBg = Color(0xFFF4F7FC);
+const _nPurple = FigmaTokens.primaryPurple;
+const _nNavy = FigmaTokens.cardTitles;
+const _nMuted = FigmaTokens.noteBodyText;
+const _nBg = FigmaTokens.pageBackground;
 
 class NotificationsPage extends ConsumerWidget {
   const NotificationsPage({super.key});
@@ -19,11 +20,15 @@ class NotificationsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(NotificationsViewModel.provider);
 
-    return Scaffold(
+    // Same shared header (height, logo, date/time, wifi/offline toggle,
+    // notification bell, profile menu, ...) every other screen uses,
+    // instead of this page's own custom purple banner.
+    return AppScaffold(
       backgroundColor: _nBg,
+      title: 'Notifications',
+      onRefresh: () => ref.read(NotificationsViewModel.provider.notifier).fetch(),
       body: Column(
         children: [
-          _NotifHeader(state: state, ref: ref),
           _StatsBar(state: state, ref: ref),
           Expanded(
             child: state.isLoading
@@ -45,104 +50,6 @@ class NotificationsPage extends ConsumerWidget {
   }
 }
 
-// ── Header ────────────────────────────────────────────────────────────────────
-
-class _NotifHeader extends StatelessWidget {
-  const _NotifHeader({required this.state, required this.ref});
-  final NotificationsState state;
-  final WidgetRef ref;
-
-  @override
-  Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, top + 12, 20, 24),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_nPurple, _nPurple2],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Back button
-          LmsAppBarButton(
-            icon: Icons.arrow_back_ios_new_rounded,
-            onTap: () => Navigator.of(context).pop(),
-            iconSize: 31,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Notifications',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Stay updated with your latest activities',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Bell with badge
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 22),
-              ),
-              if (state.unreadCount > 0)
-                Positioned(
-                  top: -2,
-                  right: -2,
-                  child: Container(
-                    constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.all(Radius.circular(9)),
-                    ),
-                    child: Text(
-                      state.unreadCount > 99 ? '99+' : '${state.unreadCount}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ── Stats bar ─────────────────────────────────────────────────────────────────
 
 class _StatsBar extends StatelessWidget {
@@ -157,7 +64,7 @@ class _StatsBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -197,36 +104,57 @@ class _StatsBar extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           // Total
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.notifications_outlined, size: 14, color: _nMuted),
-              const SizedBox(width: 4),
-              Text(
-                '${state.notifications.length} Total',
-                style: const TextStyle(color: _nMuted, fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-            ],
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F2F4),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.notifications_outlined, size: 14, color: _nMuted),
+                const SizedBox(width: 4),
+                Text(
+                  '${state.notifications.length} Total',
+                  style: const TextStyle(color: _nMuted, fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
           ),
           const Spacer(),
           // Mark all read
           if (state.unreadCount > 0)
             GestureDetector(
-              onTap: () => ref.read(NotificationsViewModel.provider.notifier).markAllAsRead(),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.check_circle_outline, size: 16, color: _nPurple),
-                  SizedBox(width: 4),
-                  Text(
-                    'Mark all read',
-                    style: TextStyle(
-                      color: _nPurple,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
+              onTap: () async {
+                final error = await ref
+                    .read(NotificationsViewModel.provider.notifier)
+                    .markAllAsRead();
+                if (error != null && context.mounted) {
+                  Toast.error(context, error);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _nPurple.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.check_circle_outline, size: 16, color: _nPurple),
+                    SizedBox(width: 4),
+                    Text(
+                      'Mark all read',
+                      style: TextStyle(
+                        color: _nPurple,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
         ],
@@ -257,7 +185,7 @@ class _NotifCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border(
           left: BorderSide(
             color: item.isRead ? Colors.transparent : _nPurple,
@@ -273,9 +201,14 @@ class _NotifCard extends StatelessWidget {
         ],
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          ref.read(NotificationsViewModel.provider.notifier).markOneAsRead(item.id);
+        borderRadius: BorderRadius.circular(8),
+        onTap: () async {
+          final error = await ref
+              .read(NotificationsViewModel.provider.notifier)
+              .markOneAsRead(item.id);
+          if (error != null && context.mounted) {
+            Toast.error(context, error);
+          }
           final url = item.redirectUrl;
           if (url != null && url.isNotEmpty) {
             if (!readIsOnline(ref)) {
@@ -284,7 +217,8 @@ class _NotifCard extends StatelessWidget {
             }
             final uri = Uri.tryParse(url);
             if (uri != null) {
-              launchUrl(uri, mode: LaunchMode.externalApplication);
+              InAppWebViewPage.showWithAuth(context, ref,
+                  url: url, title: 'Course Details');
             }
           }
         },
@@ -299,7 +233,7 @@ class _NotifCard extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: _nPurple.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.notifications_rounded, color: _nPurple, size: 20),
               ),
@@ -353,7 +287,50 @@ class _NotifCard extends StatelessWidget {
                     )
                   else
                     const SizedBox(height: 17),
-                  Icon(Icons.more_vert, size: 18, color: Colors.grey.shade400),
+                  // Nudged down a bit further from the unread dot / title row above.
+                  const SizedBox(height: 10),
+                  PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    icon: Icon(Icons.more_vert, size: 18, color: Colors.grey.shade400),
+                    itemBuilder: (context) => [
+                      // Only show Mark Read if not already read
+                      if (!item.isRead)
+                        const PopupMenuItem(
+                          value: 'read',
+                          child: Row(
+                            children: [
+                              Icon(Icons.check_circle_outline, size: 16, color: _nNavy),
+                              SizedBox(width: 10),
+                              Text('Mark Read'),
+                            ],
+                          ),
+                        ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline_rounded, size: 16, color: _nNavy),
+                            SizedBox(width: 10),
+                            Text('Delete'),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) async {
+                      final notifier = ref.read(NotificationsViewModel.provider.notifier);
+                      if (value == 'read') {
+                        final error = await notifier.markOneAsRead(item.id);
+                        if (error != null && context.mounted) {
+                          Toast.error(context, error);
+                        }
+                      } else if (value == 'delete') {
+                        final error = await notifier.deleteOne(item.id);
+                        if (error != null && context.mounted) {
+                          Toast.error(context, error);
+                        }
+                      }
+                    },
+                  ),
                 ],
               ),
             ],

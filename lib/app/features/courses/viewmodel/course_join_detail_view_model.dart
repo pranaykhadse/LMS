@@ -9,6 +9,7 @@ import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dar
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/completed_courses_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/dashboard_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/development_plan_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/enrolled_courses_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
@@ -161,6 +162,7 @@ class CourseJoinDetailViewModel
       CompletedCoursesViewModel.provider,
       RequiredCoursesViewModel.provider,
       DashboardViewModel.provider,
+      LearningProgressViewModel.provider,
       DevelopmentPlanViewModel.provider,
       CalendarViewModel.provider,
     ]) {
@@ -171,6 +173,15 @@ class CourseJoinDetailViewModel
 
 int? _loggedInUserId(AuthState? auth) {
   return auth?.userProfile?.userId ?? auth?.user?.id;
+}
+
+/// True when [error] represents a 404/"not found" response - e.g. the
+/// course was deleted by an admin. Shared with the view so it can trigger
+/// the "Course has been deleted by the Admin." toast.
+bool isCourseNotFoundError(Object? error) {
+  if (error == null) return false;
+  final msg = error.toString().toLowerCase();
+  return msg.contains('404') || msg.contains('not found');
 }
 
 String _friendlyError(Object error) {

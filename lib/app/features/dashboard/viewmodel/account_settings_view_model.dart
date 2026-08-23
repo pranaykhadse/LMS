@@ -89,6 +89,8 @@ class AccountSettingsViewModel
     required String department,
     String? avatarUrl,
     String? phoneNumber,
+    String? countryCode,
+    String? countryIso,
   }) async {
     final current = state.data;
     if (userId == null || current == null) {
@@ -103,6 +105,8 @@ class AccountSettingsViewModel
       division: division,
       department: department,
       avatarPath: avatarUrl,
+      countryCode: countryCode,
+      countryIso: countryIso,
     );
     // Not part of the documented PUT schema — included as a best-effort
     // guess (it's the key the GET response returns this value under).
@@ -120,6 +124,8 @@ class AccountSettingsViewModel
       division: division,
       department: department,
       avatarPath: avatarUrl,
+      countryCode: countryCode,
+      countryIso: countryIso,
     );
     if (mounted) {
       state = DataState.onData(
@@ -136,6 +142,35 @@ class AccountSettingsViewModel
     // AuthStateNotifier is a different, kept-alive notifier, so this
     // should still run even if this screen's own state is now moot.
     await ref.read(AuthStateNotifier.provider.notifier).updateProfile(updatedProfile);
+    return null;
+  }
+
+  /// Flips "Receive Text Message Reminders" immediately on toggle, outside
+  /// the Edit/Save flow - same immediate-save pattern as [uploadAvatar].
+  /// enable_text_messages isn't part of the documented PUT schema either
+  /// (same caveat as phone_number in [update]) - included as a best-effort
+  /// guess matching the key the GET response returns this value under.
+  Future<String?> setEnableTextMessages(bool value) async {
+    final current = state.data;
+    if (userId == null || current == null) {
+      return 'Unable to save — profile not loaded.';
+    }
+    final body = current.profile.toUpdateJson();
+    body['enable_text_messages'] = value ? 1 : 0;
+    final result = await repository.update(userId: userId!, body: body);
+    if (!result.success) {
+      return result.message ?? 'Unable to update reminders. Please try again.';
+    }
+    if (mounted) {
+      state = DataState.onData(
+        UserProfileDetail(
+          profile: current.profile,
+          user: current.user,
+          phoneNumber: current.phoneNumber,
+          enableTextMessages: value,
+        ),
+      );
+    }
     return null;
   }
 

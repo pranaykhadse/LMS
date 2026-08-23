@@ -4,10 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/providers/shell_destination_provider.dart';
 import 'package:lms/app/core/views/elements/contact_links.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/logo.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
@@ -19,14 +22,12 @@ import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
 import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 
-// Matches the Figma design system's exact primary purple (#693D94), used
-// throughout the desktop header - see FigmaTokens.primaryPurple, the same
-// value the redesigned Dashboard body already uses.
-const _appPurple = Color(0xFF693D94);
-const _appInk = Color(0xFF172033);
-const _appMuted = Color(0xFF9AA8C0);
+const _appPurple = FigmaTokens.primaryPurple;
+const _appMuted = FigmaTokens.noteBodyText;
+const _navActive = FigmaTokens.primaryPurple;
+const _navDefault = Color(0xFF6A7282);
 
 bool watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -44,20 +45,25 @@ bool readIsOnline(WidgetRef ref) {
   return !isManualOffline && connectionVM.isConnected;
 }
 
-/// "Lastname, Firstname" for the desktop header's profile menu trigger.
+/// "Firstname Lastname" for the desktop header's profile menu trigger.
 String _lastFirst(dynamic profile) {
   final first = profile?.firstname?.toString() ?? '';
   final last = profile?.lastname?.toString() ?? '';
   if (last.isEmpty) return first;
   if (first.isEmpty) return last;
-  return '$last, $first';
+  return '$first $last';
 }
 
 // TopBar's Figma spec is Height Hug 44px, but that clipped the logo mark
 // once it was swapped in - taller than spec so the logo has room to
 // breathe. NavBar matches its own Figma spec exactly (Height Hug 44px).
-const double _desktopTopBarHeight = 64;
-const double _desktopHeaderHeight = 44;
+const double _desktopTopBarHeight = 44;
+const double _desktopHeaderHeight = 45;
+// Phone gets a condensed version of the desktop purple TopBar (logo +
+// notification bell + profile avatar only - no date pill/refresh/offline
+// toggle/progress icon, too many to fit legibly on a narrow screen) above
+// the existing white "Menu" bar.
+const double _mobileTopBarHeight = 48;
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
@@ -115,8 +121,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize => Size.fromHeight(
-        (isWide ? _desktopTopBarHeight + _desktopHeaderHeight : 60.0) +
-            (bottom?.preferredSize.height ?? 0),
+        (isWide
+                ? _desktopTopBarHeight + _desktopHeaderHeight
+                : _mobileTopBarHeight + 48.0) +
+            (bottom?.preferredSize.height ?? 1.0), // 1px for the bottom divider
       );
 
   @override
@@ -135,9 +143,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   // slot don't share a visual baseline.
   Widget _buildDesktop(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
-    final canPop = Navigator.canPop(context);
-    final showBack =
-        !hideBack && (onBack != null || (canPop && onBack == null));
     final isOffline = ref.watch(OfflineModeNotifier.provider);
     final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
 
@@ -149,7 +154,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         if (onRefresh != null) ...[
           LmsAppBarButton(
             icon: Icons.refresh_rounded,
-            iconSize: 18,
+            // Design ref: bell svg is w-[14px] h-[14px] - matched across
+            // every icon in this row for consistency.
+            iconSize: 14,
             // The bell/badge in this same header is shared across every
             // screen, so a manual refresh should always pick up fresh
             // notifications too, not just whatever this particular page's
@@ -163,8 +170,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ],
         LmsOfflineToggle(
           isOffline: isOffline,
-          iconSize: 18,
-          switchScale: 0.8,
+          iconSize: 14,
+          switchScale: 0.65,
           onChanged: (val) {
             ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
             if (!val) ref.read(SyncViewModel.provider).onManualOnline();
@@ -181,81 +188,42 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               children: [
                 LmsAppBarButton(
                   icon: Icons.notifications_none_rounded,
-                  iconSize: 18,
+                  iconSize: 14,
+                  boxSize: 34,
                   onTap: () => showLmsNotifications(bellContext),
                 ),
                 if (unreadCount > 0)
                   Positioned(
-                    top: 2,
-                    right: 2,
+                    top: -2,
+                    right: -2,
                     child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
                   ),
               ],
             ),
           ),
         ),
-        const SizedBox(width: 4),
-        LmsAppBarButton(
-          icon: Icons.play_arrow_rounded,
-          iconSize: 18,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const LearningProgressPage()),
-          ),
-        ),
         const SizedBox(width: 6),
-        PopupMenuButton<String>(
-          offset: const Offset(0, 38),
-          constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        _ProfileMenuButton(
+          profile: profile,
           onSelected: (value) => _onProfileMenuSelected(context, ref, value),
           itemBuilder: (context) => _profileMenuItems(profile),
-          // Pill container: #7D4AAB background, 4px radius, 6px gap
-          // between avatar/name/chevron - padding widened past the Figma
-          // spec's tight 8/2/8/2 so it actually reads as a chip against
-          // the TopBar's own close-in-tone purple.
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF7D4AAB),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LmsAvatar(
-                  profile: profile,
-                  radius: 10,
-                  fallbackColor: const Color(0xFF6A7282),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _lastFirst(profile),
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFFE5E7EB),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    height: 16 / 12,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                const Icon(Icons.keyboard_arrow_down_rounded,
-                    color: Color(0xFF99A1AF), size: 14),
-              ],
-            ),
-          ),
         ),
       ],
     );
 
     // "TopBar": logo left, back button (detail pages only) + utilities
     // right - purple (#693D94) background, 16px left/right padding, 10px
-    // top/bottom padding, space-between (taller than the Figma spec's
-    // 44px so the logo mark isn't clipped - see _desktopTopBarHeight).
+    // top/bottom padding, space-between - matches the Figma spec's 44px
+    // exactly; the logo is sized to fit the 24px of padding-free height
+    // that leaves (see the Logo(size: ...) call below).
     final topBar = Container(
       width: double.infinity,
       height: _desktopTopBarHeight,
       color: _appPurple,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+      // Horizontal padding matches the dashboard banner's own outer
+      // margin (outerH = 24 at this tablet+ width) so the logo/avatar
+      // line up with the banner card's left/right edges below.
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -263,29 +231,45 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (showBack) ...[
-                LmsAppBarButton(
-                  icon: Icons.arrow_back_ios_new_rounded,
-                  onTap: onBack ?? () => safePop(context),
-                  iconSize: 16,
-                  boxSize: 28,
+              // Back button — left of the logo, shown whenever there's
+              // actually somewhere to go back to. Shell-tab switches
+              // (Dashboard <-> Course Catalog <-> Learning Paths <-> ...)
+              // never touch Navigator, so canPop() alone can't see that
+              // history - shellHistoryProvider tracks it instead, and this
+              // reverses through tab switches and pushed routes (course
+              // detail, etc.) alike, in the order they actually happened.
+              if (!hideBack && _canGoBack(context, ref))
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onBack ?? () => _goBack(context, ref),
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 14),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 8),
-              ],
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  if (ShellMarker.isInShell(context)) {
-                    ref.read(currentShellDestinationProvider.notifier).state =
-                        ShellDestination.dashboard;
-                    return;
-                  }
-                  resetToModularRoot(context);
-                  Modular.to.navigate(
-                    CoursesModule.construct(CoursesModule.dashboard),
-                  );
-                },
-                child: const Logo(size: 36),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    if (ShellMarker.isInShell(context)) {
+                      navigateShell(ref, ShellDestination.dashboard);
+                      return;
+                    }
+                    resetToModularRoot(context);
+                    Modular.to.navigate(
+                      CoursesModule.construct(CoursesModule.dashboard),
+                    );
+                  },
+                  child: const Logo(size: 24),
+                ),
               ),
             ],
           ),
@@ -299,9 +283,12 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
       selectedSubLabel: selectedSubLabel,
     );
 
-    final header = Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [topBar, navBar],
+    final header = Container(
+      color: FigmaTokens.pageBackground,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [topBar, navBar],
+      ),
     );
     final headerHeight = _desktopTopBarHeight + _desktopHeaderHeight;
     if (bottom == null) {
@@ -321,126 +308,245 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     );
   }
 
-  // ── Phone ────────────────────────────────────────────────────────────────
-  Widget _buildMobile(BuildContext context, WidgetRef ref) {
-    final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
-    final canPop = Navigator.canPop(context);
-    final showBack =
-        !hideBack && (onBack != null || (canPop && onBack == null));
-    final isOffline = ref.watch(OfflineModeNotifier.provider);
-    final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
+  /// True once there's actually somewhere for the back button to go -
+  /// [shellHistoryProvider] while inside the shell (tab switches never
+  /// reach Navigator), otherwise a normal [Navigator.canPop] check for
+  /// pushed routes (course detail, notifications, account settings, ...).
+  bool _canGoBack(BuildContext context, WidgetRef ref) {
+    if (onBack != null) return true;
+    if (ShellMarker.isInShell(context)) {
+      return ref.watch(shellHistoryProvider).isNotEmpty;
+    }
+    return Navigator.of(context).canPop();
+  }
 
-    return AppBar(
-      automaticallyImplyLeading: false,
-      toolbarHeight: 60,
-      backgroundColor: _appPurple,
-      foregroundColor: Colors.white,
-      elevation: 2,
-      titleSpacing: 0,
-      // The hamburger/back button and the title are kept together as a
-      // single left-hand group (via `title` below, not `leading`) so they
-      // read as one cluster, with the action icons as a separate cluster
-      // hugging the right edge - rather than the built-in AppBar
-      // leading/title split, which left an ambiguous, similarly sized gap
-      // on both sides of the title instead of grouping it with the menu
-      // button next to it.
-      leadingWidth: 0,
-      title: Padding(
-        padding: const EdgeInsets.only(left: 4, right: 4),
-        child: Row(
-          children: [
-            if (showBack) ...[
-              LmsAppBarButton(
-                icon: Icons.arrow_back_ios_new_rounded,
-                onTap: onBack ?? () => safePop(context),
-                iconSize: 18,
+  /// Reverses one step - out of shell history if inside the shell (falling
+  /// through to a normal pop if history is somehow already empty), or a
+  /// normal pop otherwise.
+  void _goBack(BuildContext context, WidgetRef ref) {
+    if (ShellMarker.isInShell(context) && goBackInShell(ref)) return;
+    safePop(context);
+  }
+
+  // ── Phone ────────────────────────────────────────────────────────────────
+  //
+  // Condensed version of the desktop purple TopBar (back button, logo,
+  // offline toggle, notification bell, profile avatar - no date pill,
+  // refresh, or progress icon, too many to fit legibly on a narrow
+  // screen), stacked above the existing white "Menu" bar.
+  Widget _buildMobileTopBar(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
+    final unreadCount = ref.watch(NotificationsViewModel.unreadCountProvider);
+    final isOffline = ref.watch(OfflineModeNotifier.provider);
+
+    return Container(
+      width: double.infinity,
+      height: _mobileTopBarHeight,
+      color: _appPurple,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Back button — same visibility rule as desktop's TopBar.
+              if (!hideBack && _canGoBack(context, ref))
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onBack ?? () => _goBack(context, ref),
+                    child: const Padding(
+                      padding: EdgeInsets.only(right: 10),
+                      child: Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              GestureDetector(
+                onTap: () {
+                  if (ShellMarker.isInShell(context)) {
+                    navigateShell(ref, ShellDestination.dashboard);
+                    return;
+                  }
+                  resetToModularRoot(context);
+                  Modular.to.navigate(
+                    CoursesModule.construct(CoursesModule.dashboard),
+                  );
+                },
+                child: const Logo(size: 22),
               ),
-              const SizedBox(width: 2),
             ],
-            Builder(
-              builder: (ctx) => LmsAppBarButton(
-                icon: Icons.menu_rounded,
-                onTap: () => Scaffold.of(ctx).openDrawer(),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LmsOfflineToggle(
+                isOffline: isOffline,
+                iconSize: 16,
+                switchScale: 0.65,
+                onChanged: (val) {
+                  ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
+                  if (!val) ref.read(SyncViewModel.provider).onManualOnline();
+                  Toast.info(context,
+                      val ? 'Offline mode enabled' : 'Back to online mode');
+                },
               ),
-            ),
-            if (title != null) ...[
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  title!,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
+              LmsAppBarButton(
+                icon: Icons.play_arrow_rounded,
+                iconSize: 14,
+                boxSize: 30,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const LearningProgressPage()),
+                ),
+              ),
+              SizedBox(
+                width: 30,
+                height: 30,
+                child: Builder(
+                  builder: (bellContext) => Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      LmsAppBarButton(
+                        icon: Icons.notifications_none_rounded,
+                        iconSize: 14,
+                        boxSize: 30,
+                        onTap: () => showLmsNotifications(bellContext),
+                      ),
+                      if (unreadCount > 0)
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              PopupMenuButton<String>(
+                offset: const Offset(0, 34),
+                constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                onSelected: (value) => _onProfileMenuSelected(context, ref, value),
+                itemBuilder: (context) => _profileMenuItems(profile),
+                padding: EdgeInsets.zero,
+                // Phone-only: avatar sits inside a small rounded box with a
+                // dropdown chevron, instead of desktop's bare avatar + name.
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(4, 4, 6, 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      LmsAvatar(
+                        profile: profile,
+                        radius: 12,
+                        fallbackColor: _appPurple,
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: Colors.white,
+                        size: 11,
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobile(BuildContext context, WidgetRef ref) {
+    // Back navigation is always handled inline in the page body header
+    // (← Back | Page Title) — the AppBar always shows "Menu" + hamburger.
+
+    // Figma mobile app bar spec:
+    // Container: horizontal, space-between, padding top 8 / right 16 / bottom 8 / left 16
+    // "Menu" label: Inter SemiBold 600, 14px, line-height 20px, color #364153
+    // Hamburger icon: 20×20px, color #6A7282
+    // Background: white
+    //
+    // Deliberately NOT a real AppBar here — nesting an actual AppBar inside
+    // the Column below (alongside the purple top bar) corrupted the
+    // semantics tree ('!semantics.parentDataDirty' assertion flood) and
+    // rendered a blank body. AppBar expects to be the sole widget handed
+    // to Scaffold's `appBar:` slot, not nested under another widget, so
+    // this replicates the same visuals with plain Material/Row instead.
+    final menuBar = Material(
+      color: Colors.white,
+      child: SizedBox(
+        height: 48,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Left: always "Menu" label
+              const Text(
+                'Menu',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  height: 20 / 14,
+                  letterSpacing: 0,
+                  color: Color(0xFF533641),
+                ),
+              ),
+              // Right: always hamburger icon
+              Builder(
+                builder: (ctx) => GestureDetector(
+                  onTap: () => Scaffold.of(ctx).openDrawer(),
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Center(
+                      child: Icon(
+                        Icons.menu_rounded,
+                        size: 20,
+                        color: FigmaTokens.noteBodyText,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-      actions: [
-        if (onRefresh != null) ...[
-          LmsAppBarButton(
-            icon: Icons.refresh_rounded,
-            // The bell/badge in this same app bar is shared across every
-            // screen, so a manual refresh should always pick up fresh
-            // notifications too, not just whatever this particular page's
-            // own onRefresh re-fetches.
-            onTap: () {
-              onRefresh!();
-              ref.read(NotificationsViewModel.provider.notifier).fetch();
-            },
-          ),
-          const SizedBox(width: 2),
+    );
+
+    // Use the caller's bottom widget if provided (e.g. a tab bar on the
+    // catalog page); otherwise render a thin 1px divider to separate the
+    // white bar from the page body.
+    final bottomWidget = bottom ?? Container(height: 1, color: FigmaTokens.cardBorders);
+
+    // Neither of these plain widgets auto-insets for the status bar/notch
+    // the way a real AppBar does, so without this the purple bar paints
+    // straight from y=0, underneath the status bar.
+    return SafeArea(
+      bottom: false,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildMobileTopBar(context, ref),
+          menuBar,
+          bottomWidget,
         ],
-        LmsOfflineToggle(
-          isOffline: isOffline,
-          onChanged: (val) {
-            ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
-            if (!val) ref.read(SyncViewModel.provider).onManualOnline();
-            Toast.info(
-                context, val ? 'Offline mode enabled' : 'Back to online mode');
-          },
-        ),
-        Builder(
-          builder: (bellContext) => Stack(
-          clipBehavior: Clip.none,
-          children: [
-            LmsAppBarButton(
-              icon: Icons.notifications_none_rounded,
-              onTap: () => showLmsNotifications(bellContext),
-            ),
-            if (unreadCount > 0)
-              Positioned(
-                top: 2,
-                right: 2,
-                child: IgnorePointer(child: LmsNotifBadge(count: unreadCount)),
-              ),
-          ],
-          ),
-        ),
-        const SizedBox(width: 2),
-        PopupMenuButton<String>(
-          offset: const Offset(0, 54),
-          constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          onSelected: (value) => _onProfileMenuSelected(context, ref, value),
-          itemBuilder: (context) => _profileMenuItems(profile),
-          child: LmsAvatar(profile: profile, radius: 18),
-        ),
-        const SizedBox(width: 2),
-        LmsAppBarButton(
-          icon: Icons.play_arrow_rounded,
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const LearningProgressPage()),
-          ),
-        ),
-        const SizedBox(width: 6),
-      ],
-      bottom: bottom,
+      ),
     );
   }
 
@@ -514,7 +620,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
     // the page doesn't slide. Falls back to a real navigation if somehow
     // reached from outside the shell.
     if (ShellMarker.isInShell(context)) {
-      ref.read(currentShellDestinationProvider.notifier).state = destination;
+      navigateShell(ref, destination);
       return;
     }
     resetToModularRoot(context);
@@ -541,7 +647,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
       height: _desktopHeaderHeight,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFEDEFF3))),
+        border: Border(bottom: BorderSide(color: FigmaTokens.cardBorders)),
       ),
       padding: EdgeInsets.zero,
       child: Row(
@@ -553,19 +659,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                 child: Row(
           children: [
             _NavItem(
-            icon: Icons.dashboard_outlined,
-            label: 'Dashboard',
-            selected: selectedLabel == 'Dashboard',
-            onTap: () => _goTo(
-              context,
-              ref,
-              ShellDestination.dashboard,
-              CoursesModule.construct(CoursesModule.dashboard),
-            ),
-          ),
-          const SizedBox(width: 48),
-          _NavItem(
-            icon: Icons.menu_book_outlined,
+            icon: LucideIcons.library,
             label: 'Course Catalog',
             selected: selectedLabel == 'Course Catalog',
             onTap: () => _goTo(
@@ -577,7 +671,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 48),
           _NavDropdown(
-            icon: Icons.library_books_outlined,
+            icon: LucideIcons.bookOpen,
             label: 'My Courses',
             selected: myCoursesActive,
             items: [
@@ -625,7 +719,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 48),
           _NavItem(
-            icon: Icons.account_tree_outlined,
+            icon: LucideIcons.map,
             label: 'Learning Paths',
             selected: selectedLabel == 'Learning Paths',
             onTap: () => _goTo(
@@ -637,7 +731,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 48),
           _NavDropdown(
-            icon: Icons.workspace_premium_outlined,
+            icon: LucideIcons.award,
             label: 'Points & Badges',
             selected: pointsBadgesActive,
             items: [
@@ -665,19 +759,19 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: 48),
           _NavDropdown(
-            icon: Icons.support_agent_outlined,
+            icon: LucideIcons.messageCircle,
             label: 'Contact a Coach',
             selected: false,
             items: [
               _NavSubItem(
                 label: 'Contact a Development Pro',
                 disabled: !isOnline,
-                onTap: () => launchContactCoachUrl(ref),
+                onTap: () => launchContactCoachUrl(ref, context),
               ),
               _NavSubItem(
                 label: 'Virtual Development Pro',
                 disabled: !isOnline,
-                onTap: launchVirtualDevUrl,
+                onTap: () => launchVirtualDevUrl(context, ref),
               ),
             ],
           ),
@@ -706,7 +800,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF6A7282);
+    final color = selected ? _navActive : _navDefault;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -714,14 +808,22 @@ class _NavItem extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
+            Transform.translate(
+              offset: const Offset(0, 1),
+              child: Icon(icon, size: 13, color: color),
+            ),
             const SizedBox(width: 6),
             Text(
               label,
+              // Explicit 16/12 line-height matches the Figma spec's own
+              // measured 16px exactly - GoogleFonts.inter's unset default
+              // leading is taller than that, which was clipping descenders
+              // against the 44px button height.
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 16 / 12,
               ),
             ),
           ],
@@ -744,7 +846,75 @@ class _NavSubItem {
   final VoidCallback onTap;
 }
 
-class _NavDropdown extends StatelessWidget {
+class _ProfileMenuButton extends StatefulWidget {
+  const _ProfileMenuButton({
+    required this.profile,
+    required this.onSelected,
+    required this.itemBuilder,
+  });
+  final dynamic profile;
+  final ValueChanged<String> onSelected;
+  final List<PopupMenuEntry<String>> Function(BuildContext) itemBuilder;
+
+  @override
+  State<_ProfileMenuButton> createState() => _ProfileMenuButtonState();
+}
+
+class _ProfileMenuButtonState extends State<_ProfileMenuButton> {
+  bool _isOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      offset: const Offset(0, 38),
+      constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      onOpened: () => setState(() => _isOpen = true),
+      onCanceled: () => setState(() => _isOpen = false),
+      onSelected: (value) {
+        setState(() => _isOpen = false);
+        widget.onSelected(value);
+      },
+      itemBuilder: widget.itemBuilder,
+      // Design ref: no background pill - just avatar (w-5 h-5) + name
+      // (text-xs, #FFFFFF, Inter) + chevron (w-[11px] h-[11px]) directly
+      // on the purple bar, 6px gap between them (gap-1.5).
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          LmsAvatar(
+            profile: widget.profile,
+            radius: 10,
+            fallbackColor: const Color(0xFF693D94),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _lastFirst(widget.profile),
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              height: 16 / 12,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Transform.translate(
+            offset: const Offset(0, 1.0),
+            child: Icon(
+              _isOpen
+                  ? Icons.keyboard_arrow_up_rounded
+                  : Icons.keyboard_arrow_down_rounded,
+              color: Colors.white,
+              size: 11,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavDropdown extends StatefulWidget {
   const _NavDropdown({
     required this.icon,
     required this.label,
@@ -757,12 +927,26 @@ class _NavDropdown extends StatelessWidget {
   final List<_NavSubItem> items;
 
   @override
+  State<_NavDropdown> createState() => _NavDropdownState();
+}
+
+class _NavDropdownState extends State<_NavDropdown> {
+  bool _isOpen = false;
+
+  @override
   Widget build(BuildContext context) {
-    final color = selected ? _appPurple : const Color(0xFF6A7282);
+    final icon = widget.icon;
+    final label = widget.label;
+    final selected = widget.selected;
+    final items = widget.items;
+    final color = selected ? _navActive : _navDefault;
     return PopupMenuButton<int>(
       offset: const Offset(0, 40),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onOpened: () => setState(() => _isOpen = true),
+      onCanceled: () => setState(() => _isOpen = false),
       onSelected: (index) {
+        setState(() => _isOpen = false);
         final item = items[index];
         if (!item.disabled) item.onTap();
       },
@@ -774,21 +958,29 @@ class _NavDropdown extends StatelessWidget {
             value: i,
             enabled: !items[i].disabled,
             padding: EdgeInsets.zero,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
-              child: Text(
-                items[i].label,
-                style: GoogleFonts.inter(
-                  color: items[i].disabled
-                      ? const Color(0xFF9AA8C0)
-                      : (items[i].selected ? _appPurple : const Color(0xFF64748B)),
-                  fontWeight:
-                      items[i].selected ? FontWeight.w700 : FontWeight.w400,
-                  fontSize: 14,
-                ),
-              ),
+            child: HoverBuilder(
+              builder: (context, hovering) {
+                final highlighted =
+                    !items[i].disabled && (hovering || items[i].selected);
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: highlighted ? FigmaTokens.badgeBackground : null,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    items[i].label,
+                    style: GoogleFonts.inter(
+                      color: items[i].disabled
+                          ? FigmaTokens.noteBodyText
+                          : (highlighted ? _navActive : _navDefault),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
       ],
@@ -796,19 +988,42 @@ class _NavDropdown extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: color),
+            Transform.translate(
+              offset: const Offset(0, 1),
+              child: Icon(icon, size: 13, color: color),
+            ),
             const SizedBox(width: 6),
             Text(
               label,
               style: GoogleFonts.inter(
                 color: color,
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 16 / 12,
               ),
             ),
             const SizedBox(width: 2),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: color),
+            // Empirically-tuned offset to match the label's visual (not
+            // geometric) center - see commit history if this needs
+            // further adjustment.
+            Transform.translate(
+              offset: const Offset(0, 1.0),
+              child: SizedBox(
+                height: 16,
+                child: Center(
+                  child: Icon(
+                    _isOpen
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    // Design ref: svg w-[11px] h-[11px] opacity-60
+                    size: 11,
+                    color: color.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -917,20 +1132,24 @@ class LmsNotifBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        constraints: const BoxConstraints(minWidth: 13, minHeight: 13),
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+        // Fixed square (not min-constraints + padding) so the circle stays
+        // perfectly round and the count stays exactly centered regardless
+        // of digit count.
+        width: 16,
+        height: 16,
         alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.all(Radius.circular(5)),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 1),
         ),
         child: Text(
           count > 99 ? '99+' : '$count',
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 7,
+            fontSize: 8,
             fontWeight: FontWeight.w800,
-            height: 1.0,
+            height: 1,
           ),
           textAlign: TextAlign.center,
         ),
@@ -1001,7 +1220,7 @@ class _NotificationsDialog extends ConsumerWidget {
                           .read(NotificationsViewModel.provider.notifier)
                           .markAllAsRead(),
                       style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF693D94),
+                        foregroundColor: _appPurple,
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -1036,7 +1255,7 @@ class _NotificationsDialog extends ConsumerWidget {
                     Text(
                       "You're all caught up",
                       style: TextStyle(
-                        color: Color(0xFF9AA8C0),
+                        color: FigmaTokens.noteBodyText,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
@@ -1070,8 +1289,9 @@ class _NotificationsDialog extends ConsumerWidget {
                           }
                           final uri = Uri.tryParse(url);
                           if (uri != null) {
-                            launchUrl(uri,
-                                mode: LaunchMode.externalApplication);
+                            InAppWebViewPage.showWithAuth(context, ref,
+                                url: url,
+                                title: item.title.isNotEmpty ? item.title : 'Notification');
                           }
                         }
                       },
@@ -1102,7 +1322,7 @@ class _NotificationsDialog extends ConsumerWidget {
                   child: Text(
                     'View All Notifications',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF693D94),
+                      color: _appPurple,
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
                     ),
@@ -1153,7 +1373,7 @@ class _NotifRow extends StatelessWidget {
               ),
               child: const Icon(
                 Icons.notifications_rounded,
-                color: Color(0xFF693D94),
+                color: _appPurple,
                 size: 18,
               ),
             ),
@@ -1201,7 +1421,7 @@ class _NotifRow extends StatelessWidget {
                   width: 7,
                   height: 7,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF693D94),
+                    color: _appPurple,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -1225,27 +1445,47 @@ class LmsAvatar extends StatelessWidget {
   final dynamic profile;
   final double radius;
 
-  /// Background color shown when there's no photo (an initial/icon
-  /// instead) — defaults to the app purple; the desktop header's TopBar
-  /// pill uses the Figma spec's own #6A7282 instead.
+  /// Initial letter color shown when there's no photo (background is
+  /// always white in that case) — defaults to the app purple.
   final Color fallbackColor;
 
   @override
   Widget build(BuildContext context) {
     final url = profile?.avatarUrl?.toString() ?? '';
+    if (url.isNotEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: radius - 2,
+          backgroundImage: NetworkImage(url),
+        ),
+      );
+    }
+    // No photo: flat white circle with the initial in fallbackColor -
+    // matches reference (bg #FFFFFF, text #693D94), not a filled/ringed
+    // circle with white text.
     return CircleAvatar(
       radius: radius,
       backgroundColor: Colors.white,
-      child: CircleAvatar(
-        radius: radius - 2,
-        backgroundColor: fallbackColor,
-        backgroundImage: url.isNotEmpty ? NetworkImage(url) : null,
-        child: url.isEmpty
-            ? const Icon(Icons.person, color: Colors.white)
-            : null,
+      child: Text(
+        _initial(profile),
+        style: GoogleFonts.inter(
+          color: fallbackColor,
+          fontWeight: FontWeight.w600,
+          fontSize: radius * 1.1,
+        ),
       ),
     );
   }
+}
+
+/// First letter of the user's first name (falling back to their username),
+/// shown in the avatar circle when there's no profile photo - matches the
+/// Figma spec's single-initial fallback rather than a generic person icon.
+String _initial(dynamic profile) {
+  final firstname = profile?.firstname?.toString() ?? '';
+  return firstname.isNotEmpty ? firstname[0].toUpperCase() : '?';
 }
 
 // ── Profile popup widgets ─────────────────────────────────────────────────────
@@ -1262,9 +1502,7 @@ class _ProfileHeader extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF7A42C4), Color(0xFFB0006D)],
-        ),
+        gradient: FigmaTokens.heroGradient,
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       child: Row(
@@ -1358,7 +1596,7 @@ class _DatePillState extends State<_DatePill> {
       _formatDatePill(_now),
       style: GoogleFonts.inter(
         color: Colors.white,
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: FontWeight.w400,
         height: 16 / 12,
       ),

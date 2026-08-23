@@ -40,12 +40,22 @@ class RepoNetworkConfig {
   /// already-successful repositories/viewmodels) every time the toggle
   /// flips — only the next request checks it.
   final bool Function() isManualOffline;
+
+  /// Called when a request comes back 401 - should attempt to obtain a
+  /// fresh access token (e.g. via the auto-login API) and return it, or
+  /// return null/throw if that isn't possible (e.g. the auto-login token
+  /// itself has expired). Null means "give up" - the original 401 is left
+  /// to propagate as a normal UnauthorizedException, which is what drives
+  /// the app's existing "session expired, log in again" screens.
+  final Future<String?> Function()? refreshToken;
+
   RepoNetworkConfig({
     required this.url,
     this.authToken,
     required this.connectionProvider,
     this.requestCacheProvider,
     bool Function()? isManualOffline,
+    this.refreshToken,
   }) : isManualOffline = isManualOffline ?? _alwaysFalse;
 
   String get baseUrl => url.endsWith("/") ? url : "$url/";
@@ -66,13 +76,54 @@ mixin RepoNetworkHelper {
   // No timeout was ever configured here, so a request that never gets a
   // response (server hang, dropped connection, etc.) left the UI stuck on
   // its loading spinner indefinitely instead of surfacing an error.
-  Dio get dio => Dio(BaseOptions(
-        baseUrl: baseUrl,
-        headers: header,
-        connectTimeout: const Duration(seconds: 20),
-        receiveTimeout: const Duration(seconds: 20),
-        sendTimeout: const Duration(seconds: 30),
+  Dio get dio {
+    final client = Dio(BaseOptions(
+      baseUrl: baseUrl,
+      headers: header,
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 20),
+      sendTimeout: const Duration(seconds: 30),
+    ));
+
+    final refreshToken = config.refreshToken;
+    if (refreshToken != null) {
+      client.interceptors.add(InterceptorsWrapper(
+        onError: (error, handler) async {
+          final isUnauthorized = error.response?.statusCode == 401;
+          // Only ever retried once per request - if the retried call also
+          // comes back 401 (the refreshed token turned out invalid too, or
+          // the refresh silently returned a stale one), don't loop forever.
+          final alreadyRetried =
+              error.requestOptions.extra['_retriedAfterTokenRefresh'] == true;
+          if (!isUnauthorized || alreadyRetried) {
+            return handler.next(error);
+          }
+
+          String? newToken;
+          try {
+            newToken = await refreshToken();
+          } catch (_) {
+            newToken = null;
+          }
+          if (newToken == null || newToken.isEmpty) {
+            return handler.next(error);
+          }
+
+          try {
+            final retryOptions = error.requestOptions;
+            retryOptions.extra['_retriedAfterTokenRefresh'] = true;
+            retryOptions.headers['Authorization'] = 'Bearer $newToken';
+            final response = await client.fetch(retryOptions);
+            return handler.resolve(response);
+          } catch (_) {
+            return handler.next(error);
+          }
+        },
       ));
+    }
+
+    return client;
+  }
   bool get isOffline =>
       config.isManualOffline() || config.connectionProvider.isConnected == false;
   @protected

@@ -12,7 +12,23 @@ bool isUnauthorizedError(String? error) {
   return v.startsWith('unauthorized') ||
       v.contains('invalid credentials') ||
       v.contains('status code of 401') ||
-      v.contains(' 401');
+      v.contains(' 401') ||
+      v.contains('session expired') ||
+      v.contains('session has expired');
+}
+
+/// Turns a raw error string into something a user should actually read -
+/// the API's own 401 body ("Unauthorized: Your request was made with
+/// invalid credentials.") is meaningless to a learner staring at an error
+/// screen; this swaps it for a plain explanation of what happened and what
+/// to do next. Every other kind of error still shows as-is (falling back to
+/// [fallback] if there's no message at all), since those messages are
+/// already written to be user-facing.
+String friendlyErrorMessage(String? error, String fallback) {
+  if (isUnauthorizedError(error)) {
+    return 'Your session has expired. Please log in again.';
+  }
+  return error ?? fallback;
 }
 
 /// Logs the user out and sends them back to the login screen, with a

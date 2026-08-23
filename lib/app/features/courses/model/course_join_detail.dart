@@ -47,29 +47,47 @@ class CourseJoinDetail {
   /// POST lms-screen/register-course rejects whole-course enrollment
   /// ("some classes require a session selection") unless this is supplied
   /// for every such class. Auto-selects each class's own earliest upcoming
-  /// session.
+  /// session, falling back to the most recent past session if no upcoming
+  /// one exists (all sessions ended) — so enrollment still works for
+  /// courses where all sessions have already started/ended.
   Map<int, int> get classLearningEventSelections {
     final selections = <int, int>{};
     for (final item in structures) {
       if (item.classId == null) continue;
       if (item.typeCode != '2' && item.typeCode != '3') continue;
-      final event = _earliestUpcomingEventOf(item.learningEvents);
+      // Prefer the earliest still-open/upcoming session; fall back to
+      // the latest past session so the server always gets a selection.
+      final event = _earliestUpcomingEventOf(item.learningEvents) ??
+          _latestPastEventOf(item.learningEvents);
       final eventId = event?.learningEventClassId;
       if (eventId != null) selections[item.classId!] = eventId;
     }
     return selections;
   }
 
-  /// Every Virtual Class / In Person class that has at least one upcoming
-  /// session - each one needs its own session picked before whole-course
-  /// enrollment can succeed, matching the website's step-through-each-class
-  /// Register wizard (Next per class, Register on the last, then a final
-  /// Confirm summarizing every selection).
+  /// Every Virtual Class / In Person class that has at least one session
+  /// (upcoming OR past) — each one needs its own session passed before
+  /// whole-course enrollment can succeed. Previously only included classes
+  /// with upcoming sessions, which caused the server to reject enrollment
+  /// with "some classes require a session selection" when all sessions had
+  /// already ended.
   List<CourseStructureItem> get classesRequiringSessionSelection => structures
       .where((item) =>
           item.classId != null &&
           (item.typeCode == '2' || item.typeCode == '3') &&
-          _earliestUpcomingEventOf(item.learningEvents) != null)
+          item.learningEvents.isNotEmpty)
+      .toList();
+
+  /// Subset of [classesRequiringSessionSelection] that have at least one
+  /// upcoming (not-yet-ended) session — only these are shown in the
+  /// session-picker dialog. Classes whose sessions have all ended skip the
+  /// dialog; their latest past session is auto-selected by
+  /// [classLearningEventSelections] instead.
+  List<CourseStructureItem> get classesWithUpcomingSessions => structures
+      .where((item) =>
+          item.classId != null &&
+          (item.typeCode == '2' || item.typeCode == '3') &&
+          item.nextSession.isNotEmpty)
       .toList();
 
   factory CourseJoinDetail.fromJson(Map<String, dynamic> json) {
@@ -203,6 +221,8 @@ class CourseStructureItem {
     this.classId,
     this.contentUrl,
     this.downloadUrl,
+    this.videoLinkUrl,
+    this.certificateHtml,
   });
 
   final String title;
@@ -221,6 +241,18 @@ class CourseStructureItem {
   final int? classId;
   final String? contentUrl;
   final String? downloadUrl;
+
+  /// Watch Video (typeCode '4') only - the external link (e.g. YouTube) from
+  /// content.watch_video_link, separate from [downloadUrl] (the actual
+  /// uploaded file from content.video_upload_url, used by the Download
+  /// button). A class can have either, both, or neither.
+  final String? videoLinkUrl;
+
+  /// Certificate (typeCode '12') only - the raw printable-certificate HTML
+  /// from content.learning_certificate.certificate. There's no file URL for
+  /// this at all; the Download button saves this string directly instead of
+  /// fetching from a URL.
+  final String? certificateHtml;
 
   factory CourseStructureItem.fromJson(Map<String, dynamic> json) {
     final classMap =
@@ -297,12 +329,28 @@ class CourseStructureItem {
         : <String, dynamic>{};
     String? contentUrl;
     String? downloadUrl;
+    String? videoLinkUrl;
+    String? certificateHtml;
     switch (typeCode) {
       case '4': // Watch Video — videoUploadUrl lives in classMap, not contentMap
         contentUrl = _url(classMap['video_upload_url'])
             ?? _url(contentMap['video_upload_url'])
             ?? _url(json['video_upload_url']);
         downloadUrl = contentUrl;
+        // The external link (e.g. YouTube) a class can carry alongside - or
+        // instead of - an actually-uploaded file.
+        videoLinkUrl = _url(contentMap['watch_video_link'])
+            ?? _url(classMap['watch_video_link'])
+            ?? _url(json['watch_video_link']);
+        break;
+      case '12': // Certificate — raw printable-certificate HTML, no file URL.
+        // Not _clean() - that strips HTML tags, which would destroy the
+        // actual certificate markup this is meant to preserve as-is.
+        final learningCert = contentMap['learning_certificate'];
+        if (learningCert is Map) {
+          final raw = learningCert['certificate']?.toString().trim();
+          certificateHtml = (raw == null || raw.isEmpty) ? null : raw;
+        }
         break;
       case '5': // Read Article
         contentUrl = _url(contentMap['article_file']);
@@ -334,12 +382,39 @@ class CourseStructureItem {
         contentUrl = _url(contentMap['article_file']);
         downloadUrl = contentUrl;
         break;
-      case '3': // Virtual Class — session link from first learning event
-        final rawEvents = (json['learning_events'] as List? ?? []);
-        for (final e in rawEvents) {
-          if (e is Map) {
-            final link = _url(e['training_session_link']?.toString());
-            if (link != null) { contentUrl = link; break; }
+      case '3': // Virtual Class — pick the nearest future session link;
+        // fall back to the nearest past session if all have ended.
+        final rawEvents3 = (json['learning_events'] as List? ?? []);
+        final now3 = DateTime.now();
+
+        // Collect events that have both a parseable start date and a link
+        final candidates = <({DateTime start, String link})>[];
+        for (final e in rawEvents3) {
+          if (e is! Map) continue;
+          final link = _url(e['training_session_link']?.toString());
+          if (link == null) continue;
+          // Try to parse start date + time
+          final startStr = e['start_date']?.toString() ?? '';
+          final timeStr  = e['start_time']?.toString() ?? '';
+          DateTime? dt;
+          if (startStr.isNotEmpty) {
+            dt = DateTime.tryParse('$startStr ${timeStr.isNotEmpty ? timeStr : '00:00:00'}');
+          }
+          candidates.add((start: dt ?? DateTime(0), link: link));
+        }
+
+        if (candidates.isNotEmpty) {
+          // Prefer nearest future; fall back to nearest past
+          final future = candidates
+              .where((c) => c.start.isAfter(now3))
+              .toList()
+            ..sort((a, b) => a.start.compareTo(b.start));
+          if (future.isNotEmpty) {
+            contentUrl = future.first.link;
+          } else {
+            final past = [...candidates]
+              ..sort((a, b) => b.start.compareTo(a.start));
+            contentUrl = past.first.link;
           }
         }
         break;
@@ -415,6 +490,8 @@ class CourseStructureItem {
       ),
       contentUrl: contentUrl,
       downloadUrl: downloadUrl,
+      videoLinkUrl: videoLinkUrl,
+      certificateHtml: certificateHtml,
     );
   }
 }
@@ -556,6 +633,22 @@ LearningEvent? _earliestUpcomingEventOf(List<LearningEvent> events) {
     if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
   }
   return earliest;
+}
+
+/// Returns the most recent past event (end time already passed) from [events].
+/// Used as a fallback when all sessions have ended, so enrollment still
+/// sends a valid learningEventClassId to the server.
+LearningEvent? _latestPastEventOf(List<LearningEvent> events) {
+  final now = DateTime.now();
+  LearningEvent? latest;
+  for (final event in events) {
+    final start = event.startDateTime;
+    if (start == null) continue;
+    final end = event.endDateTime ?? start;
+    if (now.isBefore(end)) continue; // still open — not a past event
+    if (latest == null || start.isAfter(latest.startDateTime!)) latest = event;
+  }
+  return latest;
 }
 
 String _formatNextSessionMoment(DateTime dt) {

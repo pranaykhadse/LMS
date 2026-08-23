@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/dashboard/model/my_course_item.dart';
@@ -16,11 +19,11 @@ import 'package:lms/app/features/dashboard/repository/development_plan_action_re
 import 'package:lms/app/features/dashboard/viewmodel/dev_plan_membership_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
 
-const _purple = Color(0xFF5756C9);
+const _purple = FigmaTokens.primaryPurple;
 const _pink = Color(0xFFB0006D);
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
 const _lavender = Color(0xFFEFEDFB);
 
 enum _StatusFilter { all, inProgress, completed }
@@ -66,7 +69,7 @@ class _MyCoursesPageState extends ConsumerState<MyCoursesPage> {
         DataProviderState.loading =>
           const Center(child: CircularProgressIndicator(color: _purple)),
         DataProviderState.error => _ErrorView(
-            message: state.error ?? 'Unable to load your courses.',
+            message: friendlyErrorMessage(state.error, 'Unable to load your courses.'),
             onRetry: () => ref.read(MyCoursesViewModel.provider.notifier).fetch(),
           ),
         DataProviderState.data => ListView(
@@ -419,52 +422,37 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
               ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            color: FigmaTokens.primaryPurple,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Was else-if (course.nextSession != null) showing a NEXT
-                // SESSION pill - the my_courses API has no per-course
-                // enrollment flag, and a session date shouldn't be shown
-                // for a course the learner hasn't necessarily enrolled in
-                // yet, so removed rather than risk showing it unenrolled.
                 if (course.displayRating) ...[
                   _StarRow(rating: course.averageRating, count: course.ratingCount),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                 ],
                 Text(
                   course.courseName,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: _ink,
-                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
                     fontSize: 15,
                     height: 1.3,
                   ),
                 ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: viewDisabled
-                        ? null
-                        : () => Modular.to.pushNamed(
-                            CoursesModule.construct(
-                              '${CoursesModule.detail}/${course.courseId}',
-                            ),
+                const SizedBox(height: 10),
+                ViewCourseButton(
+                  onPressed: viewDisabled
+                      ? null
+                      : () => Modular.to.pushNamed(
+                          CoursesModule.construct(
+                            '${CoursesModule.detail}/${course.courseId}',
                           ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _purple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      minimumSize: const Size.fromHeight(44),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-                    ),
-                    child: const Text('View Course'),
-                  ),
+                        ),
                 ),
               ],
             ),
@@ -622,11 +610,7 @@ class _ImgFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF0ECFF),
-      alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, color: _purple, size: 60),
-    );
+    return Image.asset('assets/images/login-bg.png', fit: BoxFit.cover);
   }
 }
 
@@ -684,10 +668,7 @@ class _ErrorView extends StatelessWidget {
             Text(message, textAlign: TextAlign.center, style: const TextStyle(color: _muted)),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(
-                onRetry: onRetry!,
-                style: ElevatedButton.styleFrom(backgroundColor: _purple),
-              ),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/contact_links.dart';
@@ -8,10 +10,15 @@ import 'package:lms/app/core/views/elements/safe_pop.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 
-const _purple = Color(0xFF5756C9);
-const _muted = Color(0xFF7C879D);
-const _navy = Color(0xFF37424E);
-const _chevron = Color(0xFF98A2B3);
+// ── Design tokens ──────────────────────────────────────────────────────────
+const _purple = FigmaTokens.primaryPurple;
+const _muted = FigmaTokens.noteBodyText;
+const _itemText = Color(0xFF23292F);
+const _sectionLabel = Color(0xFF6B7280);
+// Lavender tint used for an expanded group's header card and children panel
+const _lavender = Color(0xFFEDE8F7);
+// Left accent bar for the expanded-children panel
+const _accentBar = _purple;
 
 bool _watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -19,6 +26,8 @@ bool _watchIsOnline(WidgetRef ref) {
   ref.watch(SyncViewModel.provider);
   return !isManualOffline && connectionVM.isConnected;
 }
+
+// ── Public widget ──────────────────────────────────────────────────────────
 
 /// The phone slide-out navigation drawer. Desktop/tablet use a horizontal
 /// nav bar in LmsAppBar instead (see that file's `_DesktopNavBar`).
@@ -29,19 +38,18 @@ class AppDrawer extends ConsumerWidget {
     this.selectedSubLabel,
   });
 
-  /// The top-level nav item label that should appear highlighted (e.g.
-  /// 'Dashboard', 'Course Catalog', or a group label like 'My Courses' —
-  /// grouped items also auto-expand and highlight their header when this
-  /// or [selectedSubLabel] matches one of their children).
+  /// The top-level nav item label that should appear highlighted
+  /// (e.g. 'Dashboard', 'Course Catalog', or a group label like
+  /// 'My Courses' — grouped items auto-expand when this or
+  /// [selectedSubLabel] matches one of their children).
   final String? selectedLabel;
 
-  /// The specific child label within a group that should also appear
-  /// highlighted (e.g. 'My Enrolled Courses'). Its parent group header
-  /// highlights and auto-expands automatically — no need to also pass
-  /// [selectedLabel] for the group.
+  /// The specific child label within a group that should appear highlighted
+  /// (e.g. 'My Enrolled Courses'). Its parent group auto-expands and
+  /// highlights automatically.
   final String? selectedSubLabel;
 
-  void _closeIfNeeded(BuildContext context) => Navigator.pop(context);
+  void _close(BuildContext context) => Navigator.pop(context);
 
   void _goTo(BuildContext context, String route) {
     resetToModularRoot(context);
@@ -68,61 +76,43 @@ class AppDrawer extends ConsumerWidget {
     final pointsBadgesActive =
         sel == 'Points & Badges' || pointsBadgesChildren.contains(subSel);
 
-    final content = SafeArea(
-      child: Column(
+    return Drawer(
+      width: (width * .8).clamp(300, 315).toDouble(),
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Header ─────────────────────────────────────────────────
+            _DrawerHeader(onClose: () => _close(context)),
+
+            // ── Section label ──────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 18, 16, 16),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'MAIN NAVIGATION',
-                      style: TextStyle(
-                        color: _purple,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.1,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => _closeIfNeeded(context),
-                    icon: const Icon(Icons.close, size: 20, color: _purple),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    splashRadius: 18,
-                  ),
-                ],
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: Text(
+                'MAIN NAVIGATION',
+                style: TextStyle(
+                  color: _sectionLabel,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.0,
+                ),
               ),
             ),
-            const Divider(height: 1, thickness: 1, color: Color(0xFFEDEFF3)),
-            const SizedBox(height: 6),
+
+            // ── Nav items ──────────────────────────────────────────────
             Expanded(
               child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 child: Column(
                   children: [
-                    _DrawerItem(
-                      icon: Icons.dashboard_outlined,
-                      label: 'Dashboard',
-                      selected: sel == 'Dashboard',
-                      onTap: () {
-                        _closeIfNeeded(context);
-                        resetToModularRoot(context);
-                        if (sel != 'Dashboard') {
-                          Modular.to.navigate(
-                            CoursesModule.construct(CoursesModule.dashboard),
-                          );
-                        }
-                      },
-                    ),
-                    _DrawerItem(
-                      icon: Icons.menu_book_outlined,
+                    // Course Catalog
+                    _NavCard(
+                      icon: LucideIcons.library,
                       label: 'Course Catalog',
                       selected: sel == 'Course Catalog',
                       onTap: () {
-                        _closeIfNeeded(context);
+                        _close(context);
                         resetToModularRoot(context);
                         if (sel != 'Course Catalog') {
                           Modular.to.navigate(
@@ -131,17 +121,20 @@ class AppDrawer extends ConsumerWidget {
                         }
                       },
                     ),
-                    _DrawerItem(
-                      icon: Icons.library_books_outlined,
+                    const SizedBox(height: 10),
+
+                    // My Courses (expandable)
+                    _ExpandableNavCard(
+                      icon: LucideIcons.bookOpen,
                       label: 'My Courses',
                       selected: myCoursesActive,
                       children: [
-                        _SubItem(
+                        _SubNavItem(
+                          icon: LucideIcons.award,
                           label: 'My Enrolled Courses',
-                          icon: Icons.school_outlined,
                           selected: subSel == 'My Enrolled Courses',
                           onTap: () {
-                            _closeIfNeeded(context);
+                            _close(context);
                             _goTo(
                               context,
                               CoursesModule.construct(
@@ -150,12 +143,12 @@ class AppDrawer extends ConsumerWidget {
                             );
                           },
                         ),
-                        _SubItem(
+                        _SubNavItem(
+                          icon: LucideIcons.checkCircle,
                           label: 'My Completed Courses',
-                          icon: Icons.task_alt,
                           selected: subSel == 'My Completed Courses',
                           onTap: () {
-                            _closeIfNeeded(context);
+                            _close(context);
                             _goTo(
                               context,
                               CoursesModule.construct(
@@ -164,12 +157,12 @@ class AppDrawer extends ConsumerWidget {
                             );
                           },
                         ),
-                        _SubItem(
+                        _SubNavItem(
+                          icon: LucideIcons.globe,
                           label: 'My Development Plan',
-                          icon: Icons.timeline_outlined,
                           selected: subSel == 'My Development Plan',
                           onTap: () {
-                            _closeIfNeeded(context);
+                            _close(context);
                             _goTo(
                               context,
                               CoursesModule.construct(
@@ -178,12 +171,12 @@ class AppDrawer extends ConsumerWidget {
                             );
                           },
                         ),
-                        _SubItem(
+                        _SubNavItem(
+                          icon: LucideIcons.clipboardList,
                           label: 'My Required Courses',
-                          icon: Icons.assignment_outlined,
                           selected: subSel == 'My Required Courses',
                           onTap: () {
-                            _closeIfNeeded(context);
+                            _close(context);
                             _goTo(
                               context,
                               CoursesModule.construct(
@@ -194,41 +187,49 @@ class AppDrawer extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    _DrawerItem(
-                      icon: Icons.account_tree_outlined,
+                    const SizedBox(height: 10),
+
+                    // Learning Paths
+                    _NavCard(
+                      icon: LucideIcons.map,
                       label: 'Learning Paths',
                       selected: sel == 'Learning Paths',
                       onTap: () {
-                        _closeIfNeeded(context);
+                        _close(context);
                         _goTo(
                           context,
                           CoursesModule.construct(CoursesModule.learningPaths),
                         );
                       },
                     ),
-                    _DrawerItem(
-                      icon: Icons.workspace_premium_outlined,
+                    const SizedBox(height: 10),
+
+                    // Points & Badges (expandable)
+                    _ExpandableNavCard(
+                      icon: LucideIcons.award,
                       label: 'Points & Badges',
                       selected: pointsBadgesActive,
                       children: [
-                        _SubItem(
+                        _SubNavItem(
+                          icon: LucideIcons.gift,
                           label: 'Redeem your Points',
-                          icon: Icons.redeem_outlined,
                           selected: subSel == 'Redeem your Points',
                           onTap: () {
-                            _closeIfNeeded(context);
+                            _close(context);
                             _goTo(
                               context,
-                              CoursesModule.construct(CoursesModule.redeemPoints),
+                              CoursesModule.construct(
+                                CoursesModule.redeemPoints,
+                              ),
                             );
                           },
                         ),
-                        _SubItem(
+                        _SubNavItem(
+                          icon: LucideIcons.medal,
                           label: 'Badges',
-                          icon: Icons.military_tech_outlined,
                           selected: subSel == 'Badges',
                           onTap: () {
-                            _closeIfNeeded(context);
+                            _close(context);
                             _goTo(
                               context,
                               CoursesModule.construct(CoursesModule.badges),
@@ -237,27 +238,42 @@ class AppDrawer extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    _DrawerItem(
-                      icon: Icons.support_agent_outlined,
+                    const SizedBox(height: 10),
+
+                    // Contact a Coach (expandable)
+                    _ExpandableNavCard(
+                      icon: LucideIcons.messageCircle,
                       label: 'Contact a Coach',
+                      selected: false,
                       children: [
-                        _SubItem(
+                        _SubNavItem(
+                          icon: LucideIcons.user,
                           label: 'Contact a Development Pro',
-                          icon: Icons.person_outline_rounded,
                           disabled: !isOnline,
-                          onTap: () {
-                            _closeIfNeeded(context);
-                            launchContactCoachUrl(ref);
-                          },
+                          // Deliberately NOT calling _close(context) first
+                          // here - pushing the WebView route already
+                          // dismisses the drawer on its own, and closing it
+                          // explicitly beforehand unmounts `context` before
+                          // launchVirtualDevUrl below gets a chance to use
+                          // it (see that one's comment - this one just
+                          // happens to run fast enough today not to hit it,
+                          // but relies on the same unmounted context).
+                          onTap: () => launchContactCoachUrl(ref, context),
                         ),
-                        _SubItem(
+                        _SubNavItem(
+                          icon: LucideIcons.bot,
                           label: 'Virtual Development Pro',
-                          icon: Icons.smart_toy_outlined,
                           disabled: !isOnline,
-                          onTap: () {
-                            _closeIfNeeded(context);
-                            launchVirtualDevUrl();
-                          },
+                          // Bug: this awaits a network call
+                          // (redirect-login-link) before ever touching
+                          // `context` - closing the drawer first (Navigator
+                          // .pop) meant `context` was already unmounted by
+                          // the time that response came back, so
+                          // showWithAuth's `if (!context.mounted) return;`
+                          // silently did nothing. Let the route push itself
+                          // dismiss the drawer instead of doing it manually
+                          // beforehand.
+                          onTap: () => launchVirtualDevUrl(context, ref),
                         ),
                       ],
                     ),
@@ -267,122 +283,305 @@ class AppDrawer extends ConsumerWidget {
             ),
           ],
         ),
-    );
-
-    return Drawer(
-      width: (width * .8).clamp(300, 315).toDouble(),
-      backgroundColor: Colors.white,
-      child: content,
+      ),
     );
   }
 }
 
-class _SubItem {
-  const _SubItem({
-    required this.label,
-    this.icon,
-    this.onTap,
-    this.disabled = false,
-    this.selected = false,
-  });
-  final String label;
-  final IconData? icon;
-  final VoidCallback? onTap;
-  final bool disabled;
-  final bool selected;
-}
+// ── Header ─────────────────────────────────────────────────────────────────
 
-class _DrawerItem extends StatelessWidget {
-  const _DrawerItem({
-    required this.icon,
-    required this.label,
-    this.selected = false,
-    this.trailing = false,
-    this.onTap,
-    this.children = const [],
-  });
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final bool trailing;
-  final VoidCallback? onTap;
-  final List<_SubItem> children;
+class _DrawerHeader extends StatelessWidget {
+  const _DrawerHeader({required this.onClose});
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
-    if (children.isNotEmpty) {
-      return Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          key: ValueKey('drawer-group-$label-$selected'),
-          initiallyExpanded: selected,
-          tilePadding: const EdgeInsets.fromLTRB(24, 0, 20, 0),
-          childrenPadding: EdgeInsets.zero,
-          leading: Icon(icon, size: 21, color: selected ? _purple : _navy),
-          title: Text(
-            label,
-            style: TextStyle(
-              color: selected ? _purple : const Color(0xFF23292F),
-              fontSize: 15,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 12, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              'Leadership Edge Live',
+              style: TextStyle(
+                color: _purple,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
             ),
           ),
-          iconColor: _chevron,
-          collapsedIconColor: _chevron,
-          children: [
-            Container(
-              margin: const EdgeInsets.fromLTRB(44, 2, 16, 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x26000000),
-                    blurRadius: 18,
-                    offset: Offset(0, 8),
+          InkWell(
+            onTap: onClose,
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Icon(Icons.close, size: 20, color: _purple),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Plain (non-expandable) nav card ────────────────────────────────────────
+
+class _NavCard extends StatelessWidget {
+  const _NavCard({
+    required this.icon,
+    required this.label,
+    this.selected = false,
+    this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _CardShell(
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: selected ? _purple : _itemText,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: selected ? _purple : _itemText,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Expandable nav card ────────────────────────────────────────────────────
+
+class _ExpandableNavCard extends StatefulWidget {
+  const _ExpandableNavCard({
+    required this.icon,
+    required this.label,
+    required this.children,
+    this.selected = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final List<_SubNavItem> children;
+
+  @override
+  State<_ExpandableNavCard> createState() => _ExpandableNavCardState();
+}
+
+class _ExpandableNavCardState extends State<_ExpandableNavCard>
+    with SingleTickerProviderStateMixin {
+  late bool _expanded;
+  late AnimationController _controller;
+  late Animation<double> _expandAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = widget.selected;
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+      value: widget.selected ? 1.0 : 0.0,
+    );
+    _expandAnim = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void didUpdateWidget(_ExpandableNavCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If the active route changes externally, sync expansion state.
+    if (widget.selected != oldWidget.selected) {
+      if (widget.selected) {
+        _expanded = true;
+        _controller.forward();
+      }
+      // Don't auto-collapse when navigating away — let the user control it.
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() {
+      _expanded = !_expanded;
+      if (_expanded) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = widget.selected;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // ── Header card ──────────────────────────────────────────────
+        _CardShell(
+          selected: isActive,
+          child: InkWell(
+            onTap: _toggle,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    widget.icon,
+                    size: 22,
+                    color: isActive ? _purple : _itemText,
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      widget.label,
+                      style: TextStyle(
+                        color: isActive ? _purple : _itemText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 220),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 22,
+                      color: isActive ? _purple : const Color(0xFF98A2B3),
+                    ),
                   ),
                 ],
               ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var i = 0; i < children.length; i++) ...[
-                    if (i > 0)
-                      const Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: Color(0xFFF0F1F4),
-                      ),
-                    _SubTile(sub: children[i]),
-                  ],
-                ],
+            ),
+          ),
+        ),
+
+        // ── Children panel ───────────────────────────────────────────
+        SizeTransition(
+          sizeFactor: _expandAnim,
+          axisAlignment: -1,
+          child: _ChildrenPanel(children: widget.children),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Card shell (shared border + background logic) ──────────────────────────
+
+class _CardShell extends StatelessWidget {
+  const _CardShell({required this.child, this.selected = false});
+  final Widget child;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: selected ? _lavender : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: selected
+              ? _purple.withOpacity(0.18)
+              : FigmaTokens.cardBorders,
+          width: 1,
+        ),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: child,
+    );
+  }
+}
+
+// ── Children panel with left accent bar ───────────────────────────────────
+
+class _ChildrenPanel extends StatelessWidget {
+  const _ChildrenPanel({required this.children});
+  final List<_SubNavItem> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Left purple accent bar
+            Container(
+              width: 3,
+              decoration: BoxDecoration(
+                color: _accentBar,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-          ],
-        ),
-      );
-    }
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 14, 20, 14),
-        child: Row(
-          children: [
-            Icon(icon, size: 21, color: selected ? _purple : _navy),
-            const SizedBox(width: 16),
+            // Children list with lavender background
             Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: selected ? _purple : const Color(0xFF23292F),
-                  fontSize: 15,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _lavender,
+                  borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(12),
+                    bottomRight: Radius.circular(12),
+                    bottomLeft: Radius.circular(4),
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final item in children) ...[
+                      _SubItemTile(item: item),
+                      if (item != children.last) const SizedBox(height: 4),
+                    ],
+                  ],
                 ),
               ),
             ),
-            if (trailing)
-              const Icon(Icons.arrow_forward_ios, size: 13, color: _chevron),
           ],
         ),
       ),
@@ -390,38 +589,77 @@ class _DrawerItem extends StatelessWidget {
   }
 }
 
-class _SubTile extends StatelessWidget {
-  const _SubTile({required this.sub});
-  final _SubItem sub;
+// ── Sub-item tile ─────────────────────────────────────────────────────────
+
+class _SubNavItem {
+  const _SubNavItem({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.disabled = false,
+    this.selected = false,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool disabled;
+  final bool selected;
+}
+
+class _SubItemTile extends StatelessWidget {
+  const _SubItemTile({required this.item});
+  final _SubNavItem item;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: sub.disabled ? null : sub.onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              sub.disabled ? Icons.cloud_off_rounded : sub.icon,
-              size: 18,
-              color: sub.disabled ? _muted : (sub.selected ? _purple : _navy),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                sub.label,
-                style: TextStyle(
-                  color: sub.disabled
-                      ? _muted
-                      : (sub.selected ? _purple : const Color(0xFF23292F)),
-                  fontSize: 13.5,
-                  fontWeight: sub.selected ? FontWeight.w700 : FontWeight.w500,
-                  height: 1.25,
+    final color = item.disabled
+        ? _muted
+        : (item.selected ? _purple : _itemText);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: item.disabled ? null : item.onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            color: item.selected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: item.selected
+                ? [
+                    const BoxShadow(
+                      color: Color(0x14000000),
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ]
+                : null,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                item.disabled ? LucideIcons.cloudOff : item.icon,
+                size: 18,
+                color: color,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 13.5,
+                    fontWeight: item.selected
+                        ? FontWeight.w700
+                        : FontWeight.w500,
+                    height: 1.3,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

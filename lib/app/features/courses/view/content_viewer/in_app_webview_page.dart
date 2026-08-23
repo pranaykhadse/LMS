@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
+import 'package:lms/app/features/courses/repository/redirect_login_repository.dart';
 
-const _webviewPurple = Color(0xFF5756C9);
+const _webviewPurple = FigmaTokens.primaryPurple;
 
 /// Opens a URL inside the app itself (a real embedded WebView, not the
 /// system browser or an SFSafariViewController/Custom Tab hand-off) - used
@@ -17,6 +21,9 @@ class InAppWebViewPage extends StatefulWidget {
   final String url;
   final String? title;
 
+  /// Opens [url] in the in-app WebView directly (no auth redirect).
+  /// Use [showWithAuth] instead when the destination requires the user
+  /// to be logged in (i.e. anything on trainingpipeline.com).
   static Future<void> show(
     BuildContext context, {
     required String url,
@@ -27,6 +34,25 @@ class InAppWebViewPage extends StatefulWidget {
         builder: (_) => InAppWebViewPage(url: url, title: title),
       ),
     );
+  }
+
+  /// Calls GET user-profile/redirect-login-link?redirectUrl=<url> first to
+  /// get a pre-authenticated URL (same flow as Attend Class), then opens the
+  /// result in the in-app WebView. Falls back to [url] directly if the API
+  /// call fails, so the WebView still opens rather than silently doing nothing.
+  ///
+  /// Requires a [WidgetRef] so it can read [RedirectLoginRepository].
+  static Future<void> showWithAuth(
+    BuildContext context,
+    WidgetRef ref, {
+    required String url,
+    String? title,
+  }) async {
+    final loginLink = await ref
+        .read(RedirectLoginRepository.provider)
+        .getLoginLink(url);
+    if (!context.mounted) return;
+    return show(context, url: loginLink ?? url, title: title);
   }
 
   @override
@@ -57,7 +83,7 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
           appBar: AppBar(
             backgroundColor: _webviewPurple,
             foregroundColor: Colors.white,
-            title: Text(widget.title ?? 'Virtual Class'),
+            title: Text(widget.title ?? 'Loading…'),
             leading: IconButton(
               icon: const Icon(Icons.close_rounded),
               onPressed: () => safePop(context),
@@ -77,6 +103,15 @@ class _InAppWebViewPageState extends State<InAppWebViewPage> {
                   initialSettings: InAppWebViewSettings(
                     javaScriptEnabled: true,
                     mediaPlaybackRequiresUserGesture: false,
+                    // Allow cross-domain redirects so the oauth-login on
+                    // staging.trainingpipeline.com can redirect to
+                    // test.login.trainingpipeline.com carrying the session.
+                    javaScriptCanOpenWindowsAutomatically: true,
+                    allowsInlineMediaPlayback: true,
+                    allowsBackForwardNavigationGestures: true,
+                    sharedCookiesEnabled: true,
+                    thirdPartyCookiesEnabled: true,
+                    domStorageEnabled: true,
                   ),
                   onWebViewCreated: (controller) => _controller = controller,
                   onLoadStart: (controller, url) {
@@ -137,10 +172,16 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: onRetry,
-              style: ElevatedButton.styleFrom(backgroundColor: _webviewPurple, foregroundColor: Colors.white),
-              child: const Text('Try Again'),
+            HoverBuilder(
+              builder: (context, hovering) => ElevatedButton(
+                onPressed: onRetry,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      hovering ? FigmaTokens.purpleHover : _webviewPurple,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Try Again'),
+              ),
             ),
           ],
         ),

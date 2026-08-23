@@ -7,6 +7,34 @@ extension DateFormatExtension on DateTime {
   }
 }
 
+extension ApiUtcDateParsing on String {
+  /// Parses this string as a moment coming from the API and converts it to
+  /// the device's local timezone for display.
+  ///
+  /// The backend sends all date/time values as UTC (GMT+0) without an
+  /// explicit 'Z'/offset marker, so `DateTime.tryParse` would otherwise treat
+  /// them as already-local values and display the wrong time. This always
+  /// re-anchors the parsed value to UTC before converting, so it's correct
+  /// whether or not the source string happens to carry a timezone marker.
+  DateTime? parseApiUtc() {
+    final value = trim();
+    if (value.isEmpty) return null;
+    final dt = DateTime.tryParse(value);
+    if (dt == null) return null;
+    if (dt.isUtc) return dt.toLocal();
+    return DateTime.utc(
+      dt.year,
+      dt.month,
+      dt.day,
+      dt.hour,
+      dt.minute,
+      dt.second,
+      dt.millisecond,
+      dt.microsecond,
+    ).toLocal();
+  }
+}
+
 extension HtmlStringExtension on String {
   /// Strips HTML tags and decodes common HTML entities, returning plain text.
   ///

@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
@@ -16,10 +19,11 @@ import 'package:lms/app/features/courses/view/widgets/course_view_availability.d
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/viewmodel/development_plan_view_model.dart';
 
-const _purple = Color(0xFF5756C9);
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
+const _purple = FigmaTokens.primaryPurple;
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
+const _titleColor = Color(0xFFA20067);
 
 class DevelopmentPlanPage extends ConsumerWidget {
   const DevelopmentPlanPage({super.key});
@@ -39,6 +43,13 @@ class DevelopmentPlanPage extends ConsumerWidget {
   }
 }
 
+// The original card-grid layout (below, _CourseCard/GridView) is kept in
+// this file but no longer reachable from the UI - the table layout (now
+// used on every device, phone included - see _DevelopmentPlanTable/
+// _TableDataRow's own phone/tablet+ split) is the only design shown. Kept
+// around in case the grid layout is needed again later rather than
+// deleted outright.
+
 class _Body extends StatelessWidget {
   const _Body({required this.state, required this.notifier});
   final DevelopmentPlanState state;
@@ -52,7 +63,7 @@ class _Body extends StatelessWidget {
         return const Center(child: CircularProgressIndicator(color: _purple));
       case DataProviderState.error:
         return _ErrorView(
-          message: state.error ?? 'Unable to load development plan.',
+          message: friendlyErrorMessage(state.error, 'Unable to load development plan.'),
           onRetry: () => notifier.fetch(),
         );
       case DataProviderState.data:
@@ -65,69 +76,119 @@ class _Body extends StatelessWidget {
                   await notifier.fetch(page: state.page);
                 },
                 child: ListView(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: ElevatedButton.icon(
-                          onPressed: () => _showAddPlanItemDialog(context, notifier),
-                          icon: const Icon(Icons.add_rounded, size: 18),
-                          label: Transform.translate(
-                            offset: const Offset(0, -1),
-                            child: const Text('Add Custom Plan Item'),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF693D94),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            minimumSize: const Size(0, 40),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Builder(builder: (context) {
+                              final title = const Text(
+                                'My Development Plan',
+                                style: TextStyle(
+                                  color: _titleColor,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              );
+                              final addButton = HoverBuilder(
+                                builder: (context, hovering) =>
+                                    ElevatedButton.icon(
+                                  onPressed: () => _showAddPlanItemDialog(
+                                      context, notifier),
+                                  icon: const Icon(Icons.add_rounded,
+                                      size: 18),
+                                  label: Transform.translate(
+                                    offset: const Offset(0, -1),
+                                    child: const Text(
+                                        'Add Custom Plan Item'),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: hovering
+                                        ? FigmaTokens.purpleHover
+                                        : _purple,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    minimumSize: const Size(0, 40),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(8),
+                                    ),
+                                    textStyle: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13),
+                                  ),
+                                ),
+                              );
+                              // Phone: "Add Custom Plan Item" doesn't fit
+                              // next to the title in a Row (overflowed by
+                              // 38px) - stack title above a full-width
+                              // button instead.
+                              if (!Responsive.isTablet(context)) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    title,
+                                    const SizedBox(height: 12),
+                                    SizedBox(
+                                        width: double.infinity,
+                                        child: addButton),
+                                  ],
+                                );
+                              }
+                              return Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [title, addButton],
+                              );
+                            }),
+                          ),
+                          if (state.courses.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 40, bottom: 40),
+                              child: _EmptyState(),
+                            )
+                          // Same table on every device - _DevelopmentPlanTable
+                          // switches its own row layout between a stacked
+                          // phone card and the full multi-column row for
+                          // tablet+ (see _TableDataRow), instead of phone
+                          // getting an unrelated image-grid design.
+                          else ...[
+                            _DevelopmentPlanTable(
+                              courses: state.courses,
+                              notifier: notifier,
+                              startIndex: (state.page - 1) * state.perPage + 1,
                             ),
-                            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                          ),
-                        ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                              child: PerPageBadge(perPage: state.perPage),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    if (state.courses.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 40),
-                        child: _EmptyState(),
-                      )
-                    else ...[
-                      GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate:
-                            SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: Responsive.columns(
-                            context,
-                            phone: 2,
-                            tablet: 3,
-                            desktop: 4,
-                          ),
-                          crossAxisSpacing: 14,
-                          mainAxisSpacing: 14,
-                          mainAxisExtent: Responsive.isTablet(context) ? 400 : 380,
-                        ),
-                        itemCount: state.courses.length,
-                        itemBuilder: (ctx, i) =>
-                            _CourseCard(course: state.courses[i], notifier: notifier),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: PerPageBadge(perPage: state.perPage),
-                      ),
-                    ],
+                    const SizedBox(height: 16),
                     const AppFooter(),
                   ],
                 ),
               ),
             ),
+            const SizedBox(height: 12),
             PaginationWidget(
               page: state.page,
               pages: state.totalPages,
@@ -219,34 +280,37 @@ class _AddPlanItemDialogState extends State<_AddPlanItemDialog> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                 ),
               ),
             ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _purple,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  disabledBackgroundColor: _purple.withValues(alpha: 0.6),
-                  minimumSize: const Size(0, 44),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              child: HoverBuilder(
+                builder: (context, hovering) => ElevatedButton(
+                  onPressed: _submitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        hovering ? FigmaTokens.purpleHover : _purple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    disabledBackgroundColor: _purple.withValues(alpha: 0.6),
+                    minimumSize: const Size(0, 44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: _submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Add', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
-                child: _submitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Add', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             ),
           ],
@@ -344,38 +408,240 @@ class _UpdatePlanItemDialogState extends State<_UpdatePlanItemDialog> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Color(0xFFD0CFE8)),
+                  borderSide: const BorderSide(color: FigmaTokens.cardBorders),
                 ),
               ),
             ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _submitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _purple,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  disabledBackgroundColor: _purple.withValues(alpha: 0.6),
-                  minimumSize: const Size(0, 44),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              child: HoverBuilder(
+                builder: (context, hovering) => ElevatedButton(
+                  onPressed: _submitting ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        hovering ? FigmaTokens.purpleHover : _purple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    disabledBackgroundColor: _purple.withValues(alpha: 0.6),
+                    minimumSize: const Size(0, 44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: _submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Update', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
-                child: _submitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Update', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Development plan table ─────────────────────────────────────────────────
+
+class _DevelopmentPlanTable extends StatelessWidget {
+  const _DevelopmentPlanTable({
+    required this.courses,
+    required this.notifier,
+    required this.startIndex,
+  });
+  final List<DashboardCourse> courses;
+  final DevelopmentPlanViewModel notifier;
+  final int startIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    // Phone: each row renders as its own bordered card (see _TableDataRow),
+    // so a shared column-header row and row dividers don't apply there -
+    // they only make sense for the full multi-column row tablet+ uses.
+    final isPhone = !Responsive.isTablet(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!isPhone) ...[
+          const _TableHeaderRow(),
+          const Divider(height: 1, color: FigmaTokens.cardBorders),
+        ],
+        for (var i = 0; i < courses.length; i++) ...[
+          _TableDataRow(
+            index: startIndex + i,
+            course: courses[i],
+            notifier: notifier,
+          ),
+          if (!isPhone && i != courses.length - 1)
+            const Divider(height: 1, color: FigmaTokens.cardBorders),
+        ],
+      ],
+    );
+  }
+}
+
+class _TableHeaderRow extends StatelessWidget {
+  const _TableHeaderRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          SizedBox(width: 32, child: _HeaderCell('#')),
+          Expanded(flex: 3, child: _HeaderCell('Group')),
+          Expanded(flex: 6, child: _HeaderCell('Course')),
+          Expanded(flex: 2, child: _HeaderCell('Status')),
+          SizedBox(width: 110),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  const _HeaderCell(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+    );
+  }
+}
+
+class _TableDataRow extends ConsumerWidget {
+  const _TableDataRow({
+    required this.index,
+    required this.course,
+    required this.notifier,
+  });
+  final int index;
+  final DashboardCourse course;
+  final DevelopmentPlanViewModel notifier;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final viewDisabled =
+        !course.isNonCourse && isViewCourseDisabled(ref, course.id);
+    final group = course.isNonCourse
+        ? 'Non Course Development Plan'
+        : (course.category?.isNotEmpty == true ? course.category! : 'Course');
+    final actionButton = TextButton(
+      onPressed: course.isNonCourse
+          ? () => _showUpdatePlanItemDialog(context, notifier, course)
+          : viewDisabled
+              ? null
+              : () => Modular.to.pushNamed(
+                  CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
+                ),
+      style: TextButton.styleFrom(
+        padding: EdgeInsets.zero,
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        foregroundColor: _purple,
+      ),
+      child: Text(
+        course.isNonCourse ? 'Update' : 'View Course',
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+      ),
+    );
+
+    if (!Responsive.isTablet(context)) {
+      // Same fields as the tablet+ table row (#, Group, Course, Status,
+      // action) - just stacked instead of laid out in fixed columns, which
+      // don't fit a phone's width.
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          border: Border.all(color: FigmaTokens.cardBorders),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '#$index',
+                  style: const TextStyle(color: _purple, fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    group,
+                    style: const TextStyle(color: _muted, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              course.name,
+              style: const TextStyle(color: _ink, fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Status: ${course.notEnrolled ? 'Not Enrolled' : '${course.progress}%'}',
+                  style: const TextStyle(color: _ink, fontSize: 13),
+                ),
+                actionButton,
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 32,
+            child: Text(
+              '$index',
+              style: const TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(group, style: const TextStyle(color: _ink, fontSize: 13)),
+          ),
+          Expanded(
+            flex: 6,
+            child: Text(
+              course.name,
+              style: const TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              course.notEnrolled ? 'Not Enrolled' : '${course.progress}%',
+              style: const TextStyle(color: _ink, fontSize: 13),
+            ),
+          ),
+          SizedBox(
+            width: 110,
+            child: Align(alignment: Alignment.centerRight, child: actionButton),
+          ),
+        ],
       ),
     );
   }
@@ -413,46 +679,15 @@ class _CourseCard extends ConsumerWidget {
               ratingCount: course.ratingCount,
               displayRating: course.displayRating ? 1 : 0,
             ),
-      infoSection: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _StarRow(rating: course.averageRating, count: course.ratingCount),
-          const SizedBox(height: 6),
-          _ProgressRow(progress: course.progress),
-        ],
-      ),
+      infoSection: _buildInfoSection(course),
+      progress: course.progress,
     );
   }
-}
 
-// ─── Progress bar ─────────────────────────────────────────────────────────────
-
-class _ProgressRow extends StatelessWidget {
-  const _ProgressRow({required this.progress});
-  final int progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: progress / 100,
-            minHeight: 5,
-            backgroundColor: const Color(0xFFE8E7F8),
-            valueColor: const AlwaysStoppedAnimation<Color>(_purple),
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          '$progress% complete',
-          style: const TextStyle(color: _muted, fontSize: 10),
-        ),
-      ],
-    );
+  Widget? _buildInfoSection(DashboardCourse course) {
+    final showStars = course.displayRating && course.ratingCount > 0;
+    if (!showStars) return null;
+    return _StarRow(rating: course.averageRating, count: course.ratingCount);
   }
 }
 
@@ -555,10 +790,7 @@ class _ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(
-                onRetry: onRetry!,
-                style: ElevatedButton.styleFrom(backgroundColor: _purple),
-              ),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),

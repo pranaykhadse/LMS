@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/dashboard/model/learning_path.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart' show isEffectivelyOffline;
 import 'package:lms/app/features/dashboard/view/view_competency_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_paths_view_model.dart';
 
-const _purple = Color(0xFF5756C9);
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
+const _purple = FigmaTokens.primaryPurple;
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
 const _sectionTitle = Color(0xFFB0006D);
 
 void _openViewCompetency(
@@ -76,12 +80,12 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
           _SearchBar(
             controller: _searchController,
             onSearch: _onSearch,
+            onReset: _onReset,
           ),
           Expanded(
             child: _Body(
               state: state,
               onRetry: () => notifier.fetch(),
-              onReset: _onReset,
             ),
           ),
         ],
@@ -93,9 +97,14 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
 // ─── Search bar ───────────────────────────────────────────────────────────────
 
 class _SearchBar extends ConsumerStatefulWidget {
-  const _SearchBar({required this.controller, required this.onSearch});
+  const _SearchBar({
+    required this.controller,
+    required this.onSearch,
+    required this.onReset,
+  });
   final TextEditingController controller;
   final VoidCallback onSearch;
+  final VoidCallback onReset;
 
   @override
   ConsumerState<_SearchBar> createState() => _SearchBarState();
@@ -127,8 +136,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
     // there's no real connection just invites a tap that can only fail, the
     // same reasoning as RetryButton (see lib/app/core/views/elements).
     final offline = isEffectivelyOffline(ref);
-    return Container(
-      color: Colors.white,
+    return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       child: Row(
         children: [
@@ -141,7 +149,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
               decoration: InputDecoration(
                 hintText: offline ? "You're offline" : 'Search learning paths...',
                 hintStyle: const TextStyle(color: _muted, fontSize: 14),
-                prefixIcon: const Icon(Icons.search_rounded, color: _muted, size: 22),
+                prefixIcon: const Icon(Icons.search_rounded, color: _purple, size: 22),
                 suffixIcon: _hasText && !offline
                     ? IconButton(
                         icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
@@ -152,7 +160,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
                       )
                     : null,
                 filled: true,
-                fillColor: _bg,
+                fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -166,12 +174,12 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
             color: offline ? _muted.withValues(alpha: 0.4) : _purple,
             borderRadius: BorderRadius.circular(10),
             child: InkWell(
-              onTap: offline ? null : widget.onSearch,
+              onTap: offline ? null : widget.onReset,
               borderRadius: BorderRadius.circular(10),
               child: const SizedBox(
                 width: 44,
                 height: 44,
-                child: Icon(Icons.search_rounded, color: Colors.white, size: 22),
+                child: Icon(Icons.undo_rounded, color: Colors.white, size: 20),
               ),
             ),
           ),
@@ -184,10 +192,9 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
 // ─── Body ─────────────────────────────────────────────────────────────────────
 
 class _Body extends StatelessWidget {
-  const _Body({required this.state, required this.onRetry, required this.onReset});
+  const _Body({required this.state, required this.onRetry});
   final LearningPathsState state;
   final VoidCallback onRetry;
-  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
@@ -197,7 +204,7 @@ class _Body extends StatelessWidget {
         return const Center(child: CircularProgressIndicator(color: _purple));
       case DataProviderState.error:
         return _ErrorView(
-          message: state.error ?? 'Unable to load learning paths.',
+          message: friendlyErrorMessage(state.error, 'Unable to load learning paths.'),
           onRetry: onRetry,
         );
       case DataProviderState.data:
@@ -206,32 +213,6 @@ class _Body extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           children: [
-            _ResetButton(onTap: onReset),
-            const SizedBox(height: 18),
-            const Text(
-              'Learning Paths',
-              style: TextStyle(color: _sectionTitle, fontSize: 21, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 4),
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(color: _muted, fontSize: 12.5),
-                children: [
-                  const TextSpan(text: 'Showing '),
-                  TextSpan(
-                    text: '1-$total',
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: _ink),
-                  ),
-                  const TextSpan(text: ' of '),
-                  TextSpan(
-                    text: '$total',
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: _ink),
-                  ),
-                  const TextSpan(text: ' items.'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -242,14 +223,44 @@ class _Body extends StatelessWidget {
               ),
               clipBehavior: Clip.antiAlias,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (var i = 0; i < state.paths.length; i++) ...[
-                    if (i > 0) const Divider(height: 1, color: Color(0xFFEFF1F5)),
-                    _PathRow(index: i + 1, path: state.paths[i]),
-                  ],
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Learning Paths',
+                          style: TextStyle(
+                              color: _sectionTitle, fontSize: 20, fontWeight: FontWeight.w800),
+                        ),
+                        RichText(
+                          text: TextSpan(
+                            style: const TextStyle(color: _muted, fontSize: 12.5),
+                            children: [
+                              const TextSpan(text: 'Showing '),
+                              TextSpan(
+                                text: '1-$total',
+                                style: const TextStyle(fontWeight: FontWeight.w800, color: _ink),
+                              ),
+                              const TextSpan(text: ' of '),
+                              TextSpan(
+                                text: '$total',
+                                style: const TextStyle(fontWeight: FontWeight.w800, color: _ink),
+                              ),
+                              const TextSpan(text: ' items.'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _PathsTable(paths: state.paths),
                 ],
               ),
             ),
+            const SizedBox(height: 16),
             const AppFooter(),
           ],
         );
@@ -257,28 +268,135 @@ class _Body extends StatelessWidget {
   }
 }
 
-// ─── Reset button ───────────────────────────────────────────────────────────
+// ─── Paths table ──────────────────────────────────────────────────────────────
 
-class _ResetButton extends StatelessWidget {
-  const _ResetButton({required this.onTap});
-  final VoidCallback onTap;
+/// Owns which rows are expanded so the header's +/- can expand or collapse
+/// every row at once, alongside each row's own individual toggle.
+class _PathsTable extends StatefulWidget {
+  const _PathsTable({required this.paths});
+  final List<LearningPath> paths;
+
+  @override
+  State<_PathsTable> createState() => _PathsTableState();
+}
+
+class _PathsTableState extends State<_PathsTable> {
+  final Set<int> _expanded = {};
+
+  bool get _allExpanded =>
+      widget.paths.isNotEmpty && _expanded.length == widget.paths.length;
+
+  void _toggleAll() {
+    setState(() {
+      if (_allExpanded) {
+        _expanded.clear();
+      } else {
+        _expanded
+          ..clear()
+          ..addAll(List.generate(widget.paths.length, (i) => i));
+      }
+    });
+  }
+
+  void _toggleRow(int index) {
+    setState(() {
+      if (_expanded.contains(index)) {
+        _expanded.remove(index);
+      } else {
+        _expanded.add(index);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Material(
-        color: _purple,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: const SizedBox(
-            width: 44,
-            height: 44,
-            child: Icon(Icons.undo_rounded, color: Colors.white, size: 20),
+    return Column(
+      children: [
+        _TableHeaderRow(allExpanded: _allExpanded, onToggleAll: _toggleAll),
+        const Divider(height: 1, color: FigmaTokens.cardBorders),
+        for (var i = 0; i < widget.paths.length; i++) ...[
+          _PathRow(
+            index: i + 1,
+            path: widget.paths[i],
+            expanded: _expanded.contains(i),
+            onToggle: () => _toggleRow(i),
           ),
+          if (i != widget.paths.length - 1)
+            const Divider(height: 1, color: FigmaTokens.cardBorders),
+        ],
+      ],
+    );
+  }
+}
+
+// ─── Table header row ───────────────────────────────────────────────────────
+
+class _TableHeaderRow extends StatelessWidget {
+  const _TableHeaderRow({required this.allExpanded, required this.onToggleAll});
+  final bool allExpanded;
+  final VoidCallback onToggleAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFFFFFF), Color(0xFFEEEEEE)],
         ),
+      ),
+      // Horizontal padding is 8, not 20 like the rows below, because this
+      // container also carries a 12px margin (for the inset gradient bar) -
+      // 8 + 12 = 20, so the +/- icon and column text still land at the same
+      // x position as the rows'.
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      child: Row(
+        children: [
+          Material(
+            color: _purple,
+            borderRadius: BorderRadius.circular(6),
+            child: InkWell(
+              onTap: onToggleAll,
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                width: 22,
+                height: 22,
+                child: Icon(
+                  allExpanded ? Icons.remove_rounded : Icons.add_rounded,
+                  color: Colors.white,
+                  size: 15,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Phone: the row below stacks name/group instead of showing them
+          // side by side, so these column labels don't apply there.
+          if (Responsive.isTablet(context)) ...[
+            const Expanded(
+              flex: 6,
+              child: Text(
+                'Learning Path',
+                style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ),
+            const Expanded(
+              flex: 3,
+              child: Text(
+                'Group',
+                style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ] else
+            const Expanded(
+              child: Text(
+                'Learning Paths',
+                style: TextStyle(color: _purple, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -286,86 +404,118 @@ class _ResetButton extends StatelessWidget {
 
 // ─── Learning path row ────────────────────────────────────────────────────────
 
-class _PathRow extends StatefulWidget {
-  const _PathRow({required this.index, required this.path});
+class _PathRow extends StatelessWidget {
+  const _PathRow({
+    required this.index,
+    required this.path,
+    required this.expanded,
+    required this.onToggle,
+  });
   final int index;
   final LearningPath path;
-
-  @override
-  State<_PathRow> createState() => _PathRowState();
-}
-
-class _PathRowState extends State<_PathRow> {
-  bool _expanded = false;
+  final bool expanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 22,
-                child: Text(
-                  '${widget.index}.',
-                  style: const TextStyle(color: _muted, fontSize: 14, fontWeight: FontWeight.w600),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.path.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _ink,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14.5,
-                        height: 1.3,
-                      ),
-                    ),
-                    if (widget.path.groupName.isNotEmpty) ...[
-                      const SizedBox(height: 3),
-                      Text(
-                        widget.path.groupName,
-                        style: const TextStyle(color: _muted, fontSize: 12),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
               Material(
                 color: _purple,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
                 child: InkWell(
-                  onTap: () => setState(() => _expanded = !_expanded),
-                  borderRadius: BorderRadius.circular(8),
+                  onTap: onToggle,
+                  borderRadius: BorderRadius.circular(6),
                   child: SizedBox(
-                    width: 30,
-                    height: 30,
+                    width: 22,
+                    height: 22,
                     child: Icon(
-                      _expanded ? Icons.remove_rounded : Icons.add_rounded,
+                      expanded ? Icons.remove_rounded : Icons.add_rounded,
                       color: Colors.white,
-                      size: 18,
+                      size: 15,
                     ),
                   ),
                 ),
               ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Responsive.isTablet(context)
+                    ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 6, child: _pathNameLine(index)),
+                          Expanded(
+                            flex: 3,
+                            child: path.groupName.isEmpty
+                                ? const SizedBox.shrink()
+                                : Text(
+                                    path.groupName,
+                                    style: const TextStyle(
+                                        color: _purple, fontSize: 13.5, fontWeight: FontWeight.w600),
+                                  ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _pathNameLine(index),
+                          if (path.groupName.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              path.groupName,
+                              style: const TextStyle(
+                                  color: _purple, fontSize: 13, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ],
+                      ),
+              ),
             ],
           ),
         ),
-        if (_expanded)
+        if (expanded)
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-            child: _CompetencyPreview(path: widget.path),
+            // Left-aligned with the path name text above (row padding 20 +
+            // the 22px expand icon + the 10px gap after it), not flush
+            // with the icon itself.
+            padding: const EdgeInsets.fromLTRB(52, 0, 20, 14),
+            child: _CompetencyPreview(path: path),
           ),
+      ],
+    );
+  }
+
+  Widget _pathNameLine(int index) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Text(
+            '$index.',
+            style: const TextStyle(color: _purple, fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            path.name,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: _purple,
+              fontWeight: FontWeight.w600,
+              fontSize: 14.5,
+              height: 1.3,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -378,34 +528,57 @@ class _CompetencyPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final competencies = path.competencies;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEAF6F6),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (competencies.isEmpty)
-            Text(
-              path.courses.isEmpty
-                  ? 'No competency details available.'
-                  : 'Courses: ${path.courses.map((c) => c.name).join(', ')}',
-              style: const TextStyle(color: _ink, fontSize: 12.5, height: 1.4),
-            )
-          else
-            for (var i = 0; i < competencies.length; i++) ...[
-              if (i > 0) const SizedBox(height: 10),
-              _CompetencyPreviewRow(
-                index: i + 1,
-                pathId: path.id,
-                competency: competencies[i],
-              ),
-            ],
+    if (competencies.isEmpty) {
+      return Text(
+        path.courses.isEmpty
+            ? 'No competency details available.'
+            : 'Courses: ${path.courses.map((c) => c.name).join(', ')}',
+        style: const TextStyle(color: _ink, fontSize: 12.5, height: 1.4),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Phone: rows below stack these fields instead of a 4-column table,
+        // so the column header row doesn't apply.
+        if (Responsive.isTablet(context)) ...[
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'Competency',
+                    style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Expanded(
+                  flex: 4,
+                  child: Text(
+                    'Courses',
+                    style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Competency Type',
+                    style: TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                SizedBox(width: 90),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: FigmaTokens.cardBorders),
         ],
-      ),
+        for (var i = 0; i < competencies.length; i++) ...[
+          _CompetencyPreviewRow(index: i + 1, pathId: path.id, competency: competencies[i]),
+          if (i != competencies.length - 1)
+            const Divider(height: 1, color: FigmaTokens.cardBorders),
+        ],
+      ],
     );
   }
 }
@@ -420,98 +593,125 @@ class _CompetencyPreviewRow extends StatelessWidget {
   final int pathId;
   final LearningPathCompetency competency;
 
+  Widget _viewButton(BuildContext context) {
+    if (competency.name.isEmpty) return const SizedBox.shrink();
+    return HoverBuilder(
+      builder: (context, hovering) {
+        final onPressed = () => _openViewCompetency(
+              context,
+              learningPathId: pathId,
+              competency: competency.name,
+            );
+        const shape = StadiumBorder();
+        const textStyle = TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5);
+        return hovering
+            ? ElevatedButton.icon(
+                onPressed: onPressed,
+                icon: const Icon(Icons.remove_red_eye_outlined, size: 14, color: Colors.white),
+                label: const Text('View'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _purple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  minimumSize: const Size(0, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: shape,
+                  textStyle: textStyle,
+                ),
+              )
+            : OutlinedButton.icon(
+                onPressed: onPressed,
+                icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
+                label: const Text('View'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: _purple,
+                  side: const BorderSide(color: _purple),
+                  minimumSize: const Size(0, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: shape,
+                  textStyle: textStyle,
+                ),
+              );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final courses = competency.courseNames;
-    return Row(
+    final competencyName = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 18,
-          height: 18,
-          margin: const EdgeInsets.only(top: 1),
-          decoration: BoxDecoration(color: _purple, borderRadius: BorderRadius.circular(4)),
-          alignment: Alignment.center,
-          child: Text(
-            '$index',
-            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
-          ),
+        Text(
+          '$index',
+          style: const TextStyle(color: _purple, fontSize: 12.5, fontWeight: FontWeight.w600),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              RichText(
-                text: TextSpan(
-                  style: const TextStyle(color: _ink, fontSize: 12.5, fontWeight: FontWeight.w700),
-                  children: [
-                    const TextSpan(text: 'Competency: '),
-                    TextSpan(
-                      text: competency.name.isEmpty ? '—' : competency.name,
-                      style: const TextStyle(color: _purple, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              ),
-              if (courses.isNotEmpty) ...[
-                const SizedBox(height: 3),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(color: _ink, fontSize: 12.5, fontWeight: FontWeight.w700),
-                    children: [
-                      const TextSpan(text: 'Courses: '),
-                      TextSpan(
-                        text: courses.join(', '),
-                        style: const TextStyle(color: _muted, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              if (competency.competencyType.isNotEmpty) ...[
-                const SizedBox(height: 3),
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(color: _ink, fontSize: 12.5, fontWeight: FontWeight.w700),
-                    children: [
-                      const TextSpan(text: 'Type: '),
-                      TextSpan(
-                        text: competency.competencyType.toUpperCase(),
-                        style: const TextStyle(color: _muted, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              if (competency.name.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _openViewCompetency(
-                      context,
-                      learningPathId: pathId,
-                      competency: competency.name,
-                    ),
-                    icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
-                    label: const Text('View'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: _purple,
-                      side: const BorderSide(color: _purple),
-                      minimumSize: const Size(0, 30),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5),
-                    ),
-                  ),
-                ),
-              ],
-            ],
+          child: Text(
+            competency.name.isEmpty ? '—' : competency.name,
+            style: const TextStyle(color: _ink, fontSize: 12.5),
           ),
         ),
       ],
+    );
+
+    if (!Responsive.isTablet(context)) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            competencyName,
+            if (courses.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                'Courses: ${courses.join(', ')}',
+                style: const TextStyle(color: _ink, fontSize: 12.5),
+              ),
+            ],
+            const SizedBox(height: 6),
+            Text(
+              competency.competencyType.toUpperCase(),
+              style: const TextStyle(color: _ink, fontSize: 12.5),
+            ),
+            if (competency.name.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _viewButton(context),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 3, child: competencyName),
+          Expanded(
+            flex: 4,
+            child: Text(
+              courses.join(', '),
+              style: const TextStyle(color: _ink, fontSize: 12.5),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(
+              competency.competencyType.toUpperCase(),
+              style: const TextStyle(color: _ink, fontSize: 12.5),
+            ),
+          ),
+          SizedBox(
+            width: 90,
+            child: Align(alignment: Alignment.centerRight, child: _viewButton(context)),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -584,10 +784,7 @@ class _ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(
-                onRetry: onRetry!,
-                style: ElevatedButton.styleFrom(backgroundColor: _purple),
-              ),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),

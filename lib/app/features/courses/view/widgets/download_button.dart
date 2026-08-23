@@ -1,7 +1,7 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/features/courses/view/widgets/link_button.dart' show appActionChip;
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
@@ -28,6 +28,7 @@ class DownloadButton extends ConsumerWidget {
     required this.builder,
     required this.courseClass,
     this.fullWidth = false,
+    this.rawContent,
   });
 
   final String? url;
@@ -37,6 +38,13 @@ class DownloadButton extends ConsumerWidget {
   final CourseClass? courseClass;
   final Widget Function(BuildContext context, FileCacheState file) builder;
   final bool fullWidth;
+
+  /// When set, [url] is used only as the cache key/identifier - "Download"
+  /// saves these bytes directly (FileCacheViewModel.saveContent) instead of
+  /// fetching [url] over the network. For content the app already has in
+  /// hand from an API response (e.g. a certificate's raw HTML) rather than
+  /// a real downloadable file URL.
+  final List<int> Function()? rawContent;
 
   Future<void> _open(BuildContext context, WidgetRef ref, FileCacheState file) async {
     if (courseClass != null) {
@@ -129,14 +137,18 @@ class DownloadButton extends ConsumerWidget {
     }
 
     // ── ④ OFFLINE + NOT DOWNLOADED ───────────────────────────────────────
-    if (!isOnline) {
+    // Doesn't apply to rawContent - that's already in memory from the API
+    // response that got us here, so saving it to disk needs no network.
+    if (!isOnline && rawContent == null) {
       return const _NotAvailableOfflinePill();
     }
 
     // ── ① ONLINE + NOT DOWNLOADED ────────────────────────────────────────
     return _DownloadTriggerButton(
       label: label,
-      onTap: () => fileCacheVM.downloadFile(url!),
+      onTap: () => rawContent != null
+          ? fileCacheVM.saveContent(url!, rawContent!())
+          : fileCacheVM.downloadFile(url!),
       fullWidth: fullWidth,
     );
   }
@@ -158,17 +170,7 @@ class _DownloadTriggerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.appColorScheme.primary;
-    if (!fullWidth && defaultTargetPlatform == TargetPlatform.macOS) {
-      return appActionChip(
-        icon: Icons.download_outlined,
-        label: "Download $label",
-        fgColor: primary,
-        bgColor: Colors.transparent,
-        borderColor: primary,
-        onPressed: onTap,
-      );
-    }
+    final primary = FigmaTokens.primaryPurple;
     if (fullWidth) {
       return SizedBox(
         width: double.infinity,
@@ -187,24 +189,15 @@ class _DownloadTriggerButton extends StatelessWidget {
         ),
       );
     }
-    return SizedBox(
-      height: 30,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: const Icon(Icons.download_outlined, size: 13),
-        label: Text("Download $label"),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          textStyle: context.textTheme.bodySmall
-              ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        ),
-      ),
+    // Same outlined chip style on every platform - previously macOS-only,
+    // with mobile/tablet falling back to a solid ElevatedButton instead.
+    return appActionChip(
+      icon: Icons.download_outlined,
+      label: "Download $label",
+      fgColor: primary,
+      bgColor: Colors.transparent,
+      borderColor: primary,
+      onPressed: onTap,
     );
   }
 }
@@ -234,7 +227,7 @@ class _DownloadingRow extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: pct == 0.0 ? null : pct,
                 strokeWidth: 3,
-                color: context.appColorScheme.primary,
+                color: FigmaTokens.primaryPurple,
               ),
             ),
             const SizedBox(width: 8),
@@ -285,7 +278,7 @@ class _DownloadedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.appColorScheme.primary;
+    final primary = FigmaTokens.primaryPurple;
     final playLabel = _isVideo ? "Play $label" : "Open $label";
     final playIcon = _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded;
 
@@ -332,35 +325,17 @@ class _DownloadedRow extends StatelessWidget {
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        if (defaultTargetPlatform == TargetPlatform.macOS)
-          appActionChip(
-            icon: playIcon,
-            label: playLabel,
-            fgColor: Colors.white,
-            bgColor: primary,
-            borderColor: primary,
-            onPressed: onOpen,
-          )
-        else
-          SizedBox(
-            height: 30,
-            child: ElevatedButton.icon(
-              onPressed: onOpen,
-              icon: Icon(playIcon, size: 13),
-              label: Text(playLabel),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                textStyle: context.textTheme.bodySmall
-                    ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-              ),
-            ),
-          ),
+        // Same filled chip style on every platform - previously macOS-only,
+        // with mobile/tablet falling back to a visually-similar
+        // ElevatedButton instead.
+        appActionChip(
+          icon: playIcon,
+          label: playLabel,
+          fgColor: Colors.white,
+          bgColor: primary,
+          borderColor: primary,
+          onPressed: onOpen,
+        ),
         Tooltip(
           message: "Remove offline copy",
           child: InkWell(

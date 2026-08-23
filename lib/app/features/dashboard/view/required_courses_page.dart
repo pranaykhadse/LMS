@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
-import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
-import 'package:lms/app/features/courses/model/course.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/viewmodel/required_courses_view_model.dart';
 
-const _purple = Color(0xFF5756C9);
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
+const _purple = FigmaTokens.primaryPurple;
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
+const _titleColor = Color(0xFFA20067);
 
 bool _isRequired(Course course) => course.isRequired == 1;
 
@@ -61,7 +63,7 @@ class _Body extends StatelessWidget {
         return const Center(child: CircularProgressIndicator(color: _purple));
       case DataProviderState.error:
         return _ErrorView(
-          message: state.error ?? 'Unable to load required courses.',
+          message: friendlyErrorMessage(state.error, 'Unable to load required courses.'),
           onRetry: () => notifier.fetch(),
         );
       case DataProviderState.data:
@@ -75,37 +77,66 @@ class _Body extends StatelessWidget {
                   await notifier.fetch(page: state.page);
                 },
                 child: ListView(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   children: [
-                    GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: Responsive.columns(
-                          context,
-                          phone: 2,
-                          tablet: 3,
-                          desktop: 4,
-                        ),
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                        mainAxisExtent: Responsive.isTablet(context) ? 400 : 380,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      itemCount: state.courses.length,
-                      itemBuilder: (ctx, i) =>
-                          _CourseCard(course: state.courses[i]),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                            child: Text(
+                              'My Required Courses',
+                              style: TextStyle(
+                                color: _titleColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: Responsive.columns(
+                                context,
+                                phone: 1,
+                                tablet: 3,
+                                desktop: 4,
+                              ),
+                              crossAxisSpacing: 14,
+                              mainAxisSpacing: 14,
+                              // Phone: single-column — card is full-width
+                              // so less vertical space is needed.
+                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 320,
+                            ),
+                            itemCount: state.courses.length,
+                            itemBuilder: (ctx, i) =>
+                                _CourseCard(course: state.courses[i]),
+                          ),
+                        ],
+                      ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: PerPageBadge(perPage: state.perPage),
-                    ),
+                    const SizedBox(height: 16),
                     const AppFooter(),
                   ],
                 ),
               ),
             ),
+            const SizedBox(height: 12),
             PaginationWidget(
               page: state.page,
               pages: state.totalPages,
@@ -149,46 +180,15 @@ class _CourseCard extends ConsumerWidget {
         ratingCount: course.ratingCount,
         displayRating: course.displayRating ? 1 : 0,
       ),
-      infoSection: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _StarRow(rating: course.averageRating, count: course.ratingCount),
-          const SizedBox(height: 6),
-          _ProgressRow(progress: course.progress),
-        ],
-      ),
+      infoSection: _buildInfoSection(course),
+      progress: course.progress,
     );
   }
-}
 
-// ─── Progress bar ─────────────────────────────────────────────────────────────
-
-class _ProgressRow extends StatelessWidget {
-  const _ProgressRow({required this.progress});
-  final int progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: progress / 100,
-            minHeight: 5,
-            backgroundColor: const Color(0xFFE8E7F8),
-            valueColor: const AlwaysStoppedAnimation<Color>(_purple),
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          '$progress% complete',
-          style: const TextStyle(color: _muted, fontSize: 10),
-        ),
-      ],
-    );
+  Widget? _buildInfoSection(DashboardCourse course) {
+    final showStars = course.displayRating && course.ratingCount > 0;
+    if (!showStars) return null;
+    return _StarRow(rating: course.averageRating, count: course.ratingCount);
   }
 }
 
@@ -290,10 +290,7 @@ class _ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(
-                onRetry: onRetry!,
-                style: ElevatedButton.styleFrom(backgroundColor: _purple),
-              ),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),

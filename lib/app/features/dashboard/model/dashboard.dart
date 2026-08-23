@@ -1,3 +1,5 @@
+import 'package:lms/app/core/utils/format_utils.dart';
+
 class DashboardResponse {
   const DashboardResponse({
     required this.ongoingCourses,
@@ -47,12 +49,46 @@ class DashboardCourse {
     required this.averageRating,
     required this.ratingCount,
     this.isNonCourse = false,
+    this.notEnrolled = false,
+    this.description,
+    this.category,
+    this.dueDate,
+    this.dueDateRaw,
+    this.nextSession,
+    this.completedDate,
   });
 
   final int id;
   final String name;
   final String? logo;
   final int progress;
+
+  /// Next scheduled session/class date, when the course has one.
+  final DateTime? nextSession;
+
+  /// Date the course was completed, when reported by the API.
+  final DateTime? completedDate;
+
+  /// Only populated when built from the learning-progress endpoint's
+  /// "continue_learning" list, which is the only place a description is
+  /// actually available - null everywhere else (fromJson below doesn't set
+  /// it, since ongoing_courses never carried one).
+  final String? description;
+
+  /// The class name (e.g. "Learning Arcade Game") shown as a small
+  /// category tag above the title - same "continue_learning"-only
+  /// availability as [description].
+  final String? category;
+
+  /// Already-formatted ("August 1, 2026") - same "continue_learning"-only
+  /// availability as [description]. Display-only; use [dueDateRaw] for any
+  /// actual date comparison (e.g. overdue checks), since this string isn't
+  /// re-parseable.
+  final String? dueDate;
+
+  /// The actual comparable due-date value backing [dueDate]'s display
+  /// string - same "continue_learning"-only availability.
+  final DateTime? dueDateRaw;
   final bool displayRating;
   final double averageRating;
   final int ratingCount;
@@ -61,8 +97,32 @@ class DashboardCourse {
   // instead updated by percentage via lms-screen/non-course-development-plan.
   final bool isNonCourse;
 
+  // True when the API reports this course as not enrolled - it sends the
+  // literal string "Not Enrolled" in the `progress` field for these
+  // (instead of a number), rather than a separate flag. [progress] can't
+  // represent that (_asInt collapses it to 0, indistinguishable from a
+  // real 0% for an enrolled-but-unstarted course), so this is the only way
+  // to tell the two apart - the Development Plan table shows "Not
+  // Enrolled" instead of "0%" for it, matching the website.
+  final bool notEnrolled;
+
   factory DashboardCourse.fromJson(Map<String, dynamic> json) {
     final hasCourseId = json['course_id'] != null;
+    final progressValue = json['progress'] ?? (hasCourseId ? null : json['status']);
+    final nextSessionValue = (json['next_session'] ??
+            json['nextSession'] ??
+            json['start_date'] ??
+            json['startDate'] ??
+            json['available_at'])
+        ?.toString();
+    final completedDateValue = (json['completion_time'] ??
+            json['completionTime'] ??
+            json['completed_at'] ??
+            json['completedAt'] ??
+            json['completed_date'] ??
+            json['completedDate'] ??
+            json['completion_date'])
+        ?.toString();
     return DashboardCourse(
       // Non-course dev plan items carry their id as `non_course_id`, not
       // `id` - the development-plan API's own "Non Course ID" field (see
@@ -81,13 +141,22 @@ class DashboardCourse {
               : null,
       // Non-course items report their completion percentage via `status`
       // instead of `progress` (which is always null for them).
-      progress: _asInt(json['progress'] ?? (hasCourseId ? null : json['status'])),
+      progress: _asInt(progressValue),
+      notEnrolled:
+          progressValue?.toString().trim().toLowerCase() == 'not enrolled',
       displayRating:
           json['display_rating'] == true ||
           json['display_rating']?.toString() == '1',
       averageRating: _asDouble(json['average_rating']),
       ratingCount: _asInt(json['rating_count']),
       isNonCourse: !hasCourseId,
+      nextSession: nextSessionValue == null || nextSessionValue.isEmpty
+          ? null
+          : nextSessionValue.parseApiUtc(),
+      completedDate:
+          completedDateValue == null || completedDateValue.isEmpty
+              ? null
+              : completedDateValue.parseApiUtc(),
     );
   }
 }

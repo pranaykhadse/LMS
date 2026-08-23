@@ -5,7 +5,10 @@ import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/repository/enrolled_courses_repository.dart';
 
-const _perPage = 10;
+// Matches the 4-column desktop card grid (enrolled_courses_page.dart) so a
+// page always fills whole rows instead of leaving 1-2 empty slots on the
+// last row (10 / 4 columns left a dangling half row).
+const _perPage = 8;
 
 class EnrolledState {
   const EnrolledState({

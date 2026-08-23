@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
@@ -9,6 +10,7 @@ import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
@@ -17,10 +19,11 @@ import 'package:lms/app/features/dashboard/model/dashboard.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart';
 import 'package:lms/app/features/dashboard/viewmodel/completed_courses_view_model.dart';
 
-const _purple = Color(0xFF5756C9);
-const _ink = Color(0xFF172033);
-const _muted = Color(0xFF7C879D);
-const _bg = Color(0xFFF5F7FC);
+const _purple = FigmaTokens.primaryPurple;
+const _ink = FigmaTokens.cardTitles;
+const _muted = FigmaTokens.noteBodyText;
+const _bg = FigmaTokens.pageBackground;
+const _titleColor = Color(0xFFA20067);
 
 bool _isComplete(Course course) => course.percentage >= 1.0;
 
@@ -61,7 +64,7 @@ class _Body extends StatelessWidget {
         return const Center(child: CircularProgressIndicator(color: _purple));
       case DataProviderState.error:
         return _ErrorView(
-          message: state.error ?? 'Unable to load completed courses.',
+          message: friendlyErrorMessage(state.error, 'Unable to load completed courses.'),
           onRetry: () => notifier.fetch(),
         );
       case DataProviderState.data:
@@ -75,37 +78,70 @@ class _Body extends StatelessWidget {
                   await notifier.fetch(page: state.page);
                 },
                 child: ListView(
-                  padding: EdgeInsets.zero,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   children: [
-                    GridView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: Responsive.columns(
-                          context,
-                          phone: 2,
-                          tablet: 3,
-                          desktop: 4,
-                        ),
-                        crossAxisSpacing: 14,
-                        mainAxisSpacing: 14,
-                        mainAxisExtent: Responsive.isTablet(context) ? 400 : 380,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      itemCount: state.courses.length,
-                      itemBuilder: (ctx, i) =>
-                          _CourseCard(course: state.courses[i]),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                            child: Text(
+                              'My Completed Courses',
+                              style: TextStyle(
+                                color: _titleColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: Responsive.columns(
+                                context,
+                                phone: 1,
+                                tablet: 3,
+                                desktop: 4,
+                              ),
+                              crossAxisSpacing: 14,
+                              mainAxisSpacing: 14,
+                              // Phone: single-column — card is full-width
+                              // so less vertical space is needed.
+                              mainAxisExtent: Responsive.isTablet(context) ? 360 : 320,
+                            ),
+                            itemCount: state.courses.length,
+                            itemBuilder: (ctx, i) =>
+                                _CourseCard(course: state.courses[i]),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            child: PerPageBadge(perPage: state.perPage),
+                          ),
+                        ],
+                      ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: PerPageBadge(perPage: state.perPage),
-                    ),
+                    const SizedBox(height: 16),
                     const AppFooter(),
                   ],
                 ),
               ),
             ),
+            const SizedBox(height: 12),
             PaginationWidget(
               page: state.page,
               pages: state.totalPages,
@@ -149,49 +185,86 @@ class _CourseCard extends ConsumerWidget {
         ratingCount: course.ratingCount,
         displayRating: course.displayRating ? 1 : 0,
       ),
-      infoSection: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      infoSection: _buildInfoSection(course),
+    );
+  }
+
+  Widget? _buildInfoSection(DashboardCourse course) {
+    final showStars = course.displayRating && course.ratingCount > 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (showStars) ...[
           _StarRow(rating: course.averageRating, count: course.ratingCount),
           const SizedBox(height: 6),
-          const _CompletedBadge(),
         ],
-      ),
+        _CompletedRow(date: course.completedDate),
+      ],
     );
   }
 }
 
-// ─── Completed badge ──────────────────────────────────────────────────────────
+// ─── Completed date ────────────────────────────────────────────────────────
 
-class _CompletedBadge extends StatelessWidget {
-  const _CompletedBadge();
+class _CompletedRow extends StatelessWidget {
+  const _CompletedRow({required this.date});
+  final DateTime? date;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.check_circle_rounded, color: Color(0xFF2E7D32), size: 12),
-          SizedBox(width: 4),
-          Text(
-            'Completed',
-            style: TextStyle(
-              color: Color(0xFF2E7D32),
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'COMPLETED',
+          style: TextStyle(
+            color: _muted,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
+        ),
+        if (date != null) ...[
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Container(
+                width: 14,
+                height: 14,
+                decoration: const BoxDecoration(
+                  color: _purple,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check, size: 10, color: Colors.white),
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  _formatCompletedDate(date!),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: _purple,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
-      ),
+      ],
     );
   }
+}
+
+String _formatCompletedDate(DateTime dt) {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  return '${months[dt.month - 1]} ${dt.day.toString().padLeft(2, '0')}, ${dt.year}';
 }
 
 // ─── Star rating ──────────────────────────────────────────────────────────────
@@ -292,10 +365,7 @@ class _ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(
-                onRetry: onRetry!,
-                style: ElevatedButton.styleFrom(backgroundColor: _purple),
-              ),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),

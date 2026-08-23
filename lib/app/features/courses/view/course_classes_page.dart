@@ -1,21 +1,27 @@
 ﻿import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
-import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
+import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/model/course_join_detail.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/repository/redirect_login_repository.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
+import 'package:lms/app/features/courses/view/content_viewer/certificate_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.dart';
 import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
@@ -26,8 +32,7 @@ import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:lms/app_module.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 
 bool _watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -36,11 +41,11 @@ bool _watchIsOnline(WidgetRef ref) {
   return !isManualOffline && connectionVM.isConnected;
 }
 
-const _detailPurple = Color(0xFF5756C9);
-const _detailPurple2 = Color(0xFF775FE8);
-const _detailInk = Color(0xFF172033);
-const _detailMuted = Color(0xFF6D7587);
-const _detailBackground = Color(0xFFF5F7FC);
+const _detailPurple = FigmaTokens.primaryPurple;
+const _detailPurple2 = FigmaTokens.gradientEnd;
+const _detailInk = FigmaTokens.cardTitles;
+const _detailMuted = FigmaTokens.noteBodyText;
+const _detailBackground = FigmaTokens.pageBackground;
 
 class CourseClassesPage extends ConsumerStatefulWidget {
   const CourseClassesPage({super.key, this.courseId});
@@ -52,19 +57,26 @@ class CourseClassesPage extends ConsumerStatefulWidget {
 
 class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
   bool _redirectingUnauthorized = false;
+  bool _shownNotFoundToast = false;
 
   @override
   Widget build(BuildContext context) {
     final courseId = int.tryParse(widget.courseId ?? '') ?? 0;
     final state = ref.watch(CourseJoinDetailViewModel.provider(courseId));
 
-    if (!_redirectingUnauthorized && _isUnauthorizedError(state.error)) {
+    if (!_redirectingUnauthorized && isUnauthorizedError(state.error)) {
       _redirectingUnauthorized = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        await ref.read(AuthStateNotifier.provider.notifier).logout();
+        redirectToLoginOnSessionExpired(context, ref);
+      });
+    }
+
+    if (!_shownNotFoundToast && isCourseNotFoundError(state.error)) {
+      _shownNotFoundToast = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        Modular.to.navigate(AppModule.auth);
+        Toast.danger(context, 'Course has been deleted by the Admin.');
       });
     }
 
@@ -94,13 +106,13 @@ class _DetailBody extends ConsumerWidget {
           child: CircularProgressIndicator(color: _detailPurple),
         );
       case DataProviderState.error:
-        if (_isUnauthorizedError(state.error)) {
+        if (isUnauthorizedError(state.error)) {
           return const Center(
             child: CircularProgressIndicator(color: _detailPurple),
           );
         }
         return _DetailError(
-          message: state.error ?? 'Unable to load course details.',
+          message: friendlyErrorMessage(state.error, 'Unable to load course details.'),
           onRetry:
               () =>
                   ref
@@ -125,8 +137,9 @@ class _DetailBody extends ConsumerWidget {
                       .fetch(),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final maxWidth =
-                  constraints.maxWidth >= 760 ? 720.0 : double.infinity;
+              // 95% of the viewport width, with the remaining 5% split
+              // evenly as left/right spacing (via the Center below).
+              final maxWidth = constraints.maxWidth * 0.95;
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Center(
@@ -135,6 +148,7 @@ class _DetailBody extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const SizedBox(height: 16),
                         _CourseHero(detail: detail),
                         Transform.translate(
                           offset: const Offset(0, -18),
@@ -157,8 +171,18 @@ class _DetailBody extends ConsumerWidget {
                               ),
                             ),
                           ),
-                        _DescriptionCard(detail: detail),
-                        _CourseImageCard(url: detail.logo),
+                        if (constraints.maxWidth >= 760)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(flex: 3, child: _DescriptionCard(detail: detail)),
+                              Expanded(flex: 2, child: _CourseImageCard(url: detail.logo)),
+                            ],
+                          )
+                        else ...[
+                          _DescriptionCard(detail: detail),
+                          _CourseImageCard(url: detail.logo),
+                        ],
                         _SkillsCard(skills: detail.skills),
                         _StructureCard(
                           courseId: detail.id,
@@ -212,9 +236,7 @@ class _CourseHero extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(6, 10, 6, 0),
       padding: const EdgeInsets.fromLTRB(14, 34, 14, 54),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [_detailPurple, _detailPurple2]),
-      ),
+      decoration: const BoxDecoration(color: _detailPurple),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -264,12 +286,11 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   bool _cancelling = false;
 
   Future<void> _enroll() async {
-    // A course with one or more Virtual/In Person classes that need a
-    // session picked confirms each class's date/time with the learner
-    // before actually registering, matching the website's step-through
-    // Register -> Confirm wizard. Courses with none of those just enroll
-    // directly, unchanged.
-    final classes = widget.detail.classesRequiringSessionSelection;
+    // Only show the session-picker dialog for classes that have actual
+    // upcoming (not-yet-ended) sessions. If all sessions are past, skip
+    // the dialog and enroll directly — classLearningEventSelections
+    // auto-selects the latest past session as a fallback.
+    final classes = widget.detail.classesWithUpcomingSessions;
     if (classes.isNotEmpty) {
       await showDialog(
         context: context,
@@ -280,7 +301,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
         ),
       );
     } else {
-      await _doEnroll(const <int, int>{});
+      await _doEnroll(widget.detail.classLearningEventSelections);
     }
   }
 
@@ -353,95 +374,85 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     final isPast = (remaining?.isNegative ?? false);
     final remainingAbs = remaining?.abs();
 
-    return _InfoCard(
+    final hasCountdown = launchDate != null && detail.isEnrolled;
+    final countdown = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          isPast ? 'STARTED' : 'LAUNCHES IN',
+          style: const TextStyle(
+            color: _detailMuted,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            letterSpacing: .4,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isPast)
+              const Padding(
+                padding: EdgeInsets.only(right: 2),
+                child: Text(
+                  '-',
+                  style: TextStyle(
+                    color: _detailInk,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            _timeEntry(remainingAbs?.inDays ?? 0, 'DAYS'),
+            _timeEntry((remainingAbs?.inHours ?? 0) % 24, 'HRS'),
+            _timeEntry((remainingAbs?.inMinutes ?? 0) % 60, 'MIN'),
+            _timeEntry((remainingAbs?.inSeconds ?? 0) % 60, 'SEC'),
+          ],
+        ),
+      ],
+    );
+
+    return Container(
       margin: const EdgeInsets.fromLTRB(22, 0, 22, 28),
-      child: Column(
-        children: [
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1EEF7),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: _InfoCard(
+        margin: EdgeInsets.zero,
+        child: Column(
+          children: [
           // Only show the countdown once the learner is actually enrolled -
           // showing a countdown toward a session they haven't registered
-          // for is misleading.
-          if (launchDate != null && detail.isEnrolled) ...[
-            Text(
-              isPast ? 'STARTED' : 'LAUNCHES IN',
-              style: const TextStyle(
-                color: _detailMuted,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                letterSpacing: .4,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (isPast)
-                  const Padding(
-                    padding: EdgeInsets.only(right: 2),
-                    child: Text(
-                      '-',
-                      style: TextStyle(
-                        color: _detailInk,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
-                _timeEntry(remainingAbs?.inDays ?? 0, 'DAYS'),
-                _timeEntry((remainingAbs?.inHours ?? 0) % 24, 'HRS'),
-                _timeEntry((remainingAbs?.inMinutes ?? 0) % 60, 'MIN'),
-                _timeEntry((remainingAbs?.inSeconds ?? 0) % 60, 'SEC'),
-              ],
-            ),
-            const SizedBox(height: 26),
-          ],
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(17, 8, 10, 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6F3FF),
-                border: Border.all(color: const Color(0xFFE5DFFF)),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    detail.launchStatus.toUpperCase(),
-                    style: const TextStyle(
-                      color: _detailPurple,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  if (detail.progressPercentage > 0) ...[
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 36,
-                      height: 36,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          CircularProgressIndicator(
-                            value: detail.progressPercentage,
-                            strokeWidth: 2.5,
-                            color: _detailPurple,
-                            backgroundColor: Colors.white,
-                          ),
-                          Text(
-                            '${(detail.progressPercentage * 100).round()}%',
-                            style: const TextStyle(
-                              color: _detailPurple,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+          // for is misleading. On wide screens it sits inline with the
+          // primary action button, matching the reference's single header
+          // bar instead of stacking them.
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final statusBadge = _statusBadge(detail);
+              if (constraints.maxWidth < 620) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (hasCountdown) ...[countdown, const SizedBox(height: 20)],
+                    statusBadge,
+                    const SizedBox(height: 20),
+                    SizedBox(width: double.infinity, child: _actionButton()),
                   ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (hasCountdown) countdown,
+                  Expanded(child: Center(child: statusBadge)),
+                  _actionButton(),
                 ],
-              ),
-            ),
+              );
+            },
           ),
           if (detail.learningPath != null) ...[
             const SizedBox(height: 26),
@@ -469,58 +480,69 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDDF3FF),
+                      color: const Color(0xFFF6F3FF),
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: Text(
                       detail.learningPath!,
-                      style: const TextStyle(color: Color(0xFF0877A8)),
+                      style: const TextStyle(color: _detailPurple),
                     ),
                   ),
                 ],
               ),
             ),
           ],
-          const SizedBox(height: 28),
+        ],
+        ),
+      ),
+    );
+  }
+
+  /// Status pill: a full ring when the course is closed (nothing left to
+  /// complete), or the learner's actual completion percentage when it's
+  /// still open.
+  Widget _statusBadge(CourseJoinDetail detail) {
+    final isClosed = detail.launchStatus.toLowerCase().contains('closed');
+    final progress = isClosed ? 1.0 : detail.progressPercentage;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(17, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F3FF),
+        border: Border.all(color: FigmaTokens.cardBorders),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            detail.launchStatus.toUpperCase(),
+            style: const TextStyle(
+              color: _detailPurple,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(width: 12),
           SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: (_enrolling || _cancelling)
-                  ? null
-                  : () {
-                      if (detail.isEnrolled) {
-                        _showCancelConfirmationDialog(context, onConfirm: _cancel);
-                      } else {
-                        _enroll();
-                      }
-                    },
-              icon: (_enrolling || _cancelling)
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Icon(Icons.app_registration_rounded, size: 18),
-              label: Text(
-                _enrolling
-                    ? 'Enrolling…'
-                    : _cancelling
-                        ? 'Cancelling…'
-                        : detail.primaryAction,
-              ),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(47),
-                backgroundColor: _detailPurple,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                textStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
+            width: 36,
+            height: 36,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 2.5,
+                  color: _detailPurple,
+                  backgroundColor: Colors.white,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                Text(
+                  '${(progress * 100).round()}%',
+                  style: const TextStyle(
+                    color: _detailPurple,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
@@ -528,12 +550,59 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     );
   }
 
-  Widget _timeEntry(int value, String label) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 5),
-        child: _TimeBox(value: value, label: label),
+  Widget _actionButton() {
+    final detail = widget.detail;
+    return HoverBuilder(
+      builder: (context, hovering) => ElevatedButton.icon(
+        onPressed: (_enrolling || _cancelling)
+            ? null
+            : () {
+                if (detail.isEnrolled) {
+                  _showCancelConfirmationDialog(context, onConfirm: _cancel);
+                } else {
+                  _enroll();
+                }
+              },
+        icon: (_enrolling || _cancelling)
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+            : const Icon(Icons.app_registration_rounded, size: 18),
+        label: Text(
+          _enrolling
+              ? 'Enrolling…'
+              : _cancelling
+                  ? 'Cancelling…'
+                  : detail.primaryAction,
+        ),
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(0, 47),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          backgroundColor:
+              hovering ? FigmaTokens.purpleHover : _detailPurple,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          textStyle: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _timeEntry(int value, String label) {
+    // Phone: 4 boxes at 5px padding each overflowed the countdown row by
+    // 6.1px on a narrow screen; tighten the gap there.
+    final hPad = Responsive.isTablet(context) ? 5.0 : 3.0;
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: hPad),
+      child: _TimeBox(value: value, label: label),
     );
   }
 }
@@ -563,7 +632,7 @@ class _DescriptionCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 28),
-          const Divider(color: Color(0xFFECEFF4)),
+          const Divider(color: FigmaTokens.cardBorders),
           const SizedBox(height: 16),
           const _SectionTitle('Learning Objectives'),
           if (detail.objective.isNotEmpty) ...[
@@ -592,13 +661,15 @@ class _CourseImageCard extends StatelessWidget {
     return _InfoCard(
       padding: EdgeInsets.zero,
       child: SizedBox(
-        height: 160,
+        width: double.infinity,
+        height: 220,
         child:
             url == null
                 ? const _ImageFallback()
                 : Image.network(
                   url!,
                   width: double.infinity,
+                  height: 220,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const _ImageFallback(),
                 ),
@@ -634,7 +705,7 @@ class _SkillsCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF6F3FF),
-                            border: Border.all(color: const Color(0xFFE5DFFF)),
+                            border: Border.all(color: FigmaTokens.cardBorders),
                             borderRadius: BorderRadius.circular(22),
                           ),
                           child: Text(
@@ -673,6 +744,9 @@ class _StructureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _InfoCard(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 88),
+      padding: items.isEmpty
+          ? const EdgeInsets.all(22)
+          : const EdgeInsets.fromLTRB(22, 22, 22, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -684,16 +758,149 @@ class _StructureCard extends StatelessWidget {
               style: TextStyle(color: _detailMuted),
             )
           else
-            for (final item in items) ...[
-              _StructureItemCard(
-                courseId: courseId,
-                item: item,
-                isEnrolled: isEnrolled,
-                courseObjective: courseObjective,
-                courseTitle: courseTitle,
-              ),
-              if (item != items.last) const SizedBox(height: 20),
-            ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Full available width - only falls back to a fixed 900px
+                // (with horizontal scroll) when the card is narrower than
+                // that, e.g. on small screens.
+                final tableWidth = constraints.maxWidth;
+                final needsScroll = tableWidth < 900;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (needsScroll)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.swipe_rounded, size: 14, color: _detailMuted),
+                            SizedBox(width: 4),
+                            Text(
+                              'Swipe to see Next Session, Status & Actions',
+                              style: TextStyle(
+                                color: _detailMuted,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    _StructureTableScroller(
+                      width: tableWidth < 900 ? 900 : tableWidth,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _StructureHeaderRow(),
+                          const SizedBox(height: 8),
+                          for (var i = 0; i < items.length; i++)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _StructureItemCard(
+                                index: i + 1,
+                                courseId: courseId,
+                                item: items[i],
+                                isEnrolled: isEnrolled,
+                                courseObjective: courseObjective,
+                                courseTitle: courseTitle,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Wraps the Course Structure table in a horizontally-scrolling area with
+/// an always-visible scrollbar - on a narrow screen the table needs a
+/// swipe to reveal Next Session/Status/Action, and without a visible
+/// scrollbar that content just looked cut off with no indication more
+/// was there.
+class _StructureTableScroller extends StatefulWidget {
+  const _StructureTableScroller({required this.width, required this.child});
+  final double width;
+  final Widget child;
+
+  @override
+  State<_StructureTableScroller> createState() => _StructureTableScrollerState();
+}
+
+class _StructureTableScrollerState extends State<_StructureTableScroller> {
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scrollbar(
+      controller: _controller,
+      thumbVisibility: true,
+      child: SingleChildScrollView(
+        controller: _controller,
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(bottom: 10),
+        child: SizedBox(width: widget.width, child: widget.child),
+      ),
+    );
+  }
+}
+
+class _StructureHeaderRow extends StatelessWidget {
+  const _StructureHeaderRow();
+
+  @override
+  Widget build(BuildContext context) {
+    const style = TextStyle(
+      color: _detailMuted,
+      fontSize: 11,
+      fontWeight: FontWeight.w800,
+      letterSpacing: .3,
+    );
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEDEAF6),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(width: 28, child: Text('#', style: style)),
+          SizedBox(width: 16),
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: EdgeInsets.only(right: 24),
+              child: Text('COURSE DETAILS', style: style),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: EdgeInsets.only(right: 24),
+              child: Text('NEXT SESSION', style: style),
+            ),
+          ),
+          Expanded(
+            flex: 1,
+            child: Padding(
+              padding: EdgeInsets.only(right: 24),
+              child: Text('STATUS', style: style),
+            ),
+          ),
+          Expanded(flex: 6, child: Text('ACTION', style: style)),
         ],
       ),
     );
@@ -702,12 +909,14 @@ class _StructureCard extends StatelessWidget {
 
 class _StructureItemCard extends ConsumerStatefulWidget {
   const _StructureItemCard({
+    required this.index,
     required this.courseId,
     required this.item,
     required this.isEnrolled,
     required this.courseObjective,
     required this.courseTitle,
   });
+  final int index;
   final int courseId;
   final CourseStructureItem item;
   final bool isEnrolled;
@@ -799,20 +1008,43 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     }
   }
 
-  /// GET user-profile/redirect-login-link?redirectUrl=<contentUrl> returns
-  /// a `login_link` that auto-logs the current user in and redirects to
-  /// contentUrl - loading that in the WebView instead of contentUrl
-  /// directly is what makes Attend Class open already authenticated rather
-  /// than showing the website's login form (LMS-LE-001).
-  Future<void> _attendClass(String contentUrl, String title) async {
-    final loginLink = await ref
-        .read(RedirectLoginRepository.provider)
-        .getLoginLink(contentUrl);
+  /// Opens the virtual class URL in the in-app WebView, auto-logged in via
+  /// redirect-login-link so the learner doesn't see the website login form.
+  ///
+  /// A class can carry multiple session links (one per learning_event).
+  /// Picked fresh at click time - not from a value cached at the last
+  /// fetch - so a link that expired while the learner was looking at the
+  /// screen doesn't still get sent to redirect-login-link: only a link on
+  /// this app's own domain, whose session hasn't ended, and (among those)
+  /// the one starting soonest is eligible. If nothing qualifies, this stops
+  /// before ever calling redirect-login-link or opening the WebView and
+  /// tells the learner why instead.
+  Future<void> _attendClass(CourseStructureItem item) async {
+    if (!mounted) return;
+    final appHost = Uri.parse(ref.read(ServerProvider.serverUrl)).host;
+    final event = _selectAttendClassEvent(item.learningEvents, appHost);
+    final sessionLink = event?.sessionLink;
+    if (sessionLink == null) {
+      Toast.error(
+        context,
+        'No active session link is available for this class right now.',
+      );
+      return;
+    }
+
+    String? loginLink;
+    try {
+      loginLink = await ref
+          .read(RedirectLoginRepository.provider)
+          .getLoginLink(sessionLink);
+    } catch (e) {
+      if (mounted) Toast.error(context, 'Could not get login link: $e');
+    }
     if (!mounted) return;
     await InAppWebViewPage.show(
       context,
-      url: loginLink ?? contentUrl,
-      title: title,
+      url: loginLink ?? sessionLink,
+      title: item.title,
     );
   }
 
@@ -871,227 +1103,258 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     // clickable only to fail with a toast.
     final hasRegisterableSession =
         item.learningEvents.isEmpty || liveEvent != null;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(17, 16, 17, 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFEAEDEF)),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 16,
-            offset: Offset(0, 8),
+    // Same set of possible actions as before, just collected into a list so
+    // they can be laid out as a compact Wrap in the ACTION column instead of
+    // a full-width stacked Column.
+    final actions = <Widget>[
+      if (item.showDetails)
+        OutlinedButton.icon(
+          onPressed: () => _showClassDetails(context, courseTitle, courseObjective, item),
+          icon: const Icon(Icons.info_rounded, size: 14),
+          label: const Text('Details'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: _detailInk,
+            side: const BorderSide(color: FigmaTokens.cardBorders),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            minimumSize: const Size(0, 32),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+      // Registered Virtual Class or In Person class: Attend Class
+      // (Virtual only, via contentUrl) + optional recordings + Cancel
+      if ((item.typeCode == '3' || item.typeCode == '2') && item.isEnrolledInClass) ...[
+        // Shown for any enrolled Virtual Class regardless of whether a
+        // qualifying session link currently exists - the domain/expiry
+        // filtering happens at click time in _attendClass, which tells the
+        // learner why via a toast when nothing qualifies, instead of the
+        // button just silently disappearing.
+        if (item.typeCode == '3')
+          _OnlineActionButton(
+            icon: Icons.send_rounded,
+            label: 'Attend Class',
+            onPressed: () => _attendClass(item),
+          ),
+        // Recordings — Watch (browser) or Download (offline) + play in
+        // the in-app player. Watching in the browser has no way to
+        // track progress, so that still marks the class completed on
+        // open; downloading no longer does - completion for the
+        // in-app player instead fires once 30% of the video has
+        // actually played (see VideoContentViewer).
+        for (final recordingUrl in item.recordingUrls) ...[
+          _OnlineActionButton(
+            icon: Icons.play_circle_outline_rounded,
+            label: 'Watch Recording',
+            onPressed: () {
+              _openUrl(context, ref, recordingUrl, title: 'Watch Recording');
+              _markRecordingWatched();
+            },
+          ),
+          DownloadButton(
+            url: recordingUrl,
+            label: 'Recording',
+            icon: Icons.videocam_rounded,
+            courseClass: null,
+            builder: (ctx, file) => VideoContentViewer(
+              file: file,
+              courseId: widget.courseId.toString(),
+              classId: item.classId?.toString(),
+            ),
           ),
         ],
+        _OnlineActionButton(
+          icon: Icons.cancel_outlined,
+          label: _cancelling ? 'Cancelling…' : 'Cancel Registration',
+          onPressed: () => _showCancelConfirmationDialog(context, onConfirm: _cancelClass),
+        ),
+      ] else if (item.typeCode == '4') ...[
+        // Watch Video — the external link (e.g. YouTube, content.
+        // watch_video_link) and the actually-uploaded file (content.
+        // video_upload_url, handled by the DownloadButton below) are
+        // independent - a class can have either, both, or neither.
+        if (item.videoLinkUrl != null)
+          _OnlineActionButton(
+            icon: Icons.play_circle_outline_rounded,
+            label: 'Watch Video',
+            onPressed: () => _openUrl(context, ref, item.videoLinkUrl!, title: item.title),
+          ),
+      ] else
+        // A Virtual Class or In Person class with no live open session left
+        // has nothing to register for anymore - hide Register instead of
+        // leaving a dead button (see hasRegisterableSession above).
+        if (item.showAction &&
+            ((item.typeCode != '3' && item.typeCode != '2') || hasRegisterableSession))
+          (item.typeCode == '3' || item.typeCode == '2') && isEnrolled
+              ? _OnlineActionButton(
+                  icon: _actionIcon(item.icon),
+                  label: item.actionLabel,
+                  onPressed: _registerForSession,
+                )
+              : _EnrollActionButton(
+                  isEnrolled: isEnrolled,
+                  icon: _actionIcon(item.icon),
+                  label: item.actionLabel,
+                  item: item,
+                ),
+      // downloadUrl is populated straight from the course-structure API
+      // response regardless of enrollment, so gate visibility on isEnrolled
+      // here too - otherwise non-enrolled learners can see (and use) the
+      // Download button for course content.
+      if (item.downloadUrl != null && isEnrolled)
+        if (item.typeCode == '4')
+          DownloadButton(
+            url: item.downloadUrl,
+            label: _downloadLabel(item.typeCode),
+            icon: Icons.videocam_rounded,
+            courseClass: null,
+            builder: (ctx, file) => VideoContentViewer(
+              file: file,
+              courseId: widget.courseId.toString(),
+              classId: item.classId?.toString(),
+            ),
+          )
+        else
+          DownloadButton(
+            url: item.downloadUrl,
+            label: _downloadLabel(item.typeCode),
+            icon: Icons.picture_as_pdf_rounded,
+            courseClass: null,
+            builder: (ctx, file) => PdfContentViewer(file: file),
+          ),
+      // Certificate (typeCode '12') has no downloadUrl at all - the API
+      // gives back the certificate's raw HTML directly instead of a file
+      // URL, so this uses `url` purely as a cache key (the actual save
+      // uses rawContent, not a network fetch - see DownloadButton).
+      if (item.typeCode == '12' && item.certificateHtml != null && isEnrolled)
+        DownloadButton(
+          url: 'certificate_class_${item.classId}',
+          rawContent: () => utf8.encode(item.certificateHtml!),
+          label: 'Certificate',
+          icon: Icons.workspace_premium_rounded,
+          courseClass: null,
+          builder: (ctx, file) => CertificateContentViewer(file: file),
+        ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: FigmaTokens.cardBorders),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            item.title,
-            style: const TextStyle(
-              color: _detailInk,
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
+          SizedBox(
+            width: 28,
+            child: Text(
+              '${widget.index}',
+              style: const TextStyle(color: _detailMuted, fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ),
-          if (item.subtitle.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text(
-              item.subtitle,
-              style: const TextStyle(color: Color(0xFF9AA4B5), fontSize: 13),
-            ),
-          ],
-          const SizedBox(height: 14),
-          const Divider(color: Color(0xFFECEFF4)),
-          const SizedBox(height: 13),
-          // Only show a session date once the learner is actually registered
-          // for THIS class - showing one for a class they haven't
-          // registered for implies a commitment that hasn't been made yet.
-          // (isEnrolled is course-level enrollment, not per-class
-          // registration - a learner can be enrolled in the course but
-          // still unregistered for a given Virtual Class session.)
-          if (liveNextSession != null && item.isEnrolledInClass) ...[
-            Text(
-              'Next Session: $liveNextSession',
-              style: const TextStyle(
-                color: _detailMuted,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            // upcomingEvent can be null here even though liveNextSession
-            // isn't - the raw item.nextSession fallback (classes with no
-            // learning_events array) has a date string but no structured
-            // DateTime to count down to.
-            if (upcomingEvent != null) ...[
-              const SizedBox(height: 10),
-              // Ticks in step with liveNextSession above (same
-              // upcomingEvent, same ticking _timer) and disappears the same
-              // way - once the session starts, upcomingEvent goes null,
-              // liveNextSession goes null, and this comes down with it
-              // rather than freezing or going negative like the
-              // course-level LAUNCHES IN panel does.
-              _ClassLaunchCountdown(target: upcomingEvent.startDateTime!),
-            ],
-            const SizedBox(height: 12),
-          ],
-          if (item.status.isNotEmpty) ...[
-            item.classId != null
-                ? ClassStatusChip(
-                    courseClass: CourseClass(
-                      courseId: widget.courseId.toString(),
-                      classId: item.classId!.toString(),
-                    ),
-                    fallbackStatus: item.status,
-                  )
-                : _StatusChip(status: item.status),
-            const SizedBox(height: 12),
-          ],
-          const SizedBox(height: 1),
-          const Divider(color: Color(0xFFECEFF4)),
-          if (item.showDetails || item.showAction || item.isEnrolledInClass) ...[
-            const SizedBox(height: 18),
-            if (item.showDetails)
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => _showClassDetails(context, courseTitle, courseObjective, item),
-                  icon: const Icon(Icons.info_rounded, size: 16),
-                  label: const Text('Details'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: _detailInk,
-                    side: const BorderSide(color: Color(0xFFDDE2EA)),
-                    minimumSize: const Size.fromHeight(39),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      color: _detailInk,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                ),
+                  if (item.subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      item.subtitle,
+                      style: const TextStyle(color: Color(0xFF9AA4B5), fontSize: 12.5),
+                    ),
+                  ],
+                ],
               ),
-            // Registered Virtual Class or In Person class: Attend Class
-            // (Virtual only, via contentUrl) + optional recordings + Cancel
-            if ((item.typeCode == '3' || item.typeCode == '2') &&
-                item.isEnrolledInClass) ...[
-              const SizedBox(height: 15),
-              if (item.contentUrl != null) ...[
-                _OnlineActionButton(
-                  icon: Icons.send_rounded,
-                  label: 'Attend Class',
-                  onPressed: () => _attendClass(item.contentUrl!, item.title),
-                ),
-                const SizedBox(height: 10),
-              ],
-              // Recordings — Watch (browser) or Download (offline) + play in
-              // the in-app player. Watching in the browser has no way to
-              // track progress, so that still marks the class completed on
-              // open; downloading no longer does - completion for the
-              // in-app player instead fires once 30% of the video has
-              // actually played (see VideoContentViewer).
-              for (final recordingUrl in item.recordingUrls) ...[
-                _OnlineActionButton(
-                  icon: Icons.play_circle_outline_rounded,
-                  label: 'Watch Recording',
-                  onPressed: () {
-                    _openUrl(recordingUrl);
-                    _markRecordingWatched();
-                  },
-                ),
-                const SizedBox(height: 8),
-                DownloadButton(
-                  url: recordingUrl,
-                  label: 'Recording',
-                  icon: Icons.videocam_rounded,
-                  courseClass: null,
-                  fullWidth: true,
-                  builder: (ctx, file) => VideoContentViewer(
-                    file: file,
-                    courseId: widget.courseId.toString(),
-                    classId: item.classId?.toString(),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 24),
+              // Only show a session date once the learner is actually
+              // registered for THIS class - showing one for a class they
+              // haven't registered for implies a commitment that hasn't
+              // been made yet. (isEnrolled is course-level enrollment, not
+              // per-class registration - a learner can be enrolled in the
+              // course but still unregistered for a given Virtual Class
+              // session.)
+              child: (liveNextSession != null && item.isEnrolledInClass)
+                  // upcomingEvent can be null here even though
+                  // liveNextSession isn't - the raw item.nextSession
+                  // fallback (classes with no learning_events array) has a
+                  // date string but no structured DateTime to count down
+                  // to.
+                  ? (upcomingEvent != null
+                      ? _CompactLaunchCountdown(target: upcomingEvent.startDateTime!)
+                      : Text(
+                          liveNextSession,
+                          style: const TextStyle(color: _detailMuted, fontSize: 12.5, fontWeight: FontWeight.w700),
+                        ))
+                  : const SizedBox.shrink(),
+            ),
+          ),
+          // Fixed width, not Expanded(flex: 1) - that squeezed down to
+          // ~68px within the row's 900px minimum width (shared across 4
+          // flex sections), wrapping "Registered"/"Completed" onto two
+          // lines. 120px comfortably fits either on one.
+          SizedBox(
+            width: 120,
+            child: item.status.isEmpty
+                ? const SizedBox.shrink()
+                : Align(
+                    alignment: Alignment.centerLeft,
+                    child: item.classId != null
+                        ? ClassStatusChip(
+                            courseClass: CourseClass(
+                              courseId: widget.courseId.toString(),
+                              classId: item.classId!.toString(),
+                            ),
+                            fallbackStatus: item.status,
+                          )
+                        : _StatusChip(status: item.status),
                   ),
-                ),
-                const SizedBox(height: 10),
-              ],
-              _OnlineActionButton(
-                icon: Icons.cancel_outlined,
-                label: _cancelling ? 'Cancelling…' : 'Cancel Registration',
-                onPressed: () =>
-                    _showCancelConfirmationDialog(context, onConfirm: _cancelClass),
-              ),
-            ] else if (item.typeCode == '4') ...[
-              // Watch Video — "Watch" opens browser (handles HLS/VP9 on iOS);
-              // "Download" is handled by DownloadButton below for offline MP4.
-              const SizedBox(height: 15),
-              if (item.contentUrl != null)
-                _OnlineActionButton(
-                  icon: Icons.play_circle_outline_rounded,
-                  label: 'Watch Video',
-                  onPressed: () => _openUrl(item.contentUrl!),
-                ),
-            ] else ...[
-              if (item.showDetails && item.showAction) const SizedBox(height: 15),
-              // A Virtual Class or In Person class with no live open session
-              // left has nothing to register for anymore - hide Register
-              // instead of leaving a dead button (see hasRegisterableSession
-              // above).
-              if (item.showAction &&
-                  ((item.typeCode != '3' && item.typeCode != '2') ||
-                      hasRegisterableSession))
-                (item.typeCode == '3' || item.typeCode == '2') && isEnrolled
-                    ? _OnlineActionButton(
-                        icon: _actionIcon(item.icon),
-                        label: item.actionLabel,
-                        onPressed: _registerForSession,
-                      )
-                    : _EnrollActionButton(
-                        isEnrolled: isEnrolled,
-                        icon: _actionIcon(item.icon),
-                        label: item.actionLabel,
-                        item: item,
-                      ),
-            ],
-            // downloadUrl is populated straight from the course-structure
-            // API response regardless of enrollment, so gate visibility on
-            // isEnrolled here too - otherwise non-enrolled learners can see
-            // (and use) the Download button for course content.
-            if (item.downloadUrl != null && isEnrolled) ...[
-              const SizedBox(height: 10),
-              if (item.typeCode == '4')
-                DownloadButton(
-                  url: item.downloadUrl,
-                  label: _downloadLabel(item.typeCode),
-                  icon: Icons.videocam_rounded,
-                  courseClass: null,
-                  fullWidth: true,
-                  builder: (ctx, file) => VideoContentViewer(
-                    file: file,
-                    courseId: widget.courseId.toString(),
-                    classId: item.classId?.toString(),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 6,
+            child: actions.isEmpty
+                ? const SizedBox.shrink()
+                // center, not the default start - Details (an
+                // OutlinedButton) and the chip-styled action buttons don't
+                // render at quite the same height, so top-aligning them in
+                // the Wrap made Details look shifted upward relative to
+                // its neighbors.
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: actions,
                   ),
-                )
-              else
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: DownloadButton(
-                    url: item.downloadUrl,
-                    label: _downloadLabel(item.typeCode),
-                    icon: Icons.picture_as_pdf_rounded,
-                    courseClass: null,
-                    builder: (ctx, file) => PdfContentViewer(file: file),
-                  ),
-                ),
-            ],
-          ],
+          ),
         ],
       ),
     );
   }
 }
 
-/// A full-width elevated action button that disables itself with a
-/// "cloud off" state whenever offline, since [onPressed] always performs a
-/// network action (opening a link, launching content, etc.).
+/// A compact pill-shaped action button (for the Course Structure table's
+/// ACTION column) that disables itself with a "cloud off" state whenever
+/// offline, since [onPressed] always performs a network action (opening a
+/// link, launching content, etc.).
 class _OnlineActionButton extends ConsumerWidget {
   const _OnlineActionButton({
     required this.icon,
@@ -1105,21 +1368,27 @@ class _OnlineActionButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOnline = _watchIsOnline(ref);
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: isOnline ? onPressed : null,
-        icon: Icon(isOnline ? icon : Icons.cloud_off_rounded, size: 17),
-        label: Text(isOnline ? label : 'Internet required'),
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: isOnline ? _detailPurple : Colors.grey.shade400,
-          disabledBackgroundColor: Colors.grey.shade400,
-          disabledForegroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(39),
-          elevation: 0,
-          textStyle: const TextStyle(fontWeight: FontWeight.w800),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    return HoverBuilder(
+      builder: (context, hovering) => SizedBox(
+        height: 32,
+        child: ElevatedButton.icon(
+          onPressed: isOnline ? onPressed : null,
+          icon: Icon(isOnline ? icon : Icons.cloud_off_rounded, size: 14),
+          label: Text(isOnline ? label : 'Internet required'),
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: !isOnline
+                ? Colors.grey.shade400
+                : (hovering ? FigmaTokens.purpleHover : _detailPurple),
+            disabledBackgroundColor: Colors.grey.shade400,
+            disabledForegroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            elevation: 0,
+            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
         ),
       ),
     );
@@ -1145,19 +1414,24 @@ class _EnrollActionButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!isEnrolled) {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: () => _showNotEnrolledDialog(context),
-          icon: Icon(icon, size: 17),
-          label: Text(label),
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: _detailPurple,
-            minimumSize: const Size.fromHeight(39),
-            elevation: 0,
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      return HoverBuilder(
+        builder: (context, hovering) => SizedBox(
+          height: 32,
+          child: ElevatedButton.icon(
+            onPressed: () => _showNotEnrolledDialog(context),
+            icon: Icon(icon, size: 14),
+            label: Text(label),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor:
+                  hovering ? FigmaTokens.purpleHover : _detailPurple,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              elevation: 0,
+              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
           ),
         ),
       );
@@ -1165,7 +1439,7 @@ class _EnrollActionButton extends ConsumerWidget {
     return _OnlineActionButton(
       icon: icon,
       label: label,
-      onPressed: () => _handleClassAction(context, item),
+      onPressed: () => _handleClassAction(context, ref, item),
     );
   }
 }
@@ -1243,77 +1517,30 @@ class _SectionTitle extends StatelessWidget {
 /// count down to (see upcomingEvent in _StructureItemCardState.build), so
 /// unlike the course-level panel this never needs to handle a negative/
 /// already-started state - it just gets removed from the tree instead.
-class _ClassLaunchCountdown extends StatelessWidget {
-  const _ClassLaunchCountdown({required this.target});
+/// Compact dash-separated countdown text ("108D - 5H - 30M - 13S") used in
+/// the Course Structure table's NEXT SESSION column, instead of
+/// [_ClassLaunchCountdown]'s boxed digits.
+class _CompactLaunchCountdown extends StatelessWidget {
+  const _CompactLaunchCountdown({required this.target});
   final DateTime target;
 
   @override
   Widget build(BuildContext context) {
     final remaining = target.difference(DateTime.now());
     if (remaining.isNegative) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'LAUNCHES IN',
-          style: TextStyle(
-            color: _detailMuted,
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: .3,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            _miniTimeEntry(remaining.inDays, 'D'),
-            const SizedBox(width: 6),
-            _miniTimeEntry(remaining.inHours % 24, 'H'),
-            const SizedBox(width: 6),
-            _miniTimeEntry(remaining.inMinutes % 60, 'M'),
-            const SizedBox(width: 6),
-            _miniTimeEntry(remaining.inSeconds % 60, 'S'),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _miniTimeEntry(int value, String label) {
-    return Container(
-      width: 38,
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAF9FF),
-        border: Border.all(color: const Color(0xFFE5DFFF)),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text.rich(
-        TextSpan(
-          children: [
-            TextSpan(
-              text: value.toString().padLeft(2, '0'),
-              style: const TextStyle(
-                color: _detailPurple,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            TextSpan(
-              text: label,
-              style: const TextStyle(
-                color: _detailMuted,
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
+    final text = '${remaining.inDays}D - ${remaining.inHours % 24}H - '
+        '${remaining.inMinutes % 60}M - ${remaining.inSeconds % 60}S';
+    return Text(
+      text,
+      style: const TextStyle(
+        color: _detailPurple,
+        fontSize: 12.5,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
 }
+
 
 class _TimeBox extends StatelessWidget {
   const _TimeBox({required this.value, required this.label});
@@ -1323,12 +1550,13 @@ class _TimeBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      width: 62,
+      padding: const EdgeInsets.symmetric(vertical: 14),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: const Color(0xFFFAF9FF),
-        border: Border.all(color: const Color(0xFFE5DFFF)),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: FigmaTokens.cardBorders),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1337,16 +1565,16 @@ class _TimeBox extends StatelessWidget {
             value.toString().padLeft(2, '0'),
             style: const TextStyle(
               color: _detailPurple,
-              fontSize: 20,
+              fontSize: 26,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             label,
             style: const TextStyle(
               color: _detailMuted,
-              fontSize: 8,
+              fontSize: 9,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1387,7 +1615,7 @@ class _DetailError extends StatelessWidget {
             Text(message, textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              RetryButton(onRetry: onRetry!),
+              RetryButton(onRetry: onRetry!, errorMessage: message),
             ],
           ],
         ),
@@ -1414,7 +1642,7 @@ IconData _actionIcon(CourseStructureIcon icon) {
   }
 }
 
-void _handleClassAction(BuildContext context, CourseStructureItem item) {
+void _handleClassAction(BuildContext context, WidgetRef ref, CourseStructureItem item) {
   final url = item.contentUrl;
   switch (item.typeCode) {
     case '4':
@@ -1431,7 +1659,7 @@ void _handleClassAction(BuildContext context, CourseStructureItem item) {
       );
       break;
     default:
-      if (url != null) _openUrl(url);
+      if (url != null) _openUrl(context, ref, url, title: item.title);
   }
 }
 
@@ -1445,21 +1673,9 @@ String _downloadLabel(String typeCode) {
   }
 }
 
-Future<void> _openUrl(String url) async {
-  final uri = Uri.tryParse(url);
-  if (uri == null) return;
-  // Video/recordings need the system browser for HLS/VP9 codec support on
-  // iOS - Attend Class uses InAppWebViewPage instead, so it stays inside
-  // the app rather than switching to Chrome/Safari.
-  await launchUrl(uri, mode: LaunchMode.externalApplication);
-}
-
-bool _isUnauthorizedError(String? error) {
-  final value = error?.toLowerCase() ?? '';
-  return value.startsWith('unauthorized') ||
-      value.contains('invalid credentials') ||
-      value.contains('status code of 401') ||
-      value.contains(' 401');
+Future<void> _openUrl(BuildContext context, WidgetRef ref, String url,
+    {String? title}) async {
+  await InAppWebViewPage.showWithAuth(context, ref, url: url, title: title);
 }
 
 // ─── Virtual Class session lookup ──────────────────────────────────────────
@@ -1481,6 +1697,36 @@ LearningEvent? _earliestUpcomingEvent(List<LearningEvent> events) {
     // through end - not just before it starts, matching the website.
     final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
     if (!stillOpen) continue;
+    if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
+  }
+  return earliest;
+}
+
+/// Picks which session Attend Class should open: among this class's
+/// learning events, only those whose training_session_link host matches
+/// [appHost] (this app's own configured server domain) are eligible at
+/// all - any link pointing somewhere else is ignored outright. Of the
+/// remaining candidates, an already-ended one (its end time, or start time
+/// if it has no end, has passed) is dropped too - there's no fallback to an
+/// expired link. Whatever's left, the one starting soonest wins - whether
+/// it's already in progress (started but not yet ended) or hasn't started
+/// yet. Returns null when nothing qualifies.
+LearningEvent? _selectAttendClassEvent(List<LearningEvent> events, String appHost) {
+  final now = DateTime.now();
+  LearningEvent? earliest;
+  for (final event in events) {
+    final link = event.sessionLink;
+    if (link == null) continue;
+    final uri = Uri.tryParse(link);
+    if (uri == null || uri.host.isEmpty) continue;
+    if (uri.host.toLowerCase() != appHost.toLowerCase()) continue;
+
+    final start = event.startDateTime;
+    if (start == null) continue;
+    final end = event.endDateTime;
+    final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
+    if (!stillOpen) continue;
+
     if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
   }
   return earliest;
@@ -1588,16 +1834,19 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
         const SizedBox(height: 18),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => setState(() => _confirming = true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _detailPurple,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              minimumSize: const Size(0, 46),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: HoverBuilder(
+            builder: (context, hovering) => ElevatedButton(
+              onPressed: () => setState(() => _confirming = true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    hovering ? FigmaTokens.purpleHover : _detailPurple,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size(0, 46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Register', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
-            child: const Text('Register', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ),
       ],
@@ -1628,29 +1877,32 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
               onPressed: _submitting ? null : () => setState(() => _confirming = false),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _detailInk,
-                side: const BorderSide(color: Color(0xFFCBCBCB)),
+                side: const BorderSide(color: FigmaTokens.cardBorders),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               ),
               child: const Text('Previous', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
             const SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: _submitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _detailPurple,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            HoverBuilder(
+              builder: (context, hovering) => ElevatedButton(
+                onPressed: _submitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      hovering ? FigmaTokens.purpleHover : _detailPurple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: _submitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
-              child: _submitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -1663,7 +1915,7 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE5DFFF)),
+        border: Border.all(color: FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -1681,7 +1933,7 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFECEFF4)),
+          const Divider(height: 1, color: FigmaTokens.cardBorders),
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1922,18 +2174,21 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
         const SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => setState(() => _step = index + 1),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _detailPurple,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              minimumSize: const Size(0, 46),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text(
-              isLastClass ? 'Register' : 'Next',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+          child: HoverBuilder(
+            builder: (context, hovering) => ElevatedButton(
+              onPressed: () => setState(() => _step = index + 1),
+              style: ElevatedButton.styleFrom(
+                backgroundColor:
+                    hovering ? FigmaTokens.purpleHover : _detailPurple,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: const Size(0, 46),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(
+                isLastClass ? 'Register' : 'Next',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ),
@@ -1966,7 +2221,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
               ? Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE5DFFF)),
+                    border: Border.all(color: FigmaTokens.cardBorders),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Text(
@@ -1987,29 +2242,32 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                   : () => setState(() => _step = widget.classes.length - 1),
               style: OutlinedButton.styleFrom(
                 foregroundColor: _detailInk,
-                side: const BorderSide(color: Color(0xFFCBCBCB)),
+                side: const BorderSide(color: FigmaTokens.cardBorders),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               ),
               child: const Text('Previous', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
             const SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: _submitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _detailPurple,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            HoverBuilder(
+              builder: (context, hovering) => ElevatedButton(
+                onPressed: _submitting ? null : _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      hovering ? FigmaTokens.purpleHover : _detailPurple,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: _submitting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
-              child: _submitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -2031,7 +2289,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFE5DFFF)),
+          border: Border.all(color: FigmaTokens.cardBorders),
           borderRadius: BorderRadius.circular(10),
         ),
         child: const Text(
@@ -2043,7 +2301,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE5DFFF)),
+        border: Border.all(color: FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -2057,7 +2315,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFECEFF4)),
+          const Divider(height: 1, color: FigmaTokens.cardBorders),
           const SizedBox(height: 12),
           _sessionField('INSTRUCTOR', event.instructor.isEmpty ? '—' : event.instructor),
         ],
@@ -2144,7 +2402,7 @@ void _showCancelConfirmationDialog(
           onPressed: () => Navigator.pop(context),
           style: OutlinedButton.styleFrom(
             foregroundColor: _detailInk,
-            side: const BorderSide(color: Color(0xFFCBCBCB)),
+            side: const BorderSide(color: FigmaTokens.cardBorders),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -2155,23 +2413,26 @@ void _showCancelConfirmationDialog(
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
         ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            onConfirm();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _detailPurple,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+        HoverBuilder(
+          builder: (context, hovering) => ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  hovering ? FigmaTokens.purpleHover : _detailPurple,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-          ),
-          child: const Text(
-            'Yes, Cancel',
-            style: TextStyle(fontWeight: FontWeight.w700),
+            child: const Text(
+              'Yes, Cancel',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ),
         ),
       ],
@@ -2287,7 +2548,7 @@ class _ClassDetailsDialog extends StatelessWidget {
                       style: const TextStyle(color: _detailMuted, height: 1.5),
                     ),
                     const SizedBox(height: 16),
-                    const Divider(color: Color(0xFFECEFF4)),
+                    const Divider(color: FigmaTokens.cardBorders),
                     const SizedBox(height: 16),
                   ],
                   if (item.description.isNotEmpty) ...[
@@ -2301,7 +2562,7 @@ class _ClassDetailsDialog extends StatelessWidget {
                   if (item.learningEvents.isNotEmpty) ...[
                     if (item.description.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      const Divider(color: Color(0xFFECEFF4)),
+                      const Divider(color: FigmaTokens.cardBorders),
                       const SizedBox(height: 16),
                     ],
                     const _DialogLabel('SCHEDULE'),
@@ -2347,7 +2608,7 @@ class _LearningEventCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFECEFF4)),
+        border: Border.all(color: FigmaTokens.cardBorders),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -2373,7 +2634,7 @@ class _LearningEventCard extends StatelessWidget {
           ),
           if (event.instructor.isNotEmpty || event.location.isNotEmpty) ...[
             const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFECEFF4)),
+            const Divider(height: 1, color: FigmaTokens.cardBorders),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2399,7 +2660,7 @@ class _LearningEventCard extends StatelessWidget {
           ],
           if (event.instructions.isNotEmpty) ...[
             const SizedBox(height: 12),
-            const Divider(height: 1, color: Color(0xFFECEFF4)),
+            const Divider(height: 1, color: FigmaTokens.cardBorders),
             const SizedBox(height: 12),
             _ScheduleField(label: 'INSTRUCTIONS', value: event.instructions),
           ],
@@ -2457,6 +2718,8 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         status,
+        softWrap: false,
+        overflow: TextOverflow.visible,
         style: TextStyle(
           color: isCompleted ? const Color(0xFF2E7D32) : _detailPurple,
           fontSize: 12,

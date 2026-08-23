@@ -61,7 +61,7 @@ class Toast {
       context: context,
       message: message,
       icon: Icons.check_circle_outline_rounded,
-      color: const Color(0xFF2E7D32),
+      color: const Color(0xFF16A34A),
     );
   }
 
@@ -83,6 +83,21 @@ class Toast {
     );
   }
 
+  /// Red, shield icon - matches the reference site's "Course has been
+  /// deleted by the Admin." banner.
+  static void danger(BuildContext context, String message) {
+    _showTopToast(
+      context: context,
+      message: message,
+      icon: Icons.shield_outlined,
+      color: const Color(0xFFDC2626),
+      duration: const Duration(seconds: 8),
+    );
+  }
+
+  /// Every simple confirmation toast (success/info/warning/danger) shares
+  /// this one look - matches the reference site's "Successfully logged
+  /// In." banner exactly: pill shape, icon, message, explicit close button.
   static void _showTopToast({
     required BuildContext context,
     required String message,
@@ -94,19 +109,20 @@ class Toast {
       SafeArea(
         child: Container(
           margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(999),
             boxShadow: const [
               BoxShadow(color: Color(0x30000000), blurRadius: 10, offset: Offset(0, 3)),
             ],
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, color: Colors.white, size: 20),
               const SizedBox(width: 10),
-              Expanded(
+              Flexible(
                 child: Text(
                   message,
                   style: const TextStyle(
@@ -115,6 +131,11 @@ class Toast {
                     fontSize: 14,
                   ),
                 ),
+              ),
+              const SizedBox(width: 10),
+              GestureDetector(
+                onTap: () => dismissAllToast(),
+                child: const Icon(Icons.close, color: Colors.white, size: 18),
               ),
             ],
           ),

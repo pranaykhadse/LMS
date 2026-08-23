@@ -111,6 +111,44 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
         a.department == b.department;
   }
 
+  // De-dupes concurrent refresh attempts - if several requests 401 around
+  // the same moment, they all await this one in-flight auto-login call
+  // instead of each firing their own.
+  Future<String?>? _refreshInFlight;
+
+  /// Calls the auto-login API with the stored auto_login_token to get a
+  /// fresh access token without the user re-entering their password.
+  /// Returns the new token on success (and updates/persists state), or
+  /// null if that isn't possible (no stored session, or the auto_login_token
+  /// itself has expired) - callers should fall back to their normal 401
+  /// handling (session-expired -> log in again) in that case.
+  Future<String?> refreshAccessToken() {
+    return _refreshInFlight ??= _doRefreshAccessToken().whenComplete(() {
+      _refreshInFlight = null;
+    });
+  }
+
+  Future<String?> _doRefreshAccessToken() async {
+    final email = state?.user?.email;
+    final autoLoginToken = state?.user?.autoLoginToken;
+    if (email == null || autoLoginToken == null) return null;
+
+    try {
+      final refreshed = await AuthRepository(
+        config: RepoNetworkConfig(
+          url: baseUrl,
+          connectionProvider: connectionProvider,
+        ),
+      ).autoLogin(email: email, autoLoginToken: autoLoginToken);
+
+      await storage.setString("session_data", refreshed.toRawJson());
+      if (mounted) state = refreshed;
+      return refreshed.token;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> logout() async {
     await storage.setString("session_data", null);
     // Clear any queued offline completions so they don't bleed into the

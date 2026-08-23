@@ -12,7 +12,16 @@ class Responsive {
 
   static double widthOf(BuildContext context) => MediaQuery.sizeOf(context).width;
 
+  /// True for both tablet (iPad) and desktop widths (≥ 700 px).
   static bool isTablet(BuildContext context) => widthOf(context) >= tablet;
+
+  /// True only in the iPad / tablet tier: 700 px ≤ width < 1024 px.
+  static bool isTabletOnly(BuildContext context) {
+    final w = widthOf(context);
+    return w >= tablet && w < desktop;
+  }
+
+  /// True for desktop widths only (≥ 1024 px).
   static bool isDesktop(BuildContext context) => widthOf(context) >= desktop;
 
   /// Pick a value for the current screen width. Falls back to the next

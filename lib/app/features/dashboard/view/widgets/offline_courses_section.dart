@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
+import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 
-const _offlinePurple = Color(0xFF5756C9);
-const _offlineInk = Color(0xFF172033);
-const _offlineMuted = Color(0xFF7C879D);
+const _offlinePurple = FigmaTokens.primaryPurple;
+const _offlineInk = FigmaTokens.cardTitles;
+const _offlineMuted = FigmaTokens.noteBodyText;
 const _offlinePink = Color(0xFFB0006D);
 
 /// Whether the app should be showing cached/offline content instead of
@@ -174,19 +177,10 @@ class _OfflineCourseCard extends StatelessWidget {
                   const Spacer(),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: ViewCourseButton(
                       onPressed: () => Modular.to.pushNamed(
                         CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _offlinePurple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        minimumSize: const Size.fromHeight(32),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-                      ),
-                      child: const Text('View Course'),
                     ),
                   ),
                 ],
@@ -263,10 +257,6 @@ class _ImgFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF0ECFF),
-      alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, color: _offlinePurple, size: 54),
-    );
+    return Image.asset('assets/images/login-bg.png', fit: BoxFit.cover);
   }
 }

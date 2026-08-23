@@ -398,6 +398,9 @@ class UserProfile {
   final int? mentorPopupMonth;
   final dynamic notificationType;
   final dynamic countryCode;
+  // ISO 3166-1 alpha-2 (e.g. "do" for Dominican Republic) - disambiguates
+  // countryCode, which many countries share (every NANP country is "+1").
+  final dynamic countryIso;
   final dynamic textPhoneNumber;
   final dynamic emailOptions;
   final dynamic whatsappPhoneNumber;
@@ -437,6 +440,7 @@ class UserProfile {
     this.mentorPopupMonth,
     this.notificationType,
     this.countryCode,
+    this.countryIso,
     this.textPhoneNumber,
     this.emailOptions,
     this.whatsappPhoneNumber,
@@ -489,6 +493,7 @@ class UserProfile {
     int? mentorPopupMonth,
     dynamic notificationType,
     dynamic countryCode,
+    dynamic countryIso,
     dynamic textPhoneNumber,
     dynamic emailOptions,
     dynamic whatsappPhoneNumber,
@@ -523,6 +528,7 @@ class UserProfile {
     mentorPopupMonth: mentorPopupMonth ?? this.mentorPopupMonth,
     notificationType: notificationType ?? this.notificationType,
     countryCode: countryCode ?? this.countryCode,
+    countryIso: countryIso ?? this.countryIso,
     textPhoneNumber: textPhoneNumber ?? this.textPhoneNumber,
     emailOptions: emailOptions ?? this.emailOptions,
     whatsappPhoneNumber: whatsappPhoneNumber ?? this.whatsappPhoneNumber,
@@ -565,6 +571,7 @@ class UserProfile {
     mentorPopupMonth: _asInt(json["mentor_popup_month"]),
     notificationType: json["notification_type"],
     countryCode: json["country_code"],
+    countryIso: json["country_iso"],
     textPhoneNumber: json["text_phone_number"],
     emailOptions: json["email_options"],
     whatsappPhoneNumber: json["whatsapp_phone_number"],
@@ -604,6 +611,7 @@ class UserProfile {
     "mentor_popup_month": mentorPopupMonth,
     "notification_type": notificationType,
     "country_code": countryCode,
+    "country_iso": countryIso,
     "text_phone_number": textPhoneNumber,
     "email_options": emailOptions,
     "whatsapp_phone_number": whatsappPhoneNumber,
@@ -636,6 +644,8 @@ class UserProfile {
     String? division,
     String? department,
     dynamic avatarPath,
+    dynamic countryCode,
+    dynamic countryIso,
   }) => {
     "firstname": firstname ?? this.firstname,
     "middlename": middlename,
@@ -650,6 +660,8 @@ class UserProfile {
     "points": points,
     "website": website ?? this.website,
     "linked_in": linkedIn ?? this.linkedIn,
+    "country_code": countryCode ?? this.countryCode,
+    "country_iso": countryIso ?? this.countryIso,
     "metered_access": meteredAccess,
     "restricted_group_id": restrictedGroupId,
     "restriction_type": restrictionType,

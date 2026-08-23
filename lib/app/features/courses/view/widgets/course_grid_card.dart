@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 
-/// Same card design as the Course Catalog screen's course cards: a
-/// fixed-height image, an optional white info block underneath it, and a
-/// purple (#603D92) footer with the title and an outlined action button
-/// pinned to the bottom-left. Shared across the "My Courses" grid screens
-/// (Enrolled/Completed/Required/Development Plan) instead of each having
-/// its own copy-pasted card.
+/// Course card matching the reference design:
+///  • Full-width image, no padding, rounded top corners only
+///  • White content area: "NEXT AVAILABLE" label + date, course title
+///  • Full-width primary-color filled "View Course" button (pill shape)
+///  • "+" overlay button top-right (dev plan), shown via overlayButtons
 class CourseGridCard extends StatelessWidget {
   const CourseGridCard({
     super.key,
@@ -19,21 +19,26 @@ class CourseGridCard extends StatelessWidget {
     required this.onPressed,
     this.offlineCourse,
     this.infoSection,
+    this.overlayButtons,
+    this.progress,
   });
 
   final String? imageUrl;
   final String title;
   final String buttonLabel;
   final VoidCallback? onPressed;
-
-  /// Omit to hide the save-offline button (e.g. a custom development-plan
-  /// entry with no real course behind it).
   final Course? offlineCourse;
 
-  /// Rendered in the white block between the image and the purple footer
-  /// (e.g. star rating / progress bar / completed badge). Omitted entirely
-  /// when null, same as the catalog card without a next-session block.
+  /// White info block between image and title
+  /// (next-session date, star rating, etc.)
   final Widget? infoSection;
+
+  /// Overlay widget shown top-right of image (e.g. dev plan +/- button).
+  final Widget? overlayButtons;
+
+  /// Course completion percentage (0-100). When set and > 0, a small
+  /// circular progress ring is overlaid on the bottom-right of the image.
+  final int? progress;
 
   @override
   Widget build(BuildContext context) {
@@ -41,25 +46,22 @@ class CourseGridCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 2,
-            offset: const Offset(0, 1),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.max,
         children: [
+          // ── Image — full-width, no side padding ──────────────────────
           SizedBox(
-            height: 140,
+            height: 160,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -70,72 +72,109 @@ class CourseGridCard extends StatelessWidget {
                         errorBuilder: (_, __, ___) => const _ImgFallback(),
                       )
                     : const _ImgFallback(),
+                // Offline save button — top-left
                 if (offlineCourse != null)
                   Positioned(
-                    top: 12,
-                    left: 12,
+                    top: 10,
+                    left: 10,
                     child: OfflineCourseButton(course: offlineCourse!),
+                  ),
+                // Dev plan / extra overlay — top-right
+                if (overlayButtons != null)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: overlayButtons!,
+                  ),
+                // Progress ring — bottom-right
+                if (progress != null && progress! > 0)
+                  Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: _ProgressRing(progress: progress!),
                   ),
               ],
             ),
           ),
-          if (infoSection != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 18, 14, 16),
-              child: infoSection!,
-            ),
+
+          // ── White content area — title + button pinned to bottom ────
           Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-              decoration: const BoxDecoration(gradient: FigmaTokens.heroGradient),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Up to 3 lines before truncating - the grid row height
-                  // (set by each page) is sized generously enough that
-                  // realistic titles fit in full; this is just a safety net
-                  // against an unexpectedly long one overflowing the card.
+                  // Info section (next session date, rating, etc.)
+                  if (infoSection != null) ...[
+                    infoSection!,
+                    const SizedBox(height: 6),
+                  ],
+                  // Course title — pushed down a bit
+                  const SizedBox(height: 8),
                   Text(
                     title,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.roboto(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w400,
-                      height: 27 / 22,
+                      color: const Color(0xFF1A1A2E),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      height: 1.35,
                     ),
                   ),
+                  // Spacer pushes button to 15px from bottom
                   const Spacer(),
-                  OutlinedButton(
+                  // Full-width outlined View Course button
+                  ViewCourseButton(
+                    label: buttonLabel,
                     onPressed: onPressed,
-                    style: OutlinedButton.styleFrom(
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 13),
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                    ),
-                    child: Transform.translate(
-                      offset: const Offset(0, -1),
-                      child: Text(
-                        buttonLabel,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.roboto(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w400,
-                          height: 21 / 16,
-                        ),
-                      ),
-                    ),
                   ),
-                  const SizedBox(height: 8),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressRing extends StatelessWidget {
+  const _ProgressRing({required this.progress});
+  final int progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      padding: const EdgeInsets.all(2.5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: progress / 100,
+            strokeWidth: 2.5,
+            backgroundColor: const Color(0xFFE8E7F8),
+            valueColor: const AlwaysStoppedAnimation<Color>(FigmaTokens.primaryPurple),
+          ),
+          Text(
+            '$progress',
+            style: const TextStyle(
+              color: FigmaTokens.primaryPurple,
+              fontSize: 7,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -149,10 +188,81 @@ class _ImgFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF1EFFB),
-      alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, size: 54, color: Color(0xFF603D92)),
+    return Image.asset('assets/images/login-bg.png', fit: BoxFit.cover);
+  }
+}
+
+// ── Shared View Course button ─────────────────────────────────────────────
+//
+// Figma spec:
+//   • Default  — bg #F8FAFC, border 0.65px #693D94 (radius 14px),
+//                text Inter 12px SemiBold #693D94, height 40px
+//   • Hover    — bg #693D94, text white
+//   • Disabled — 50 % opacity of default
+//
+// Used by CourseGridCard and every other "View Course" surface in the app.
+class ViewCourseButton extends StatelessWidget {
+  const ViewCourseButton({
+    super.key,
+    this.label = 'View Course',
+    this.onPressed,
+    this.width = double.infinity,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+  /// Defaults to full-width; pass a fixed value for inline/narrow contexts.
+  final double width;
+
+  static const _purple = FigmaTokens.primaryPurple;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onPressed == null;
+
+    return HoverBuilder(
+      builder: (context, hovering) {
+        final bg = disabled
+            ? const Color(0xFFF8FAFC).withValues(alpha: 0.5)
+            : hovering
+                ? _purple
+                : const Color(0xFFF8FAFC);
+        final textColor = disabled
+            ? _purple.withValues(alpha: 0.4)
+            : hovering
+                ? Colors.white
+                : _purple;
+        final borderColor = disabled
+            ? _purple.withValues(alpha: 0.3)
+            : _purple;
+
+        return SizedBox(
+          width: width,
+          height: 40,
+          child: GestureDetector(
+            onTap: onPressed,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeInOut,
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: borderColor, width: 0.65),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: textColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

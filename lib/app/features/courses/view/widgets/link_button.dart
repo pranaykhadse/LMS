@@ -1,14 +1,12 @@
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
-import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
+import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class LinkButton extends ConsumerWidget {
   const LinkButton({
@@ -34,43 +32,20 @@ class LinkButton extends ConsumerWidget {
 
     final isOnline = !isManualOffline && connectionVM.isConnected;
     final primary = context.appColorScheme.primary;
-    final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
 
     if (!isOnline) {
       return Tooltip(
         message: "Internet required — not available offline",
-        child: isMacOS
-            ? appActionChip(
-                icon: icon,
-                label: label,
-                fgColor: Colors.white,
-                bgColor: Colors.grey.shade500,
-                borderColor: Colors.grey.shade500,
-                disabledColor: Colors.grey.shade500,
-                onPressed: null,
-                trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.white),
-              )
-            : SizedBox(
-                height: 30,
-                child: ElevatedButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.cloud_off, size: 13, color: Colors.white),
-                  label: Text(label),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade500,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: Colors.grey.shade500,
-                    disabledForegroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    textStyle: context.textTheme.bodySmall
-                        ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
-                ),
-              ),
+        child: appActionChip(
+          icon: icon,
+          label: label,
+          fgColor: Colors.white,
+          bgColor: Colors.grey.shade500,
+          borderColor: Colors.grey.shade500,
+          disabledColor: Colors.grey.shade500,
+          onPressed: null,
+          trailing: const Icon(Icons.cloud_off, size: 12, color: Colors.white),
+        ),
       );
     }
 
@@ -80,51 +55,23 @@ class LinkButton extends ConsumerWidget {
             .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
             .markAsRead(courseClass!);
       }
-      final uri = Uri.tryParse(url!);
-      if (uri != null && await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          Toast.error(context, 'Could not open link.');
-        }
-      }
+      if (!context.mounted) return;
+      await InAppWebViewPage.showWithAuth(context, ref,
+          url: url!, title: label);
     };
 
-    if (isMacOS) {
-      return appActionChip(
-        icon: icon,
-        label: label,
-        fgColor: primary,
-        bgColor: Colors.transparent,
-        borderColor: primary,
-        onPressed: onTap,
-      );
-    }
-
-    // ── iOS / other platforms: filled action button ───────────────────────────
-    return SizedBox(
-      height: 30,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, size: 13),
-        label: Text(label),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          textStyle: context.textTheme.bodySmall
-              ?.copyWith(fontWeight: FontWeight.w600, fontSize: 12),
-          elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        ),
-      ),
+    return appActionChip(
+      icon: icon,
+      label: label,
+      fgColor: primary,
+      bgColor: Colors.transparent,
+      borderColor: primary,
+      onPressed: onTap,
     );
   }
 }
 
-/// ActionChip with custom colors — macOS-only action button style.
+/// ActionChip with custom colors — same style on every platform.
 Widget appActionChip({
   required IconData icon,
   required String label,
@@ -140,6 +87,12 @@ Widget appActionChip({
     backgroundColor: bgColor,
     disabledColor: disabledColor ?? bgColor,
     side: BorderSide(color: borderColor),
+    // ActionChip defaults to a fully-rounded stadium shape - override it to
+    // match the same 8px radius every other compact action button (Watch
+    // Video, Article, Tasks, ...) uses.
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.all(Radius.circular(8)),
+    ),
     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
     labelPadding: const EdgeInsets.only(left: 2, right: 4),
     avatar: Icon(icon, size: 14, color: fgColor),

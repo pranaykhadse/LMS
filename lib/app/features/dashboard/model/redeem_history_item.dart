@@ -1,3 +1,5 @@
+import 'package:lms/app/core/utils/format_utils.dart';
+
 class RedeemHistoryResult {
   const RedeemHistoryResult({required this.total, required this.items});
   final int total;
@@ -58,7 +60,7 @@ class RedeemHistoryItem {
       note: note.isNotEmpty ? note : null,
       redeemedAt: json['redeemed_at'] == null
           ? null
-          : DateTime.tryParse(json['redeemed_at'].toString()),
+          : json['redeemed_at'].toString().parseApiUtc(),
       groupId: details['group_id'] == null ? null : _asInt(details['group_id']),
       description: details['description']?.toString(),
       managedBy: details['managed_by']?.toString(),
