@@ -390,7 +390,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               LmsOfflineToggle(
                 isOffline: isOffline,
                 iconSize: 14,
-                iconColor: Colors.white,
                 switchScale: 0.65,
                 onChanged: (val) {
                   ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
@@ -411,8 +410,9 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         children: [
                           LmsAppBarButton(
                             icon: Icons.notifications_none_rounded,
-                            // Mobile header utility icons are all white.
-                            iconColor: Colors.white,
+                            // Mobile dashboard reference: 14px bell in
+                            // #1A1A2E. Desktop retains its existing styling.
+                            iconColor: const Color(0xFF1A1A2E),
                             iconSize: 14,
                             boxSize: 30,
                             onTap: () => showLmsNotifications(bellContext),
@@ -1121,7 +1121,6 @@ class LmsOfflineToggle extends StatelessWidget {
     required this.onChanged,
     this.iconSize,
     this.switchScale,
-    this.iconColor,
   });
   final bool isOffline;
   final ValueChanged<bool> onChanged;
@@ -1130,7 +1129,6 @@ class LmsOfflineToggle extends StatelessWidget {
   /// desktop header to match its smaller, button-less icon styling.
   final double? iconSize;
   final double? switchScale;
-  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -1141,7 +1139,7 @@ class LmsOfflineToggle extends StatelessWidget {
         Icon(
           isOffline ? Icons.wifi_off_rounded : Icons.wifi_rounded,
           size: iconSize ?? (isWide ? 22 : 18),
-          color: iconColor ?? (isOffline ? Colors.amber.shade600 : Colors.white70),
+          color: isOffline ? Colors.amber.shade600 : Colors.white70,
         ),
         Transform.scale(
           scale: switchScale ?? (isWide ? 0.85 : 0.72),
