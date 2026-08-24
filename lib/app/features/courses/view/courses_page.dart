@@ -154,9 +154,9 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
             SliverPadding(
               padding: EdgeInsets.fromLTRB(
                 isWide ? 32 : 12,
-                isWide ? 24 : 42,
+                isWide ? 16 : 24,  // py-2 = 8px, plus breathing room
                 isWide ? 32 : 12,
-                isWide ? 12 : 28,
+                isWide ? 8 : 16,
               ),
               sliver: SliverToBoxAdapter(
                 child: _FilterPanel(
@@ -262,7 +262,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     crossAxisCount: columns,
                     crossAxisSpacing: width >= 760 ? 28 : 18,
                     mainAxisSpacing: width >= 760 ? 28 : 34,
-                    mainAxisExtent: width >= 760 ? 325 : 350,
+                    mainAxisExtent: width >= 760 ? 360 : 380,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _CatalogCourseCard(
@@ -448,7 +448,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               final width = constraints.maxWidth - 40; // account for container padding
               final columns = _catalogColumns(constraints.maxWidth);
               final itemW = (width - (columns - 1) * (isWide ? 28 : 18)) / columns;
-              final extent = isWide ? 325.0 : 350.0;
+              final extent = isWide ? 360.0 : 380.0;
               final rows = (courses.length / columns).ceil();
               final gridH = rows * extent + (rows - 1) * (isWide ? 28 : 34);
               return SizedBox(
@@ -1300,6 +1300,7 @@ class _CatalogCourseCard extends ConsumerStatefulWidget {
 class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
   bool _showOverlay = false;
   bool _isBusy = false;
+  bool _hovering = false;
 
   Future<void> _handleDevPlanAction(BuildContext context, bool isInPlan) async {
     final auth = ref.read(AuthStateNotifier.provider);
@@ -1357,22 +1358,24 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
 
     final isWide = MediaQuery.sizeOf(context).width >= 760;
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        // CSS ref: --card-radius: 16px
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          // CSS ref: --card-shadow: 0 10px 25px rgba(0,0,0,0.05)
-          BoxShadow(
-            color: Color.fromRGBO(0, 0, 0, 0.05),
-            blurRadius: 25,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Stack(
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, _hovering ? 0.12 : 0.05),
+              blurRadius: _hovering ? 40 : 25,
+              offset: Offset(0, _hovering ? 20 : 10),
+            ),
+          ],
+        ),
+        child: Stack(
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1493,6 +1496,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               ),
             ),
         ],
+        ),
       ),
     );
   }
