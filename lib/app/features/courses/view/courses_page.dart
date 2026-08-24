@@ -1444,7 +1444,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         const SizedBox(height: 6),
                         _StarRating(
                           rating: widget.course.offlineCourse.averageRating,
-                          count: widget.course.offlineCourse.ratingCount,
+                          count: widget.course.offlineCourse.ratingCount ?? 0,
                         ),
                       ],
                       const Spacer(),
