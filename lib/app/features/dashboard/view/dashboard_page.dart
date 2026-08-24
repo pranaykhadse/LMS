@@ -704,7 +704,7 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             icon: LucideIcons.alertCircle,
-            iconColor: const Color(0xFFFD9A02),
+            iconColor: const Color(0xFFF59E0B), // amber-500
             label: 'REQUIRED',
             value: required,
           ),
@@ -713,7 +713,7 @@ class _StatRow extends StatelessWidget {
         Expanded(
           child: _StatCard(
             icon: LucideIcons.checkCircle,
-            iconColor: const Color(0xFF00C950),
+            iconColor: const Color(0xFF22C55E), // green-500
             label: 'COMPLETED',
             value: completed,
           ),
