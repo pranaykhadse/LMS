@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -18,6 +19,9 @@ class AllCourseProgressItem {
   final String dueDate;
 
   factory AllCourseProgressItem.fromJson(Map<String, dynamic> json) {
+    // Debug: print all keys so we can see exact field names from API
+    debugPrint('=== AllCourseProgressItem keys: ${json.keys.toList()}');
+    debugPrint('=== AllCourseProgressItem sample: $json');
     return AllCourseProgressItem(
       courseId: json['course_id']?.toString() ?? '',
       courseName: json['course_name']?.toString() ?? '',
