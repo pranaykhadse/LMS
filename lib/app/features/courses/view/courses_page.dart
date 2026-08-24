@@ -422,11 +422,11 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
           child: Text(
             title,
-            style: GoogleFonts.roboto(
-              color: const Color(0xFFA20067),
-              fontSize: 24,
-              fontWeight: FontWeight.w400,
-              height: 28 / 24,
+            style: GoogleFonts.inter(
+              color: const Color(0xFF693D94),
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              height: 28 / 20,
             ),
           ),
         ),
@@ -491,9 +491,6 @@ class _FilterPanel extends StatelessWidget {
   final TextEditingController searchController;
   final List<CatalogSkill> skills;
   final String? selectedSkillId;
-  // Search/Reset both hit the live API with no offline fallback - offering
-  // them while there's no real connection just invites a tap that can only
-  // fail, the same reasoning as RetryButton.
   final bool offline;
   final ValueChanged<String?> onSkillChanged;
   final VoidCallback onApply;
@@ -505,6 +502,8 @@ class _FilterPanel extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 720;
+
+        // CSS ref: search input — rounded-[12px] border-[#e2e8f0] bg-[#f8fafc] h-[42px] px-4
         final searchField = _CatalogField(
           controller: searchController,
           hint: offline ? "You're offline" : 'Search',
@@ -513,106 +512,147 @@ class _FilterPanel extends StatelessWidget {
           enabled: !offline,
           onSubmitted: (_) => onApply(),
         );
+
+        // CSS ref: Strategic Imperative input — same style as search
+        final strategicField = _CatalogField(
+          hint: 'Strategic Imperative',
+          showLeadingIcon: true,
+          enabled: !offline,
+        );
+
+        // CSS ref: Competencies input — same style as search
+        final competenciesField = _CatalogField(
+          hint: 'Competencies',
+          showLeadingIcon: true,
+          enabled: !offline,
+        );
+
         final skillDropdown = _SkillDropdown(
           skills: skills,
           value: selectedSkillId,
           onChanged: onSkillChanged,
           inline: wide,
         );
+
+        // CSS ref: undo-btn — bg-[#f1f5f9] text-[#64748b] rounded-[12px] h-[42px] w-[30%]
         final undoButton = SizedBox(
-          width: 48,
+          width: 42,
           height: 42,
           child: HoverBuilder(
-            builder: (context, hovering) => ElevatedButton(
-              onPressed: offline ? null : onReset,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                backgroundColor:
-                    hovering ? FigmaTokens.purpleHover : _catalogUndoBlue,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+            builder: (context, hovering) => GestureDetector(
+              onTap: offline ? null : onReset,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                decoration: BoxDecoration(
+                  color: hovering
+                      ? const Color(0xFFE2E8F0)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                alignment: Alignment.center,
+                child: const Icon(Icons.undo_rounded,
+                    size: 18, color: Color(0xFF64748B)),
               ),
-              child: const Icon(Icons.undo_rounded, size: 18),
-            ),
-          ),
-        );
-        final calendarButton = HoverBuilder(
-          builder: (context, hovering) => ElevatedButton(
-            onPressed: onCalendarView,
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  hovering ? FigmaTokens.purpleHover : _catalogCalendarBlue,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            child: Text(
-              'Calendar View',
-              style: GoogleFonts.roboto(fontWeight: FontWeight.w700, fontSize: 16),
             ),
           ),
         );
 
+        // CSS ref: calendar-btn — bg-[#693D94] rounded-[12px] font-semibold text-[13px] h-[42px]
+        final calendarButton = HoverBuilder(
+          builder: (context, hovering) => GestureDetector(
+            onTap: onCalendarView,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              height: 42,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: hovering
+                    ? const Color(0xFF5A3480)
+                    : _catalogCalendarBlue,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF693D94).withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'Calendar View',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
+        );
+
+        // CSS ref: search-blcok — bg-white rounded-[16px] p-[10px] shadow border-[#f0f1f5]
+        const outerDecoration = BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.all(Radius.circular(16)),
+        );
+
         if (wide) {
           return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
+            padding: const EdgeInsets.all(10),
+            decoration: outerDecoration.copyWith(
+              boxShadow: const [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Color.fromRGBO(0, 0, 0, 0.05),
+                  blurRadius: 20,
+                  offset: Offset(0, 4),
                 ),
               ],
+              border: Border.all(color: const Color(0xFFF0F1F5)),
             ),
+            // CSS ref: row — Search | Strategic Imperative | Competencies | Skills | [Reset] [Calendar]
             child: Row(
               children: [
-                Expanded(flex: 5, child: searchField),
-                const SizedBox(width: 16),
-                Expanded(flex: 3, child: skillDropdown),
-                const SizedBox(width: 16),
+                Expanded(child: searchField),
+                const SizedBox(width: 8),
+                Expanded(child: strategicField),
+                const SizedBox(width: 8),
+                Expanded(child: competenciesField),
+                const SizedBox(width: 8),
+                Expanded(child: skillDropdown),
+                const SizedBox(width: 8),
                 undoButton,
-                const SizedBox(width: 16),
-                SizedBox(height: 42, child: calendarButton),
+                const SizedBox(width: 8),
+                calendarButton,
               ],
             ),
           );
         }
 
+        // Mobile: stack vertically
         return Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
+          decoration: outerDecoration.copyWith(
+            boxShadow: const [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: Color.fromRGBO(0, 0, 0, 0.05),
+                blurRadius: 20,
+                offset: Offset(0, 4),
               ),
             ],
+            border: Border.all(color: const Color(0xFFF0F1F5)),
           ),
           child: Column(
             children: [
               searchField,
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               skillDropdown,
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   undoButton,
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: SizedBox(height: 48, child: calendarButton),
-                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: calendarButton),
                 ],
               ),
             ],
@@ -706,7 +746,7 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
       controller: _controller,
       enabled: widget.enabled,
       autofocus: widget.autofocus,
-      style: GoogleFonts.roboto(color: const Color(0xFF495057), fontSize: 16),
+      style: GoogleFonts.inter(color: const Color(0xFF475569), fontSize: 14),
       onChanged: widget.onChanged,
       onSubmitted: (value) {
         FocusScope.of(context).unfocus();
@@ -1145,30 +1185,35 @@ InputDecoration _fieldDecoration(
   bool showLeadingIcon = true,
 }) => InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.roboto(color: const Color(0xFF999999), fontSize: 16),
+      // CSS ref: text-[#94a3b8] (placeholder) font-size 14px
+      hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 14),
       prefixIcon: showLeadingIcon
-          ? const Icon(
-              Icons.search_rounded,
-              color: FigmaTokens.primaryPurple,
-              size: 20,
-            )
+          ? const Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 16)
           : null,
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.white,
+      // CSS ref: bg-[#f8fafc]
+      fillColor: const Color(0xFFF8FAFC),
       isDense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      // CSS ref: h-[42px] — contentPadding controls vertical height
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(4),
-        borderSide: const BorderSide(color: FigmaTokens.cardBorders),
+        // CSS ref: rounded-[12px]
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(4),
-        borderSide: const BorderSide(color: FigmaTokens.cardBorders),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        // CSS ref: focus:border-color var(--primary-color)
+        borderSide: const BorderSide(color: Color(0xFF693D94), width: 1.5),
       ),
       disabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(4),
-        borderSide: const BorderSide(color: FigmaTokens.cardBorders),
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
     );
 
@@ -1316,12 +1361,14 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
+        // CSS ref: --card-radius: 16px
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          // CSS ref: --card-shadow: 0 10px 25px rgba(0,0,0,0.05)
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Color.fromRGBO(0, 0, 0, 0.05),
+            blurRadius: 25,
+            offset: Offset(0, 10),
           ),
         ],
       ),
@@ -1338,57 +1385,71 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               ),
               // -- White content area ------------------------------------
               // -- White content area � title + button pinned to bottom -
+              // -- White content area: session info, title, rating, btn --
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // CSS ref: .session-info — "NEXT AVAILABLE" label + date
                       if (widget.course.nextSession != null) ...[
                         Text(
                           'NEXT AVAILABLE',
-                          style: GoogleFonts.roboto(
+                          style: GoogleFonts.inter(
                             color: const Color(0xFF9CA3AF),
                             fontSize: 10,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             letterSpacing: 0.8,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Row(
                           children: [
-                            Icon(Icons.calendar_today_rounded,
-                                size: 12, color: FigmaTokens.primaryPurple),
-                            const SizedBox(width: 5),
-                            Text(
-                              _formatNextSession(widget.course.nextSession!),
-                              style: GoogleFonts.roboto(
-                                color: FigmaTokens.primaryPurple,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                            const Icon(Icons.calendar_today_rounded,
+                                size: 11, color: Color(0xFF693D94)),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                _formatNextSession(widget.course.nextSession!),
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF693D94),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                       ],
-                      const SizedBox(height: 8),
+                      // CSS ref: .course-title — Inter 14px w600 #1E293B
                       Text(
                         widget.course.name.isEmpty
                             ? 'Untitled Course'
                             : widget.course.name,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.roboto(
-                          color: const Color(0xFF1A1A2E),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          height: 1.35,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF1E293B),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          height: 1.4,
                         ),
                       ),
-                      // Spacer pins button 15px from bottom
+                      // CSS ref: .rating-bar — stars + avg + count
+                      if (widget.course.offlineCourse.displayRating == 1 &&
+                          widget.course.offlineCourse.averageRating > 0) ...[
+                        const SizedBox(height: 6),
+                        _StarRating(
+                          rating: widget.course.offlineCourse.averageRating,
+                          count: widget.course.offlineCourse.ratingCount,
+                        ),
+                      ],
                       const Spacer(),
-                      ViewCourseButton(
+                      // CSS ref: .btn-modern-primary — filled #693D94 hover #5a3480
+                      _ModernViewCourseButton(
                         onPressed: viewDisabled
                             ? null
                             : () => Modular.to.pushNamed(
@@ -1610,6 +1671,115 @@ class _CourseImage extends StatelessWidget {
                       color: _catalogPurple,
                     ),
                   ),
+    );
+  }
+}
+
+// ── Modern filled View Course button ─────────────────────────────────────────
+// CSS ref: .btn-modern-primary — bg-[#693D94] hover:bg-[#5a3480] text-white
+//          rounded-[8px] full-width font-weight:600 font-size:13px
+
+class _ModernViewCourseButton extends StatefulWidget {
+  const _ModernViewCourseButton({this.onPressed});
+  final VoidCallback? onPressed;
+
+  @override
+  State<_ModernViewCourseButton> createState() => _ModernViewCourseButtonState();
+}
+
+class _ModernViewCourseButtonState extends State<_ModernViewCourseButton> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = widget.onPressed == null;
+    return MouseRegion(
+      cursor: disabled ? SystemMouseCursors.basic : SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        onTap: widget.onPressed,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: double.infinity,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: disabled
+                ? const Color(0xFF693D94).withValues(alpha: 0.4)
+                : _hovering
+                    ? const Color(0xFF5A3480)
+                    : const Color(0xFF693D94),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: disabled || _hovering
+                ? null
+                : const [
+                    BoxShadow(
+                      color: Color.fromRGBO(105, 61, 148, 0.25),
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+          ),
+          child: Text(
+            'View Course',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Star rating row ────────────────────────────────────────────────────────────
+// CSS ref: .rating-bar — stars (filled/half/empty) + average + (count)
+
+class _StarRating extends StatelessWidget {
+  const _StarRating({required this.rating, required this.count});
+  final double rating;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        ...List.generate(5, (i) {
+          final filled = rating >= i + 1;
+          final half = !filled && rating >= i + 0.5;
+          return Icon(
+            filled
+                ? Icons.star_rounded
+                : half
+                    ? Icons.star_half_rounded
+                    : Icons.star_outline_rounded,
+            size: 14,
+            color: const Color(0xFFFFA500), // amber star color
+          );
+        }),
+        const SizedBox(width: 4),
+        Text(
+          rating.toStringAsFixed(1),
+          style: GoogleFonts.inter(
+            color: const Color(0xFF64748B),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (count > 0) ...[
+          const SizedBox(width: 2),
+          Text(
+            '($count)',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF94A3B8),
+              fontSize: 11,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
