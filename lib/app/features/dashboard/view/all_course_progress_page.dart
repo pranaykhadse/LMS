@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
-import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/horizontal_scroll_hint.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
@@ -21,12 +21,7 @@ const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
 
-// # (36) + gap (12) + COURSE/CATEGORY/DUE DATE (240 min, enough for a
-// course title on two lines) + gap (12) + PROGRESS (160) + the table row's
-// own horizontal padding (24 each side) - the narrowest the table can go
-// before it needs to scroll horizontally instead of squeezing the course
-// column down to nothing (which is what silently hid its category/date
-// subtitle on a phone-narrow screen).
+// Desktop: table scrolls horizontally below _minTableWidth. Mobile: columns flex naturally.
 const _minTableWidth = 520.0;
 
 class AllCourseProgressPage extends ConsumerWidget {
@@ -54,6 +49,11 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: px-4 sm:px-6 py-6 sm:py-8
+    final isWide = MediaQuery.of(context).size.width >= 600;
+    final hPad = isWide ? 24.0 : 16.0;
+    final vPad = isWide ? 32.0 : 24.0;
+
     switch (state.providerState) {
       case DataProviderState.loading:
       case DataProviderState.idle:
@@ -69,7 +69,7 @@ class _Body extends StatelessWidget {
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+              padding: EdgeInsets.fromLTRB(hPad, vPad, hPad, 24),
               child: _Header(count: state.totalCourses),
             ),
             Expanded(
@@ -77,9 +77,9 @@ class _Body extends StatelessWidget {
                 color: _purple,
                 onRefresh: () async => notifier.fetch(page: state.page),
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                  padding: EdgeInsets.fromLTRB(hPad, 0, hPad, vPad),
                   children: [
-                    const HorizontalScrollHint(),
+                    if (isWide) const HorizontalScrollHint(),
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -87,51 +87,61 @@ class _Body extends StatelessWidget {
                         border: Border.all(color: const Color(0xFFE5E7EB)),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      // Squeezing the course column's Expanded into
-                      // whatever's left after the fixed-width PROGRESS
-                      // column on a phone-narrow screen collapsed it far
-                      // enough to silently hide the category/date subtitle
-                      // line entirely. Below the table's real minimum
-                      // width, this scrolls horizontally instead - same
-                      // columns, same widths, just pannable.
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final tableWidth = constraints.maxWidth < _minTableWidth
-                              ? _minTableWidth
-                              : constraints.maxWidth;
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: SizedBox(
-                              width: tableWidth,
-                              child: Column(
-                                children: [
-                                  const _TableHeaderRow(),
-                                  for (var i = 0; i < state.courses.length; i++)
-                                    _CourseRow(
-                                      index: (state.page - 1) * 10 + i + 1,
-                                      item: state.courses[i],
-                                      showDivider: i < state.courses.length - 1,
+                      child: isWide
+                          // Desktop: horizontal scroll when narrower than _minTableWidth
+                          ? LayoutBuilder(
+                              builder: (context, constraints) {
+                                final tableWidth = constraints.maxWidth < _minTableWidth
+                                    ? _minTableWidth
+                                    : constraints.maxWidth;
+                                return SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: SizedBox(
+                                    width: tableWidth,
+                                    child: Column(
+                                      children: [
+                                        const _TableHeaderRow(isWide: true),
+                                        for (var i = 0; i < state.courses.length; i++)
+                                          _CourseRow(
+                                            index: (state.page - 1) * 100 + i + 1,
+                                            item: state.courses[i],
+                                            showDivider: i < state.courses.length - 1,
+                                            isWide: true,
+                                          ),
+                                      ],
                                     ),
-                                ],
-                              ),
+                                  ),
+                                );
+                              },
+                            )
+                          // Mobile: columns flex, no horizontal scroll
+                          : Column(
+                              children: [
+                                const _TableHeaderRow(isWide: false),
+                                for (var i = 0; i < state.courses.length; i++)
+                                  _CourseRow(
+                                    index: (state.page - 1) * 100 + i + 1,
+                                    item: state.courses[i],
+                                    showDivider: i < state.courses.length - 1,
+                                    isWide: false,
+                                  ),
+                              ],
                             ),
-                          );
-                        },
-                      ),
                     ),
-                    const AppFooter(),
                   ],
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: PaginationWidget(
-                page: state.page,
-                pages: state.totalPages,
-                onPage: (page) => _goToPage(context, page),
+            // Hide pagination when there's only one page
+            if (state.totalPages > 1)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: PaginationWidget(
+                  page: state.page,
+                  pages: state.totalPages,
+                  onPage: (page) => _goToPage(context, page),
+                ),
               ),
-            ),
           ],
         );
     }
@@ -144,7 +154,7 @@ class _Body extends StatelessWidget {
   }
 }
 
-// ─── In-page header ─────────────────────────────────────────────────────────
+// ─── In-page header ──────────────────────────────────────────────────────────
 
 class _Header extends StatelessWidget {
   const _Header({required this.count});
@@ -161,7 +171,7 @@ class _Header extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.arrow_back, size: 14, color: _purple),
+                const Icon(LucideIcons.arrowLeft, size: 14, color: _purple),
                 const SizedBox(width: 6),
                 Text(
                   'Back',
@@ -169,6 +179,7 @@ class _Header extends StatelessWidget {
                     color: _purple,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
+                    height: 20 / 14,
                   ),
                 ),
               ],
@@ -176,22 +187,37 @@ class _Header extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        Container(width: 1, height: 16, color: const Color(0xFFD1D5DB)),
+        Text(
+          '|',
+          style: GoogleFonts.inter(
+            color: const Color(0xFFD1D5DB),
+            fontSize: 14,
+          ),
+        ),
         const SizedBox(width: 12),
         Text(
           'All Course Progress',
           style: GoogleFonts.inter(
             color: const Color(0xFF1F2937),
-            fontSize: 18,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
+            height: 20 / 14,
           ),
         ),
-        const SizedBox(width: 10),
-        Text(
-          '$count courses',
-          style: GoogleFonts.inter(
-            color: const Color(0xFF9CA3AF),
-            fontSize: 14,
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            '$count courses',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF9CA3AF),
+              fontSize: 14,
+              height: 20 / 14,
+            ),
           ),
         ),
       ],
@@ -199,36 +225,40 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ─── Table header row ────────────────────────────────────────────────────────
-//
-// #  |  COURSE / CATEGORY / DUE DATE  (combined, every size)  |  PROGRESS
+// ─── Table header row ─────────────────────────────────────────────────────────
 
 class _TableHeaderRow extends StatelessWidget {
-  const _TableHeaderRow();
+  const _TableHeaderRow({this.isWide = true});
+  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
     final style = GoogleFonts.inter(
       color: const Color(0xFF9CA3AF),
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: FontWeight.w600,
-      letterSpacing: 0.5,
+      letterSpacing: 0.8,
+      height: 16 / 11,
     );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
         color: Color(0xFFF9FAFB),
         border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
       ),
       child: Row(
         children: [
-          SizedBox(width: 36, child: Text('#', style: style)),
+          SizedBox(width: isWide ? 32.0 : 24.0, child: Text('#', style: style)),
+          const SizedBox(width: 24),
           Expanded(
             child: Text('COURSE / CATEGORY / DUE DATE', style: style),
           ),
-          const SizedBox(width: 12),
-          SizedBox(width: 160, child: Text('PROGRESS', style: style)),
+          const SizedBox(width: 16),
+          SizedBox(
+            width: isWide ? 160.0 : 80.0,
+            child: Text('PROGRESS', style: style),
+          ),
         ],
       ),
     );
@@ -237,105 +267,137 @@ class _TableHeaderRow extends StatelessWidget {
 
 // ─── Course row ───────────────────────────────────────────────────────────────
 
-class _CourseRow extends StatelessWidget {
+class _CourseRow extends StatefulWidget {
   const _CourseRow({
     required this.index,
     required this.item,
     required this.showDivider,
+    this.isWide = true,
   });
   final int index;
   final AllCourseProgressItem item;
   final bool showDivider;
+  final bool isWide;
+
+  @override
+  State<_CourseRow> createState() => _CourseRowState();
+}
+
+class _CourseRowState extends State<_CourseRow> {
+  bool _hovering = false;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: showDivider
-          ? const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
-            )
-          : null,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // ── # ──────────────────────────────────────────────────────
-          SizedBox(
-            width: 36,
-            child: Text(
-              '$index',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF9CA3AF),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: _hovering ? const Color(0xFFF8F8FF) : Colors.white,
+          border: widget.showDivider
+              ? const Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))
+              : null,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Index
+            SizedBox(
+              width: widget.isWide ? 32.0 : 24.0,
+              child: Text(
+                '${widget.index}',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 20 / 14,
+                ),
               ),
             ),
-          ),
-
-          // ── COURSE / CATEGORY / DUE DATE ───────────────────────────
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () => Modular.to.pushNamed(
-                    CoursesModule.construct(
-                        '${CoursesModule.detail}/${item.courseId}'),
-                  ),
-                  child: Text(
-                    item.courseName,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF1F2937),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.35,
+            const SizedBox(width: 24),
+            // Course / Category / Due Date
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () => Modular.to.pushNamed(
+                      CoursesModule.construct(
+                          '${CoursesModule.detail}/${widget.item.courseId}'),
+                    ),
+                    child: Text(
+                      widget.item.courseName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF1F2937),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.375,
+                      ),
                     ),
                   ),
-                ),
-                if (item.category.isNotEmpty || item.dueDate.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      if (item.category.isNotEmpty)
-                        Text(
-                          item.category,
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF9CA3AF),
-                            fontSize: 12,
+                  if (widget.item.category.isNotEmpty || widget.item.dueDate.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 2,
+                      children: [
+                        if (widget.item.category.isNotEmpty)
+                          Text(
+                            widget.item.category,
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF9CA3AF),
+                              fontSize: 12,
+                              height: 16 / 12,
+                            ),
                           ),
-                        ),
-                      if (item.category.isNotEmpty && item.dueDate.isNotEmpty)
-                        Text(
-                          '  ·  ',
-                          style: GoogleFonts.inter(
-                              color: const Color(0xFFD1D5DB), fontSize: 12),
-                        ),
-                      if (item.dueDate.isNotEmpty) ...[
-                        const Icon(Icons.calendar_today_rounded,
-                            size: 10, color: _purple),
-                        const SizedBox(width: 4),
-                        Text(
-                          item.dueDate,
-                          style: GoogleFonts.inter(
-                            color: const Color(0xFF6B7280),
-                            fontSize: 12,
+                        if (widget.item.category.isNotEmpty && widget.item.dueDate.isNotEmpty)
+                          Text(
+                            '·',
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFFD1D5DB),
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
+                        if (widget.item.dueDate.isNotEmpty)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(LucideIcons.calendarDays,
+                                  size: 10, color: _purple),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  widget.item.dueDate,
+                                  softWrap: true,
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF6B7280),
+                                    fontSize: 12,
+                                    height: 16 / 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
-                    ],
-                  ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-
-          // ── PROGRESS ────────────────────────────────────────────────
-          const SizedBox(width: 12),
-          SizedBox(width: 160, child: _ProgressCell(percent: item.progress)),
-        ],
+            const SizedBox(width: 16),
+            // Progress
+            SizedBox(
+              width: widget.isWide ? 160.0 : 80.0,
+              child: _ProgressCell(percent: widget.item.progress),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -374,7 +436,7 @@ class _ProgressCell extends StatelessWidget {
   }
 }
 
-// ─── Empty / error states ───────────────────────────────────────────────────
+// ─── Empty / error states ─────────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState();

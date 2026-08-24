@@ -4,7 +4,7 @@ import 'package:lms/app/features/authentication/app_state/auth_state_provider.da
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/dashboard/repository/all_course_progress_repository.dart';
 
-const _perPage = 10;
+const _perPage = 100;
 
 class AllCourseProgressState {
   const AllCourseProgressState({
