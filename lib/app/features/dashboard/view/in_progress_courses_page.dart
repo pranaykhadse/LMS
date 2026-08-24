@@ -518,14 +518,17 @@ class _ResumeButtonState extends State<_ResumeButton> {
             borderRadius: BorderRadius.circular(12), // rounded-xl
           ),
           alignment: Alignment.center,
-          child: Text(
-            'Resume',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              height: 16 / 11,
+          child: Transform.translate(
+            offset: const Offset(0, -1),
+            child: Text(
+              'Resume',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 16 / 11,
+              ),
             ),
           ),
         ),
