@@ -2869,7 +2869,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                   height: 50,
                   child: TextField(
                     controller: _firstController,
-                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF533641)),
+                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF374151)),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -2880,9 +2880,8 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                        borderSide: const BorderSide(color: Color(0xFF693D94), width: 1),
                       ),
-
                     ),
                   ),
                 ),
@@ -2897,7 +2896,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                   height: 50,
                   child: TextField(
                     controller: _lastController,
-                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF533641)),
+                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF374151)),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -2908,9 +2907,8 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                        borderSide: const BorderSide(color: Color(0xFF693D94), width: 1),
                       ),
-
                     ),
                   ),
                 ),
@@ -2926,7 +2924,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                   child: TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF533641)),
+                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF374151)),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -2937,29 +2935,25 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                        borderSide: const BorderSide(color: Color(0xFF693D94), width: 1),
                       ),
-
                     ),
                   ),
                 ),
                 Padding(
-                  // Design ref (mobile only, desktop unchanged): just a
-                  // 16px top gap, no other padding - 16px/26px line-height
-                  // text (vs desktop's 12px/20px), body italic.
-                  padding: isTablet
-                      ? const EdgeInsets.fromLTRB(12, 16, 12, 12)
-                      : const EdgeInsets.only(top: 16),
+                  // Design ref: px-4 py-3 = 16/12/16/12 both mobile+desktop
+                  // Note: 12px, height 20/12, "Note:" bold #4A5565, body #6A7282
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                   child: RichText(
                   text: TextSpan(
                     children: [
                       TextSpan(
                         text: 'Note: ',
                         style: GoogleFonts.inter(
-                          fontSize: isTablet ? 12 : 16,
-                          height: isTablet ? 20 / 12 : 26 / 16,
+                          fontSize: 12,
+                          height: 20 / 12,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF6A7282),
+                          color: const Color(0xFF4A5565),
                         ),
                       ),
                       TextSpan(
@@ -2967,10 +2961,9 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                             ? "We ask that you confirm your supervisor's information every three months. If the above information is correct, click Confirm. You can edit your supervisor's information at anytime through your profile."
                             : "We ask that you confirm your mentor's information every three months. If the above information is correct, click Confirm. You can edit your mentor's information at anytime through your profile.",
                         style: GoogleFonts.inter(
-                          fontSize: isTablet ? 12 : 16,
-                          height: isTablet ? 20 / 12 : 26 / 16,
+                          fontSize: 12,
+                          height: 20 / 12,
                           fontWeight: FontWeight.w400,
-                          fontStyle: isTablet ? FontStyle.normal : FontStyle.italic,
                           color: const Color(0xFF6A7282),
                         ),
                       ),
@@ -2980,10 +2973,8 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Skip + Confirm buttons, centered as a pair. Design ref
-                // (mobile only, desktop unchanged): radius 14 (was 20),
-                // 16px gap (was 12), SemiBold 600 text (was Medium 500),
-                // Skip gets a visible border on mobile.
+                // Skip + Confirm buttons, centered as a pair.
+                // Design ref: rounded-[20px] = 20 on both mobile+desktop
                 Center(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -2993,15 +2984,13 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(isTablet ? 20 : 14),
+                            borderRadius: BorderRadius.circular(20),
                             onTap: null, // Skip is intentionally disabled.
                             child: Container(
                               decoration: BoxDecoration(
                                 color: const Color(0xFFF4F5F7),
-                                borderRadius: BorderRadius.circular(isTablet ? 20 : 14),
-                                border: isTablet
-                                    ? null
-                                    : Border.all(color: const Color(0xFFD1D5DC), width: 0.65),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
                               ),
                               alignment: Alignment.center,
                               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
@@ -3010,8 +2999,8 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   height: 24 / 16,
-                                  fontWeight: isTablet ? FontWeight.w500 : FontWeight.w600,
-                                  color: isTablet ? const Color(0xFF826A72) : const Color(0xFF6A7282),
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF6B7280),
                                 ),
                               ),
                             ),
@@ -3024,12 +3013,12 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(isTablet ? 20 : 14),
+                            borderRadius: BorderRadius.circular(20),
                             onTap: (!_valid || _submitting) ? null : _confirm,
                             child: Container(
                               decoration: BoxDecoration(
                                 color: _valid ? const Color(0xFF693D94) : const Color(0xFFE5E7EB),
-                                borderRadius: BorderRadius.circular(isTablet ? 20 : 14),
+                                borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(color: const Color(0xFF000000).withOpacity(0.08), offset: const Offset(0, 8), blurRadius: 10, spreadRadius: -6),
                                 ],
@@ -3041,7 +3030,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                                 style: GoogleFonts.inter(
                                   fontSize: 16,
                                   height: 24 / 16,
-                                  fontWeight: isTablet ? FontWeight.w500 : FontWeight.w600,
+                                  fontWeight: FontWeight.w500,
                                   color: _valid ? Colors.white : const Color(0xFF6B7280),
                                 ),
                               ),
