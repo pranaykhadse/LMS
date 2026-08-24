@@ -2446,9 +2446,9 @@ class _RequiredRow extends ConsumerWidget {
 class _ViewButton extends StatelessWidget {
   const _ViewButton({
     required this.onPressed,
-    // Design ref default: Discussion Board's button.shrink-0 (13/500)
-    this.fontSize = 13,
-    this.fontWeight = FontWeight.w500,
+    // Design ref: text-xs font-semibold = 12px/600
+    this.fontSize = 12,
+    this.fontWeight = FontWeight.w600,
   });
   final VoidCallback? onPressed;
   final double fontSize;
@@ -2459,9 +2459,9 @@ class _ViewButton extends StatelessWidget {
     return HoverBuilder(
       builder: (context, hovering) {
         final filled = hovering && onPressed != null;
-        // Design ref: rounded-xl = 12px on mobile, 14px on tablet/desktop
+        // Design ref: rounded-xl = 12px on both mobile and desktop
         final borderRadius = BorderRadius.all(
-          Radius.circular(Responsive.isTablet(context) ? 14 : 12),
+          Radius.circular(12),
         );
         return Material(
           color: filled ? _purple : Colors.transparent,
