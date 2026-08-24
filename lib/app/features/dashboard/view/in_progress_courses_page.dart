@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
-import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/horizontal_scroll_hint.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
@@ -87,7 +86,6 @@ class _Body extends StatelessWidget {
                   padding: EdgeInsets.fromLTRB(hPad, 0, hPad, vPad),
                   children: [
                     const HorizontalScrollHint(),
-                    // bg-white rounded-xl border border-gray-200 overflow-hidden
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -120,7 +118,6 @@ class _Body extends StatelessWidget {
                         },
                       ),
                     ),
-                    const AppFooter(),
                   ],
                 ),
               ),
@@ -514,13 +511,16 @@ class _ResumeButtonState extends State<_ResumeButton> {
                 ),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
+          width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), // px-3 py-1
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(12), // rounded-xl
           ),
+          alignment: Alignment.center,
           child: Text(
             'Resume',
+            textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 11,
