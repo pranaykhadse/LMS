@@ -1568,7 +1568,8 @@ class _SessionRow extends StatelessWidget {
             height: 18 / 12,
           ),
         ),
-        if (event.startTime != null && event.startTime!.isNotEmpty) ...[
+        // Design ref: separator + time are "hidden sm:inline" — desktop only
+        if (isTablet && event.startTime != null && event.startTime!.isNotEmpty) ...[
           Text(
             ' • ',
             style: GoogleFonts.inter(color: const Color(0xFFD1D5DB), fontSize: 12, height: 18 / 12),
@@ -1669,7 +1670,27 @@ class _SessionRow extends StatelessWidget {
                 if (hostedBy != null) ...[const SizedBox(height: 2), hostedBy],
               ]
             : [
-                title,
+                // Mobile: title on first line, badge on separate row below
+                // (sm:hidden span in reference — badge below title, not inline)
+                titleText,
+                if (_showBadge) ...[
+                  const SizedBox(height: 2), // mt-0.5 = 2px
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0E8F7),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Virtual Class ${_vcNum.toString()}',
+                      style: GoogleFonts.inter(
+                        color: _purple,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 6),
                 dateRow,
                 if (hostedBy != null) ...[const SizedBox(height: 2), hostedBy],
