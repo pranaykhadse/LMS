@@ -483,10 +483,8 @@ class DashboardBody extends ConsumerWidget {
                   Padding(
                     padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
                     child: isWide
-                        ? Row(
-                            // stretch = both cards fill the same height
-                            // so Discussion Board bottom aligns with
-                            // Rewards & Points regardless of content.
+                        ? IntrinsicHeight(
+                            child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                                 Expanded(
@@ -501,7 +499,8 @@ class DashboardBody extends ConsumerWidget {
                                   ),
                                 ),
                               ],
-                            )
+                            ),
+                          )
                         : Column(
                             children: [
                               _RewardsPointsCard(
