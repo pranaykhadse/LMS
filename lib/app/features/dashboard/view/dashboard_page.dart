@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_modular/flutter_modular.dart';
@@ -225,32 +223,23 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           Positioned.fill(
             child: Material(
               color: Colors.transparent,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                      child: Container(color: const Color(0xFFD6D9F1).withOpacity(0.5)),
-                    ),
-                  ),
-                  Center(
-                    child: _InlineConfirmDialog(
-                      // Explicit key so this never gets mistaken for the
-                      // mentor dialog below and has its State reused across
-                      // them - see the mentor one's key comment.
-                      key: const ValueKey('supervisor-confirm-dialog'),
-                      data: _supData!,
-                      title: 'Confirm Your Supervisor',
-                      type: 'supervisor',
-                      onConfirmed: () {
-                        setState(() => _showSupervisorInline = false);
-                        if (_supervisorCompleter?.isCompleted == false) {
-                          _supervisorCompleter!.complete();
-                        }
-                      },
-                    ),
-                  ),
-                ],
+              child: Container(
+                // CSS ref: background: rgba(180, 185, 230, 0.55), px-4 horizontal padding
+                color: const Color.fromRGBO(180, 185, 230, 0.55),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.center,
+                child: _InlineConfirmDialog(
+                  key: const ValueKey('supervisor-confirm-dialog'),
+                  data: _supData!,
+                  title: 'Confirm Your Supervisor',
+                  type: 'supervisor',
+                  onConfirmed: () {
+                    setState(() => _showSupervisorInline = false);
+                    if (_supervisorCompleter?.isCompleted == false) {
+                      _supervisorCompleter!.complete();
+                    }
+                  },
+                ),
               ),
             ),
           ),
@@ -258,37 +247,31 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           Positioned.fill(
             child: Material(
               color: Colors.transparent,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                      child: Container(color: const Color(0xFFD6D9F1).withOpacity(0.5)),
-                    ),
-                  ),
-                  Center(
-                    child: _InlineConfirmDialog(
-                      // Without a distinct key from the supervisor dialog
-                      // above, Flutter can reconcile them as "the same
-                      // widget updated" (same runtimeType, same Stack slot)
-                      // once the supervisor overlay closes and the mentor
-                      // one opens - reusing the old State object instead of
-                      // creating a fresh one. That left _submitting stuck
-                      // at true from the supervisor confirm, permanently
-                      // disabling the mentor dialog's Confirm button.
-                      key: const ValueKey('mentor-confirm-dialog'),
-                      data: _mentData!,
-                      title: 'Confirm Your Mentor',
-                      type: 'mentor',
-                      onConfirmed: () {
-                        setState(() => _showMentorInline = false);
-                        if (_mentorCompleter?.isCompleted == false) {
-                          _mentorCompleter!.complete();
-                        }
-                      },
-                    ),
-                  ),
-                ],
+              child: Container(
+                // CSS ref: background: rgba(180, 185, 230, 0.55), px-4 horizontal padding
+                color: const Color.fromRGBO(180, 185, 230, 0.55),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.center,
+                child: _InlineConfirmDialog(
+                  // Without a distinct key from the supervisor dialog
+                  // above, Flutter can reconcile them as "the same
+                  // widget updated" (same runtimeType, same Stack slot)
+                  // once the supervisor overlay closes and the mentor
+                  // one opens - reusing the old State object instead of
+                  // creating a fresh one. That left _submitting stuck
+                  // at true from the supervisor confirm, permanently
+                  // disabling the mentor dialog's Confirm button.
+                  key: const ValueKey('mentor-confirm-dialog'),
+                  data: _mentData!,
+                  title: 'Confirm Your Mentor',
+                  type: 'mentor',
+                  onConfirmed: () {
+                    setState(() => _showMentorInline = false);
+                    if (_mentorCompleter?.isCompleted == false) {
+                      _mentorCompleter!.complete();
+                    }
+                  },
+                ),
               ),
             ),
           ),
