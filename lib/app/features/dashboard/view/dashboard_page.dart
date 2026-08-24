@@ -378,7 +378,8 @@ class DashboardBody extends ConsumerWidget {
                       child: Text(
                         "Welcome back! Here's what's happening with your courses.",
                         style: GoogleFonts.inter(
-                          color: const Color(0xFF826A72),
+                          // text-gray-500 = #6B7280
+                          color: const Color(0xFF6B7280),
                           fontSize: 16,
                           height: 24 / 16,
                         ),
@@ -1279,7 +1280,8 @@ class _ContinueLearningItem extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF391E29),
+                    // text-gray-800 = #1F2937
+                    color: const Color(0xFF1F2937),
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     height: 22 / 16,
@@ -1717,7 +1719,8 @@ class _CourseProgressCard extends StatelessWidget {
                 child: Text(
                   'Course Progress',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF533641),
+                    // text-gray-700 = #374151
+                    color: const Color(0xFF374151),
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     height: 24 / 16,
