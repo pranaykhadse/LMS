@@ -19,6 +19,7 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
+import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
 import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
@@ -391,10 +392,12 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               LmsOfflineToggle(
                 isOffline: isOffline,
-                iconSize: 16,
+                // Match all utility icons at 14px for consistency
+                iconSize: 14,
                 switchScale: 0.65,
                 onChanged: (val) {
                   ref.read(OfflineModeNotifier.provider.notifier).setMode(val);
@@ -405,6 +408,17 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   );
                 },
               ),
+              const SizedBox(width: 6),
+              LmsAppBarButton(
+                icon: Icons.play_arrow_rounded,
+                iconSize: 14,
+                boxSize: 30,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (_) => const LearningProgressPage()),
+                ),
+              ),
+              const SizedBox(width: 6),
               SizedBox(
                 width: 30,
                 height: 30,
@@ -431,7 +445,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 6),
               PopupMenuButton<String>(
                 offset: const Offset(0, 34),
                 constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
