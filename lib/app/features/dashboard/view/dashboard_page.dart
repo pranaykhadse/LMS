@@ -2842,24 +2842,23 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
   Widget build(BuildContext context) {
     final maxWidth = MediaQuery.of(context).size.width * 0.9;
     final dialogWidth = maxWidth > 640 ? 640.0 : maxWidth;
-    // Design ref (mobile only, desktop unchanged): 16px gap between field
-    // groups (was 12px everywhere).
-    final isTablet = Responsive.isTablet(context);
-    final fieldGap = isTablet ? 12.0 : 16.0;
+    // Design ref: flex-col gap-4 = 16px between all field groups (both mobile+desktop)
+    final fieldGap = 16.0;
 
     return Center(
       child: Material(
         color: Colors.transparent,
         child: Container(
           width: dialogWidth,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: const [
-              BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 8), blurRadius: 10, spreadRadius: -6),
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+            // shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)
+            boxShadow: [
               BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 20), blurRadius: 25, spreadRadius: -5),
+              BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 8), blurRadius: 10, spreadRadius: -6),
             ],
-            border: Border.all(color: const Color(0xFFD5E6FF).withOpacity(0.6)),
+            // No border in CSS ref (border-width: 0px)
           ),
           clipBehavior: Clip.antiAlias,
           child: Padding(
@@ -2963,9 +2962,10 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                     ),
                   ),
                 ),
+                SizedBox(height: fieldGap),
                 Padding(
-                  // Design ref: px-4 py-3 = 16/12/16/12 both mobile+desktop
-                  // Note: 12px, height 20/12, "Note:" bold #4A5565, body #6A7282
+                  // Design ref: mt-4 px-4 py-3 = margin-top 16, padding 16/12/16/12
+                  // Note: 12px, height 20/12, "Note:" bold #4A5565, body italic #6A7282
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                   child: RichText(
                   text: TextSpan(
@@ -2997,7 +2997,8 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                 const SizedBox(height: 16),
 
                 // Skip + Confirm buttons, centered as a pair.
-                // Design ref: rounded-[20px] = 20 on both mobile+desktop
+                // Design ref: flex items-center justify-center gap-4 mt-4
+                // rounded-[20px] = 20 on both mobile+desktop
                 Center(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -3011,11 +3012,12 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                             onTap: null, // Skip is intentionally disabled.
                             child: Container(
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF4F5F7),
+                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
                               ),
                               alignment: Alignment.center,
+                              // px-8 py-3 = 32/12
                               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                               child: Text(
                                 'Skip',
@@ -3030,7 +3032,7 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
                           ),
                         ),
                       ),
-                      SizedBox(width: isTablet ? 12 : 16),
+                      const SizedBox(width: 16),
                       SizedBox(
                         height: 48,
                         child: Material(
