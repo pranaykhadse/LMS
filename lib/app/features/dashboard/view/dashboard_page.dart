@@ -68,7 +68,7 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Completer<void>? _supervisorCompleter;
   Completer<void>? _mentorCompleter;
 
-  // ── TESTING ONLY: force the mentor modal to show ──────────────────────────
+  // ── TESTING ONLY: force both supervisor and mentor modals to show ─────────
   // Set to false to restore normal API-driven behaviour.
   static const bool _forceShowMentorForTesting = true;
   // ─────────────────────────────────────────────────────────────────────────
@@ -80,6 +80,14 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         setState(() {
+          _supData = const MentorModalData(
+            visible: true,
+            popupMonth: 1,
+            shouldShow: true,
+            firstname: 'Jane',
+            lastname: 'Smith',
+            email: 'jane.smith@example.com',
+          );
           _mentData = const MentorModalData(
             visible: true,
             popupMonth: 1,
@@ -88,8 +96,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
             lastname: 'Doe',
             email: 'john.doe@example.com',
           );
-          _showMentorInline = true;
-          _mentorCompleter = Completer<void>();
+          // Show supervisor first; mentor will show after supervisor is dismissed
+          _supervisorCompleter = Completer<void>();
+          _showSupervisorInline = true;
         });
       });
     } else {
@@ -237,6 +246,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     setState(() => _showSupervisorInline = false);
                     if (_supervisorCompleter?.isCompleted == false) {
                       _supervisorCompleter!.complete();
+                    }
+                    // In test mode, show mentor after supervisor is dismissed
+                    if (_forceShowMentorForTesting && _mentData != null) {
+                      Future.delayed(const Duration(seconds: 1), () {
+                        if (!mounted) return;
+                        setState(() {
+                          _mentorCompleter = Completer<void>();
+                          _showMentorInline = true;
+                        });
+                      });
                     }
                   },
                 ),
