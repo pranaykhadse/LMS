@@ -70,11 +70,34 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Completer<void>? _supervisorCompleter;
   Completer<void>? _mentorCompleter;
 
+  // ── TESTING ONLY: force the mentor modal to show ──────────────────────────
+  // Set to false to restore normal API-driven behaviour.
+  static const bool _forceShowMentorForTesting = true;
+  // ─────────────────────────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _runSupervisorMentorFlow());
+    if (_forceShowMentorForTesting) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _mentData = const MentorModalData(
+            visible: true,
+            popupMonth: 1,
+            shouldShow: true,
+            firstname: 'John',
+            lastname: 'Doe',
+            email: 'john.doe@example.com',
+          );
+          _showMentorInline = true;
+          _mentorCompleter = Completer<void>();
+        });
+      });
+    } else {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _runSupervisorMentorFlow());
+    }
   }
 
   /// Fetches supervisor then mentor data, and shows each one's confirm
