@@ -122,12 +122,13 @@ class _Body extends StatelessWidget {
                           // Mobile: columns flex, title wraps — no horizontal scroll
                           : Column(
                               children: [
-                                const _TableHeaderRow(),
+                                const _TableHeaderRow(isWide: false),
                                 for (var i = 0; i < state.courses.length; i++)
                                   _CourseRow(
                                     index: (state.page - 1) * 10 + i + 1,
                                     item: state.courses[i],
                                     showDivider: i < state.courses.length - 1,
+                                    isWide: false,
                                   ),
                               ],
                             ),
@@ -244,7 +245,8 @@ class _Header extends StatelessWidget {
 //          text-[11px] font-semibold text-gray-400 uppercase tracking-wider
 
 class _TableHeaderRow extends StatelessWidget {
-  const _TableHeaderRow();
+  const _TableHeaderRow({this.isWide = true});
+  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
@@ -255,6 +257,10 @@ class _TableHeaderRow extends StatelessWidget {
       letterSpacing: 0.8, // tracking-wider ≈ 0.05em at 11px ≈ 0.55px, use 0.8 for wider
       height: 16 / 11,
     );
+
+    // Narrower STATUS/ACTION on mobile so BRIDGEWORK (Expanded) gets enough room
+    final statusW = isWide ? 90.0 : 70.0;
+    final actionW = isWide ? 80.0 : 64.0;
 
     return Container(
       // px-4 py-3 = 16/12
@@ -271,15 +277,15 @@ class _TableHeaderRow extends StatelessWidget {
           // BRIDGEWORK: flex-1
           Expanded(child: Text('BRIDGEWORK', style: style)),
           const SizedBox(width: 24), // gap-6
-          // STATUS: 90px, centered
+          // STATUS
           SizedBox(
-            width: 90,
+            width: statusW,
             child: Text('STATUS', style: style, textAlign: TextAlign.center),
           ),
           const SizedBox(width: 24), // gap-6
-          // ACTION: 80px, centered
+          // ACTION
           SizedBox(
-            width: 80,
+            width: actionW,
             child: Text('ACTION', style: style, textAlign: TextAlign.center),
           ),
         ],
@@ -297,10 +303,12 @@ class _CourseRow extends ConsumerStatefulWidget {
     required this.index,
     required this.item,
     required this.showDivider,
+    this.isWide = true,
   });
   final int index;
   final ContinueLearningListItem item;
   final bool showDivider;
+  final bool isWide;
 
   @override
   ConsumerState<_CourseRow> createState() => _CourseRowState();
@@ -349,15 +357,15 @@ class _CourseRowState extends ConsumerState<_CourseRow> {
             // Bridgework column
             Expanded(child: _Bridgework(item: widget.item, disabled: viewDisabled)),
             const SizedBox(width: 24), // gap-6
-            // Status pill — 90px
+            // Status pill
             SizedBox(
-              width: 90,
+              width: widget.isWide ? 90.0 : 70.0,
               child: Center(child: _StatusPill(status: widget.item.status)),
             ),
             const SizedBox(width: 24), // gap-6
-            // Resume button — 80px
+            // Resume button
             SizedBox(
-              width: 80,
+              width: widget.isWide ? 80.0 : 64.0,
               child: Center(child: _ResumeButton(item: widget.item, disabled: viewDisabled)),
             ),
           ],
@@ -438,12 +446,15 @@ class _Bridgework extends ConsumerWidget {
                       color: _purple,
                     ),
                     const SizedBox(width: 4), // gap-1
-                    Text(
-                      item.date,
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF6B7280), // gray-500, text-xs
-                        fontSize: 12,
-                        height: 16 / 12,
+                    Flexible(
+                      child: Text(
+                        item.date,
+                        softWrap: true,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF6B7280), // gray-500, text-xs
+                          fontSize: 12,
+                          height: 16 / 12,
+                        ),
                       ),
                     ),
                   ],
