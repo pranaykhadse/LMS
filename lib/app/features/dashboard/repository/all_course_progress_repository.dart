@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/repository/repo_network_helper.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -8,30 +7,20 @@ class AllCourseProgressItem {
     required this.courseId,
     required this.courseName,
     required this.progress,
-    this.category = '',
     this.dueDate = '',
   });
 
   final String courseId;
   final String courseName;
   final int progress;
-  final String category;
   final String dueDate;
 
   factory AllCourseProgressItem.fromJson(Map<String, dynamic> json) {
-    // Debug: print all keys so we can see exact field names from API
-    debugPrint('=== AllCourseProgressItem keys: ${json.keys.toList()}');
-    debugPrint('=== AllCourseProgressItem sample: $json');
     return AllCourseProgressItem(
       courseId: json['course_id']?.toString() ?? '',
       courseName: json['course_name']?.toString() ?? '',
       progress: _asInt(json['progress']),
-      category: json['category']?.toString() ??
-          json['class_name']?.toString() ??
-          '',
-      dueDate: json['due_date']?.toString() ??
-          json['date']?.toString() ??
-          '',
+      dueDate: _formatDate(json['due_date']?.toString()),
     );
   }
 }
@@ -65,6 +54,25 @@ class AllCourseProgressResult {
           .map((m) => AllCourseProgressItem.fromJson(Map<String, dynamic>.from(m)))
           .toList(),
     );
+  }
+}
+
+String _formatDate(String? raw) {
+  if (raw == null || raw.isEmpty || raw == 'null') return '';
+  // API returns "2026-08-25" — format to "August 25, 2026"
+  try {
+    final parts = raw.split('-');
+    if (parts.length != 3) return raw;
+    final year = parts[0];
+    final month = int.parse(parts[1]);
+    final day = int.parse(parts[2]);
+    const months = [
+      '', 'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    return '${months[month]} $day, $year';
+  } catch (_) {
+    return raw;
   }
 }
 
