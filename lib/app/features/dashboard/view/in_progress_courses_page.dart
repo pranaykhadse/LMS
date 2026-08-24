@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
@@ -22,10 +23,7 @@ const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
 
-// # (36) + gap (12) + BRIDGEWORK (240 min, enough for a course title on two
-// lines) + gap (12) + STATUS (120) + gap (12) + ACTION (120) + the table
-// row's own horizontal padding (24 each side) - the narrowest the table can
-// go before it needs to scroll horizontally instead of squeezing columns.
+// Below this width the table scrolls horizontally instead of squeezing columns.
 const _minTableWidth = 600.0;
 
 class InProgressCoursesPage extends ConsumerWidget {
@@ -53,6 +51,12 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: px-4 sm:px-6 py-6 sm:py-8
+    // mobile: h=16, v=24  |  desktop(sm+): h=24, v=32
+    final isWide = MediaQuery.of(context).size.width >= 600;
+    final hPad = isWide ? 24.0 : 16.0;
+    final vPad = isWide ? 32.0 : 24.0;
+
     switch (state.providerState) {
       case DataProviderState.loading:
       case DataProviderState.idle:
@@ -67,19 +71,23 @@ class _Body extends StatelessWidget {
         if (state.courses.isEmpty) return const _EmptyState();
         return Column(
           children: [
+            // Header — mb-6 = 24px below header
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 0),
+              padding: EdgeInsets.fromLTRB(hPad, vPad, hPad, 24),
               child: _Header(
-                  count: state.totalCourses, title: 'Course in Progress'),
+                count: state.totalCourses,
+                title: 'Course in Progress',
+              ),
             ),
             Expanded(
               child: RefreshIndicator(
                 color: _purple,
                 onRefresh: () async => notifier.fetch(page: state.page),
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                  padding: EdgeInsets.fromLTRB(hPad, 0, hPad, vPad),
                   children: [
                     const HorizontalScrollHint(),
+                    // bg-white rounded-xl border border-gray-200 overflow-hidden
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -87,15 +95,6 @@ class _Body extends StatelessWidget {
                         border: Border.all(color: const Color(0xFFE5E7EB)),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      // The BRIDGEWORK column needs real room for a course
-                      // title + type + date - squeezing it into whatever's
-                      // left after the fixed-width STATUS/ACTION columns on
-                      // a phone-narrow screen (as Expanded did) collapsed it
-                      // to near-zero width, wrapping "BRIDGEWORK" one letter
-                      // per line and overflowing every row. Below the
-                      // table's real minimum width, this scrolls
-                      // horizontally instead - same columns, same widths,
-                      // just pannable - rather than compressing them.
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           final tableWidth = constraints.maxWidth < _minTableWidth
@@ -146,7 +145,13 @@ class _Body extends StatelessWidget {
   }
 }
 
-// ─── In-page header ─────────────────────────────────────────────────────────
+// ─── In-page header ──────────────────────────────────────────────────────────
+// CSS ref: flex items-center gap-3 mb-6
+//   Back: flex items-center gap-1.5 text-sm font-semibold text-[#693D94]
+//         ArrowLeft icon 14×14
+//   separator: text-gray-300 = #D1D5DB
+//   title: text-sm font-semibold text-gray-800
+//   count badge: text-sm text-gray-400 bg-gray-100 rounded-full px-2.5 py-0.5
 
 class _Header extends StatelessWidget {
   const _Header({required this.count, required this.title});
@@ -157,6 +162,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        // Back button
         MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
@@ -164,37 +170,56 @@ class _Header extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.arrow_back, size: 14, color: _purple),
-                const SizedBox(width: 6),
+                const Icon(LucideIcons.arrowLeft, size: 14, color: _purple),
+                const SizedBox(width: 6), // gap-1.5 = 6px
                 Text(
                   'Back',
                   style: GoogleFonts.inter(
                     color: _purple,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14, // text-sm
+                    fontWeight: FontWeight.w600, // font-semibold
+                    height: 20 / 14,
                   ),
                 ),
               ],
             ),
           ),
         ),
+        const SizedBox(width: 12), // gap-3 = 12px
+        // Separator "|" — text-gray-300 = #D1D5DB
+        Text(
+          '|',
+          style: GoogleFonts.inter(
+            color: const Color(0xFFD1D5DB),
+            fontSize: 14,
+          ),
+        ),
         const SizedBox(width: 12),
-        Container(width: 1, height: 16, color: const Color(0xFFD1D5DB)),
-        const SizedBox(width: 12),
+        // Title — text-sm font-semibold text-gray-800 = #1F2937
         Text(
           title,
           style: GoogleFonts.inter(
             color: const Color(0xFF1F2937),
-            fontSize: 18,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
+            height: 20 / 14,
           ),
         ),
-        const SizedBox(width: 10),
-        Text(
-          '$count courses',
-          style: GoogleFonts.inter(
-            color: const Color(0xFF9CA3AF),
-            fontSize: 14,
+        const SizedBox(width: 8), // visual spacing before badge
+        // Count badge — bg-gray-100 rounded-full px-2.5 py-0.5 text-sm text-gray-400
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6), // gray-100
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            '$count courses',
+            style: GoogleFonts.inter(
+              color: const Color(0xFF9CA3AF), // gray-400
+              fontSize: 14,
+              height: 20 / 14,
+            ),
           ),
         ),
       ],
@@ -202,9 +227,10 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ─── Table header row ────────────────────────────────────────────────────────
-//
-// #  |  BRIDGEWORK (title + class + date, all inline)  |  STATUS  |  ACTION
+// ─── Table header row ─────────────────────────────────────────────────────────
+// CSS ref: grid grid-cols-[2rem_1fr_90px_80px] gap-6 px-4 py-3
+//          border-b border-gray-100 bg-gray-50
+//          text-[11px] font-semibold text-gray-400 uppercase tracking-wider
 
 class _TableHeaderRow extends StatelessWidget {
   const _TableHeaderRow();
@@ -212,30 +238,37 @@ class _TableHeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = GoogleFonts.inter(
-      color: const Color(0xFF9CA3AF),
-      fontSize: 12,
+      color: const Color(0xFF9CA3AF), // gray-400
+      fontSize: 11,
       fontWeight: FontWeight.w600,
-      letterSpacing: 0.5,
+      letterSpacing: 0.8, // tracking-wider ≈ 0.05em at 11px ≈ 0.55px, use 0.8 for wider
+      height: 16 / 11,
     );
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      // px-4 py-3 = 16/12
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
-        color: Color(0xFFF9FAFB),
-        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
+        color: Color(0xFFF9FAFB), // bg-gray-50
+        border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))), // border-gray-100
       ),
       child: Row(
         children: [
-          SizedBox(width: 36, child: Text('#', style: style)),
+          // # column: 2rem = 32px
+          SizedBox(width: 32, child: Text('#', style: style)),
+          const SizedBox(width: 24), // gap-6
+          // BRIDGEWORK: flex-1
           Expanded(child: Text('BRIDGEWORK', style: style)),
-          const SizedBox(width: 12),
+          const SizedBox(width: 24), // gap-6
+          // STATUS: 90px, centered
           SizedBox(
-            width: 120,
+            width: 90,
             child: Text('STATUS', style: style, textAlign: TextAlign.center),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 24), // gap-6
+          // ACTION: 80px, centered
           SizedBox(
-            width: 120,
+            width: 80,
             child: Text('ACTION', style: style, textAlign: TextAlign.center),
           ),
         ],
@@ -245,8 +278,10 @@ class _TableHeaderRow extends StatelessWidget {
 }
 
 // ─── Course row ───────────────────────────────────────────────────────────────
+// CSS ref: grid grid-cols-[2rem_1fr_90px_80px] gap-6 px-4 py-4
+//          border-b border-gray-100 hover:bg-[#f8f8ff] items-center
 
-class _CourseRow extends ConsumerWidget {
+class _CourseRow extends ConsumerStatefulWidget {
   const _CourseRow({
     required this.index,
     required this.item,
@@ -257,16 +292,90 @@ class _CourseRow extends ConsumerWidget {
   final bool showDivider;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final viewDisabled = isViewCourseDisabled(ref, item.courseId);
+  ConsumerState<_CourseRow> createState() => _CourseRowState();
+}
 
-    final bridgework = Column(
+class _CourseRowState extends ConsumerState<_CourseRow> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final viewDisabled = isViewCourseDisabled(ref, widget.item.courseId);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        // px-4 py-4 = 16/16
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          // hover:bg-[#f8f8ff]
+          color: _hovering ? const Color(0xFFF8F8FF) : Colors.white,
+          border: widget.showDivider
+              ? const Border(
+                  bottom: BorderSide(color: Color(0xFFF3F4F6)), // border-gray-100
+                )
+              : null,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Index — text-sm text-gray-400 font-medium
+            SizedBox(
+              width: 32,
+              child: Text(
+                '${widget.index}',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF), // gray-400
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  height: 20 / 14,
+                ),
+              ),
+            ),
+            const SizedBox(width: 24), // gap-6
+            // Bridgework column
+            Expanded(child: _Bridgework(item: widget.item, disabled: viewDisabled)),
+            const SizedBox(width: 24), // gap-6
+            // Status pill — 90px
+            SizedBox(
+              width: 90,
+              child: Center(child: _StatusPill(status: widget.item.status)),
+            ),
+            const SizedBox(width: 24), // gap-6
+            // Resume button — 80px
+            SizedBox(
+              width: 80,
+              child: Center(child: _ResumeButton(item: widget.item, disabled: viewDisabled)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Bridgework cell ──────────────────────────────────────────────────────────
+// title: text-sm font-semibold text-gray-800 leading-snug line-clamp-2
+// type: text-xs text-gray-400
+// dot: text-gray-300
+// calendar icon: lucide CalendarDays 10×10 text-[#693D94]
+// date: text-xs text-gray-500
+
+class _Bridgework extends ConsumerWidget {
+  const _Bridgework({required this.item, required this.disabled});
+  final ContinueLearningListItem item;
+  final bool disabled;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         GestureDetector(
-          // A tap shortcut to the course alongside the ACTION column's own
-          // Resume button.
-          onTap: viewDisabled
+          onTap: disabled
               ? null
               : () => Modular.to.pushNamed(
                     CoursesModule.construct(
@@ -277,86 +386,69 @@ class _CourseRow extends ConsumerWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              color: const Color(0xFF1F2937),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              height: 1.35,
+              color: const Color(0xFF1F2937), // gray-800
+              fontSize: 14, // text-sm
+              fontWeight: FontWeight.w600, // font-semibold
+              height: 1.375, // leading-snug
             ),
           ),
         ),
-        // Class type and date sit on one line, separated by a dot - not
-        // stacked on separate lines.
         if (item.className.isNotEmpty || item.date.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Row(
+          const SizedBox(height: 2), // mt-0.5
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8, // gap-x-2
+            runSpacing: 2, // gap-y-0.5
             children: [
               if (item.className.isNotEmpty)
                 Text(
                   item.className,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF),
+                    color: const Color(0xFF9CA3AF), // gray-400, text-xs
                     fontSize: 12,
+                    height: 16 / 12,
                   ),
                 ),
               if (item.className.isNotEmpty && item.date.isNotEmpty)
                 Text(
-                  '  ·  ',
+                  '·',
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF),
+                    color: const Color(0xFFD1D5DB), // gray-300
                     fontSize: 12,
                   ),
                 ),
-              if (item.date.isNotEmpty) ...[
-                const Icon(Icons.calendar_today_rounded, size: 10, color: _purple),
-                const SizedBox(width: 4),
-                Text(
-                  item.date,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280),
-                    fontSize: 12,
-                  ),
+              if (item.date.isNotEmpty)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      LucideIcons.calendarDays,
+                      size: 10,
+                      color: _purple,
+                    ),
+                    const SizedBox(width: 4), // gap-1
+                    Text(
+                      item.date,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF6B7280), // gray-500, text-xs
+                        fontSize: 12,
+                        height: 16 / 12,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
             ],
           ),
         ],
       ],
     );
-
-    final statusPill = _StatusPill(status: item.status);
-    final resumeButton = _ResumeButton(item: item, disabled: viewDisabled);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: showDivider
-          ? const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
-            )
-          : null,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: 36,
-            child: Text(
-              '$index',
-              style: GoogleFonts.inter(
-                color: const Color(0xFF9CA3AF),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(child: bridgework),
-          const SizedBox(width: 12),
-          SizedBox(width: 120, child: Center(child: statusPill)),
-          const SizedBox(width: 12),
-          SizedBox(width: 120, child: Center(child: resumeButton)),
-        ],
-      ),
-    );
   }
 }
+
+// ─── Status pill ──────────────────────────────────────────────────────────────
+// CSS ref: flex items-center justify-center px-2 py-1 rounded-full
+//          text-[10px] font-semibold bg-[#f0e8f7] text-[#693D94]
+//          leading-tight whitespace-nowrap
 
 class _StatusPill extends StatelessWidget {
   const _StatusPill({required this.status});
@@ -364,12 +456,11 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // px-2 py-1 rounded-full text-[10px] font-semibold, #693D94 on #F0E8F7.
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // px-2 py-1
       decoration: BoxDecoration(
         color: const Color(0xFFF0E8F7),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(999), // rounded-full
       ),
       child: Text(
         status.isNotEmpty ? status : 'In Progress',
@@ -378,40 +469,55 @@ class _StatusPill extends StatelessWidget {
           color: _purple,
           fontSize: 10,
           fontWeight: FontWeight.w600,
+          height: 1.25, // leading-tight
         ),
       ),
     );
   }
 }
 
-class _ResumeButton extends StatelessWidget {
+// ─── Resume button ────────────────────────────────────────────────────────────
+// CSS ref: inline-flex items-center justify-center px-3 py-1 rounded-xl
+//          text-[11px] font-semibold text-white bg-[#693D94] hover:bg-[#5a3480]
+//          whitespace-nowrap
+
+class _ResumeButton extends StatefulWidget {
   const _ResumeButton({required this.item, required this.disabled});
   final ContinueLearningListItem item;
   final bool disabled;
 
   @override
+  State<_ResumeButton> createState() => _ResumeButtonState();
+}
+
+class _ResumeButtonState extends State<_ResumeButton> {
+  bool _hovering = false;
+
+  @override
   Widget build(BuildContext context) {
-    // Plain InkWell + Container (not ElevatedButton) - Material's button
-    // widgets impose their own minimum tap-target/padding defaults on top
-    // of whatever style is passed in, which kept rendering this visibly
-    // larger than the inspected 80x24.5px spec no matter what padding was
-    // set. This mirrors _StatusPill's own implementation so both chips are
-    // sized purely by their own padding/text, guaranteed.
-    // px-3 py-1 rounded-xl text-[11px] font-semibold, white on #693D94.
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: disabled
+    final bg = widget.disabled
+        ? _purple.withValues(alpha: 0.4)
+        : _hovering
+            ? const Color(0xFF5A3480) // hover:bg-[#5a3480]
+            : _purple;
+
+    return MouseRegion(
+      cursor: widget.disabled ? SystemMouseCursors.basic : SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        onTap: widget.disabled
             ? null
             : () => Modular.to.pushNamed(
-                  CoursesModule.construct('${CoursesModule.detail}/${item.courseId}'),
+                  CoursesModule.construct(
+                      '${CoursesModule.detail}/${widget.item.courseId}'),
                 ),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), // px-3 py-1
           decoration: BoxDecoration(
-            color: disabled ? _purple.withValues(alpha: 0.4) : _purple,
-            borderRadius: BorderRadius.circular(12),
+            color: bg,
+            borderRadius: BorderRadius.circular(12), // rounded-xl
           ),
           child: Text(
             'Resume',
@@ -419,6 +525,7 @@ class _ResumeButton extends StatelessWidget {
               color: Colors.white,
               fontSize: 11,
               fontWeight: FontWeight.w600,
+              height: 16 / 11,
             ),
           ),
         ),
@@ -427,7 +534,7 @@ class _ResumeButton extends StatelessWidget {
   }
 }
 
-// ─── Empty / error states ───────────────────────────────────────────────────
+// ─── Empty / error states ─────────────────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState();
@@ -447,8 +554,7 @@ class _EmptyState extends StatelessWidget {
                 color: const Color(0xFFF0ECFF),
                 borderRadius: BorderRadius.circular(50),
               ),
-              child: const Icon(Icons.play_circle_outline,
-                  color: _purple, size: 52),
+              child: const Icon(Icons.play_circle_outline, color: _purple, size: 52),
             ),
             const SizedBox(height: 24),
             const Text(
