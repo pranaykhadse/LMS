@@ -62,7 +62,7 @@ const double _desktopHeaderHeight = 45;
 // notification bell + profile avatar only - no date pill/refresh/offline
 // toggle/progress icon, too many to fit legibly on a narrow screen) above
 // the existing white "Menu" bar.
-const double _mobileTopBarHeight = 48;
+const double _mobileTopBarHeight = 44; // py-2.5 (10px×2) + content
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
@@ -385,7 +385,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                     CoursesModule.construct(CoursesModule.dashboard),
                   );
                 },
-                child: const Logo(size: 22),
+                child: const Logo(size: 24), // h-6 = 24px
               ),
             ],
           ),
@@ -395,7 +395,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             children: [
               LmsOfflineToggle(
                 isOffline: isOffline,
-                // Match all utility icons at 14px for consistency
+                // w-[14px] h-[14px] from dashboard CSS
                 iconSize: 14,
                 switchScale: 0.65,
                 onChanged: (val) {
@@ -418,6 +418,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         children: [
                           LmsAppBarButton(
                             icon: Icons.notifications_none_rounded,
+                            // w-[14px] h-[14px] from dashboard CSS
                             iconSize: 14,
                             boxSize: 30,
                             onTap: () => showLmsNotifications(bellContext),
@@ -434,7 +435,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       ),
                 ),
               ),
-              const SizedBox(width: 6),
+              // gap-3 = 12px between bell and profile
+              const SizedBox(width: 12),
               PopupMenuButton<String>(
                 offset: const Offset(0, 34),
                 constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
