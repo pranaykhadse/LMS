@@ -860,7 +860,7 @@ class _SkillDropdownState extends State<_SkillDropdown> {
       child: InputDecorator(
         decoration: _fieldDecoration(
           'Skills or Behavior',
-          showLeadingIcon: false,
+          showLeadingIcon: true, // CSS ref: fa-search prefix icon
         ).copyWith(
           suffixIcon: Row(
             mainAxisSize: MainAxisSize.min,
@@ -874,13 +874,14 @@ class _SkillDropdownState extends State<_SkillDropdown> {
                   },
                   icon: const Icon(
                     Icons.close_rounded,
-                    color: _catalogMuted,
-                    size: 20,
+                    color: Color(0xFF94A3B8),
+                    size: 18,
                   ),
                 ),
               Icon(
                 _open ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                color: _catalogMuted,
+                color: const Color(0xFF94A3B8),
+                size: 18,
               ),
               const SizedBox(width: 8),
             ],
@@ -890,9 +891,9 @@ class _SkillDropdownState extends State<_SkillDropdown> {
           selected?.name ?? 'Skills or Behavior',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.roboto(
-            color: selected == null ? const Color(0xFF999999) : const Color(0xFF495057),
-            fontSize: 16,
+          style: GoogleFonts.inter(
+            color: selected == null ? const Color(0xFF94A3B8) : const Color(0xFF475569),
+            fontSize: 14,
           ),
         ),
       ),
@@ -954,53 +955,61 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
           child: Align(
             alignment: Alignment.topLeft,
             child: Material(
-              elevation: 6,
-              borderRadius: BorderRadius.circular(4),
+              elevation: 4,
+              borderRadius: BorderRadius.circular(12),
               child: Container(
                 width: widget.width,
-                constraints: const BoxConstraints(maxHeight: 340),
+                constraints: const BoxConstraints(maxHeight: 300),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border.all(color: FigmaTokens.cardBorders),
-                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                       child: TextField(
                         controller: _queryController,
                         autofocus: true,
                         onChanged: (_) => setState(() {}),
-                        style: GoogleFonts.roboto(fontSize: 15, color: const Color(0xFF495057)),
+                        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF475569)),
                         decoration: InputDecoration(
                           isDense: true,
+                          hintText: 'Search...',
+                          hintStyle: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF94A3B8)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(2),
-                            borderSide: const BorderSide(color: Colors.black87),
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(2),
-                            borderSide: const BorderSide(color: Colors.black87),
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(2),
-                            borderSide: const BorderSide(color: Colors.black87, width: 1.5),
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFF693D94), width: 1.5),
                           ),
                         ),
                       ),
                     ),
                     Flexible(
                       child: filtered.isEmpty
-                          ? const Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Text('No matching filters found.'),
+                          ? Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                'No matching filters found.',
+                                style: GoogleFonts.inter(
+                                    fontSize: 13, color: const Color(0xFF94A3B8)),
+                              ),
                             )
                           : ListView.builder(
                               shrinkWrap: true,
-                              padding: EdgeInsets.zero,
+                              padding: const EdgeInsets.only(bottom: 6),
                               itemCount: filtered.length,
                               itemBuilder: (context, index) {
                                 final skill = filtered[index];
@@ -1009,14 +1018,22 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                                   onTap: () => widget.onSelected(skill),
                                   child: Container(
                                     width: double.infinity,
-                                    color: selected ? const Color(0xFF5B8DEF) : Colors.transparent,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    // CSS ref: selected bg rgb(88,151,251) = #5897FB
+                                    color: selected
+                                        ? const Color(0xFF5897FB)
+                                        : Colors.transparent,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 9),
                                     child: Text(
                                       skill.name,
-                                      style: GoogleFonts.roboto(
-                                        fontSize: 15,
-                                        color: selected ? Colors.white : const Color(0xFF495057),
-                                        fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        color: selected
+                                            ? Colors.white
+                                            : const Color(0xFF475569),
+                                        fontWeight: selected
+                                            ? FontWeight.w600
+                                            : FontWeight.w400,
                                       ),
                                     ),
                                   ),
