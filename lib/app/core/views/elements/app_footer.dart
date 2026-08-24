@@ -26,8 +26,8 @@ class AppFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTablet = Responsive.isTablet(context);
     final color = isTablet ? _footerText : _footerTextPhone;
-    // LinkedIn icon: gray-500 on mobile, same as links on tablet
-    final linkedInColor = isTablet ? _footerText : _footerLinkedInPhone;
+    // LinkedIn icon: gray-500 = #6B7280 on all sizes
+    final linkedInColor = isTablet ? _footerLinkedInPhone : _footerLinkedInPhone;
     final links = Wrap(
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -65,10 +65,10 @@ class AppFooter extends StatelessWidget {
     return Column(
       children: [
         const Divider(height: 1, color: _footerBorder),
-        // Mobile: py-3 (12px) top/bottom, no horizontal padding (outer
-        // page wrapper provides it). Column centered. gap-3 (12px).
+        // py-3 (12px) top/bottom, no horizontal padding on any size —
+        // outer page wrapper provides horizontal spacing.
         Padding(
-          padding: EdgeInsets.fromLTRB(isTablet ? 20 : 0, 12, isTablet ? 20 : 0, 12),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           child: isTablet
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
