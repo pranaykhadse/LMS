@@ -137,6 +137,8 @@ class _Body extends StatelessWidget {
                 ),
               ),
             ),
+            // Hide pagination when there's only one page
+            if (state.totalPages > 1)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: PaginationWidget(
@@ -259,8 +261,8 @@ class _TableHeaderRow extends StatelessWidget {
     );
 
     // Narrower STATUS/ACTION on mobile so BRIDGEWORK (Expanded) gets enough room
-    final statusW = isWide ? 90.0 : 70.0;
-    final actionW = isWide ? 80.0 : 64.0;
+    final statusW = isWide ? 90.0 : 80.0;
+    final actionW = isWide ? 80.0 : 76.0;
 
     return Container(
       // px-4 py-3 = 16/12
@@ -271,8 +273,8 @@ class _TableHeaderRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // # column: 2rem = 32px
-          SizedBox(width: 32, child: Text('#', style: style)),
+          // # column: reduced to 24px on mobile
+          SizedBox(width: isWide ? 32.0 : 24.0, child: Text('#', style: style)),
           const SizedBox(width: 24), // gap-6
           // BRIDGEWORK: flex-1
           Expanded(child: Text('BRIDGEWORK', style: style)),
@@ -342,7 +344,7 @@ class _CourseRowState extends ConsumerState<_CourseRow> {
           children: [
             // Index — text-sm text-gray-400 font-medium
             SizedBox(
-              width: 32,
+              width: widget.isWide ? 32.0 : 24.0,
               child: Text(
                 '${widget.index}',
                 style: GoogleFonts.inter(
@@ -359,13 +361,13 @@ class _CourseRowState extends ConsumerState<_CourseRow> {
             const SizedBox(width: 24), // gap-6
             // Status pill
             SizedBox(
-              width: widget.isWide ? 90.0 : 70.0,
+              width: widget.isWide ? 90.0 : 80.0,
               child: Center(child: _StatusPill(status: widget.item.status)),
             ),
             const SizedBox(width: 24), // gap-6
             // Resume button
             SizedBox(
-              width: widget.isWide ? 80.0 : 64.0,
+              width: widget.isWide ? 80.0 : 76.0,
               child: Center(child: _ResumeButton(item: widget.item, disabled: viewDisabled)),
             ),
           ],
