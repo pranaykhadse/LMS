@@ -214,9 +214,10 @@ class _Header extends StatelessWidget {
           child: Text(
             '$count courses',
             style: GoogleFonts.inter(
+              // text-xs on mobile, text-sm on desktop
               color: const Color(0xFF9CA3AF),
-              fontSize: 14,
-              height: 20 / 14,
+              fontSize: 12,
+              height: 16 / 12,
             ),
           ),
         ),
@@ -235,11 +236,17 @@ class _TableHeaderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = GoogleFonts.inter(
       color: const Color(0xFF9CA3AF),
-      fontSize: 11,
+      // text-[10px] on mobile, text-[11px] on desktop
+      fontSize: isWide ? 11.0 : 10.0,
       fontWeight: FontWeight.w600,
       letterSpacing: 0.8,
-      height: 16 / 11,
+      height: isWide ? 16 / 11 : 16 / 10,
     );
+
+    // gap-4 (16px) on mobile, gap-6 (24px) on desktop
+    // PROGRESS: 140px mobile, 160px desktop
+    final colGap = isWide ? 24.0 : 16.0;
+    final progressW = isWide ? 160.0 : 140.0;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -250,13 +257,13 @@ class _TableHeaderRow extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(width: isWide ? 32.0 : 24.0, child: Text('#', style: style)),
-          const SizedBox(width: 24),
+          SizedBox(width: colGap),
           Expanded(
             child: Text('COURSE / CATEGORY / DUE DATE', style: style),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: colGap),
           SizedBox(
-            width: isWide ? 160.0 : 80.0,
+            width: progressW,
             child: Text('PROGRESS', style: style),
           ),
         ],
@@ -316,7 +323,7 @@ class _CourseRowState extends State<_CourseRow> {
                 ),
               ),
             ),
-            const SizedBox(width: 24),
+            SizedBox(width: widget.isWide ? 24.0 : 16.0),
             // Course / Category / Due Date
             Expanded(
               child: Column(
@@ -390,10 +397,10 @@ class _CourseRowState extends State<_CourseRow> {
                 ],
               ),
             ),
-            const SizedBox(width: 16),
-            // Progress
+            SizedBox(width: widget.isWide ? 24.0 : 16.0),
+            // Progress — 140px mobile, 160px desktop
             SizedBox(
-              width: widget.isWide ? 160.0 : 80.0,
+              width: widget.isWide ? 160.0 : 140.0,
               child: _ProgressCell(percent: widget.item.progress),
             ),
           ],
@@ -412,21 +419,25 @@ class _ProgressCell extends StatelessWidget {
     final fraction = (percent.clamp(0, 100)) / 100;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
+        // text-xs font-semibold text-[#693D94]
         Text(
           '$percent%',
           style: GoogleFonts.inter(
             color: _purple,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            height: 16 / 12,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4), // gap-1
+        // w-full bg-gray-100 rounded-full h-1.5
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(999),
           child: LinearProgressIndicator(
             value: fraction,
-            minHeight: 6,
+            minHeight: 6, // h-1.5 = 6px
             backgroundColor: const Color(0xFFF3F4F6),
             valueColor: const AlwaysStoppedAnimation<Color>(_purple),
           ),
