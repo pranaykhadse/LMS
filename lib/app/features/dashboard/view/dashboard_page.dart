@@ -407,7 +407,10 @@ class DashboardBody extends ConsumerWidget {
                     // and content visibly resize between page loads.
                     child: isWide
                         ? Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            // CSS Grid equal-height: both cards stretch to
+                            // match the taller one (Continue Learning fixed
+                            // height drives this row).
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
                                 child: _ContinueLearningCard(
