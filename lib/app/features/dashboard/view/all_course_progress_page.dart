@@ -340,25 +340,50 @@ class _CourseRowState extends State<_CourseRow> {
                       ),
                     ),
                   ),
-                  if (widget.item.dueDate.isNotEmpty) ...[
+                  if (widget.item.category.isNotEmpty || widget.item.dueDate.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 2,
                       children: [
-                        const Icon(LucideIcons.calendarDays,
-                            size: 10, color: _purple),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            widget.item.dueDate,
-                            softWrap: true,
+                        if (widget.item.category.isNotEmpty)
+                          Text(
+                            widget.item.category,
                             style: GoogleFonts.inter(
-                              color: const Color(0xFF6B7280),
+                              color: const Color(0xFF9CA3AF),
                               fontSize: 12,
                               height: 16 / 12,
                             ),
                           ),
-                        ),
+                        if (widget.item.category.isNotEmpty && widget.item.dueDate.isNotEmpty)
+                          Text(
+                            '·',
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFFD1D5DB),
+                              fontSize: 12,
+                            ),
+                          ),
+                        if (widget.item.dueDate.isNotEmpty)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(LucideIcons.calendarDays,
+                                  size: 10, color: _purple),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  widget.item.dueDate,
+                                  softWrap: true,
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF6B7280),
+                                    fontSize: 12,
+                                    height: 16 / 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ],
