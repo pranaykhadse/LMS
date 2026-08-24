@@ -26,8 +26,8 @@ class AllCourseProgressItem {
       category: (json['category']?.toString().isNotEmpty == true)
           ? json['category'].toString()
           : 'Category Here',
-      // due_date comes pre-formatted from API e.g. "August 12, 2026"
-      dueDate: json['due_date']?.toString() ?? '',
+      // due_date may be pre-formatted "August 12, 2026" or ISO "2026-08-12"
+      dueDate: _formatDate(json['due_date']?.toString()),
     );
   }
 }
@@ -61,6 +61,27 @@ class AllCourseProgressResult {
           .map((m) => AllCourseProgressItem.fromJson(Map<String, dynamic>.from(m)))
           .toList(),
     );
+  }
+}
+
+/// Converts ISO date "2026-08-12" → "August 12, 2026".
+/// Already-formatted strings are returned as-is. Null/empty → "".
+String _formatDate(String? raw) {
+  if (raw == null || raw.isEmpty || raw == 'null') return '';
+  if (!RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(raw)) return raw;
+  try {
+    final parts = raw.substring(0, 10).split('-');
+    if (parts.length != 3) return raw;
+    final year = parts[0];
+    final month = int.parse(parts[1]);
+    final day = int.parse(parts[2]);
+    const months = [
+      '', 'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    return '${months[month]} $day, $year';
+  } catch (_) {
+    return raw;
   }
 }
 

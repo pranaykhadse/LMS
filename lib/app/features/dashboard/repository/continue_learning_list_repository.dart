@@ -29,7 +29,7 @@ class ContinueLearningListItem {
       classId: _asInt(json['class_id']),
       courseName: json['course_name']?.toString() ?? '',
       className: json['class_name']?.toString() ?? '',
-      date: json['date']?.toString() ?? '',
+      date: _formatDate(json['date']?.toString()),
       status: json['status']?.toString() ?? '',
       action: json['action']?.toString() ?? 'Resume',
       resumeUrl: json['resume_url']?.toString(),
@@ -66,6 +66,29 @@ class ContinueLearningListResult {
           .map((m) => ContinueLearningListItem.fromJson(Map<String, dynamic>.from(m)))
           .toList(),
     );
+  }
+}
+
+/// Converts ISO date "2026-08-21" → "August 21, 2026".
+/// Already-formatted strings (e.g. "August 21, 2026") are returned as-is.
+/// Null / empty / "null" → empty string.
+String _formatDate(String? raw) {
+  if (raw == null || raw.isEmpty || raw == 'null') return '';
+  // Already formatted (contains a space, not a dash-only date)
+  if (!RegExp(r'^\d{4}-\d{2}-\d{2}').hasMatch(raw)) return raw;
+  try {
+    final parts = raw.substring(0, 10).split('-');
+    if (parts.length != 3) return raw;
+    final year = parts[0];
+    final month = int.parse(parts[1]);
+    final day = int.parse(parts[2]);
+    const months = [
+      '', 'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    return '${months[month]} $day, $year';
+  } catch (_) {
+    return raw;
   }
 }
 
