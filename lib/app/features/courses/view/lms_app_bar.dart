@@ -26,7 +26,7 @@ import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page
 const _appPurple = FigmaTokens.primaryPurple;
 const _appMuted = FigmaTokens.noteBodyText;
 const _navActive = FigmaTokens.primaryPurple;
-const _navDefault = Color(0xFF6A7282);
+const _navDefault = Color(0xFF6B7280); // gray-500
 
 bool watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
