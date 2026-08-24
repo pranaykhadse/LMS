@@ -348,28 +348,37 @@ class _CourseRowState extends State<_CourseRow> {
                     ),
                   ),
                   if (widget.item.category.isNotEmpty || widget.item.dueDate.isNotEmpty) ...[
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 2), // mt-0.5
+                    // Category on its own line with dot, date on next line
+                    // Uses Wrap with gap-y-0.5 (2px) so date naturally wraps below
                     Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 2,
+                      spacing: 8,    // gap-x-2
+                      runSpacing: 2, // gap-y-0.5
                       children: [
                         if (widget.item.category.isNotEmpty)
-                          Text(
-                            widget.item.category,
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF9CA3AF),
-                              fontSize: 12,
-                              height: 16 / 12,
-                            ),
-                          ),
-                        if (widget.item.category.isNotEmpty && widget.item.dueDate.isNotEmpty)
-                          Text(
-                            '·',
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFFD1D5DB),
-                              fontSize: 12,
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                widget.item.category,
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF9CA3AF), // text-xs text-gray-400
+                                  fontSize: 12,
+                                  height: 16 / 12,
+                                ),
+                              ),
+                              if (widget.item.dueDate.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Text(
+                                  '·',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFFD1D5DB), // text-gray-300
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         if (widget.item.dueDate.isNotEmpty)
                           Row(
@@ -377,13 +386,13 @@ class _CourseRowState extends State<_CourseRow> {
                             children: [
                               const Icon(LucideIcons.calendarDays,
                                   size: 10, color: _purple),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 4), // gap-1
                               Flexible(
                                 child: Text(
                                   widget.item.dueDate,
                                   softWrap: true,
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFF6B7280),
+                                    color: const Color(0xFF6B7280), // text-xs text-gray-500
                                     fontSize: 12,
                                     height: 16 / 12,
                                   ),

@@ -22,10 +22,10 @@ class AllCourseProgressItem {
       courseId: json['course_id']?.toString() ?? '',
       courseName: json['course_name']?.toString() ?? '',
       progress: _asInt(json['progress']),
-      // Show "here" placeholder when category is absent/null
+      // Show "Category Here" placeholder when category is absent/null
       category: (json['category']?.toString().isNotEmpty == true)
           ? json['category'].toString()
-          : 'here',
+          : 'Category Here',
       // due_date comes pre-formatted from API e.g. "August 12, 2026"
       dueDate: json['due_date']?.toString() ?? '',
     );
