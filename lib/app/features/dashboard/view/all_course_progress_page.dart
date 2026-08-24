@@ -236,17 +236,16 @@ class _TableHeaderRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = GoogleFonts.inter(
       color: const Color(0xFF9CA3AF),
-      // text-[10px] on mobile, text-[11px] on desktop
-      fontSize: isWide ? 11.0 : 10.0,
+      // text-[10px] on both mobile and desktop
+      fontSize: 10,
       fontWeight: FontWeight.w600,
       letterSpacing: 0.8,
-      height: isWide ? 16 / 11 : 16 / 10,
+      height: 16 / 10,
     );
 
-    // gap-4 (16px) on mobile, gap-6 (24px) on desktop
-    // PROGRESS: 140px mobile, 160px desktop
-    final colGap = isWide ? 24.0 : 16.0;
-    final progressW = isWide ? 160.0 : 140.0;
+    // Both mobile and desktop: gap-4 (16px), PROGRESS 140px, text-[10px]
+    final colGap = 16.0;
+    final progressW = 140.0;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -323,7 +322,7 @@ class _CourseRowState extends State<_CourseRow> {
                 ),
               ),
             ),
-            SizedBox(width: widget.isWide ? 24.0 : 16.0),
+            SizedBox(width: 16), // gap-4 — same on both mobile and desktop
             // Course / Category / Due Date
             Expanded(
               child: Column(
@@ -406,10 +405,10 @@ class _CourseRowState extends State<_CourseRow> {
                 ],
               ),
             ),
-            SizedBox(width: widget.isWide ? 24.0 : 16.0),
-            // Progress — 140px mobile, 160px desktop
+            SizedBox(width: 16), // gap-4
+            // Progress — 140px on both mobile and desktop
             SizedBox(
-              width: widget.isWide ? 160.0 : 140.0,
+              width: 140.0,
               child: _ProgressCell(percent: widget.item.progress),
             ),
           ],
