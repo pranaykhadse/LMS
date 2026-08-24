@@ -19,7 +19,6 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
-import 'package:lms/app/features/dashboard/view/learning_progress_page.dart';
 import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
@@ -407,16 +406,6 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                     val ? 'Offline mode enabled' : 'Back to online mode',
                   );
                 },
-              ),
-              const SizedBox(width: 6),
-              LmsAppBarButton(
-                icon: Icons.play_arrow_rounded,
-                iconSize: 14,
-                boxSize: 30,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (_) => const LearningProgressPage()),
-                ),
               ),
               const SizedBox(width: 6),
               SizedBox(
