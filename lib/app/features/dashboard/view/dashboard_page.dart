@@ -68,43 +68,11 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   Completer<void>? _supervisorCompleter;
   Completer<void>? _mentorCompleter;
 
-  // ── TESTING ONLY: force both supervisor and mentor modals to show ─────────
-  // Set to false to restore normal API-driven behaviour.
-  static const bool _forceShowMentorForTesting = true;
-  // ─────────────────────────────────────────────────────────────────────────
-
   @override
   void initState() {
     super.initState();
-    if (_forceShowMentorForTesting) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _supData = const MentorModalData(
-            visible: true,
-            popupMonth: 1,
-            shouldShow: true,
-            firstname: 'Jane',
-            lastname: 'Smith',
-            email: 'jane.smith@example.com',
-          );
-          _mentData = const MentorModalData(
-            visible: true,
-            popupMonth: 1,
-            shouldShow: true,
-            firstname: 'John',
-            lastname: 'Doe',
-            email: 'john.doe@example.com',
-          );
-          // Show supervisor first; mentor will show after supervisor is dismissed
-          _supervisorCompleter = Completer<void>();
-          _showSupervisorInline = true;
-        });
-      });
-    } else {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _runSupervisorMentorFlow());
-    }
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _runSupervisorMentorFlow());
   }
 
   /// Fetches supervisor then mentor data, and shows each one's confirm
@@ -246,16 +214,6 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
                     setState(() => _showSupervisorInline = false);
                     if (_supervisorCompleter?.isCompleted == false) {
                       _supervisorCompleter!.complete();
-                    }
-                    // In test mode, show mentor after supervisor is dismissed
-                    if (_forceShowMentorForTesting && _mentData != null) {
-                      Future.delayed(const Duration(seconds: 1), () {
-                        if (!mounted) return;
-                        setState(() {
-                          _mentorCompleter = Completer<void>();
-                          _showMentorInline = true;
-                        });
-                      });
                     }
                   },
                 ),
