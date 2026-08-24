@@ -62,7 +62,7 @@ const double _desktopHeaderHeight = 45;
 // notification bell + profile avatar only - no date pill/refresh/offline
 // toggle/progress icon, too many to fit legibly on a narrow screen) above
 // the existing white "Menu" bar.
-const double _mobileTopBarHeight = 44;
+const double _mobileTopBarHeight = 48;
 
 // ── Shared AppBar ─────────────────────────────────────────────────────────────
 
@@ -385,7 +385,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                     CoursesModule.construct(CoursesModule.dashboard),
                   );
                 },
-                child: const Logo(size: 24),
+                child: const Logo(size: 22),
               ),
             ],
           ),
@@ -409,9 +409,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
               const SizedBox(width: 6),
               SizedBox(
-                // Bell: 14×14px matching reference w-[14px] h-[14px]
-                width: 14,
-                height: 14,
+                width: 30,
+                height: 30,
                 child: Builder(
                   builder:
                       (bellContext) => Stack(
@@ -420,13 +419,13 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                           LmsAppBarButton(
                             icon: Icons.notifications_none_rounded,
                             iconSize: 14,
-                            boxSize: 14,
+                            boxSize: 30,
                             onTap: () => showLmsNotifications(bellContext),
                           ),
                           if (unreadCount > 0)
                             Positioned(
-                              top: -4,
-                              right: -4,
+                              top: -2,
+                              right: -2,
                               child: IgnorePointer(
                                 child: LmsNotifBadge(count: unreadCount),
                               ),
@@ -435,8 +434,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       ),
                 ),
               ),
-              // gap-3 = 12px between bell and profile
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
               PopupMenuButton<String>(
                 offset: const Offset(0, 34),
                 constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
