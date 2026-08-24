@@ -992,7 +992,7 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
           // border-b border-gray-100 - text-base font-semibold
           // text-gray-500 uppercase / text-xs font-semibold text-[#693D94]
           Container(
-            padding: EdgeInsets.fromLTRB(20, isTablet ? 18 : 16, 20, 12),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
             decoration: BoxDecoration(
               color: headerBg,
               border: Border(bottom: BorderSide(color: headerBorder)),
@@ -1297,7 +1297,8 @@ class _ContinueLearningItem extends ConsumerWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      color: const Color(0xFFAF99A1),
+                      // text-gray-400 = #9CA3AF
+                      color: const Color(0xFF9CA3AF),
                       fontSize: 16,
                       // Design ref: leading-relaxed = 1.625
                       height: 1.625,
@@ -1564,7 +1565,7 @@ class _SessionRow extends StatelessWidget {
           ),
           Text(
             event.endDateTime != null
-                ? '${_formatTime(event.startDateTime)} - ${_formatTime(event.endDateTime!)}'
+                ? '${_formatTime(event.startDateTime)} – ${_formatTime(event.endDateTime!)}'
                 : _formatTime(event.startDateTime),
             style: GoogleFonts.inter(
               color: const Color(0xFF9CA3AF),
