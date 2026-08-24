@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/horizontal_scroll_hint.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
@@ -21,7 +22,8 @@ const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
 
-// Table columns flex naturally — BRIDGEWORK is Expanded, # / STATUS / ACTION are fixed.
+// Desktop: table scrolls horizontally below _minTableWidth. Mobile: columns flex naturally.
+const _minTableWidth = 600.0;
 
 class InProgressCoursesPage extends ConsumerWidget {
   const InProgressCoursesPage({super.key});
@@ -83,6 +85,7 @@ class _Body extends StatelessWidget {
                 child: ListView(
                   padding: EdgeInsets.fromLTRB(hPad, 0, hPad, vPad),
                   children: [
+                    if (isWide) const HorizontalScrollHint(),
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -90,17 +93,44 @@ class _Body extends StatelessWidget {
                         border: Border.all(color: const Color(0xFFE5E7EB)),
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: Column(
-                        children: [
-                          const _TableHeaderRow(),
-                          for (var i = 0; i < state.courses.length; i++)
-                            _CourseRow(
-                              index: (state.page - 1) * 10 + i + 1,
-                              item: state.courses[i],
-                              showDivider: i < state.courses.length - 1,
+                      child: isWide
+                          // Desktop: horizontal scroll when narrower than _minTableWidth
+                          ? LayoutBuilder(
+                              builder: (context, constraints) {
+                                final tableWidth = constraints.maxWidth < _minTableWidth
+                                    ? _minTableWidth
+                                    : constraints.maxWidth;
+                                return SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: SizedBox(
+                                    width: tableWidth,
+                                    child: Column(
+                                      children: [
+                                        const _TableHeaderRow(),
+                                        for (var i = 0; i < state.courses.length; i++)
+                                          _CourseRow(
+                                            index: (state.page - 1) * 10 + i + 1,
+                                            item: state.courses[i],
+                                            showDivider: i < state.courses.length - 1,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          // Mobile: columns flex, title wraps — no horizontal scroll
+                          : Column(
+                              children: [
+                                const _TableHeaderRow(),
+                                for (var i = 0; i < state.courses.length; i++)
+                                  _CourseRow(
+                                    index: (state.page - 1) * 10 + i + 1,
+                                    item: state.courses[i],
+                                    showDivider: i < state.courses.length - 1,
+                                  ),
+                              ],
                             ),
-                        ],
-                      ),
                     ),
                   ],
                 ),
