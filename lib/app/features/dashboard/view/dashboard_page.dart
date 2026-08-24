@@ -2317,7 +2317,7 @@ class _RequiredForYouCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(isTablet ? 8 : 10),
+        borderRadius: BorderRadius.circular(isTablet ? 10 : 8),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
@@ -2429,6 +2429,9 @@ class _RequiredRow extends ConsumerWidget {
         // spec as Discussion Board's View button (both confirmed via live
         // inspection) - uses _ViewButton's default styling.
         _ViewButton(
+          // Design ref: text-[13px] font-medium = 13px/500
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
           onPressed: viewDisabled
               ? null
               : () => Modular.to.pushNamed(
