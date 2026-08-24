@@ -857,7 +857,8 @@ class _CardHeader extends StatelessWidget {
           child: Text(
             large ? title : title.toUpperCase(),
             style: GoogleFonts.inter(
-              color: large ? const Color(0xFF364153) : const Color(0xFF6A7282),
+              // large: text-gray-700 = #374151; small: text-gray-500 = #6B7280
+              color: large ? const Color(0xFF374151) : const Color(0xFF6B7280),
               fontSize: large ? 16 : 12,
               fontWeight: large ? FontWeight.w600 : FontWeight.w700,
               letterSpacing: large ? 0 : .3,
@@ -1787,7 +1788,8 @@ class _CourseProgressRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF1A1A2E),
+                  // text-gray-600 = #4B5563
+                  color: const Color(0xFF4B5563),
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                   height: 24 / 16,
@@ -1799,7 +1801,8 @@ class _CourseProgressRow extends StatelessWidget {
               value: course.progress,
               suffix: '%',
               style: GoogleFonts.inter(
-                color: const Color(0xFFAF99A1),
+                // text-gray-400 = #9CA3AF
+                color: const Color(0xFF9CA3AF),
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 height: 24 / 16,
@@ -1814,7 +1817,7 @@ class _CourseProgressRow extends StatelessWidget {
           child: LinearProgressIndicator(
             value: pct,
             minHeight: 6,
-            backgroundColor: const Color(0xFFF6F3F4),
+            backgroundColor: const Color(0xFFF3F4F6), // bg-gray-100
             valueColor: const AlwaysStoppedAnimation<Color>(_purple),
           ),
         ),
