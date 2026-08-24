@@ -625,7 +625,10 @@ class _BannerSection extends StatelessWidget {
                       style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: greetingSize,
-                        height: isTablet ? 36 / 22 : 20 / 16,
+                        // lg: leading-tight (1.25), sm: leading-[36px]/18px
+                        height: isDesktop
+                            ? greetingSize * 1.25 / greetingSize
+                            : (isTablet ? 36 / 18 : 20 / 16),
                         fontWeight: FontWeight.w500,
                         letterSpacing: -0.75,
                       ),
