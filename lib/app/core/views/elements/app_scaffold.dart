@@ -30,7 +30,7 @@ class AppScaffold extends ConsumerWidget {
     this.bottom,
     this.backgroundColor,
     this.onRefresh,
-    this.useDashboardMobileProfileStyle = false,
+    this.useDashboardMobileProfileStyle = true,
   });
 
   final Widget body;
@@ -53,7 +53,9 @@ class AppScaffold extends ConsumerWidget {
   final PreferredSizeWidget? bottom;
   final Color? backgroundColor;
 
-  /// Applies the website's compact profile trigger only to Dashboard phones.
+  /// Applies the website's compact profile trigger to all screens.
+  /// Defaults to true so every screen uses the same bare avatar + chevron
+  /// style as the dashboard header.
   final bool useDashboardMobileProfileStyle;
 
   @override
