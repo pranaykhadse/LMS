@@ -1005,7 +1005,7 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                   children: [
                     // CSS ref: select2-search padding: 4px all sides
                     Padding(
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.all(6),
                       child: TextField(
                         controller: _queryController,
                         autofocus: false,
@@ -1014,20 +1014,20 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                         decoration: InputDecoration(
                           isDense: true,
                           hintText: '',
-                          // CSS ref: input height ~30px, padding minimal
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          // Increased height, border radius 6px
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(0),
+                            borderRadius: BorderRadius.circular(6),
                             borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(0),
+                            borderRadius: BorderRadius.circular(6),
                             borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(0),
+                            borderRadius: BorderRadius.circular(6),
                             borderSide: const BorderSide(color: Color(0xFF5457C1), width: 1.5),
                           ),
                         ),
