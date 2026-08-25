@@ -1028,7 +1028,7 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(color: Color(0xFF5457C1), width: 1.5),
+                            borderSide: const BorderSide(color: Color(0xFF693D94), width: 1),
                           ),
                         ),
                       ),
