@@ -746,7 +746,14 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
   Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (focused) => setState(() => _focused = focused),
-      child: TextField(
+      child: Theme(
+        // Remove Flutter's default gray hover color on TextField
+        data: Theme.of(context).copyWith(
+          inputDecorationTheme: const InputDecorationTheme(
+            hoverColor: Colors.transparent,
+          ),
+        ),
+        child: TextField(
         controller: _controller,
         enabled: widget.enabled,
         autofocus: widget.autofocus,
@@ -780,6 +787,7 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
                   ),
                 )
               : null,
+        ),
         ),
       ),
     );
@@ -1239,6 +1247,8 @@ InputDecoration _fieldDecoration(
       filled: true,
       // CSS ref: background-color: #f8fafc (unfocused), #fff (focused) — passed via fillColor param
       fillColor: fillColor,
+      // Remove Flutter's default gray hover overlay
+      hoverColor: Colors.transparent,
       isDense: true,
       // CSS ref: height 42px, padding 6px 12px (vertical), padding-left 42px (prefix icon handles left)
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
