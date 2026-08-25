@@ -153,9 +153,9 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
           slivers: [
             SliverPadding(
               padding: EdgeInsets.fromLTRB(
-                isWide ? 32 : 12,
+                isWide ? 40 : 16,
                 isWide ? 16 : 24,  // py-2 = 8px, plus breathing room
-                isWide ? 32 : 12,
+                isWide ? 40 : 16,
                 isWide ? 8 : 16,
               ),
               sliver: SliverToBoxAdapter(
@@ -360,7 +360,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   /// div#resources: bg #fff, border 1px #E7E4FF, border-radius 14px, padding 30px
   Widget _groupBlock(CatalogCourseGroup group, int selectedPage) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final hPad = isWide ? 48.0 : 27.0;
+    final hPad = isWide ? 40.0 : 16.0;
     final title = group.name.trim().isEmpty ? 'Courses' : '${group.name} Courses';
 
     return SliverPadding(
@@ -442,7 +442,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
 
   Widget _perPageBadge(int perPage) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final hPad = isWide ? 48.0 : 27.0;
+    final hPad = isWide ? 40.0 : 16.0;
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 0),
       sliver: SliverToBoxAdapter(
@@ -457,7 +457,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
 
   Widget _groupPagination(CatalogCourseGroup group, int selectedPage) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final hPad = isWide ? 48.0 : 27.0;
+    final hPad = isWide ? 40.0 : 16.0;
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 24),
       sliver: SliverToBoxAdapter(
@@ -488,7 +488,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
   Widget _groupTitle(String groupName) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
     final title = groupName.trim().isEmpty ? 'Courses' : '$groupName Courses';
-    final hPad = isWide ? 48.0 : 27.0;
+    final hPad = isWide ? 40.0 : 16.0;
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 0),
       sliver: SliverToBoxAdapter(
@@ -521,7 +521,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
 
   Widget _catalogGrid(List<CatalogCourse> courses) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final hPad = isWide ? 48.0 : 27.0;
+    final hPad = isWide ? 40.0 : 16.0;
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 0),
       sliver: SliverToBoxAdapter(
