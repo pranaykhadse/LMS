@@ -989,6 +989,7 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
               child: Container(
                 width: widget.width,
                 constraints: const BoxConstraints(maxHeight: 280),
+                clipBehavior: Clip.antiAlias,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   // CSS ref: border: 1px solid #aaa, border-top: none
@@ -1048,12 +1049,15 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                               itemBuilder: (context, index) {
                                 final skill = filtered[index];
                                 final selected = skill.id == widget.selectedId;
+                                // CSS ref: first item auto-highlighted when nothing selected
+                                final highlighted = selected ||
+                                    (widget.selectedId == null && index == 0);
                                 return InkWell(
                                   onTap: () => widget.onSelected(skill),
                                   child: Container(
                                     width: double.infinity,
                                     // CSS ref: highlighted bg rgb(88,151,251) = #5897FB
-                                    color: selected
+                                    color: highlighted
                                         ? const Color(0xFF5897FB)
                                         : Colors.transparent,
                                     padding: const EdgeInsets.symmetric(
@@ -1062,7 +1066,7 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                                       skill.name,
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
-                                        color: selected
+                                        color: highlighted
                                             ? Colors.white
                                             : const Color(0xFF2D3748),
                                         fontWeight: selected
