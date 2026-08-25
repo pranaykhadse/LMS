@@ -998,29 +998,36 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                     // CSS ref: select2-search padding: 4px all sides
                     Padding(
                       padding: const EdgeInsets.all(6),
-                      child: TextField(
-                        controller: _queryController,
-                        autofocus: false,
-                        onChanged: (_) => setState(() {}),
-                        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF475569)),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          hintText: '',
-                          // Increased height, border radius 6px
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          inputDecorationTheme: const InputDecorationTheme(
+                            hoverColor: Colors.transparent,
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(color: Color(0xFF693D94), width: 0.5),
+                        ),
+                        child: TextField(
+                          controller: _queryController,
+                          autofocus: false,
+                          onChanged: (_) => setState(() {}),
+                          style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF475569)),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            hintText: '',
+                            hoverColor: Colors.transparent,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              borderSide: const BorderSide(color: Color(0xFF693D94), width: 0.5),
+                            ),
                           ),
                         ),
                       ),
@@ -1028,14 +1035,16 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                     Flexible(
                       child: filtered.isEmpty
                           ? Padding(
-                              // CSS ref: select2-results__message padding matches items
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              child: Text(
-                                'No results found',
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  color: const Color(0xFF2D3748),
-                                  height: 21 / 14,
+                              // CSS ref: select2-results__message — centered
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                              child: Center(
+                                child: Text(
+                                  'No results found',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    color: const Color(0xFF2D3748),
+                                    height: 21 / 14,
+                                  ),
                                 ),
                               ),
                             )
