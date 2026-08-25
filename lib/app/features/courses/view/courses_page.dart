@@ -1032,61 +1032,58 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                         ),
                       ),
                     ),
-                    Flexible(
-                      child: filtered.isEmpty
-                          ? Padding(
-                              // CSS ref: select2-results__message — centered
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                              child: Center(
+                    if (filtered.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        child: Center(
+                          child: Text(
+                            'No results found',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: const Color(0xFF2D3748),
+                              height: 21 / 14,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 200),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          itemCount: filtered.length,
+                          itemBuilder: (context, index) {
+                            final skill = filtered[index];
+                            final selected = skill.id == widget.selectedId;
+                            final highlighted = selected ||
+                                (widget.selectedId == null && index == 0);
+                            return InkWell(
+                              onTap: () => widget.onSelected(skill),
+                              child: Container(
+                                width: double.infinity,
+                                color: highlighted
+                                    ? const Color(0xFF5897FB)
+                                    : Colors.transparent,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 8),
                                 child: Text(
-                                  'No results found',
+                                  skill.name,
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
-                                    color: const Color(0xFF2D3748),
-                                    height: 21 / 14,
+                                    color: highlighted
+                                        ? Colors.white
+                                        : const Color(0xFF2D3748),
+                                    fontWeight: highlighted
+                                        ? FontWeight.w600
+                                        : FontWeight.w400,
                                   ),
                                 ),
                               ),
-                            )
-                          : ConstrainedBox(
-                              // CSS ref: max-height: 200px, overflow-y: auto
-                              constraints: const BoxConstraints(maxHeight: 200),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                padding: EdgeInsets.zero,
-                                itemCount: filtered.length,
-                                itemBuilder: (context, index) {
-                                  final skill = filtered[index];
-                                  final selected = skill.id == widget.selectedId;
-                                  final highlighted = selected ||
-                                      (widget.selectedId == null && index == 0);
-                                  return InkWell(
-                                    onTap: () => widget.onSelected(skill),
-                                    child: Container(
-                                      width: double.infinity,
-                                      color: highlighted
-                                          ? const Color(0xFF5897FB)
-                                          : Colors.transparent,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 8),
-                                      child: Text(
-                                        skill.name,
-                                        style: GoogleFonts.inter(
-                                          fontSize: 14,
-                                          color: highlighted
-                                              ? Colors.white
-                                              : const Color(0xFF2D3748),
-                                          fontWeight: highlighted
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                    ),
+                            );
+                          },
+                        ),
+                      ),
                   ],
                 ),
               ),
