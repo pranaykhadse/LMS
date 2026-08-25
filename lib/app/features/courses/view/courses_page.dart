@@ -951,56 +951,65 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
           showWhenUnlinked: false,
           targetAnchor: Alignment.bottomLeft,
           followerAnchor: Alignment.topLeft,
-          offset: const Offset(0, 4),
+          offset: const Offset(0, 0),
           child: Align(
             alignment: Alignment.topLeft,
             child: Material(
-              elevation: 4,
-              borderRadius: BorderRadius.circular(12),
+              elevation: 2,
+              // CSS ref: border-top-left-radius:0, border-top-right-radius:0,
+              // border-bottom-left-radius:4px, border-bottom-right-radius:4px
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(4)),
               child: Container(
                 width: widget.width,
-                constraints: const BoxConstraints(maxHeight: 300),
-                decoration: BoxDecoration(
+                constraints: const BoxConstraints(maxHeight: 280),
+                decoration: const BoxDecoration(
                   color: Colors.white,
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                  borderRadius: BorderRadius.circular(12),
+                  // CSS ref: border: 1px solid #aaa, border-top: none
+                  border: Border(
+                    left:   BorderSide(color: Color(0xFFAAAAAA)),
+                    right:  BorderSide(color: Color(0xFFAAAAAA)),
+                    bottom: BorderSide(color: Color(0xFFAAAAAA)),
+                  ),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(4)),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-                      child: TextField(
-                        controller: _queryController,
-                        autofocus: true,
-                        onChanged: (_) => setState(() {}),
-                        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF475569)),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          hintText: 'Search...',
-                          hintStyle: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF94A3B8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          filled: true,
-                          fillColor: const Color(0xFFF8FAFC),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFF693D94), width: 1.5),
+                    // Only show search field when there are enough items to warrant it
+                    if (widget.skills.length > 5)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
+                        child: TextField(
+                          controller: _queryController,
+                          autofocus: widget.skills.length > 5,
+                          onChanged: (_) => setState(() {}),
+                          style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF475569)),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            hintText: 'Search...',
+                            hintStyle: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF94A3B8)),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(4),
+                              borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(4),
+                              borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(4),
+                              borderSide: const BorderSide(color: Color(0xFF693D94), width: 1.5),
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     Flexible(
                       child: filtered.isEmpty
                           ? Padding(
-                              padding: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.all(12),
                               child: Text(
                                 'No matching filters found.',
                                 style: GoogleFonts.inter(
@@ -1009,7 +1018,7 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                             )
                           : ListView.builder(
                               shrinkWrap: true,
-                              padding: const EdgeInsets.only(bottom: 6),
+                              padding: EdgeInsets.zero,
                               itemCount: filtered.length,
                               itemBuilder: (context, index) {
                                 final skill = filtered[index];
@@ -1018,19 +1027,19 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                                   onTap: () => widget.onSelected(skill),
                                   child: Container(
                                     width: double.infinity,
-                                    // CSS ref: selected bg rgb(88,151,251) = #5897FB
+                                    // CSS ref: highlighted bg rgb(88,151,251) = #5897FB
                                     color: selected
                                         ? const Color(0xFF5897FB)
                                         : Colors.transparent,
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 9),
+                                        horizontal: 10, vertical: 8),
                                     child: Text(
                                       skill.name,
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         color: selected
                                             ? Colors.white
-                                            : const Color(0xFF475569),
+                                            : const Color(0xFF2D3748),
                                         fontWeight: selected
                                             ? FontWeight.w600
                                             : FontWeight.w400,
