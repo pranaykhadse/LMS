@@ -779,6 +779,8 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
           decoration: _fieldDecoration(
             widget.hint,
             showLeadingIcon: widget.showLeadingIcon,
+            // CSS ref: focus:background-color: #fff (was #f8fafc when unfocused)
+            fillColor: _focused ? Colors.white : const Color(0xFFF8FAFC),
             suffixIcon: widget.showClear && _controller.text.isNotEmpty
                 ? IconButton(
                     tooltip: 'Clear',
@@ -1234,6 +1236,7 @@ InputDecoration _fieldDecoration(
   String hint, {
   Widget? suffixIcon,
   bool showLeadingIcon = true,
+  Color fillColor = const Color(0xFFF8FAFC),
 }) => InputDecoration(
       hintText: hint,
       // CSS ref: color: #94A3B8 placeholder, font-size 14px, letter-spacing 1px
@@ -1247,8 +1250,8 @@ InputDecoration _fieldDecoration(
           : null,
       suffixIcon: suffixIcon,
       filled: true,
-      // CSS ref: background-color: #f8fafc
-      fillColor: const Color(0xFFF8FAFC),
+      // CSS ref: background-color: #f8fafc (unfocused), #fff (focused) — passed via fillColor param
+      fillColor: fillColor,
       isDense: true,
       // CSS ref: height 42px, padding 6px 12px (vertical), padding-left 42px (prefix icon handles left)
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
