@@ -1028,48 +1028,54 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                     Flexible(
                       child: filtered.isEmpty
                           ? Padding(
-                              padding: const EdgeInsets.all(12),
+                              // CSS ref: select2-results__message padding matches items
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               child: Text(
-                                'No matching filters found.',
+                                'No results found',
                                 style: GoogleFonts.inter(
-                                    fontSize: 13, color: const Color(0xFF94A3B8)),
+                                  fontSize: 14,
+                                  color: const Color(0xFF2D3748),
+                                  height: 21 / 14,
+                                ),
                               ),
                             )
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              padding: EdgeInsets.zero,
-                              itemCount: filtered.length,
-                              itemBuilder: (context, index) {
-                                final skill = filtered[index];
-                                final selected = skill.id == widget.selectedId;
-                                // CSS ref: first item auto-highlighted when nothing selected
-                                final highlighted = selected ||
-                                    (widget.selectedId == null && index == 0);
-                                return InkWell(
-                                  onTap: () => widget.onSelected(skill),
-                                  child: Container(
-                                    width: double.infinity,
-                                    // CSS ref: highlighted bg rgb(88,151,251) = #5897FB
-                                    color: highlighted
-                                        ? const Color(0xFF5897FB)
-                                        : Colors.transparent,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 8),
-                                    child: Text(
-                                      skill.name,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 14,
-                                        color: highlighted
-                                            ? Colors.white
-                                            : const Color(0xFF2D3748),
-                                        fontWeight: selected
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
+                          : ConstrainedBox(
+                              // CSS ref: max-height: 200px, overflow-y: auto
+                              constraints: const BoxConstraints(maxHeight: 200),
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                itemCount: filtered.length,
+                                itemBuilder: (context, index) {
+                                  final skill = filtered[index];
+                                  final selected = skill.id == widget.selectedId;
+                                  final highlighted = selected ||
+                                      (widget.selectedId == null && index == 0);
+                                  return InkWell(
+                                    onTap: () => widget.onSelected(skill),
+                                    child: Container(
+                                      width: double.infinity,
+                                      color: highlighted
+                                          ? const Color(0xFF5897FB)
+                                          : Colors.transparent,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 8),
+                                      child: Text(
+                                        skill.name,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          color: highlighted
+                                              ? Colors.white
+                                              : const Color(0xFF2D3748),
+                                          fontWeight: highlighted
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              },
+                                  );
+                                },
+                              ),
                             ),
                     ),
                   ],
