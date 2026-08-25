@@ -15,6 +15,7 @@ import 'package:lms/app_module.dart';
 
 import '../view/course_classes_page.dart';
 import '../view/courses_page.dart';
+import '../view/courses_page_v2.dart';
 
 class CoursesModule extends Module {
   static const root = "/";
@@ -56,7 +57,7 @@ class CoursesModule extends Module {
     r.child(learningPaths, child: (context) => const AuthGate(child: LearningPathsPage()));
     r.child(badges, child: (context) => const AuthGate(child: BadgesPage()));
     r.child(redeemPoints, child: (context) => const AuthGate(child: ItemInventoryPage()));
-    r.child("/", child: (context) => const AuthGate(child: CoursesPage()));
+    r.child("/", child: (context) => const AuthGate(child: CoursesPageV2()));
     r.child(
       "$detail/:id",
       child:

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/providers/shell_destination_provider.dart';
 import 'package:lms/app/core/views/elements/tablet_nav_bar.dart';
-import 'package:lms/app/features/courses/view/courses_page.dart';
+import 'package:lms/app/features/courses/view/courses_page_v2.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/view/badges_page.dart';
 import 'package:lms/app/features/dashboard/view/completed_courses_page.dart';
@@ -38,7 +38,7 @@ class MainShell extends ConsumerWidget {
       case ShellDestination.dashboard:
         return const DashboardPage();
       case ShellDestination.courseCatalog:
-        return const CoursesPage();
+        return const CoursesPageV2();
       case ShellDestination.myEnrolledCourses:
         return const EnrolledCoursesPage();
       case ShellDestination.myCompletedCourses:
