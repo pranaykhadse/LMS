@@ -1035,14 +1035,12 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                     if (filtered.isEmpty)
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        child: Center(
-                          child: Text(
-                            'No results found',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              color: const Color(0xFF2D3748),
-                              height: 21 / 14,
-                            ),
+                        child: Text(
+                          'No results found',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: const Color(0xFF2D3748),
+                            height: 21 / 14,
                           ),
                         ),
                       )
