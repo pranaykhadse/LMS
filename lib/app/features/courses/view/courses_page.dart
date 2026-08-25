@@ -746,56 +746,40 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
   Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (focused) => setState(() => _focused = focused),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          // CSS ref: focus box-shadow: 0 0 0 4px rgba(84, 87, 193, 0.1)
-          boxShadow: _focused
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFF5457C1).withValues(alpha: 0.15),
-                    blurRadius: 0,
-                    spreadRadius: 3,
-                  ),
-                ]
-              : [],
+      child: TextField(
+        controller: _controller,
+        enabled: widget.enabled,
+        autofocus: widget.autofocus,
+        style: GoogleFonts.inter(
+          color: const Color(0xFF2D3748),
+          fontSize: 14,
+          letterSpacing: 1.0,
+          fontWeight: FontWeight.w400,
         ),
-        child: TextField(
-          controller: _controller,
-          enabled: widget.enabled,
-          autofocus: widget.autofocus,
-          style: GoogleFonts.inter(
-            color: const Color(0xFF2D3748),
-            fontSize: 14,
-            letterSpacing: 1.0,
-            fontWeight: FontWeight.w400,
-          ),
-          onChanged: widget.onChanged,
-          onSubmitted: (value) {
-            FocusScope.of(context).unfocus();
-            widget.onSubmitted?.call(value);
-          },
-          decoration: _fieldDecoration(
-            widget.hint,
-            showLeadingIcon: widget.showLeadingIcon,
-            // CSS ref: focus:background-color: #fff (was #f8fafc when unfocused)
-            fillColor: _focused ? Colors.white : const Color(0xFFF8FAFC),
-            suffixIcon: widget.showClear && _controller.text.isNotEmpty
-                ? IconButton(
-                    tooltip: 'Clear',
-                    onPressed: () {
-                      _controller.clear();
-                      widget.onChanged?.call('');
-                    },
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: _catalogMuted,
-                      size: 20,
-                    ),
-                  )
-                : null,
-          ),
+        onChanged: widget.onChanged,
+        onSubmitted: (value) {
+          FocusScope.of(context).unfocus();
+          widget.onSubmitted?.call(value);
+        },
+        decoration: _fieldDecoration(
+          widget.hint,
+          showLeadingIcon: widget.showLeadingIcon,
+          // CSS ref: focus:background-color: #fff (was #f8fafc when unfocused)
+          fillColor: _focused ? Colors.white : const Color(0xFFF8FAFC),
+          suffixIcon: widget.showClear && _controller.text.isNotEmpty
+              ? IconButton(
+                  tooltip: 'Clear',
+                  onPressed: () {
+                    _controller.clear();
+                    widget.onChanged?.call('');
+                  },
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    color: _catalogMuted,
+                    size: 20,
+                  ),
+                )
+              : null,
         ),
       ),
     );
@@ -1028,7 +1012,7 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(color: Color(0xFF693D94), width: 1),
+                            borderSide: const BorderSide(color: Color(0xFF693D94), width: 0.5),
                           ),
                         ),
                       ),
