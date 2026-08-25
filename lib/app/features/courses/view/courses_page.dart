@@ -1003,18 +1003,19 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // CSS ref: select2-search always shown
+                    // CSS ref: select2-search padding: 4px all sides
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
+                      padding: const EdgeInsets.all(4),
                       child: TextField(
                         controller: _queryController,
-                        autofocus: false, // autofocus breaks on desktop overlay
+                        autofocus: false,
                         onChanged: (_) => setState(() {}),
                         style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF475569)),
                         decoration: InputDecoration(
                           isDense: true,
                           hintText: '',
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          // CSS ref: input height ~30px, padding minimal
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(
