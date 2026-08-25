@@ -1002,37 +1002,35 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Only show search field when there are enough items to warrant it
-                    if (widget.skills.length > 5)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
-                        child: TextField(
-                          controller: _queryController,
-                          autofocus: widget.skills.length > 5,
-                          onChanged: (_) => setState(() {}),
-                          style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF475569)),
-                          decoration: InputDecoration(
-                            isDense: true,
-                            hintText: 'Search...',
-                            hintStyle: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF94A3B8)),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(4),
-                              borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(4),
-                              borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(4),
-                              borderSide: const BorderSide(color: Color(0xFF693D94), width: 1.5),
-                            ),
+                    // CSS ref: select2-search always shown
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
+                      child: TextField(
+                        controller: _queryController,
+                        autofocus: true,
+                        onChanged: (_) => setState(() {}),
+                        style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF475569)),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          hintText: '',
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(0),
+                            borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(0),
+                            borderSide: const BorderSide(color: Color(0xFFAAAAAA)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(0),
+                            borderSide: const BorderSide(color: Color(0xFF5457C1), width: 1.5),
                           ),
                         ),
                       ),
+                    ),
                     Flexible(
                       child: filtered.isEmpty
                           ? Padding(
