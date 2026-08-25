@@ -1008,7 +1008,7 @@ class _SkillDropdownOverlayState extends State<_SkillDropdownOverlay> {
                       padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
                       child: TextField(
                         controller: _queryController,
-                        autofocus: true,
+                        autofocus: false, // autofocus breaks on desktop overlay
                         onChanged: (_) => setState(() {}),
                         style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF475569)),
                         decoration: InputDecoration(
