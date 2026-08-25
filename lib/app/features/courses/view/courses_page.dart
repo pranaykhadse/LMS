@@ -746,7 +746,12 @@ class _ClearableTextFieldState extends State<_ClearableTextField> {
       controller: _controller,
       enabled: widget.enabled,
       autofocus: widget.autofocus,
-      style: GoogleFonts.inter(color: const Color(0xFF475569), fontSize: 14),
+      style: GoogleFonts.inter(
+        color: const Color(0xFF2D3748), // CSS ref: color: var(--text-main)
+        fontSize: 14,
+        letterSpacing: 1.0, // CSS ref: letter-spacing: 1px
+        fontWeight: FontWeight.w400,
+      ),
       onChanged: widget.onChanged,
       onSubmitted: (value) {
         FocusScope.of(context).unfocus();
@@ -1211,20 +1216,24 @@ InputDecoration _fieldDecoration(
   bool showLeadingIcon = true,
 }) => InputDecoration(
       hintText: hint,
-      // CSS ref: text-[#94a3b8] (placeholder) font-size 14px
-      hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 14),
+      // CSS ref: color: #94A3B8 placeholder, font-size 14px, letter-spacing 1px
+      hintStyle: GoogleFonts.inter(
+        color: const Color(0xFF94A3B8),
+        fontSize: 14,
+        letterSpacing: 1.0,
+      ),
       prefixIcon: showLeadingIcon
           ? const Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 16)
           : null,
       suffixIcon: suffixIcon,
       filled: true,
-      // CSS ref: bg-[#f8fafc]
+      // CSS ref: background-color: #f8fafc
       fillColor: const Color(0xFFF8FAFC),
       isDense: true,
-      // CSS ref: h-[42px] — contentPadding controls vertical height
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+      // CSS ref: height 42px, padding 6px 12px (vertical), padding-left 42px (prefix icon handles left)
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       border: OutlineInputBorder(
-        // CSS ref: rounded-[12px]
+        // CSS ref: border-radius: 12px
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
