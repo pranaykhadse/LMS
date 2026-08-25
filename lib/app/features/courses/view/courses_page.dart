@@ -321,16 +321,11 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
         final groups = response?.groups ?? const <CatalogCourseGroup>[];
         if (groups.isNotEmpty) {
           return [
-            for (final group in groups) ...[
-              _groupTitle(group.name),
-              _catalogGrid(group.courses),
-              _perPageBadge(group.pagination.perPage),
-              if (group.pagination.pages > 1)
-                _groupPagination(
-                  group,
-                  catalogState.groupPages[group.id] ?? group.pagination.page,
-                ),
-            ],
+            for (final group in groups)
+              _groupBlock(
+                group,
+                catalogState.groupPages[group.id] ?? group.pagination.page,
+              ),
             _bottomSpacer,
             const SliverToBoxAdapter(child: AppFooter()),
           ];
@@ -346,13 +341,92 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
           ];
         }
         return [
-          _groupTitle('Available'),
-          _catalogGrid(courses),
-          _perPageBadge(4),
+          _groupBlock(
+            CatalogCourseGroup(
+              id: 'available',
+              name: 'Available',
+              pagination: const CatalogPagination(),
+              courses: courses,
+            ),
+            1,
+          ),
           _bottomSpacer,
           const SliverToBoxAdapter(child: AppFooter()),
         ];
     }
+  }
+
+  /// CSS ref: div#resources — bg #fff, border 1px #E7E4FF, border-radius 14px, padding 30px
+  Widget _groupBlock(CatalogCourseGroup group, int selectedPage) {
+    final isWide = MediaQuery.sizeOf(context).width >= 760;
+    final hPad = isWide ? 48.0 : 27.0;
+    return SliverPadding(
+      padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 0),
+      sliver: SliverToBoxAdapter(
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE7E4FF)),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          padding: const EdgeInsets.all(30),
+          margin: EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Group title — CSS .sec-title h2.title
+              Text(
+                group.name.trim().isEmpty ? 'Courses' : '${group.name} Courses',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF693D94),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  height: 28 / 20,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Card grid
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = _catalogColumns(constraints.maxWidth);
+                  final extent = isWide ? 360.0 : 380.0;
+                  final rows = (group.courses.length / columns).ceil();
+                  final gridH = rows * extent + (rows - 1) * (isWide ? 28 : 34);
+                  return SizedBox(
+                    height: gridH,
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                        crossAxisSpacing: isWide ? 28 : 18,
+                        mainAxisSpacing: isWide ? 28 : 34,
+                        mainAxisExtent: extent,
+                      ),
+                      itemCount: group.courses.length,
+                      itemBuilder: (context, index) => _CatalogCourseCard(
+                        course: _CourseCardData.fromCatalog(group.courses[index]),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              // Per page badge
+              const SizedBox(height: 8),
+              PerPageBadge(perPage: group.pagination.perPage),
+              // Pagination — only when multiple pages
+              if (group.pagination.pages > 1) ...[
+                const SizedBox(height: 8),
+                PaginationWidget(
+                  page: selectedPage,
+                  pages: group.pagination.pages,
+                  onPage: (page) => _changeGroupPage(group.id, page),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _perPageBadge(int perPage) {
