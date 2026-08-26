@@ -1605,17 +1605,22 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                           ),
                         ),
                       ],
+                      // CSS ref: .card-actions-modern — margin-top: auto
+                      // (Spacer below achieves the same push-to-bottom).
                       const Spacer(),
-                      // CSS ref: .btn-modern-primary — filled #693D94 hover #5a3480
-                      _ModernViewCourseButton(
-                        onPressed: viewDisabled
-                            ? null
-                            : () => Modular.to.pushNamed(
-                                  CoursesModule.construct(
-                                    '${CoursesModule.detail}/${widget.course.id}',
+                      // CSS ref: .card-actions-modern — padding: 0 12px 15px.
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 15),
+                        child: _ModernViewCourseButton(
+                          onPressed: viewDisabled
+                              ? null
+                              : () => Modular.to.pushNamed(
+                                    CoursesModule.construct(
+                                      '${CoursesModule.detail}/${widget.course.id}',
+                                    ),
+                                    arguments: widget.course.offlineCourse,
                                   ),
-                                  arguments: widget.course.offlineCourse,
-                                ),
+                        ),
                       ),
                     ],
                   ),
