@@ -367,75 +367,68 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
     return SliverPadding(
       padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 0),
       sliver: SliverToBoxAdapter(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // CSS .sec-title h2.title — height:48px, color #A20067, font 24px, margin-bottom 20px
-            Container(
-              alignment: Alignment.centerLeft,
-              margin: const EdgeInsets.only(bottom: 20),
-              child: Text(
-                title,
-                style: GoogleFonts.inter(
-                  color: const Color(0xFFA20067),
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  height: 28 / 24,
+        child: Container(
+          // CSS: bg #fff, border 1px #E7E4FF, radius 14px, padding 30px
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFE7E4FF)),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          padding: const EdgeInsets.all(30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // div.sec-title h2.title — inside div#resources
+              // color #A20067, font-size 24px, margin-bottom 20px
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFFA20067),
+                    fontSize: 24,
+                    fontWeight: FontWeight.w600,
+                    height: 28 / 24,
+                  ),
                 ),
               ),
-            ),
-            // CSS div#resources — bg #fff, border 1px #E7E4FF, radius 14px, padding 30px
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: const Color(0xFFE7E4FF)),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              padding: const EdgeInsets.all(30),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Card grid
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final columns = _catalogColumns(constraints.maxWidth);
-                      final extent = isWide ? 360.0 : 380.0;
-                      final rows = (group.courses.length / columns).ceil();
-                      final gridH = rows * extent + (rows - 1) * (isWide ? 28 : 34);
-                      return SizedBox(
-                        height: gridH,
-                        child: GridView.builder(
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: columns,
-                            crossAxisSpacing: isWide ? 28 : 18,
-                            mainAxisSpacing: isWide ? 28 : 34,
-                            mainAxisExtent: extent,
-                          ),
-                          itemCount: group.courses.length,
-                          itemBuilder: (context, index) => _CatalogCourseCard(
-                            course: _CourseCardData.fromCatalog(group.courses[index]),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  // Per page badge
-                  const SizedBox(height: 8),
-                  PerPageBadge(perPage: group.pagination.perPage),
-                  // Pagination
-                  if (group.pagination.pages > 1) ...[
-                    const SizedBox(height: 8),
-                    PaginationWidget(
-                      page: selectedPage,
-                      pages: group.pagination.pages,
-                      onPage: (page) => _changeGroupPage(group.id, page),
+              // Card grid
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final columns = _catalogColumns(constraints.maxWidth);
+                  final extent = isWide ? 360.0 : 380.0;
+                  final rows = (group.courses.length / columns).ceil();
+                  final gridH = rows * extent + (rows - 1) * (isWide ? 28 : 34);
+                  return SizedBox(
+                    height: gridH,
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                        crossAxisSpacing: isWide ? 28 : 18,
+                        mainAxisSpacing: isWide ? 28 : 34,
+                        mainAxisExtent: extent,
+                      ),
+                      itemCount: group.courses.length,
+                      itemBuilder: (context, index) => _CatalogCourseCard(
+                        course: _CourseCardData.fromCatalog(group.courses[index]),
+                      ),
                     ),
-                  ],
-                ],
+                  );
+                },
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              PerPageBadge(perPage: group.pagination.perPage),
+              if (group.pagination.pages > 1) ...[
+                const SizedBox(height: 8),
+                PaginationWidget(
+                  page: selectedPage,
+                  pages: group.pagination.pages,
+                  onPage: (page) => _changeGroupPage(group.id, page),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
