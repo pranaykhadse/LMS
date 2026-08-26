@@ -10,7 +10,6 @@ import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
-import 'package:lms/app/core/views/elements/per_page_badge.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
@@ -21,7 +20,6 @@ import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/features/courses/view/widgets/course_view_availability.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
@@ -37,10 +35,13 @@ const _catalogBackground = FigmaTokens.pageBackground;
 const _catalogCalendarBlue = FigmaTokens.primaryPurple;
 const _catalogUndoBlue = FigmaTokens.primaryPurple;
 
+/// CSS ref: .group-item column classes — col-lg-3 (viewport ≥ 992px) → 4
+/// per row, col-md-6 (≥ 768px) → 2 per row, col-12 below that → 1 per row.
+/// Bootstrap breakpoints are viewport-based, so [width] must be the page
+/// (window) width, not the grid's content width.
 int _catalogColumns(double width) {
-  if (width >= 900) return 4;
-  if (width >= 760) return 3;
-  if (width >= 620) return 2;
+  if (width >= 992) return 4;
+  if (width >= 768) return 2;
   return 1;
 }
 
@@ -257,13 +258,17 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
             sliver: SliverLayoutBuilder(
               builder: (context, constraints) {
                 final width = constraints.crossAxisExtent;
-                final columns = _catalogColumns(width);
+                final columns =
+                    _catalogColumns(MediaQuery.sizeOf(context).width);
                 return SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: columns,
-                    crossAxisSpacing: width >= 760 ? 28 : 18,
-                    mainAxisSpacing: width >= 760 ? 28 : 34,
-                    mainAxisExtent: width >= 760 ? 360 : 380,
+                    // CSS ref: same card metrics as the catalog grid — 30px
+                    // gutters (col padding 15px + 15px), 30px .group-item
+                    // margin-bottom, 352px card height.
+                    crossAxisSpacing: 30,
+                    mainAxisSpacing: 30,
+                    mainAxisExtent: width >= 760 ? 352 : 380,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => _CatalogCourseCard(
@@ -357,8 +362,9 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
     }
   }
 
-  /// CSS ref: .sec-title is outside div#resources (separate element above the card grid)
-  /// div#resources: bg #fff, border 1px #E7E4FF, border-radius 14px, padding 30px
+  /// CSS ref: div#resources — bg #fff, border 1px #E7E4FF, border-radius
+  /// 14px, padding 30px, margin 0. div.sec-title is its first child; then
+  /// div.resources-block (empty .summary, .row of cards, div.pagination.m-2).
   Widget _groupBlock(CatalogCourseGroup group, int selectedPage) {
     final isWide = MediaQuery.sizeOf(context).width >= 760;
     final hPad = isWide ? 40.0 : 16.0;
@@ -387,7 +393,7 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                   style: GoogleFonts.inter(
                     color: const Color(0xFFA20067),
                     fontSize: 24,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                     height: 28 / 24,
                   ),
                 ),
@@ -395,18 +401,26 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
               // Card grid
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final columns = _catalogColumns(constraints.maxWidth);
-                  final extent = isWide ? 360.0 : 380.0;
+                  // Bootstrap breakpoints are viewport-based (col-lg-3 /
+                  // col-md-6), so decide columns from the page width.
+                  final columns =
+                      _catalogColumns(MediaQuery.sizeOf(context).width);
+                  // Computed .group-item box (data-key=124): content 318x352
+                  // at the 4-column breakpoint — the card's exact height.
+                  final extent = isWide ? 352.0 : 380.0;
                   final rows = (group.courses.length / columns).ceil();
-                  final gridH = rows * extent + (rows - 1) * (isWide ? 28 : 34);
+                  // CSS ref: .group-item margin-bottom 30px between rows;
+                  // col-* padding 15px + 15px = 30px gutter between columns.
+                  final gap = 30.0;
+                  final gridH = rows * extent + (rows - 1) * gap;
                   return SizedBox(
                     height: gridH,
                     child: GridView.builder(
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: columns,
-                        crossAxisSpacing: isWide ? 28 : 18,
-                        mainAxisSpacing: isWide ? 28 : 34,
+                        crossAxisSpacing: gap,
+                        mainAxisSpacing: gap,
                         mainAxisExtent: extent,
                       ),
                       itemCount: group.courses.length,
@@ -417,16 +431,23 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                   );
                 },
               ),
-              const SizedBox(height: 8),
-              PerPageBadge(perPage: group.pagination.perPage),
+              // CSS ref: div.pagination.m-2 — 8px margins around the pager,
+              // stacked on the last row's .group-item margin-bottom: 30px
+              // (the flex .row's height includes it), so 38px total sits
+              // between the last card and the pager. The web's #resources
+              // holds no per-page badge, only the pager.
               if (group.pagination.pages > 1) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 38),
                 PaginationWidget(
                   page: selectedPage,
                   pages: group.pagination.pages,
                   onPage: (page) => _changeGroupPage(group.id, page),
                 ),
-              ],
+                const SizedBox(height: 8),
+              ] else
+                // No pager — the trailing .group-item margin-bottom still
+                // applies below the last row of cards.
+                const SizedBox(height: 30),
             ],
           ),
         ),
@@ -434,124 +455,6 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
     );
   }
 
-  Widget _perPageBadge(int perPage) {
-    final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final hPad = isWide ? 40.0 : 16.0;
-    return SliverPadding(
-      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 0),
-      sliver: SliverToBoxAdapter(
-        child: Container(
-          color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-          child: PerPageBadge(perPage: perPage),
-        ),
-      ),
-    );
-  }
-
-  Widget _groupPagination(CatalogCourseGroup group, int selectedPage) {
-    final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final hPad = isWide ? 40.0 : 16.0;
-    return SliverPadding(
-      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 24),
-      sliver: SliverToBoxAdapter(
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius:
-                const BorderRadius.vertical(bottom: Radius.circular(12)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: PaginationWidget(
-            page: selectedPage,
-            pages: group.pagination.pages,
-            onPage: (page) => _changeGroupPage(group.id, page),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _groupTitle(String groupName) {
-    final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final title = groupName.trim().isEmpty ? 'Courses' : '$groupName Courses';
-    final hPad = isWide ? 40.0 : 16.0;
-    return SliverPadding(
-      padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 0),
-      sliver: SliverToBoxAdapter(
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-          child: Text(
-            title,
-            style: GoogleFonts.inter(
-              color: const Color(0xFF693D94),
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              height: 28 / 20,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _catalogGrid(List<CatalogCourse> courses) {
-    final isWide = MediaQuery.sizeOf(context).width >= 760;
-    final hPad = isWide ? 40.0 : 16.0;
-    return SliverPadding(
-      padding: EdgeInsets.fromLTRB(hPad, 0, hPad, 0),
-      sliver: SliverToBoxAdapter(
-        child: Container(
-          color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth - 40; // account for container padding
-              final columns = _catalogColumns(constraints.maxWidth);
-              final itemW = (width - (columns - 1) * (isWide ? 28 : 18)) / columns;
-              final extent = isWide ? 360.0 : 380.0;
-              final rows = (courses.length / columns).ceil();
-              final gridH = rows * extent + (rows - 1) * (isWide ? 28 : 34);
-              return SizedBox(
-                height: gridH,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: columns,
-                    crossAxisSpacing: isWide ? 28 : 18,
-                    mainAxisSpacing: isWide ? 28 : 34,
-                    mainAxisExtent: extent,
-                  ),
-                  itemCount: courses.length,
-                  itemBuilder: (context, index) => _CatalogCourseCard(
-                    course: _CourseCardData.fromCatalog(courses[index]),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
 }  // end _CoursesPageState
 
 
@@ -1544,8 +1447,9 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         Text(
                           'NEXT AVAILABLE',
                           style: GoogleFonts.inter(
-                            color: const Color(0xFF9CA3AF),
-                            fontSize: 10,
+                            // span.label: color #64748B, font 11px
+                            color: const Color(0xFF64748B),
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.8,
                           ),
@@ -1553,15 +1457,17 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         const SizedBox(height: 3),
                         Row(
                           children: [
+                            // i.far.fa-calendar-alt: ~10px
                             const Icon(Icons.calendar_today_rounded,
-                                size: 11, color: Color(0xFF693D94)),
+                                size: 10, color: Color(0xFF693D94)),
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
                                 _formatNextSession(widget.course.nextSession!),
                                 style: GoogleFonts.inter(
+                                  // strong: color #693D94, font 13px
                                   color: const Color(0xFF693D94),
-                                  fontSize: 12,
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -1571,7 +1477,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         ),
                         const SizedBox(height: 8),
                       ],
-                      // CSS ref: .course-title — Inter 14px w600 #1E293B
+                      // CSS ref: a (course title): color #1E2939, font 16px Inter
                       Text(
                         widget.course.name.isEmpty
                             ? 'Untitled Course'
@@ -1579,8 +1485,8 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
-                          color: const Color(0xFF1E293B),
-                          fontSize: 14,
+                          color: const Color(0xFF1E2939),
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                           height: 1.4,
                         ),
@@ -1629,9 +1535,15 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
             left: 10,
             child: OfflineCourseButton(course: widget.course.offlineCourse),
           ),
-          // Dev plan confirm overlay
+          // Dev plan confirm overlay — div.overlay lives inside
+          // .card-image-wrapper on the web, so it covers the image area
+          // only, not the whole card.
           if (_showOverlay)
-            Positioned.fill(
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 160, // same height as the card image above
               child: _DevPlanOverlay(
                 isInPlan: isInPlan,
                 isBusy: _isBusy,
@@ -1647,9 +1559,10 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
 }
 
 String _formatNextSession(DateTime dt) {
+  // Web ref: .date-display strong — "Nov 30, 05:30 AM" (PHP "M j, h:i A").
   const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
   final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
   final hourStr = hour12.toString().padLeft(2, '0');
@@ -1846,7 +1759,7 @@ class _ModernViewCourseButtonState extends State<_ModernViewCourseButton> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: double.infinity,
-          height: 38,
+          height: 41, // a.btn-modern-primary: height 41px
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: disabled
@@ -1869,7 +1782,7 @@ class _ModernViewCourseButtonState extends State<_ModernViewCourseButton> {
             'View Course',
             style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 13,
+              fontSize: 14, // a.btn-modern-primary: font 14px
               fontWeight: FontWeight.w600,
             ),
           ),
