@@ -46,12 +46,13 @@ class CourseGridCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        // Design ref: --card-radius: 16px, --card-shadow: 0 10px 25px rgba(0,0,0,0.05)
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 25,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -116,7 +117,8 @@ class CourseGridCard extends StatelessWidget {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.roboto(
-                      color: const Color(0xFF1A1A2E),
+                      // Design ref: --card-title: #1E2939
+                      color: const Color(0xFF1E2939),
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                       height: 1.35,
