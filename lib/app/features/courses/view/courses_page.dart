@@ -1,7 +1,6 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1686,14 +1685,10 @@ class _DevPlanButton extends StatelessWidget {
           ],
         ),
         alignment: Alignment.center,
-        // Bold (solid) glyphs — Material's Icons font has no weight axis,
-        // so font_awesome_flutter's solid set is used to get a heavier
-        // stroke weight, matching the reference's font-weight: 900 .fas
-        // icon class.
         child: Icon(
           isDisabled
               ? Icons.cloud_off_rounded
-              : (isInPlan ? FontAwesomeIcons.minus : FontAwesomeIcons.plus),
+              : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
           // Icon scales with the 36px box (was 18 on the old 30px box).
           size: isDisabled ? 18 : 22,
           color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : FigmaTokens.primaryPurple),
