@@ -113,7 +113,7 @@ class PaginationWidget extends StatelessWidget {
               // 30px; border-radius: 24px; box-shadow: 0 10px 40px
               // rgba(0,0,0,0.04) (confirmed active via live inspection —
               // an earlier static export had this commented out).
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -136,7 +136,7 @@ class PaginationWidget extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         for (var i = 0; i < items.length; i++) ...[
-                          if (i > 0) const SizedBox(width: 12),
+                          if (i > 0) const SizedBox(width: 18),
                           items[i],
                         ],
                       ],
@@ -151,40 +151,49 @@ class PaginationWidget extends StatelessWidget {
                     // .pg-status-text: "Page X of Y", color #94A3B8, font
                     // weight 800, size 12, line-height 18px.
                     const SizedBox(height: 5),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: SizedBox(
-                        width: 200,
-                        height: 4,
-                        child: Stack(
-                          children: [
-                            Container(color: const Color(0xFFF1F5F9)),
-                            FractionallySizedBox(
-                              widthFactor: progress.clamp(0.0, 1.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF693D94),
-                                  borderRadius: BorderRadius.circular(10),
+                    // Track is half the row's width and centered, rather
+                    // than stretching full-width under the Column's
+                    // crossAxisAlignment.stretch.
+                    Center(
+                      child: FractionallySizedBox(
+                        widthFactor: 0.5,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: SizedBox(
+                            height: 4,
+                            child: Stack(
+                              children: [
+                                Container(color: const Color(0xFFF1F5F9)),
+                                FractionallySizedBox(
+                                  widthFactor: progress.clamp(0.0, 1.0),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF693D94),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      // Rendered uppercase on the web (visually confirmed
-                      // against a screenshot — "PAGE 1 OF 10", not "Page 1
-                      // of 10"); Flutter has no CSS text-transform
-                      // equivalent, so the string itself is upper-cased.
-                      'Page $page of $pages'.toUpperCase(),
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF94A3B8),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                        height: 18 / 12,
-                        letterSpacing: 0.8,
+                    Center(
+                      child: Text(
+                        // Rendered uppercase on the web (visually confirmed
+                        // against a screenshot — "PAGE 1 OF 10", not "Page 1
+                        // of 10"); Flutter has no CSS text-transform
+                        // equivalent, so the string itself is upper-cased.
+                        'Page $page of $pages'.toUpperCase(),
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF94A3B8),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          height: 18 / 12,
+                          letterSpacing: 0.8,
+                        ),
                       ),
                     ),
                   ] else ...[
@@ -262,7 +271,12 @@ class _NavBtn extends StatelessWidget {
           color: Color(0xFFF8FAFC),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 14, color: const Color(0xFF475569)),
+        // Enlarged per request (was 14, matching the CSS's computed
+        // 8.75x14 glyph box). Note: Icons.chevron_left/_right come from
+        // the classic fixed-weight Icons font (same constraint hit
+        // earlier on the dev-plan +/- icon) — there's no weight
+        // parameter that visibly bolds it, so only size increased here.
+        child: Icon(icon, size: 22, color: const Color(0xFF475569)),
       ),
     );
   }
