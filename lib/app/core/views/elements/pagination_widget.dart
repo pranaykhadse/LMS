@@ -34,167 +34,175 @@ class PaginationWidget extends StatelessWidget {
     final nums = _pageNumbers(page, pages);
     final progress = page / pages;
 
+    // CSS ref: .pagination — gap: 12px between every item (nav buttons,
+    // numbers, ellipsis alike). Built as a flat list so a uniform 12px
+    // SizedBox can be interspersed between items, replacing the previous
+    // ad hoc per-item margin/padding (3px/4px/6px, inconsistent).
+    final items = <Widget>[
+      _NavBtn(
+        icon: Icons.chevron_left,
+        onTap: page > 1 ? () => onPage(page - 1) : null,
+      ),
+      ...nums.map((p) {
+        if (p == -1) {
+          return Text(
+            // li.disabled.ellipsis-end renders a plain "..."
+            // (span.page-link with border:none)
+            '...',
+            style: GoogleFonts.inter(
+              color: _muted,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          );
+        }
+        final isCurrent = p == page;
+        return GestureDetector(
+          onTap: isCurrent ? null : () => onPage(p),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              // CSS ref (active .page-link inline style):
+              // background-color #693D94, border-color
+              // #693D94, color #fff, box-shadow
+              // 0 8px 16px rgba(105, 61, 148, 0.25)
+              color: isCurrent ? _purple : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isCurrent ? _purple : const Color(0xFFE5E7EB),
+              ),
+              boxShadow:
+                  isCurrent
+                      ? [
+                        BoxShadow(
+                          color: _purple.withValues(alpha: 0.25),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
+                        ),
+                      ]
+                      : null,
+            ),
+            child: Text(
+              '$p',
+              style: GoogleFonts.inter(
+                color: isCurrent ? Colors.white : _ink,
+                fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        );
+      }),
+      _NavBtn(
+        icon: Icons.chevron_right,
+        onTap: page < pages ? () => onPage(page + 1) : null,
+      ),
+    ];
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // ── Centered row + progress bar at same width ──────────────────
         Center(
           child: IntrinsicWidth(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Page buttons row
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _NavBtn(
-                        icon: Icons.chevron_left,
-                        onTap: page > 1 ? () => onPage(page - 1) : null,
-                      ),
-                      const SizedBox(width: 4),
-                      ...nums.map((p) {
-                        if (p == -1) {
-                          return Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 6),
-                            child: Text(
-                              // li.disabled.ellipsis-end renders a plain
-                              // "..." (span.page-link with border:none)
-                              '...',
-                              style: GoogleFonts.inter(
-                                color: _muted,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          );
-                        }
-                        final isCurrent = p == page;
-                        return GestureDetector(
-                          onTap: isCurrent ? null : () => onPage(p),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            margin:
-                                const EdgeInsets.symmetric(horizontal: 3),
-                            width: 36,
-                            height: 36,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              // CSS ref (active .page-link inline style):
-                              // background-color #693D94, border-color
-                              // #693D94, color #fff, box-shadow
-                              // 0 8px 16px rgba(105, 61, 148, 0.25)
-                              color:
-                                  isCurrent ? _purple : Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: isCurrent
-                                    ? _purple
-                                    : const Color(0xFFE5E7EB),
-                              ),
-                              boxShadow: isCurrent
-                                  ? [
-                                      BoxShadow(
-                                        color: _purple
-                                            .withValues(alpha: 0.25),
-                                        blurRadius: 16,
-                                        offset: const Offset(0, 8),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Text(
-                              '$p',
-                              style: GoogleFonts.inter(
-                                color: isCurrent ? Colors.white : _ink,
-                                fontWeight: isCurrent
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                      const SizedBox(width: 4),
-                      _NavBtn(
-                        icon: Icons.chevron_right,
-                        onTap: page < pages ? () => onPage(page + 1) : null,
-                      ),
-                    ],
-                  ),
-                ),
-                if (showProgressBar) ...[
-                  // CSS ref: .pagination-footer — margin: 5px 0 0; display:
-                  // flex column, centered. .pg-progress-container: 200x4,
-                  // bg #F1F5F9, radius 10. .pg-progress-bar (fill): bg
-                  // #693D94, radius 10, width = (page / pages) * track
-                  // width (proportional, not a literal pixel value).
-                  // .pg-status-text: "Page X of Y", color #94A3B8, font
-                  // weight 800, size 12, line-height 18px.
-                  const SizedBox(height: 5),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: SizedBox(
-                      width: 200,
-                      height: 4,
-                      child: Stack(
-                        children: [
-                          Container(color: const Color(0xFFF1F5F9)),
-                          FractionallySizedBox(
-                            widthFactor: progress.clamp(0.0, 1.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF693D94),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
+            child: Container(
+              // CSS ref: .pagination — background: #fff; padding: 20px
+              // 30px; border-radius: 24px; box-shadow: none (commented
+              // out on the web).
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Page buttons row
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (var i = 0; i < items.length; i++) ...[
+                          if (i > 0) const SizedBox(width: 12),
+                          items[i],
                         ],
+                      ],
+                    ),
+                  ),
+                  if (showProgressBar) ...[
+                    // CSS ref: .pagination-footer — margin: 5px 0 0; display:
+                    // flex column, centered. .pg-progress-container: 200x4,
+                    // bg #F1F5F9, radius 10. .pg-progress-bar (fill): bg
+                    // #693D94, radius 10, width = (page / pages) * track
+                    // width (proportional, not a literal pixel value).
+                    // .pg-status-text: "Page X of Y", color #94A3B8, font
+                    // weight 800, size 12, line-height 18px.
+                    const SizedBox(height: 5),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: SizedBox(
+                        width: 200,
+                        height: 4,
+                        child: Stack(
+                          children: [
+                            Container(color: const Color(0xFFF1F5F9)),
+                            FractionallySizedBox(
+                              widthFactor: progress.clamp(0.0, 1.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF693D94),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Page $page of $pages',
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF94A3B8),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                      height: 18 / 12,
-                    ),
-                  ),
-                ] else ...[
-                  const SizedBox(height: 10),
-                  // Progress bar — same width as the row above
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 3,
-                      backgroundColor: const Color(0xFFE5E7EB),
-                      valueColor: AlwaysStoppedAnimation<Color>(_purple),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  // PAGE X OF Y
-                  Center(
-                    child: Text(
-                      'PAGE $page OF $pages',
+                    const SizedBox(height: 4),
+                    Text(
+                      'Page $page of $pages',
                       style: GoogleFonts.inter(
-                        color: _muted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.8,
+                        color: const Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        height: 18 / 12,
                       ),
                     ),
-                  ),
+                  ] else ...[
+                    const SizedBox(height: 10),
+                    // Progress bar — same width as the row above
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 3,
+                        backgroundColor: const Color(0xFFE5E7EB),
+                        valueColor: AlwaysStoppedAnimation<Color>(_purple),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // PAGE X OF Y
+                    Center(
+                      child: Text(
+                        'PAGE $page OF $pages',
+                        style: GoogleFonts.inter(
+                          color: _muted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
                 ],
-                const SizedBox(height: 12),
-              ],
+              ),
             ),
           ),
         ),
@@ -221,10 +229,7 @@ class PaginationWidget extends StatelessWidget {
 }
 
 class _NavBtn extends StatelessWidget {
-  const _NavBtn({
-    required this.icon,
-    this.onTap,
-  });
+  const _NavBtn({required this.icon, this.onTap});
   final IconData icon;
   final VoidCallback? onTap;
 
@@ -244,11 +249,7 @@ class _NavBtn extends StatelessWidget {
           color: Color(0xFFF8FAFC),
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          icon,
-          size: 14,
-          color: const Color(0xFF475569),
-        ),
+        child: Icon(icon, size: 14, color: const Color(0xFF475569)),
       ),
     );
   }
