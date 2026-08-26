@@ -1616,7 +1616,11 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
           // right: 12px; z-index: 10; computed box 36x36. It sits inside
           // .card-image-wrapper, whose top-right corner is the card's, so
           // card-Stack offsets are identical.
-          if (membership.loaded)
+          // Hidden while this card's own confirm overlay is open — the
+          // overlay covers the button's spot, and hiding it (rather than
+          // just visually covering it) also stops it from being tapped
+          // through the frosted blur while the confirm prompt is showing.
+          if (membership.loaded && !showOverlay)
             Positioned(
               top: 12,
               right: 12,
@@ -1783,11 +1787,13 @@ class _DevPlanOverlay extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         // CSS ref: .overlay — padding: 15px !important; flex column
-        // centered; text-align: center; color: #fff !important. No
-        // background is set (the purple background: var(--primary-first)
-        // rule is commented out on the web), so the frosted blur of the
-        // image behind is the only scrim.
+        // centered; text-align: center; color: #fff !important. The web
+        // leaves this scrim-less (blur only, background commented out),
+        // but that reads poorly against busier course images in practice
+        // — added a grey scrim on top of the blur so the white text stays
+        // legible regardless of what's behind it.
         child: Container(
+          color: const Color(0x99334155),
           alignment: Alignment.center,
           padding: const EdgeInsets.all(15),
           // Defensive: clip the animated content to the padded box too, so
