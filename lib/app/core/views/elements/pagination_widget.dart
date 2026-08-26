@@ -12,11 +12,20 @@ class PaginationWidget extends StatelessWidget {
     required this.page,
     required this.pages,
     required this.onPage,
+    this.showProgressBar = false,
   });
 
   final int page;
   final int pages;
   final ValueChanged<int> onPage;
+
+  /// CSS ref: .pagination-footer / .pg-progress-container / .pg-progress-bar
+  /// / .pg-status-text — a thin proportional progress track + "Page X of Y"
+  /// text, shown below the numbered page row. Opt-in (defaults to false) so
+  /// existing call sites of this shared widget (dashboard course lists,
+  /// item inventory, development plan, etc.) keep their current appearance
+  /// unless they explicitly ask for the extra footer.
+  final bool showProgressBar;
 
   @override
   Widget build(BuildContext context) {
@@ -118,30 +127,72 @@ class PaginationWidget extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                // Progress bar — same width as the row above
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 3,
-                    backgroundColor: const Color(0xFFE5E7EB),
-                    valueColor: AlwaysStoppedAnimation<Color>(_purple),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // PAGE X OF Y
-                Center(
-                  child: Text(
-                    'PAGE $page OF $pages',
-                    style: GoogleFonts.inter(
-                      color: _muted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.8,
+                if (showProgressBar) ...[
+                  // CSS ref: .pagination-footer — margin: 5px 0 0; display:
+                  // flex column, centered. .pg-progress-container: 200x4,
+                  // bg #F1F5F9, radius 10. .pg-progress-bar (fill): bg
+                  // #693D94, radius 10, width = (page / pages) * track
+                  // width (proportional, not a literal pixel value).
+                  // .pg-status-text: "Page X of Y", color #94A3B8, font
+                  // weight 800, size 12, line-height 18px.
+                  const SizedBox(height: 5),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: SizedBox(
+                      width: 200,
+                      height: 4,
+                      child: Stack(
+                        children: [
+                          Container(color: const Color(0xFFF1F5F9)),
+                          FractionallySizedBox(
+                            widthFactor: progress.clamp(0.0, 1.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF693D94),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Page $page of $pages',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF94A3B8),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      height: 18 / 12,
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(height: 10),
+                  // Progress bar — same width as the row above
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 3,
+                      backgroundColor: const Color(0xFFE5E7EB),
+                      valueColor: AlwaysStoppedAnimation<Color>(_purple),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // PAGE X OF Y
+                  Center(
+                    child: Text(
+                      'PAGE $page OF $pages',
+                      style: GoogleFonts.inter(
+                        color: _muted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
               ],
             ),

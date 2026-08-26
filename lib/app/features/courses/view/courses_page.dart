@@ -460,6 +460,12 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                   page: selectedPage,
                   pages: group.pagination.pages,
                   onPage: (page) => _changeGroupPage(group.id, page),
+                  // CSS ref: .pagination-footer / .pg-progress-container /
+                  // .pg-progress-bar / .pg-status-text — blueprint-exact
+                  // progress footer, opt-in here only so the other 7+
+                  // screens using this shared widget keep their current
+                  // look.
+                  showProgressBar: true,
                 ),
                 const SizedBox(height: 8),
               ] else
@@ -1262,8 +1268,10 @@ InputDecoration _fieldDecoration(
       // Remove Flutter's default gray hover overlay
       hoverColor: Colors.transparent,
       isDense: true,
-      // CSS ref: height 42px, padding 6px 12px (vertical), padding-left 42px (prefix icon handles left)
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      // CSS ref: .searchInput.form-control padding: 6px 12px 6px 42px
+      // (6px vertical, 12px horizontal, 42px left for the icon inset —
+      // applied exactly per blueprint).
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       border: OutlineInputBorder(
         // CSS ref: border-radius: 12px
         borderRadius: BorderRadius.circular(12),
@@ -1544,9 +1552,24 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                       if (widget.course.offlineCourse.displayRating == 1 &&
                           widget.course.offlineCourse.averageRating > 0) ...[
                         const SizedBox(height: 6),
-                        _StarRating(
-                          rating: widget.course.offlineCourse.averageRating,
-                          count: widget.course.offlineCourse.ratingCount ?? 0,
+                        // CSS ref: .rating-bar { padding: 4px 12px; margin: 0
+                        // 0 2px; border-radius: 8px; } — applied exactly per
+                        // blueprint (no background color is specified, so the
+                        // border-radius has no visible effect, but is kept
+                        // for fidelity).
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: _StarRating(
+                            rating: widget.course.offlineCourse.averageRating,
+                            count: widget.course.offlineCourse.ratingCount ?? 0,
+                          ),
                         ),
                       ],
                       const Spacer(),
@@ -1898,10 +1921,9 @@ class _StarRating extends StatelessWidget {
   Widget build(BuildContext context) {
     // CSS ref: .rating-bar — .rating-stars color #FFA534, font-size 18px.
     // .average-rating font 700 15px, color #2D3748. .review-count color
-    // #64748B, font-size 13px. (The rating-bar's own 4px/12px padding is
-    // not applied here — the surrounding card-title above it has no
-    // matching horizontal inset in this layout, so adding it here would
-    // misalign the row against the title text.)
+    // #64748B, font-size 13px. (The rating-bar's own 4px/12px padding /
+    // 2px margin / 8px radius are applied by the Container wrapping this
+    // widget in _CatalogCourseCard, not inside this widget itself.)
     return Row(
       children: [
         ...List.generate(5, (i) {
