@@ -1867,29 +1867,39 @@ class _OverlayBtn extends StatelessWidget {
     // CSS ref: .overlay_btn — both Yes and No share the same style: bg
     // #fff, color #693D94, padding 8px 20px, border-radius 12px, box-shadow
     // 0 4px 10px rgba(0,0,0,0.2), font 700 13px/19.5px. There is no
-    // filled/outline distinction on the web for this class.
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: const [
-            BoxShadow(
-              color: Color.fromRGBO(0, 0, 0, 0.2),
-              blurRadius: 10,
-              offset: Offset(0, 4),
+    // filled/outline distinction on the web for this class at rest.
+    //
+    // The web's :hover state isn't in the static CSS export, so this dark
+    // fill (bg + white text) is matched from a screenshot of the live
+    // hover state — applied identically to both Yes and No.
+    return HoverBuilder(
+      builder: (context, hovering) => MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(
+              color: hovering ? _catalogInk : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromRGBO(0, 0, 0, 0.2),
+                  blurRadius: 10,
+                  offset: Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: _catalogPurple,
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.4,
+            child: Text(
+              label,
+              style: TextStyle(
+                color: hovering ? Colors.white : _catalogPurple,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
+              ),
+            ),
           ),
         ),
       ),
