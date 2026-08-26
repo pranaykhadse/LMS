@@ -1986,7 +1986,8 @@ class _ModernViewCourseButtonState extends State<_ModernViewCourseButton> {
                 : _hovering
                     ? const Color(0xFF5A3480)
                     : const Color(0xFF693D94),
-            borderRadius: BorderRadius.circular(8),
+            // CSS ref: .btn-modern-primary border-radius: 12px (was 8).
+            borderRadius: BorderRadius.circular(12),
             boxShadow: disabled || _hovering
                 ? null
                 : const [
