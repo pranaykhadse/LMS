@@ -1460,8 +1460,9 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               // -- White content area � title + button pinned to bottom -
               // -- White content area: session info, title, rating, btn --
               Expanded(
+                // CSS ref: .card-body-modern — padding 8px, flex-grow 1
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 15),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
