@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/viewmodel/offline_view_model.dart';
 
@@ -68,15 +69,23 @@ class _OfflineCourseAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isDownloading) {
-      return _roundActionShell(
-        tooltip: 'Saving course offline',
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            value: progress,
-            strokeWidth: 2.4,
-            color: _purple,
+      return Tooltip(
+        message: 'Saving course offline',
+        child: Material(
+          color: Colors.white,
+          elevation: 5,
+          shape: const CircleBorder(),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                value: progress,
+                strokeWidth: 2.4,
+                color: _purple,
+              ),
+            ),
           ),
         ),
       );
@@ -105,30 +114,41 @@ class _OfflineCourseAction extends StatelessWidget {
     required Color color,
     required VoidCallback? onTap,
   }) {
-    return _roundActionShell(
-      tooltip: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Padding(
-          padding: const EdgeInsets.all(7),
-          child: Icon(icon, size: iconSize, weight: 1000, color: color),
-        ),
-      ),
-    );
-  }
-
-  Widget _roundActionShell({required String tooltip, required Widget child}) {
+    final isDisabled = onTap == null;
     return Tooltip(
       message: tooltip,
-      child: Material(
-        color: Colors.white,
-        elevation: 5,
-        shape: const CircleBorder(),
-        child: Padding(
-          padding: child is InkWell ? EdgeInsets.zero : const EdgeInsets.all(8),
-          child: child,
-        ),
+      child: HoverBuilder(
+        builder: (context, hovering) {
+          // On hover the button fills solid with its own accent color
+          // and the icon turns white, matching the dev-plan +/- button's
+          // hover treatment for a consistent feel across both icons.
+          final filled = !isDisabled && hovering;
+          return MouseRegion(
+            cursor: isDisabled
+                ? SystemMouseCursors.basic
+                : SystemMouseCursors.click,
+            child: Material(
+              // Material animates its own color changes (AnimatedPhysicalModel
+              // internally), so this cross-fades on hover without extra work.
+              color: filled ? color : Colors.white,
+              elevation: 5,
+              shape: const CircleBorder(),
+              child: InkWell(
+                onTap: onTap,
+                customBorder: const CircleBorder(),
+                child: Padding(
+                  padding: const EdgeInsets.all(7),
+                  child: Icon(
+                    icon,
+                    size: iconSize,
+                    weight: 1000,
+                    color: filled ? Colors.white : color,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

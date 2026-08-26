@@ -1677,42 +1677,47 @@ class _DevPlanButton extends StatelessWidget {
           // captured by the static CSS export, so this mirrors the
           // reference screenshot directly).
           final filled = !isDisabled && hovering;
-          return GestureDetector(
-            onTap: onTap,
-            behavior: HitTestBehavior.opaque,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              // CSS ref: .dev-plan-action computed box — 36x36.
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                // CSS ref: .dev-plan-action .plus-icon — background
-                // rgba(255,255,255,0.9), box-shadow 0 4px 12px rgba(0,0,0,0.1).
-                color: isDisabled
-                    ? Colors.white
-                    : (filled ? accentColor : Colors.white.withValues(alpha: 0.9)),
-                // CSS ref: .dev-plan-action .plus-icon / .minus-icon —
-                // border-radius: 50% (full circle on the 36x36 box).
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              alignment: Alignment.center,
-              child: Icon(
-                isDisabled
-                    ? Icons.cloud_off_rounded
-                    : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
-                // Icon scales with the 36px box (was 18 on the old 30px box).
-                size: isDisabled ? 18 : 22,
-                weight: 1000,
-                color: isDisabled
-                    ? _catalogMuted
-                    : (filled ? Colors.white : accentColor),
+          return MouseRegion(
+            cursor: isDisabled
+                ? SystemMouseCursors.basic
+                : SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: onTap,
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                // CSS ref: .dev-plan-action computed box — 36x36.
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  // CSS ref: .dev-plan-action .plus-icon — background
+                  // rgba(255,255,255,0.9), box-shadow 0 4px 12px rgba(0,0,0,0.1).
+                  color: isDisabled
+                      ? Colors.white
+                      : (filled ? accentColor : Colors.white.withValues(alpha: 0.9)),
+                  // CSS ref: .dev-plan-action .plus-icon / .minus-icon —
+                  // border-radius: 50% (full circle on the 36x36 box).
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  isDisabled
+                      ? Icons.cloud_off_rounded
+                      : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
+                  // Icon scales with the 36px box (was 18 on the old 30px box).
+                  size: isDisabled ? 18 : 22,
+                  weight: 1000,
+                  color: isDisabled
+                      ? _catalogMuted
+                      : (filled ? Colors.white : accentColor),
+                ),
               ),
             ),
           );
