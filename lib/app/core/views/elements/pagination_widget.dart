@@ -113,7 +113,7 @@ class PaginationWidget extends StatelessWidget {
               // 30px; border-radius: 24px; box-shadow: 0 10px 40px
               // rgba(0,0,0,0.04) (confirmed active via live inspection —
               // an earlier static export had this commented out).
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
+              padding: const EdgeInsets.symmetric(horizontal: 56, vertical: 28),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -276,7 +276,7 @@ class _NavBtn extends StatelessWidget {
         // the classic fixed-weight Icons font (same constraint hit
         // earlier on the dev-plan +/- icon) — there's no weight
         // parameter that visibly bolds it, so only size increased here.
-        child: Icon(icon, size: 22, color: const Color(0xFF475569)),
+        child: Icon(icon, size: 26, color: const Color(0xFF475569)),
       ),
     );
   }
