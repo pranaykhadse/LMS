@@ -112,7 +112,7 @@ class _OfflineCourseAction extends StatelessWidget {
         customBorder: const CircleBorder(),
         child: Padding(
           padding: const EdgeInsets.all(7),
-          child: Icon(icon, size: iconSize, color: color),
+          child: Icon(icon, size: iconSize, weight: 1000, color: color),
         ),
       ),
     );

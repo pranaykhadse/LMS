@@ -1691,6 +1691,7 @@ class _DevPlanButton extends StatelessWidget {
               : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
           // Icon scales with the 36px box (was 18 on the old 30px box).
           size: isDisabled ? 18 : 22,
+          weight: 1000,
           color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : FigmaTokens.primaryPurple),
         ),
       ),
