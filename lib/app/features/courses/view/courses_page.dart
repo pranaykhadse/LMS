@@ -1493,15 +1493,16 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                             // i.far.fa-calendar-alt: ~10px
                             const Icon(Icons.calendar_today_rounded,
                                 size: 10, color: Color(0xFF693D94)),
-                            const SizedBox(width: 4),
+                            // CSS ref: .session-info .date-display gap: 6px
+                            const SizedBox(width: 6),
                             Flexible(
                               child: Text(
                                 _formatNextSession(widget.course.nextSession!),
                                 style: GoogleFonts.inter(
-                                  // strong: color #693D94, font 13px
+                                  // CSS ref: .session-info .date-display
                                   color: const Color(0xFF693D94),
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w600,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
