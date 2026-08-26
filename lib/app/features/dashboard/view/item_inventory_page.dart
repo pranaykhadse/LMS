@@ -121,12 +121,14 @@ class _Body extends ConsumerWidget {
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            // CSS ref: .inventory-card — padding 32/28/32/28, radius 16,
+            // border 0.8px solid #F3F4F6
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+              padding: const EdgeInsets.fromLTRB(32, 28, 32, 28),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFF3F4F6)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,24 +144,28 @@ class _Body extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // CSS ref: .inventory-header h2 — 18px, weight 600, #111827
                             const Text(
                               'Inventory',
                               style: TextStyle(
-                                color: _ink,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF111827),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                            const SizedBox(height: 1),
+                            const SizedBox(height: 4),
+                            // CSS ref: .inventory-header p — 13px, #6B7280
                             const Text(
                               'Items available to redeem with your points',
-                              style: TextStyle(color: _muted, fontSize: 12),
+                              style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Redeem History button
+                      // Redeem History button — CSS ref: .btn-history bg
+                      // #5C52D4 (distinct indigo, not the app's usual
+                      // primaryPurple), weight 500, padding 20/10, radius 10
                       SizedBox(
                         height: 36,
                         child: HoverBuilder(
@@ -171,16 +177,17 @@ class _Body extends ConsumerWidget {
                             icon: const Icon(Icons.history_rounded, size: 15),
                             label: const Text('Redeem History'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  hovering ? FigmaTokens.purpleHover : _purple,
+                              backgroundColor: hovering
+                                  ? const Color(0xFF4B3FC2)
+                                  : const Color(0xFF5C52D4),
                               foregroundColor: Colors.white,
                               elevation: 0,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 14),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 10),
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8)),
+                                  borderRadius: BorderRadius.circular(10)),
                               textStyle: const TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 13),
+                                  fontWeight: FontWeight.w500, fontSize: 13),
                             ),
                           ),
                         ),
@@ -210,15 +217,16 @@ class _Body extends ConsumerWidget {
                               vertical: 0,
                               horizontal: 14,
                             ),
+                            // CSS ref: .search-input radius 8, border #E2E8F0
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: const BorderSide(
-                                  color: FigmaTokens.cardBorders),
+                                  color: Color(0xFFE2E8F0)),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(8),
                               borderSide: const BorderSide(
-                                  color: FigmaTokens.cardBorders),
+                                  color: Color(0xFFE2E8F0)),
                             ),
                           ),
                         ),
@@ -376,10 +384,14 @@ class _PointsBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: .points-card — padding 28/32/28/32, margin-bottom 24,
+    // radius 16 (bg gradient not captured by the blueprint exporter,
+    // kept as-is since it already visually matches).
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding: const EdgeInsets.fromLTRB(32, 28, 32, 28),
+      margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: const LinearGradient(
@@ -390,12 +402,13 @@ class _PointsBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // CSS ref: .points-card-icon — 56x56, radius 14
           Container(
-            width: 44,
-            height: 44,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: .2),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(Icons.star_rounded, color: Colors.white, size: 26),
           ),
@@ -403,21 +416,23 @@ class _PointsBanner extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // CSS ref: .points-value — 32px, weight 700
               Text(
                 '$points',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w700,
                   height: 1,
                 ),
               ),
               const SizedBox(height: 2),
+              // CSS ref: .points-label — 14px, weight 500, white@0.85
               const Text(
                 'Available Points',
                 style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 13,
+                  color: Color(0xD9FFFFFF),
+                  fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),
