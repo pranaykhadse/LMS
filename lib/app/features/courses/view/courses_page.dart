@@ -1694,7 +1694,8 @@ class _DevPlanButton extends StatelessWidget {
                 // the icon's actual stroke weight matches the web exactly
                 // (Material's Icons font has no weight axis to bump).
                 isInPlan ? FontAwesomeIcons.minus : FontAwesomeIcons.plus,
-                size: 22,
+                // CSS ref: i.fas.fa-plus computed box 12.25x14.
+                size: 14,
                 color: isInPlan ? _catalogPink : FigmaTokens.primaryPurple,
               ),
       ),
