@@ -1662,7 +1662,8 @@ class _DevPlanButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDisabled = onTap == null;
-    final accentColor = isInPlan ? _catalogPink : FigmaTokens.primaryPurple;
+    // Same accent color for both add (+) and remove (-) states.
+    const accentColor = FigmaTokens.primaryPurple;
 
     // CSS ref: a.plus-icon/.minus-icon title="Add to Development Plan" —
     // the web version's native tooltip on hover.
@@ -1747,27 +1748,35 @@ class _DevPlanOverlay extends StatelessWidget {
     // shown state fades to opacity 1 and settles at scale(1) over 0.4s
     // cubic-bezier(0.16, 1, 0.3, 1). TweenAnimationBuilder replays that
     // entrance every time the overlay is inserted.
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 400),
-      curve: const Cubic(0.16, 1, 0.3, 1),
-      builder: (context, t, child) => Opacity(
-        opacity: t,
-        child: Transform.scale(scale: 1.1 - 0.1 * t, child: child),
-      ),
-      // CSS ref: .overlay — backdrop-filter: blur(8px) !important;
-      // padding: 15px !important; flex column centered; text-align:
-      // center; color: #fff !important. No background is set (the purple
-      // background: var(--primary-first) rule is commented out on the
-      // web), so the frosted blur of the image behind is the only scrim.
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            alignment: Alignment.center,
-            padding: const EdgeInsets.all(15),
+    //
+    // ClipRect+BackdropFilter are kept OUTSIDE the scale animation and
+    // fixed to the full 180px box: scaling them together with the content
+    // (as before) meant the whole clipped region briefly grew ~10% larger
+    // than the box during the entrance, which could poke past the card's
+    // own rounded-corner clip and chop the top line of text. With the
+    // clip fixed, only the inner Column scales/fades, safely within it.
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        // CSS ref: .overlay — padding: 15px !important; flex column
+        // centered; text-align: center; color: #fff !important. No
+        // background is set (the purple background: var(--primary-first)
+        // rule is commented out on the web), so the frosted blur of the
+        // image behind is the only scrim.
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.all(15),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 400),
+            curve: const Cubic(0.16, 1, 0.3, 1),
+            builder: (context, t, child) => Opacity(
+              opacity: t,
+              child: Transform.scale(scale: 1.1 - 0.1 * t, child: child),
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '$action this course $prep your development plan?',
