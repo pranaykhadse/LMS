@@ -15,8 +15,16 @@ import 'package:lms/app/features/dashboard/viewmodel/badges_view_model.dart';
 const _purple = FigmaTokens.primaryPurple;
 const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
-const _bg = FigmaTokens.pageBackground;
+// CSS ref: section bg #F4F6FB (page-specific, not the app's usual
+// pageBackground #F4F5F7).
+const _bg = Color(0xFFF4F6FB);
 const _gold = Color(0xFFFFC107);
+// CSS ref: .lock-icon bg rgba(92,82,212,0.9) - distinct indigo also used
+// on the Redeem Points page, not the app's usual primaryPurple.
+const _lockIndigo = Color(0xFF5C52D4);
+const _cardShadow = [
+  BoxShadow(color: Color(0x05000000), blurRadius: 3, offset: Offset(0, 1)),
+];
 
 class BadgesPage extends ConsumerWidget {
   const BadgesPage({super.key});
@@ -69,8 +77,9 @@ class _Body extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Left: profile card — fixed width, natural height
+                    // (bumped for the 120px avatar + 24px padding each side)
                     SizedBox(
-                      width: 160,
+                      width: 176,
                       child: _ProfileCard(userProfile: userProfile),
                     ),
                     const SizedBox(width: 16),
@@ -106,34 +115,36 @@ class _ProfileCard extends StatelessWidget {
     ].where((s) => s.isNotEmpty).join(' ');
     final avatarUrl = userProfile?.avatarUrl ?? '';
 
+    // CSS ref: .badges-profile — padding 24, radius 16, shadow (not
+    // border), avatar 120x120.
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: _cardShadow,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Avatar
           CircleAvatar(
-            radius: 40,
+            radius: 60,
             backgroundColor: const Color(0xFFE5E7EB),
             backgroundImage:
                 avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
             child: avatarUrl.isEmpty
-                ? const Icon(Icons.person_rounded, size: 40, color: _muted)
+                ? const Icon(Icons.person_rounded, size: 60, color: _muted)
                 : null,
           ),
           const SizedBox(height: 12),
-          // Name
+          // Name — CSS ref: h1.text-center 16px/weight700/#1E293B
           Text(
             name.isNotEmpty ? name : 'User',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: _purple,
-              fontSize: 13,
+            style: const TextStyle(
+              color: Color(0xFF1E293B),
+              fontSize: 16,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -156,17 +167,19 @@ class _BadgesContent extends StatelessWidget {
       children: [
         // ── Earned badges ── title inside the white card ────────────
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          // CSS ref: .badges-block — padding 30, radius 16, shadow (not border)
+          padding: const EdgeInsets.all(30),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: _cardShadow,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const _SectionHeader(title: 'Your Badges'),
-              const SizedBox(height: 14),
+              // CSS ref: h2 padding-bottom 12 + margin-bottom 20
+              const SizedBox(height: 32),
               result.earned.isEmpty
                   ? _EmptySection(
                       message: 'You have not earned any badges yet.',
@@ -179,17 +192,19 @@ class _BadgesContent extends StatelessWidget {
         const SizedBox(height: 24),
         // ── Available badges ── title inside the white card ──────────
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          // CSS ref: .badges-block — padding 30, radius 16, shadow (not border)
+          padding: const EdgeInsets.all(30),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: _cardShadow,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const _SectionHeader(title: 'Available Badges'),
-              const SizedBox(height: 14),
+              // CSS ref: h2 padding-bottom 12 + margin-bottom 20
+              const SizedBox(height: 32),
               result.notEarned.isEmpty
                   ? _EmptySection(
                       message: 'No additional badges available.',
@@ -212,12 +227,13 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: h2.mb-3 — 18px, weight700, #1E293B
     return Text(
       title,
       style: const TextStyle(
-        color: _ink,
-        fontSize: 16,
-        fontWeight: FontWeight.w800,
+        color: Color(0xFF1E293B),
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
@@ -261,8 +277,10 @@ class _BadgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: .badge-container — radius 16, shadow (not border); earned
+    // bg white, locked bg #F8FAFC (distinct, was white for both).
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       onTap: earned
           ? () => showDialog(
                 context: context,
@@ -271,9 +289,11 @@ class _BadgeCard extends StatelessWidget {
           : null,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+          color: earned ? Colors.white : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(color: Color(0x05000000), blurRadius: 8, offset: Offset(0, 2)),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -284,28 +304,34 @@ class _BadgeCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(11),
+                    borderRadius: BorderRadius.circular(15),
                     child: Padding(
                       padding: const EdgeInsets.all(10),
                       child: _BadgeImage(imageUrl: badge.image, earned: earned),
                     ),
                   ),
-                  // Lock icon overlay for not-earned badges
+                  // Lock icon overlay for not-earned badges — CSS ref:
+                  // .lock-icon 32x32, bg indigo@0.9, centered
                   if (!earned)
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
+                    Center(
                       child: Container(
-                        width: 26,
-                        height: 26,
+                        width: 32,
+                        height: 32,
                         decoration: BoxDecoration(
-                          color: _purple,
+                          color: _lockIndigo.withValues(alpha: 0.9),
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: _lockIndigo.withValues(alpha: 0.35),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: const Icon(
                           Icons.lock_rounded,
                           color: Colors.white,
-                          size: 14,
+                          size: 16,
                         ),
                       ),
                     ),
