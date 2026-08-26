@@ -1673,7 +1673,9 @@ class _DevPlanButton extends StatelessWidget {
           // CSS ref: .dev-plan-action .plus-icon — background
           // rgba(255,255,255,0.9), box-shadow 0 4px 12px rgba(0,0,0,0.1).
           color: isDisabled ? Colors.white : Colors.white.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(8),
+          // CSS ref: .dev-plan-action .plus-icon / .minus-icon —
+          // border-radius: 50% (full circle on the 36x36 box).
+          shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.1),
