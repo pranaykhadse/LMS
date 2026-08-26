@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
@@ -94,9 +93,7 @@ class _OfflineCourseAction extends StatelessWidget {
 
     return _roundActionButton(
       tooltip: isOnline ? 'Save for offline' : 'Connect to save offline',
-      // Solid (bold) FontAwesome glyph so this icon's weight matches the
-      // dev-plan +/- button's solid fa-plus/fa-minus icons.
-      icon: isOnline ? FontAwesomeIcons.bookmark : Icons.wifi_off_rounded,
+      icon: isOnline ? Icons.bookmark_add_outlined : Icons.wifi_off_rounded,
       color: isOnline ? _purple : _muted,
       onTap: isOnline ? onSave : null,
     );

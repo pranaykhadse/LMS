@@ -49,7 +49,6 @@ dependencies:
   google_fonts: ^6.2.1
   hugeicons: ^0.0.7
   lucide_icons: ^0.257.0
-  font_awesome_flutter: ^10.8.0
 
   # ------------------------------------------------------------------------------
   # Localization
