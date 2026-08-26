@@ -1689,8 +1689,10 @@ class _DevPlanButton extends StatelessWidget {
           isDisabled
               ? Icons.cloud_off_rounded
               : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
-          // Icon scales with the 36px box (was 18 on the old 30px box).
-          size: isDisabled ? 18 : 22,
+          // CSS ref: i.fas.fa-plus computed box 12.25x14 — no font-size
+          // override in .plus-icon/.minus-icon, so it's the default FA
+          // icon size, not scaled up with the 36px box.
+          size: isDisabled ? 18 : 14,
           color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : FigmaTokens.primaryPurple),
         ),
       ),
