@@ -110,20 +110,11 @@ class PaginationWidget extends StatelessWidget {
           child: IntrinsicWidth(
             child: Container(
               // CSS ref: .pagination — background: #fff; padding: 20px
-              // 30px; border-radius: 24px; box-shadow: 0 10px 40px
-              // rgba(0,0,0,0.04) (confirmed active via live inspection —
-              // an earlier static export had this commented out).
+              // 30px; border-radius: 24px.
               padding: const EdgeInsets.symmetric(horizontal: 56, vertical: 28),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.04),
-                    blurRadius: 40,
-                    offset: Offset(0, 10),
-                  ),
-                ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -150,7 +141,7 @@ class PaginationWidget extends StatelessWidget {
                     // width (proportional, not a literal pixel value).
                     // .pg-status-text: "Page X of Y", color #94A3B8, font
                     // weight 800, size 12, line-height 18px.
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 20),
                     // Track is half the row's width and centered, rather
                     // than stretching full-width under the Column's
                     // crossAxisAlignment.stretch.
