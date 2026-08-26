@@ -61,8 +61,8 @@ class PaginationWidget extends StatelessWidget {
           onTap: isCurrent ? null : () => onPage(p),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 180),
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               // CSS ref (active .page-link inline style):
@@ -90,7 +90,7 @@ class PaginationWidget extends StatelessWidget {
               style: GoogleFonts.inter(
                 color: isCurrent ? Colors.white : _ink,
                 fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 14,
+                fontSize: 16,
               ),
             ),
           ),
@@ -136,7 +136,7 @@ class PaginationWidget extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         for (var i = 0; i < items.length; i++) ...[
-                          if (i > 0) const SizedBox(width: 18),
+                          if (i > 0) const SizedBox(width: 24),
                           items[i],
                         ],
                       ],
