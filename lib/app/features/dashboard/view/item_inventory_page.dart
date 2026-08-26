@@ -195,65 +195,48 @@ class _Body extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  // ── Search bar with prefix icon ──
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: searchController,
-                          enabled: !offline,
-                          onSubmitted: (_) => onSearch(),
-                          decoration: InputDecoration(
-                            hintText:
-                                offline ? "You're offline" : 'Search items...',
-                            hintStyle:
-                                const TextStyle(color: _muted, fontSize: 14),
-                            filled: true,
-                            fillColor: Colors.white,
-                            // prefix search icon
-                            prefixIcon: const Icon(Icons.search_rounded,
-                                color: _muted, size: 20),
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 0,
-                              horizontal: 14,
-                            ),
-                            // CSS ref: .search-input radius 8, border #E2E8F0
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                  color: Color(0xFFE2E8F0)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                  color: Color(0xFFE2E8F0)),
-                            ),
+                  // CSS ref: .inventory-search .search-wrapper — fixed
+                  // 400px width, icon inline via left padding, no separate
+                  // search button (submits on Enter, same as the form's
+                  // own submit-on-Enter behavior).
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ConstrainedBox(
+                      // maxWidth (not a fixed width) so this still fits on
+                      // narrow/mobile screens instead of overflowing.
+                      constraints: const BoxConstraints(maxWidth: 400),
+                      child: TextField(
+                        controller: searchController,
+                        enabled: !offline,
+                        onSubmitted: (_) => onSearch(),
+                        decoration: InputDecoration(
+                          hintText:
+                              offline ? "You're offline" : 'Search items...',
+                          hintStyle:
+                              const TextStyle(color: _muted, fontSize: 14),
+                          filled: true,
+                          fillColor: Colors.white,
+                          // CSS ref: .search-icon 16px, #9CA3AF
+                          prefixIcon: const Icon(Icons.search_rounded,
+                              color: Color(0xFF9CA3AF), size: 16),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ),
+                          // CSS ref: .search-input radius 8, border #E2E8F0
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0)),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: HoverBuilder(
-                          builder: (context, hovering) => ElevatedButton(
-                            onPressed: offline ? null : onSearch,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  hovering ? FigmaTokens.purpleHover : _purple,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: EdgeInsets.zero,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            child:
-                                const Icon(Icons.search_rounded, size: 20),
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                   if (state.query.isNotEmpty) ...[
                     const SizedBox(height: 10),
@@ -699,17 +682,13 @@ class _ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: .item-card — bg white, radius 16, border 0.8px #F3F4F6
+    // (no box-shadow in the blueprint).
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -718,43 +697,43 @@ class _ItemCard extends StatelessWidget {
           Expanded(
             child: _ItemImage(imageUrl: item.image),
           ),
-          // ── Item name ──
+          // ── Item name — CSS ref: .item-card-name 15px/weight600/#111827 ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
             child: Text(
               item.name,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: _ink,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+                color: Color(0xFF111827),
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
                 height: 1.3,
               ),
             ),
           ),
-          // ── Points chip (task 5) ──
+          // ── Points chip — CSS ref: .points-badge #5C52D4 on #F5F3FF ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+            padding: const EdgeInsets.fromLTRB(18, 10, 18, 8),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: _purple.withValues(alpha: 0.12),
+                color: const Color(0xFFF5F3FF),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 '${item.points} pts',
                 style: const TextStyle(
-                  color: _purple,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF5C52D4),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
-          // ── View / Redeem buttons (task 4) ──
+          // ── View / Redeem buttons — CSS ref: .btn-view / .btn-redeem ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
             child: Row(
               children: [
                 // View button — outlined with eye icon
@@ -765,15 +744,16 @@ class _ItemCard extends StatelessWidget {
                     label: const Text('View'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      minimumSize: const Size(0, 32),
-                      foregroundColor: _muted,
-                      side: const BorderSide(color: FigmaTokens.cardBorders),
+                      minimumSize: const Size(0, 37),
+                      backgroundColor: const Color(0xFFF3F4F6),
+                      foregroundColor: const Color(0xFF374151),
+                      side: const BorderSide(color: Color(0xFFE5E7EB)),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       textStyle: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -815,20 +795,21 @@ class _ItemCard extends StatelessWidget {
                           ),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
-                            minimumSize: const Size(0, 32),
-                            backgroundColor:
-                                hovering ? FigmaTokens.purpleHover : _purple,
+                            minimumSize: const Size(0, 37),
+                            backgroundColor: hovering
+                                ? const Color(0xFF4B3FC2)
+                                : const Color(0xFF5C52D4),
                             foregroundColor: Colors.white,
                             // greyed out when redeemed / offline / can't redeem
                             disabledBackgroundColor: const Color(0xFFB0AFD4),
                             disabledForegroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             textStyle: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
