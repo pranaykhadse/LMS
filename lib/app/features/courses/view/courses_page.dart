@@ -1486,7 +1486,8 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                             letterSpacing: 0.8,
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        // CSS ref: .session-info gap: 2px !important
+                        const SizedBox(height: 2),
                         Row(
                           children: [
                             // i.far.fa-calendar-alt: ~10px
