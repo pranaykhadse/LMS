@@ -1429,16 +1429,24 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         clipBehavior: Clip.antiAlias,
+        // CSS ref: .modern-course-card — box-shadow is commented out in the
+        // reference stylesheet (not applied at rest); a subtle border
+        // (rgba(0,0,0,0.03)) is used instead. Kept a hover-only shadow using
+        // --card-shadow-hover, since that token is still defined and this
+        // class already has a `transition` for it.
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Color.fromRGBO(0, 0, 0, _hovering ? 0.12 : 0.05),
-              blurRadius: _hovering ? 40 : 25,
-              offset: Offset(0, _hovering ? 20 : 10),
-            ),
-          ],
+          border: Border.all(color: Colors.black.withValues(alpha: 0.03)),
+          boxShadow: _hovering
+              ? [
+                  BoxShadow(
+                    color: const Color(0x1F000000),
+                    blurRadius: 40,
+                    offset: const Offset(0, 20),
+                  ),
+                ]
+              : null,
         ),
         child: Stack(
         children: [
