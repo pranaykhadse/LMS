@@ -1541,9 +1541,11 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                                  _formatNextSession(widget.course.nextSession!),
                                  style: GoogleFonts.inter(
                                    // CSS ref: .session-info .date-display
+                                   // strong — font-weight: 700 (bolder than
+                                   // the .date-display container's own 600).
                                    color: const Color(0xFF693D94),
                                    fontSize: 13,
-                                   fontWeight: FontWeight.w600,
+                                   fontWeight: FontWeight.w700,
                                  ),
                                  overflow: TextOverflow.ellipsis,
                                ),
