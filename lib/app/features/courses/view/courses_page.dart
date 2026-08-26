@@ -1554,28 +1554,37 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                          ),
                          const SizedBox(height: 8),
                        ],
-                      // CSS ref: a (course title): color #1E2939, font 16px Inter.
-                      // maxLines 2 — the 172px card-body budget (352 card
-                      // - 180 image) fits 2 lines (44.8px) beside the 46px
-                      // session block and 41px button; a third line would
-                      // overflow, matching the web's line-clamped title.
-                      Text(
-                        widget.course.name.isEmpty
-                            ? 'Untitled Course'
-                            : widget.course.name,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF1E2939),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          height: 1.4,
+                      // CSS ref: .course-title — color var(--card-title)
+                      // #1E2939, font-weight 700, padding 0 12px, margin 0
+                      // 0 8px (both competing .course-title rules agree on
+                      // weight 700 and line-height 1.4; the more specific
+                      // one wins font-size 16px/margin 8px/color #1E2939
+                      // over the other's 18px/6px/#2D3748). maxLines 2 —
+                      // the 172px card-body budget (352 card - 180 image)
+                      // fits 2 lines (44.8px) beside the 46px session block
+                      // and 41px button; a third line would overflow,
+                      // matching the web's -webkit-line-clamp: 2.
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          widget.course.name.isEmpty
+                              ? 'Untitled Course'
+                              : widget.course.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF1E2939),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            height: 1.4,
+                          ),
                         ),
                       ),
+                      // CSS ref: .course-title margin-bottom: 8px.
+                      const SizedBox(height: 8),
                       // CSS ref: .rating-bar — stars + avg + count
                       if (widget.course.offlineCourse.displayRating == 1 &&
                           widget.course.offlineCourse.averageRating > 0) ...[
-                        const SizedBox(height: 6),
                         // CSS ref: .rating-bar { padding: 4px 12px; margin: 0
                         // 0 2px; border-radius: 8px; } — applied exactly per
                         // blueprint (no background color is specified, so the
