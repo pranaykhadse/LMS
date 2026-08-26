@@ -37,6 +37,13 @@ const _catalogBackground = FigmaTokens.pageBackground;
 const _catalogCalendarBlue = FigmaTokens.primaryPurple;
 const _catalogUndoBlue = FigmaTokens.primaryPurple;
 
+/// Course id of whichever card currently has its dev-plan add/remove
+/// confirmation overlay open, or null if none. Shared across every card
+/// on this page so opening one card's overlay closes any other that was
+/// already open, instead of each card tracking that state locally and
+/// independently.
+final _openDevPlanOverlayId = StateProvider<int?>((ref) => null);
+
 /// CSS ref: .group-item column classes — col-lg-3 (viewport ≥ 992px) → 4
 /// per row, col-md-6 (≥ 768px) → 2 per row, col-12 below that → 1 per row.
 /// Bootstrap breakpoints are viewport-based, so [width] must be the page
@@ -440,10 +447,19 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                           mainAxisExtent: extent,
                         ),
                         itemCount: group.courses.length,
-                        itemBuilder: (context, index) => _CatalogCourseCard(
-                          course:
-                              _CourseCardData.fromCatalog(group.courses[index]),
-                        ),
+                        itemBuilder: (context, index) {
+                          final course =
+                              _CourseCardData.fromCatalog(group.courses[index]);
+                          // Keyed by course id so pagination/group changes
+                          // fully dispose and recreate each card's state
+                          // (hover, busy, dev-plan overlay) rather than
+                          // Flutter reusing State objects at the same grid
+                          // position for a different course.
+                          return _CatalogCourseCard(
+                            key: ValueKey(course.id),
+                            course: course,
+                          );
+                        },
                       ),
                     );
                   },
@@ -1365,7 +1381,7 @@ class _CourseCardData {
 }
 
 class _CatalogCourseCard extends ConsumerStatefulWidget {
-  const _CatalogCourseCard({required this.course});
+  const _CatalogCourseCard({super.key, required this.course});
   final _CourseCardData course;
 
   @override
@@ -1373,9 +1389,18 @@ class _CatalogCourseCard extends ConsumerStatefulWidget {
 }
 
 class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
-  bool _showOverlay = false;
   bool _isBusy = false;
   bool _hovering = false;
+
+  void _closeOverlayIfMine() {
+    // Only clear the shared id if it's still this card's — avoids
+    // accidentally closing a different card's overlay that may have been
+    // opened in between (e.g. a slow network response finishing late).
+    final notifier = ref.read(_openDevPlanOverlayId.notifier);
+    if (notifier.state == widget.course.id) {
+      notifier.state = null;
+    }
+  }
 
   Future<void> _handleDevPlanAction(BuildContext context, bool isInPlan) async {
     final auth = ref.read(AuthStateNotifier.provider);
@@ -1397,10 +1422,8 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
       } else {
         membership.markInPlan(widget.course.id);
       }
-      setState(() {
-        _showOverlay = false;
-        _isBusy = false;
-      });
+      _closeOverlayIfMine();
+      setState(() => _isBusy = false);
       if (context.mounted) {
         Toast.success(
           context,
@@ -1410,10 +1433,8 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
         );
       }
     } else {
-      setState(() {
-        _isBusy = false;
-        _showOverlay = false;
-      });
+      _closeOverlayIfMine();
+      setState(() => _isBusy = false);
       if (context.mounted) {
         Toast.error(context, result.message ?? 'Action failed. Please try again.');
       }
@@ -1430,6 +1451,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
     final membership = ref.watch(DevPlanMembershipViewModel.provider);
     final isInPlan = membership.ids.contains(widget.course.id);
     final viewDisabled = isViewCourseDisabled(ref, widget.course.id);
+    final showOverlay = ref.watch(_openDevPlanOverlayId) == widget.course.id;
 
     final isWide = MediaQuery.sizeOf(context).width >= 760;
 
@@ -1600,8 +1622,10 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               right: 12,
               child: _DevPlanButton(
                 isInPlan: isInPlan,
-                onTap:
-                    isOnline ? () => setState(() => _showOverlay = true) : null,
+                onTap: isOnline
+                    ? () => ref.read(_openDevPlanOverlayId.notifier).state =
+                          widget.course.id
+                    : null,
               ),
             ),
           // Offline save button — top-left. App-specific (no web
@@ -1620,7 +1644,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
           // only, not the whole card. Listed LAST: the web overlay carries
           // z-index: 99 !important, above .dev-plan-action's z-index: 10,
           // so it covers the +/− button while open.
-          if (_showOverlay)
+          if (showOverlay)
             Positioned(
               top: 0,
               left: 0,
@@ -1631,7 +1655,7 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                 isInPlan: isInPlan,
                 isBusy: _isBusy,
                 onYes: () => _handleDevPlanAction(context, isInPlan),
-                onNo: () => setState(() => _showOverlay = false),
+                onNo: () => ref.read(_openDevPlanOverlayId.notifier).state = null,
               ),
             ),
         ],
@@ -1766,48 +1790,54 @@ class _DevPlanOverlay extends StatelessWidget {
         child: Container(
           alignment: Alignment.center,
           padding: const EdgeInsets.all(15),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 400),
-            curve: const Cubic(0.16, 1, 0.3, 1),
-            builder: (context, t, child) => Opacity(
-              opacity: t,
-              child: Transform.scale(scale: 1.1 - 0.1 * t, child: child),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$action this course $prep your development plan?',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                if (isBusy)
-                  const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.4,
+          // Defensive: clip the animated content to the padded box too, so
+          // even at the animation's largest scale (1.1x) nothing can ever
+          // paint outside this card's image area, regardless of content
+          // height at a given card width.
+          child: ClipRect(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 400),
+              curve: const Cubic(0.16, 1, 0.3, 1),
+              builder: (context, t, child) => Opacity(
+                opacity: t,
+                child: Transform.scale(scale: 1.1 - 0.1 * t, child: child),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$action this course $prep your development plan?',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
                       color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
                     ),
-                  )
-                else
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _OverlayBtn(label: 'YES', onTap: onYes, filled: true),
-                      const SizedBox(width: 10),
-                      _OverlayBtn(label: 'NO', onTap: onNo, filled: false),
-                    ],
                   ),
-              ],
+                  const SizedBox(height: 14),
+                  if (isBusy)
+                    const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        color: Colors.white,
+                      ),
+                    )
+                  else
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _OverlayBtn(label: 'YES', onTap: onYes, filled: true),
+                        const SizedBox(width: 10),
+                        _OverlayBtn(label: 'NO', onTap: onNo, filled: false),
+                      ],
+                    ),
+                ],
+              ),
             ),
           ),
         ),
