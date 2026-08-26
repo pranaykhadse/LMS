@@ -1,6 +1,7 @@
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1685,14 +1686,18 @@ class _DevPlanButton extends StatelessWidget {
           ],
         ),
         alignment: Alignment.center,
-        child: Icon(
-          isDisabled
-              ? Icons.cloud_off_rounded
-              : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
-          // Icon scales with the 36px box (was 18 on the old 30px box).
-          size: isDisabled ? 18 : 22,
-          color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : FigmaTokens.primaryPurple),
-        ),
+        child: isDisabled
+            ? Icon(Icons.cloud_off_rounded, size: 18, color: _catalogMuted)
+            : Icon(
+                // CSS ref: i.fas.fa-plus / fa-minus — solid (weight 900)
+                // FontAwesome glyphs, matched via font_awesome_flutter so
+                // the icon's actual stroke weight matches the web exactly
+                // (Material's Icons font has no weight axis to bump).
+                isInPlan ? FontAwesomeIcons.minus : FontAwesomeIcons.plus,
+                // CSS ref: i.fas.fa-plus computed box 12.25x14.
+                size: 14,
+                color: isInPlan ? _catalogPink : FigmaTokens.primaryPurple,
+              ),
       ),
     );
   }
