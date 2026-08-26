@@ -369,14 +369,17 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // CSS .sec-title h2.title — display:flex height:48px, color #693D94
+            // CSS .sec-title h2.title — display:flex height:48px, color
+            // --primary-second (#A20067) - confirmed via live visual
+            // comparison (was incorrectly #693D94, the general primary
+            // purple, not this heading's actual pink/magenta color).
             Container(
               height: 48,
               alignment: Alignment.centerLeft,
               child: Text(
                 title,
                 style: GoogleFonts.inter(
-                  color: const Color(0xFF693D94),
+                  color: const Color(0xFFA20067),
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
                   height: 1.0,
