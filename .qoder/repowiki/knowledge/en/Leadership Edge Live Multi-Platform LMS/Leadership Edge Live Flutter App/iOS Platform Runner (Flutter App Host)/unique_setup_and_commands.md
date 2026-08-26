@@ -1,0 +1,1 @@
+CocoaPods must be installed before building; `Podfile` requires `flutter pub get` to be run first so that `Flutter/Generated.xcconfig` (containing `FLUTTER_ROOT`) exists, otherwise `pod install` raises an error. Analytics are disabled via `ENV['COCOAPODS_DISABLE_STATS'] = 'true'` to avoid blocking network calls during builds.

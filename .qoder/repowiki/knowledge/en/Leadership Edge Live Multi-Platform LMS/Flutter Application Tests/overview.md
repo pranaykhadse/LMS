@@ -1,0 +1,1 @@
+Unit and widget tests for the LMS Flutter app, covering the PurchaseRecord model serialization and a basic counter smoke test of the root MyApp.

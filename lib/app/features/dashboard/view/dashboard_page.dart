@@ -1507,10 +1507,10 @@ class _SessionRow extends StatelessWidget {
     // "Virtual Class N" badge — shown only when virtualClassNumber is set
     // Treat 0 and negative values as not-present to avoid showing an empty/invalid
     // badge; ensure we convert to string safely.
-    final int? _vcNum = virtualClassNumber;
-    final bool _showBadge = _vcNum != null && _vcNum > 0;
+    final int? vcNum = virtualClassNumber;
+    final bool showBadge = vcNum != null && vcNum > 0;
 
-    final badge = _showBadge
+    final badge = showBadge
         ? Container(
             margin: const EdgeInsets.only(left: 8),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1519,7 +1519,7 @@ class _SessionRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              'Virtual Class ${_vcNum.toString()}',
+              'Virtual Class ${vcNum.toString()}',
               style: GoogleFonts.inter(
                 color: _purple,
                 fontSize: 11,
@@ -1530,7 +1530,7 @@ class _SessionRow extends StatelessWidget {
           )
         : null;
 
-    final title = _showBadge
+    final title = showBadge
         ? Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -1656,7 +1656,7 @@ class _SessionRow extends StatelessWidget {
                 // Mobile: title on first line, badge on separate row below
                 // (sm:hidden span in reference — badge below title, not inline)
                 titleText,
-                if (_showBadge) ...[
+                if (showBadge) ...[
                   const SizedBox(height: 2), // mt-0.5 = 2px
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1665,7 +1665,7 @@ class _SessionRow extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Virtual Class ${_vcNum.toString()}',
+                      'Virtual Class ${vcNum.toString()}',
                       style: GoogleFonts.inter(
                         color: _purple,
                         fontSize: 11,
@@ -2660,7 +2660,7 @@ class _AnimatedCounterState extends State<_AnimatedCounter>
       animation: _animation,
       builder: (context, _) {
         return Text(
-          '${_displayValue}${widget.suffix}',
+          '$_displayValue${widget.suffix}',
           style: widget.style,
         );
       },

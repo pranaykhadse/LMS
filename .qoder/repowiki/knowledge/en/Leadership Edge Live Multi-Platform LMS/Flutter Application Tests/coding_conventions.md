@@ -1,0 +1,4 @@
+- Tests are grouped by method or behavior using `group('...')` blocks around related `test(...)` cases.
+- Fixtures are constructed as local variables at the top of each `main()` before the grouped tests.
+- Assertions use `expect` with matchers such as `equals`, `isTrue`, `isA<String>()`, `contains`, `isEmpty`, and `findsOneWidget`/`findsNothing`.
+- Feature-scoped tests mirror the production package path (e.g., importing `package:lms/app/features/payment/model/purchase_record.dart`) rather than relative paths.

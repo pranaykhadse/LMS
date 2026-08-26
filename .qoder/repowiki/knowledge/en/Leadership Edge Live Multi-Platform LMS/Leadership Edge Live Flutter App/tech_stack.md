@@ -1,0 +1,1 @@
+Flutter/Dart for the shared UI layer; Kotlin/Gradle on Android and Swift/Xcode on iOS as native host shells; CocoaPods (`Podfile`) for iOS dependency management.

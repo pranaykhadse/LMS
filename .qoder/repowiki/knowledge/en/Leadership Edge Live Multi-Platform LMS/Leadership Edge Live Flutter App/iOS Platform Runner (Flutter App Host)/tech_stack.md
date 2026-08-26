@@ -1,0 +1,1 @@
+Swift-based iOS host targeting iOS 13+ via CocoaPods; uses Flutter's implicit engine bootstrap (`FlutterImplicitEngineDelegate`) and Scene-based app lifecycle (`UIApplicationSceneManifest` with `FlutterSceneDelegate`).

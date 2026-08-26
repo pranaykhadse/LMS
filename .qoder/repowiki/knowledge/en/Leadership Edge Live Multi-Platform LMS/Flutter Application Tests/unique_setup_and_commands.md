@@ -1,0 +1,1 @@
+Run all tests via `flutter test`; individual suites can be targeted directly (e.g., `flutter test test/payment/purchase_record_test.dart`).

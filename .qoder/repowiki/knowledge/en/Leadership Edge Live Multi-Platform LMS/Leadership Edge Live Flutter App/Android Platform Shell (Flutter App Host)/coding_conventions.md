@@ -1,0 +1,3 @@
+- Platform entry points are kept as thin subclasses of Flutter-provided base classes (e.g., `MainActivity : FlutterActivity`) with no business logic inside the Android layer.
+- Version and SDK configuration is delegated to Flutter's `flutter.*` properties (`compileSdk`, `minSdk`, `versionCode`, etc.) rather than hard-coded constants in Gradle scripts.
+- Build artifacts are centralized under a shared `../../build` directory via `rootProject.layout.buildDirectory` so Android outputs co-locate with the Flutter project.

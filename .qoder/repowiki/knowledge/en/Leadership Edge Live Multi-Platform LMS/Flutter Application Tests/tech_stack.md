@@ -1,0 +1,1 @@
+Flutter Test framework (`flutter_test`) with `WidgetTester` for UI smoke tests; pure Dart unit tests for model logic without platform setup.

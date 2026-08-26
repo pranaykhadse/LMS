@@ -7,7 +7,6 @@ import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
-import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/features/courses/model/calendar_event.dart';

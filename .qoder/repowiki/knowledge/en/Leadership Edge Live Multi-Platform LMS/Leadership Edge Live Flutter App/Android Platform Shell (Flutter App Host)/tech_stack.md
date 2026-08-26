@@ -1,0 +1,1 @@
+Android Gradle Plugin 8.7.0, Kotlin 1.8.22, Java 11 bytecode target, Flutter embedding v2, Gradle wrapper managed by Flutter.

@@ -1,0 +1,1 @@
+Build and run via the standard Flutter CLI (`flutter build apk|ios|web`, `flutter run`) from this directory; native builds delegate to Gradle (`android/`) and Xcode (`ios/Runner.xcworkspace`).

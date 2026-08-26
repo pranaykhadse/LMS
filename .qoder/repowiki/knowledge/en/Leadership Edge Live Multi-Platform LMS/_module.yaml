@@ -1,0 +1,18 @@
+schema_version: 1
+module_path: ""
+title: Leadership Edge Live Multi-Platform LMS
+scope:
+    - README.md
+    - SUPPORT.md
+    - .gitignore
+    - analysis_options.yaml
+    - devtools_options.yaml
+    - pubspec.yaml
+    - pubspec.lock
+    - flutter_launcher_icons.yaml
+    - dev_cors_proxy.js
+    - run_chrome_dev.bat
+    - flutter_01.png
+source_files: []
+depends_on: []
+related_to: []

@@ -1,0 +1,1 @@
+Top-level Flutter workspace that unifies the mobile/desktop Flutter app, a separate React web dashboard, desktop runner targets, and shared tests under one project.

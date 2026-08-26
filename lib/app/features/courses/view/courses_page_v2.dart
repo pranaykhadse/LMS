@@ -16,6 +16,7 @@
 ///
 /// CoursesPage (courses_page.dart) is kept intact.
 /// This file is the entry point used by routing.
+library;
 
 import 'package:flutter/widgets.dart';
 import 'package:lms/app/features/courses/view/courses_page.dart';

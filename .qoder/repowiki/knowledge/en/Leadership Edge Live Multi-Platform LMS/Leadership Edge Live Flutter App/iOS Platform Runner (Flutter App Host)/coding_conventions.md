@@ -1,0 +1,3 @@
+- App lifecycle customization is done by subclassing `FlutterAppDelegate` and overriding `didFinishLaunchingWithOptions` while delegating to `super` rather than re-implementing bootstrapping.
+- Plugin registration is centralized through `GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)` in the implicit engine delegate callback instead of manual plugin imports.
+- Build settings are externalized into `.xcconfig` files per build configuration (Debug/Release) and kept out of the Xcode project file to keep the `.pbxproj` clean.

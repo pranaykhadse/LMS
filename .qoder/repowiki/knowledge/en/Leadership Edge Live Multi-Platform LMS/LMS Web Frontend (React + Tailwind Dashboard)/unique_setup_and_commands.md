@@ -1,0 +1,1 @@
+The HTML entry uses a Flutter placeholder base href (`$FLUTTER_BASE_HREF`) and loads `flutter_bootstrap.js`, indicating this frontend may be embedded into or served alongside a Flutter web build.

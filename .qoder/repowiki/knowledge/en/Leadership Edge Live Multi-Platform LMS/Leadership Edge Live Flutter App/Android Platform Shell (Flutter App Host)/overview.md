@@ -1,0 +1,1 @@
+Android Gradle application shell that hosts the Flutter engine via a minimal MainActivity, declares app metadata, launch theme, and plugin registration for the LMS Flutter app.

@@ -597,7 +597,7 @@ class _CompetencyPreviewRow extends StatelessWidget {
     if (competency.name.isEmpty) return const SizedBox.shrink();
     return HoverBuilder(
       builder: (context, hovering) {
-        final onPressed = () => _openViewCompetency(
+        void onPressed() => _openViewCompetency(
               context,
               learningPathId: pathId,
               competency: competency.name,

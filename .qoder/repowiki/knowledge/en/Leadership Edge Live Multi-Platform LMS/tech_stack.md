@@ -1,0 +1,1 @@
+Flutter SDK ^3.7.2 with Riverpod/Modular state management, Dio networking, Hive local storage, media_kit video playback, and flutter_inappwebview; the web frontend uses React with Tailwind CSS and shadcn/ui primitives; both share the same backend API surface.

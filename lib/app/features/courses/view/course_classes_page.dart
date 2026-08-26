@@ -32,7 +32,6 @@ import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
-import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 
 bool _watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);

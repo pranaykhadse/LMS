@@ -58,9 +58,7 @@ class RedeemHistoryItem {
       image: img.isNotEmpty ? img : null,
       address: address.isNotEmpty ? address : null,
       note: note.isNotEmpty ? note : null,
-      redeemedAt: json['redeemed_at'] == null
-          ? null
-          : json['redeemed_at'].toString().parseApiUtc(),
+      redeemedAt: json['redeemed_at']?.toString().parseApiUtc(),
       groupId: details['group_id'] == null ? null : _asInt(details['group_id']),
       description: details['description']?.toString(),
       managedBy: details['managed_by']?.toString(),

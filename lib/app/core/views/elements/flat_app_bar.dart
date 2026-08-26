@@ -123,7 +123,7 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         ref.read(SyncViewModel.provider).onManualOnline();
                       }
                     },
-                    activeColor: Colors.amber.shade700,
+                    activeThumbColor: Colors.amber.shade700,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                 ),

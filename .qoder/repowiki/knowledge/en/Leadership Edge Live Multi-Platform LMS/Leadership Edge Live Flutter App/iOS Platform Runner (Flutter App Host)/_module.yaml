@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: flutter_app/platform_ios
+title: iOS Platform Runner (Flutter App Host)
+scope:
+    - ios/
+source_files: []
+depends_on: []
+related_to: []

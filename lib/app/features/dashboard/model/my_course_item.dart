@@ -55,9 +55,7 @@ class MyCourseItem {
       averageRating: _asDouble(json['average_rating']),
       ratingCount: _asInt(json['rating_count']),
       logo: logo.isNotEmpty ? logo : null,
-      nextSession: json['next_session'] == null
-          ? null
-          : json['next_session'].toString().parseApiUtc(),
+      nextSession: json['next_session']?.toString().parseApiUtc(),
     );
   }
 }

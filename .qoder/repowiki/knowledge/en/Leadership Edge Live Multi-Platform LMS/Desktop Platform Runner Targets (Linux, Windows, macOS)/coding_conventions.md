@@ -1,0 +1,4 @@
+- Each platform keeps its native entry point under `runner/` (main.cc / main.cpp / AppDelegate.swift) and delegates window/application lifecycle to a platform wrapper class (MyApplication, Win32Window, MainFlutterWindow).
+- Plugin discovery is centralized through Flutter-generated files under `flutter/ephemeral/` (`generated_plugin_registrant.*`, `generated_plugins.cmake`) included by the top-level CMakeLists rather than hand-maintained lists.
+- Build configuration is split into per-target CMakeLists plus shared settings functions/macros (e.g. `APPLY_STANDARD_SETTINGS` on Linux) so plugins inherit consistent compiler flags.
+- Runtime assets and the Flutter engine are installed into a relocatable bundle layout (`bundle/data`, `bundle/lib`) with explicit RPATH or install destinations instead of relying on system paths.

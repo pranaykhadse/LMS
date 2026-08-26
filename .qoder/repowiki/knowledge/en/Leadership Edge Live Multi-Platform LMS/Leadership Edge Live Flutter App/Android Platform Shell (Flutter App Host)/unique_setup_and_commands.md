@@ -1,0 +1,1 @@
+Build output is redirected to `../../build` relative to the `android/` directory so that `flutter build` places APKs/AABs next to the Dart source; signing defaults to debug keys for release builds until a real keystore is configured.

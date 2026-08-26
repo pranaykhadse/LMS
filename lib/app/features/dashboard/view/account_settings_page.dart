@@ -1407,7 +1407,7 @@ class _ToggleRow extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged ?? (_) => Toast.info(context, 'Coming soon.'),
-            activeColor: _asPurple,
+            activeThumbColor: _asPurple,
           ),
         ],
       ),

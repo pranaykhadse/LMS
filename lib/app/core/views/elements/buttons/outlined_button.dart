@@ -11,13 +11,12 @@ class AdminOutlinedResponsiveButton extends StatelessWidget {
   final ButtonController? controller;
   final ButtonStyle? buttonStyle;
   const AdminOutlinedResponsiveButton(
-      {Key? key,
+      {super.key,
       required this.child,
       this.loadingChild,
       required this.onPressed,
       this.controller,
-      this.buttonStyle,})
-      : super(key: key);
+      this.buttonStyle,});
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ButtonState>(

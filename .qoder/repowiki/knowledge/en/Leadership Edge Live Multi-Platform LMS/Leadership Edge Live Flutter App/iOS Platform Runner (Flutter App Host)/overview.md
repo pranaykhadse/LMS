@@ -1,0 +1,1 @@
+iOS host application that boots the Flutter engine, registers plugins, and configures app lifecycle, assets, and permissions for the Leadership Edge Live app.

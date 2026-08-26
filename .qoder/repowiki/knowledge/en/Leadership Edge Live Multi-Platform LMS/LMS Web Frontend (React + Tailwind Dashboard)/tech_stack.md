@@ -1,0 +1,1 @@
+React 18 with `react-dom/client` createRoot, Tailwind CSS for utility styling, Radix UI primitives via shadcn/ui codegen, Lucide React icons, and a PWA manifest under `web/`.

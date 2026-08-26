@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -252,8 +254,11 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
         }
         return [
           SliverPadding(
+            // 48/27 page padding + the same 15px grid inset the catalog's
+            // div.row gets (Bootstrap negative margins commented out), so
+            // both grids render identical card geometry.
             padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.sizeOf(context).width >= 760 ? 48 : 27,
+              horizontal: MediaQuery.sizeOf(context).width >= 760 ? 63 : 42,
             ),
             sliver: SliverLayoutBuilder(
               builder: (context, constraints) {
@@ -384,8 +389,10 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // div.sec-title h2.title — inside div#resources
-              // color #A20067, font-size 24px, margin-bottom 20px
+              // div.sec-title h2.title — inside div#resources:
+              // font-size 24px, font-weight 400 (the ID selector overrides
+              // Bootstrap's h1-h6 500 reset), line-height 28px,
+              // margin-bottom 20px, color var(--primary-second) = #A20067.
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
                 child: Text(
@@ -393,43 +400,54 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                   style: GoogleFonts.inter(
                     color: const Color(0xFFA20067),
                     fontSize: 24,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w400,
                     height: 28 / 24,
                   ),
                 ),
               ),
               // Card grid
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  // Bootstrap breakpoints are viewport-based (col-lg-3 /
-                  // col-md-6), so decide columns from the page width.
-                  final columns =
-                      _catalogColumns(MediaQuery.sizeOf(context).width);
-                  // Computed .group-item box (data-key=124): content 318x352
-                  // at the 4-column breakpoint — the card's exact height.
-                  final extent = isWide ? 352.0 : 380.0;
-                  final rows = (group.courses.length / columns).ceil();
-                  // CSS ref: .group-item margin-bottom 30px between rows;
-                  // col-* padding 15px + 15px = 30px gutter between columns.
-                  final gap = 30.0;
-                  final gridH = rows * extent + (rows - 1) * gap;
-                  return SizedBox(
-                    height: gridH,
-                    child: GridView.builder(
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: columns,
-                        crossAxisSpacing: gap,
-                        mainAxisSpacing: gap,
-                        mainAxisExtent: extent,
+              // CSS ref: div.row — display: flex; flex-wrap: wrap; with
+              // Bootstrap's negative margins (margin: 0 -15px) COMMENTED
+              // OUT, so the edge columns keep their outer 15px col padding:
+              // the grid is inset 15px from #resources' content box on both
+              // sides (computed .row box: 1392 x 1070, margin/padding 0).
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Bootstrap breakpoints are viewport-based (col-lg-3 /
+                    // col-md-6), so decide columns from the page width.
+                    final columns =
+                        _catalogColumns(MediaQuery.sizeOf(context).width);
+                    // Computed .group-item box (data-key=124): content 318x352
+                    // at the 4-column breakpoint — the card's exact height
+                    // (column 348px minus 15px + 15px col padding).
+                    final extent = isWide ? 352.0 : 380.0;
+                    final rows = (group.courses.length / columns).ceil();
+                    // CSS ref: .group-item margin-bottom 30px between rows;
+                    // col-* padding 15px + 15px = 30px gutter between columns.
+                    final gap = 30.0;
+                    final gridH = rows * extent + (rows - 1) * gap;
+                    return SizedBox(
+                      height: gridH,
+                      child: GridView.builder(
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columns,
+                          crossAxisSpacing: gap,
+                          mainAxisSpacing: gap,
+                          mainAxisExtent: extent,
+                        ),
+                        itemCount: group.courses.length,
+                        itemBuilder: (context, index) => _CatalogCourseCard(
+                          course:
+                              _CourseCardData.fromCatalog(group.courses[index]),
+                        ),
                       ),
-                      itemCount: group.courses.length,
-                      itemBuilder: (context, index) => _CatalogCourseCard(
-                        course: _CourseCardData.fromCatalog(group.courses[index]),
-                      ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
               // CSS ref: div.pagination.m-2 — 8px margins around the pager,
               // stacked on the last row's .group-item margin-bottom: 30px
@@ -1429,8 +1447,13 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
             mainAxisSize: MainAxisSize.max,
             children: [
               // -- Full-width image --------------------------------------
+              // CSS ref: .card-image-wrapper img — position: absolute;
+              // top/left 0; width/height 100% !important; object-fit:
+              // cover !important. Computed tooltip: 316.4 x 180 (the
+              // wrapper is 180px tall; the ~1.6px width gap vs the 318px
+              // card is subpixel/zoom noise).
               SizedBox(
-                height: 160,
+                height: 180,
                 child: _CourseImage(url: widget.course.logo),
               ),
               // -- White content area ------------------------------------
@@ -1477,12 +1500,16 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         ),
                         const SizedBox(height: 8),
                       ],
-                      // CSS ref: a (course title): color #1E2939, font 16px Inter
+                      // CSS ref: a (course title): color #1E2939, font 16px Inter.
+                      // maxLines 2 — the 172px card-body budget (352 card
+                      // - 180 image) fits 2 lines (44.8px) beside the 46px
+                      // session block and 41px button; a third line would
+                      // overflow, matching the web's line-clamped title.
                       Text(
                         widget.course.name.isEmpty
                             ? 'Untitled Course'
                             : widget.course.name,
-                        maxLines: 3,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
                           color: const Color(0xFF1E2939),
@@ -1518,32 +1545,43 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               ),
             ],
           ),
-          // Dev plan button � top-right
+          // CSS ref: .dev-plan-action — position: absolute; top: 12px;
+          // right: 12px; z-index: 10; computed box 36x36. It sits inside
+          // .card-image-wrapper, whose top-right corner is the card's, so
+          // card-Stack offsets are identical.
           if (membership.loaded)
             Positioned(
-              top: 10,
-              right: 10,
+              top: 12,
+              right: 12,
               child: _DevPlanButton(
                 isInPlan: isInPlan,
                 onTap:
                     isOnline ? () => setState(() => _showOverlay = true) : null,
               ),
             ),
-          // Offline save button � top-left
+          // Offline save button — top-left. App-specific (no web
+          // counterpart); mirrors the dev-plan action's 12px offsets and
+          // 36px box (icon 22 + 7px padding each side).
           Positioned(
-            top: 10,
-            left: 10,
-            child: OfflineCourseButton(course: widget.course.offlineCourse),
+            top: 12,
+            left: 12,
+            child: OfflineCourseButton(
+              course: widget.course.offlineCourse,
+              iconSize: 22,
+            ),
           ),
           // Dev plan confirm overlay — div.overlay lives inside
           // .card-image-wrapper on the web, so it covers the image area
-          // only, not the whole card.
+          // only, not the whole card. Listed LAST: the web overlay carries
+          // z-index: 99 !important, above .dev-plan-action's z-index: 10,
+          // so it covers the +/− button while open.
           if (_showOverlay)
             Positioned(
               top: 0,
               left: 0,
               right: 0,
-              height: 160, // same height as the card image above
+              // same height as the card image above (.card-image-wrapper)
+              height: 180,
               child: _DevPlanOverlay(
                 isInPlan: isInPlan,
                 isBusy: _isBusy,
@@ -1583,8 +1621,9 @@ class _DevPlanButton extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: 30,
-        height: 30,
+        // CSS ref: .dev-plan-action computed box — 36x36.
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
           color: isDisabled ? Colors.white : const Color(0xFFE8E7F8),
           borderRadius: BorderRadius.circular(8),
@@ -1601,7 +1640,8 @@ class _DevPlanButton extends StatelessWidget {
           isDisabled
               ? Icons.cloud_off_rounded
               : (isInPlan ? Icons.remove_rounded : Icons.add_rounded),
-          size: isDisabled ? 15 : 18,
+          // Icon scales with the 36px box (was 18 on the old 30px box).
+          size: isDisabled ? 18 : 22,
           color: isDisabled ? _catalogMuted : (isInPlan ? _catalogPink : FigmaTokens.primaryPurple),
         ),
       ),
@@ -1625,44 +1665,64 @@ class _DevPlanOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final action = isInPlan ? 'Remove' : 'Add';
     final prep = isInPlan ? 'from' : 'to';
-    return Container(
-      color: const Color(0xCC172033),
-      alignment: Alignment.center,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '$action this course $prep your development plan?',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 14),
-            if (isBusy)
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: Colors.white,
+    // CSS ref: .overlay — hidden state is opacity: 0 / scale(1.1); the
+    // shown state fades to opacity 1 and settles at scale(1) over 0.4s
+    // cubic-bezier(0.16, 1, 0.3, 1). TweenAnimationBuilder replays that
+    // entrance every time the overlay is inserted.
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 400),
+      curve: const Cubic(0.16, 1, 0.3, 1),
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.scale(scale: 1.1 - 0.1 * t, child: child),
+      ),
+      // CSS ref: .overlay — backdrop-filter: blur(8px) !important;
+      // padding: 15px !important; flex column centered; text-align:
+      // center; color: #fff !important. No background is set (the purple
+      // background: var(--primary-first) rule is commented out on the
+      // web), so the frosted blur of the image behind is the only scrim.
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            alignment: Alignment.center,
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$action this course $prep your development plan?',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    height: 1.3,
+                  ),
                 ),
-              )
-            else
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _OverlayBtn(label: 'YES', onTap: onYes, filled: true),
-                  const SizedBox(width: 10),
-                  _OverlayBtn(label: 'NO', onTap: onNo, filled: false),
-                ],
-              ),
-          ],
+                const SizedBox(height: 14),
+                if (isBusy)
+                  const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: Colors.white,
+                    ),
+                  )
+                else
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _OverlayBtn(label: 'YES', onTap: onYes, filled: true),
+                      const SizedBox(width: 10),
+                      _OverlayBtn(label: 'NO', onTap: onNo, filled: false),
+                    ],
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

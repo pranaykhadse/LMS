@@ -60,7 +60,7 @@ void handelException(e) {
           final errors = responseData is Map ? responseData["errors"] : null;
           if (errors is Map) {
             for (var item in errors.values) {
-              data2 += (item is List ? item.join("\n") : item.toString()) + "\n";
+              data2 += "${item is List ? item.join("\n") : item.toString()}\n";
             }
           } else if (errors is List) {
             data2 = errors.join("\n");

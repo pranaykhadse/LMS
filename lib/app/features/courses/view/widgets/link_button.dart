@@ -49,7 +49,7 @@ class LinkButton extends ConsumerWidget {
       );
     }
 
-    final onTap = () async {
+    Future<Null> onTap() async {
       if (courseClass != null) {
         ref
             .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
@@ -58,7 +58,7 @@ class LinkButton extends ConsumerWidget {
       if (!context.mounted) return;
       await InAppWebViewPage.showWithAuth(context, ref,
           url: url!, title: label);
-    };
+    }
 
     return appActionChip(
       icon: icon,

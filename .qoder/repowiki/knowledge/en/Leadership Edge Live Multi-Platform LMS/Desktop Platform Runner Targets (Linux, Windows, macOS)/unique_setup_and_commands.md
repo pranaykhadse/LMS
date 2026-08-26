@@ -1,0 +1,1 @@
+Builds are driven by each platform's native toolchain — `cmake` for linux/windows runners and `xcodebuild`/Xcode for macos — invoked through the standard `flutter build linux|windows|macos` workflow which regenerates `flutter/ephemeral/*` files before invoking the platform build system.

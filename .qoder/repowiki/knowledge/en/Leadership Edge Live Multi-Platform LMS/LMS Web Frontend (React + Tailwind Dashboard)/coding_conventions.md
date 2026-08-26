@@ -1,0 +1,5 @@
+- UI variants are declared with `class-variance-authority` cva and composed via a `cn()` utility to merge variant classes with user-supplied className props.
+- Radix UI primitives are wrapped in custom components that forward props and use `data-slot` attributes for testable styling hooks.
+- Static assets exported from Figma live under `src/imports/<Name>/index.tsx` as self-contained React components that reassemble images and text blocks with inline Tailwind styles.
+- Multi-view navigation within the app is implemented by toggling boolean state flags in `App.tsx` and conditionally returning different JSX trees instead of using a router.
+- Mock data (courses, sessions, required courses) is defined as top-level const arrays at the module scope of `App.tsx` and rendered directly without a separate data layer.

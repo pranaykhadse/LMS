@@ -1,0 +1,2 @@
+- Platform-specific configuration is isolated to `android/app/src/main/` and `ios/Runner/` while all business logic lives under `lib/`.
+- Native hosts rely on Flutter's auto-generated `GeneratedPluginRegistrant` instead of manual plugin registration.

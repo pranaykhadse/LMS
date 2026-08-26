@@ -1,0 +1,1 @@
+Linux: GTK 3 + GLib via CMake; Windows: Win32 API + COM via CMake; macOS: Cocoa + Xcode project with CocoaPods; all targets link against the Flutter Desktop Engine and embed the AOT-compiled Dart snapshot.

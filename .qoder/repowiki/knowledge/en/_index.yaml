@@ -1,0 +1,91 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: en-US
+branch: ui-design
+nodes_managed: true
+exported_at: "2026-08-26T06:33:28Z"
+modules:
+    "":
+        dir_name: Leadership Edge Live Multi-Platform LMS
+        title: Leadership Edge Live Multi-Platform LMS
+        scope:
+            - README.md
+            - SUPPORT.md
+            - .gitignore
+            - analysis_options.yaml
+            - devtools_options.yaml
+            - pubspec.yaml
+            - pubspec.lock
+            - flutter_launcher_icons.yaml
+            - dev_cors_proxy.js
+            - run_chrome_dev.bat
+            - flutter_01.png
+        source_files: []
+        children:
+            - desktop_platforms
+            - flutter_app
+            - tests
+            - web_frontend
+        depends_on: []
+        related_to: []
+    desktop_platforms:
+        dir_name: Desktop Platform Runner Targets (Linux, Windows, macOS)
+        title: Desktop Platform Runner Targets (Linux, Windows, macOS)
+        scope:
+            - linux/
+            - windows/
+            - macos/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    flutter_app:
+        dir_name: Leadership Edge Live Flutter App
+        title: Leadership Edge Live Flutter App
+        scope:
+            - lib/
+            - android/
+            - ios/
+        source_files: []
+        children:
+            - flutter_app/platform_android
+            - flutter_app/platform_ios
+        depends_on: []
+        related_to: []
+    flutter_app/platform_android:
+        dir_name: Android Platform Shell (Flutter App Host)
+        title: Android Platform Shell (Flutter App Host)
+        scope:
+            - android/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    flutter_app/platform_ios:
+        dir_name: iOS Platform Runner (Flutter App Host)
+        title: iOS Platform Runner (Flutter App Host)
+        scope:
+            - ios/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    tests:
+        dir_name: Flutter Application Tests
+        title: Flutter Application Tests
+        scope:
+            - test/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    web_frontend:
+        dir_name: LMS Web Frontend (React + Tailwind Dashboard)
+        title: LMS Web Frontend (React + Tailwind Dashboard)
+        scope:
+            - src/
+            - web/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []

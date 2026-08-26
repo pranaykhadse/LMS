@@ -1,0 +1,1 @@
+Native Flutter desktop runner targets that bootstrap the platform-specific application entry points and bundle the compiled Dart/Flutter engine for Linux, Windows, and macOS.

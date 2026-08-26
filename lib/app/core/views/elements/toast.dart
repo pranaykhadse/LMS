@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:lms/app/core/localization/translate.dart';
 import 'package:lms/app/core/logic/repository/app_exception.dart';
-import 'package:lms/app/core/utils/size_utils.dart';
-import 'package:lms/app/core/utils/theme_utils.dart';
 import 'package:lms/app/core/views/elements/error/error_toast.dart';
 
 class Toast {

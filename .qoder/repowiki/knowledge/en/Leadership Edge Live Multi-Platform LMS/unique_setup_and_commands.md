@@ -1,0 +1,1 @@
+`flutter pub get` resolves dependencies for the Flutter app and its desktop/mobile targets; `flutter gen-l10n` / `flutter run` build and launch the mobile or desktop targets; the React dashboard in `web_frontend/` is started independently via its own npm script.

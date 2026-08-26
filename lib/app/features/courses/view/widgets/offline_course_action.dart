@@ -15,8 +15,17 @@ const _muted = FigmaTokens.noteBodyText;
 /// development plan) so offline downloads aren't only reachable from one
 /// screen.
 class OfflineCourseButton extends ConsumerWidget {
-  const OfflineCourseButton({super.key, required this.course});
+  const OfflineCourseButton({
+    super.key,
+    required this.course,
+    this.iconSize = 21,
+  });
   final Course course;
+
+  /// Icon size inside the round shell; total diameter is iconSize + 14
+  /// (7px padding each side). Default 21 -> 35px; the course catalog
+  /// passes 22 -> 36px to match its 36x36 .dev-plan-action button.
+  final double iconSize;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,6 +39,7 @@ class OfflineCourseButton extends ConsumerWidget {
       isSavedOffline: offlineVM.isAvailable(course),
       isDownloading: offlineVM.isDownloading(course),
       progress: offlineVM.downloadProgress(course),
+      iconSize: iconSize,
       onSave: () => offlineVM.download(course),
       onRemove: () => offlineVM.removeOffline(course),
     );
@@ -42,6 +52,7 @@ class _OfflineCourseAction extends StatelessWidget {
     required this.isSavedOffline,
     required this.isDownloading,
     required this.progress,
+    required this.iconSize,
     required this.onSave,
     required this.onRemove,
   });
@@ -50,6 +61,7 @@ class _OfflineCourseAction extends StatelessWidget {
   final bool isSavedOffline;
   final bool isDownloading;
   final double? progress;
+  final double iconSize;
   final VoidCallback onSave;
   final VoidCallback onRemove;
 
@@ -100,7 +112,7 @@ class _OfflineCourseAction extends StatelessWidget {
         customBorder: const CircleBorder(),
         child: Padding(
           padding: const EdgeInsets.all(7),
-          child: Icon(icon, size: 21, color: color),
+          child: Icon(icon, size: iconSize, color: color),
         ),
       ),
     );

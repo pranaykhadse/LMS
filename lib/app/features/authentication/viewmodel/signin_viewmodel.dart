@@ -1,8 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lms/app/core/logic/vm_helper/offline_vm_helper.dart';
-import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/features/authentication/repository/auth_repository.dart';
 
 import '../../../core/logic/form/form_element_mixin.dart';

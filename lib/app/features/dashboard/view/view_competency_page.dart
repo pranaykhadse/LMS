@@ -199,7 +199,7 @@ class _ViewButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return HoverBuilder(
       builder: (context, hovering) {
-        final onPressed = () => Modular.to.pushNamed(
+        Future<Object?> onPressed() => Modular.to.pushNamed(
               CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
             );
         const shape = StadiumBorder();

@@ -43,8 +43,7 @@ class PaginationWidget extends StatelessWidget {
                     children: [
                       _NavBtn(
                         icon: Icons.chevron_left,
-                        enabled: page > 1,
-                        onTap: () => onPage(page - 1),
+                        onTap: page > 1 ? () => onPage(page - 1) : null,
                       ),
                       const SizedBox(width: 4),
                       ...nums.map((p) {
@@ -53,10 +52,12 @@ class PaginationWidget extends StatelessWidget {
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 6),
                             child: Text(
-                              '…',
-                              style: TextStyle(
+                              // li.disabled.ellipsis-end renders a plain
+                              // "..." (span.page-link with border:none)
+                              '...',
+                              style: GoogleFonts.inter(
                                 color: _muted,
-                                fontSize: 15,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -73,27 +74,32 @@ class PaginationWidget extends StatelessWidget {
                             height: 36,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
+                              // CSS ref (active .page-link inline style):
+                              // background-color #693D94, border-color
+                              // #693D94, color #fff, box-shadow
+                              // 0 8px 16px rgba(105, 61, 148, 0.25)
                               color:
                                   isCurrent ? _purple : Colors.white,
                               borderRadius: BorderRadius.circular(8),
-                              border: isCurrent
-                                  ? null
-                                  : Border.all(
-                                      color: const Color(0xFFE5E7EB)),
+                              border: Border.all(
+                                color: isCurrent
+                                    ? _purple
+                                    : const Color(0xFFE5E7EB),
+                              ),
                               boxShadow: isCurrent
                                   ? [
                                       BoxShadow(
                                         color: _purple
                                             .withValues(alpha: 0.25),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 8),
                                       ),
                                     ]
                                   : null,
                             ),
                             child: Text(
                               '$p',
-                              style: GoogleFonts.roboto(
+                              style: GoogleFonts.inter(
                                 color: isCurrent ? Colors.white : _ink,
                                 fontWeight: isCurrent
                                     ? FontWeight.w700
@@ -107,8 +113,7 @@ class PaginationWidget extends StatelessWidget {
                       const SizedBox(width: 4),
                       _NavBtn(
                         icon: Icons.chevron_right,
-                        enabled: page < pages,
-                        onTap: () => onPage(page + 1),
+                        onTap: page < pages ? () => onPage(page + 1) : null,
                       ),
                     ],
                   ),
@@ -129,7 +134,7 @@ class PaginationWidget extends StatelessWidget {
                 Center(
                   child: Text(
                     'PAGE $page OF $pages',
-                    style: GoogleFonts.roboto(
+                    style: GoogleFonts.inter(
                       color: _muted,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -146,15 +151,20 @@ class PaginationWidget extends StatelessWidget {
     );
   }
 
+  /// CSS ref: the web pager keeps the first page, a 3-page window around
+  /// the current page and the last page visible, hiding everything else
+  /// behind "..." — page 1 of 10 renders as: 1 2 3 ... 10.
   static List<int> _pageNumbers(int current, int total) {
-    if (total <= 7) return List.generate(total, (i) => i + 1);
-    final left = (current - 2).clamp(2, (total - 5).clamp(2, total));
-    final right = (left + 4).clamp(left, total - 1);
+    if (total <= 5) return List.generate(total, (i) => i + 1);
+    final start = (current - 1).clamp(1, total - 2);
+    final end = (start + 2).clamp(start, total);
     final result = <int>[1];
-    if (left > 2) result.add(-1);
-    for (int p = left; p <= right; p++) result.add(p);
-    if (right < total - 1) result.add(-1);
-    if (result.last != total) result.add(total);
+    if (start > 2) result.add(-1);
+    for (int p = start; p <= end; p++) {
+      if (p != 1 && p != total) result.add(p);
+    }
+    if (end < total - 1) result.add(-1);
+    result.add(total);
     return result;
   }
 }
@@ -162,43 +172,30 @@ class PaginationWidget extends StatelessWidget {
 class _NavBtn extends StatelessWidget {
   const _NavBtn({
     required this.icon,
-    required this.enabled,
-    required this.onTap,
+    this.onTap,
   });
   final IconData icon;
-  final bool enabled;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: enabled ? onTap : null,
+      onTap: onTap,
       child: Container(
         width: 36,
         height: 36,
         alignment: Alignment.center,
+        // CSS ref: li.page-item.prev/.next — the chevron page-links share
+        // the number links' bordered box chrome and never carry .disabled.
         decoration: BoxDecoration(
           color: Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: enabled
-                ? const Color(0xFFE5E7EB)
-                : const Color(0xFFF3F4F6),
-          ),
-          boxShadow: enabled
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
         child: Icon(
           icon,
           size: 18,
-          color: enabled ? _ink : const Color(0xFFD1D5DB),
+          color: _ink,
         ),
       ),
     );

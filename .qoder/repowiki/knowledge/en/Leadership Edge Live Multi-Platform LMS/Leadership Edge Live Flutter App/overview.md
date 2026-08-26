@@ -1,0 +1,1 @@
+Flutter application that bundles the Dart UI with Android and iOS platform shells, wiring a single app entry point to native hosts via generated plugin registrants.

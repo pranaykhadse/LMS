@@ -1,0 +1,1 @@
+React-based learning management system dashboard that renders a course catalog, progress tracking, and mentor confirmation UI using Tailwind CSS and Radix-powered shadcn/ui primitives.

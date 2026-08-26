@@ -1,0 +1,2 @@
+- Lint rules and analysis options are enforced centrally via the root `analysis_options.yaml` applied to all Dart modules.
+- Assets such as images and translations are declared once in the root `pubspec.yaml` and consumed by every platform target.
