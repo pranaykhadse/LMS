@@ -3,6 +3,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/utils/dev_image_proxy.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -1809,7 +1810,7 @@ class _CourseImage extends StatelessWidget {
     final fallback = Image.asset('assets/images/login-bg.png', fit: BoxFit.cover);
     if (url == null) return fallback;
     return Image.network(
-      url!,
+      devProxiedImageUrl(url!),
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => fallback,
       loadingBuilder:

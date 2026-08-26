@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/utils/dev_image_proxy.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
@@ -68,7 +69,7 @@ class CourseGridCard extends StatelessWidget {
               children: [
                 imageUrl != null
                     ? Image.network(
-                        imageUrl!,
+                        devProxiedImageUrl(imageUrl!),
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const _ImgFallback(),
                       )
