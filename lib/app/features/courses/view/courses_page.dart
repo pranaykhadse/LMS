@@ -571,8 +571,10 @@ class _FilterPanel extends StatelessWidget {
                     : _catalogCalendarBlue,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
+                  // CSS ref: .calendar-btn box-shadow rgba(84,87,193,0.2) —
+                  // #5457C1, not the button's own #693D94 fill color.
                   BoxShadow(
-                    color: const Color(0xFF693D94).withValues(alpha: 0.2),
+                    color: const Color(0xFF5457C1).withValues(alpha: 0.2),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -1460,9 +1462,18 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
               // cover !important. Computed tooltip: 316.4 x 180 (the
               // wrapper is 180px tall; the ~1.6px width gap vs the 318px
               // card is subpixel/zoom noise).
-              SizedBox(
-                height: 180,
-                child: _CourseImage(url: widget.course.logo),
+              // CSS ref: .card-image-wrapper — border-radius: 12px 12px 0 0
+              // (top corners only; the outer card's own 16px radius is on
+              // all four corners, so the image needs its own tighter clip).
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+                child: SizedBox(
+                  height: 180,
+                  child: _CourseImage(url: widget.course.logo),
+                ),
               ),
               // -- White content area ------------------------------------
               // -- White content area � title + button pinned to bottom -
@@ -1473,44 +1484,44 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                   padding: const EdgeInsets.all(8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // CSS ref: .session-info — "NEXT AVAILABLE" label + date
-                      if (widget.course.nextSession != null) ...[
-                        Text(
-                          'NEXT AVAILABLE',
-                          style: GoogleFonts.inter(
-                            // CSS ref: .session-info .label
-                            color: const Color(0xFF64748B),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                        // CSS ref: .session-info gap: 2px !important
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            // i.far.fa-calendar-alt: ~10px
-                            const Icon(Icons.calendar_today_rounded,
-                                size: 10, color: Color(0xFF693D94)),
-                            // CSS ref: .session-info .date-display gap: 6px
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                _formatNextSession(widget.course.nextSession!),
-                                style: GoogleFonts.inter(
-                                  // CSS ref: .session-info .date-display
-                                  color: const Color(0xFF693D94),
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                      ],
+                     children: [
+                       // CSS ref: .session-info — "NEXT AVAILABLE" label + date
+                       if (widget.course.nextSession != null) ...[
+                         Text(
+                           'NEXT AVAILABLE',
+                           style: GoogleFonts.inter(
+                             // CSS ref: .session-info .label — font:500 11px/16.5px
+                             color: const Color(0xFF64748B),
+                             fontSize: 11,
+                             fontWeight: FontWeight.w500,
+                             letterSpacing: 0.3,
+                           ),
+                         ),
+                         // CSS ref: .session-info gap: 2px !important
+                         const SizedBox(height: 2),
+                         Row(
+                           children: [
+                             // i.far.fa-calendar-alt: ~10px
+                             const Icon(Icons.calendar_today_rounded,
+                                 size: 10, color: Color(0xFF693D94)),
+                             // CSS ref: .session-info .date-display gap: 6px
+                             const SizedBox(width: 6),
+                             Flexible(
+                               child: Text(
+                                 _formatNextSession(widget.course.nextSession!),
+                                 style: GoogleFonts.inter(
+                                   // CSS ref: .session-info .date-display
+                                   color: const Color(0xFF693D94),
+                                   fontSize: 13,
+                                   fontWeight: FontWeight.w600,
+                                 ),
+                                 overflow: TextOverflow.ellipsis,
+                               ),
+                             ),
+                           ],
+                         ),
+                         const SizedBox(height: 8),
+                       ],
                       // CSS ref: a (course title): color #1E2939, font 16px Inter.
                       // maxLines 2 — the 172px card-body budget (352 card
                       // - 180 image) fits 2 lines (44.8px) beside the 46px
@@ -1636,13 +1647,15 @@ class _DevPlanButton extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: isDisabled ? Colors.white : const Color(0xFFE8E7F8),
+          // CSS ref: .dev-plan-action .plus-icon — background
+          // rgba(255,255,255,0.9), box-shadow 0 4px 12px rgba(0,0,0,0.1).
+          color: isDisabled ? Colors.white : Colors.white.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.14),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -1752,19 +1765,29 @@ class _OverlayBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: .overlay_btn — both Yes and No share the same style: bg
+    // #fff, color #693D94, padding 8px 20px, border-radius 12px, box-shadow
+    // 0 4px 10px rgba(0,0,0,0.2), font 700 13px/19.5px. There is no
+    // filled/outline distinction on the web for this class.
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          color: filled ? _catalogPurple : Colors.transparent,
-          border: Border.all(color: Colors.white, width: 1.4),
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, 0.2),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
         ),
         child: Text(
           label,
           style: const TextStyle(
-            color: Colors.white,
+            color: _catalogPurple,
             fontSize: 13,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.4,
@@ -1873,6 +1896,12 @@ class _StarRating extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: .rating-bar — .rating-stars color #FFA534, font-size 18px.
+    // .average-rating font 700 15px, color #2D3748. .review-count color
+    // #64748B, font-size 13px. (The rating-bar's own 4px/12px padding is
+    // not applied here — the surrounding card-title above it has no
+    // matching horizontal inset in this layout, so adding it here would
+    // misalign the row against the title text.)
     return Row(
       children: [
         ...List.generate(5, (i) {
@@ -1884,17 +1913,17 @@ class _StarRating extends StatelessWidget {
                 : half
                     ? Icons.star_half_rounded
                     : Icons.star_outline_rounded,
-            size: 14,
-            color: const Color(0xFFFFA500), // amber star color
+            size: 18,
+            color: const Color(0xFFFFA534),
           );
         }),
         const SizedBox(width: 4),
         Text(
           rating.toStringAsFixed(1),
           style: GoogleFonts.inter(
-            color: const Color(0xFF64748B),
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+            color: const Color(0xFF2D3748),
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
           ),
         ),
         if (count > 0) ...[
@@ -1902,8 +1931,8 @@ class _StarRating extends StatelessWidget {
           Text(
             '($count)',
             style: GoogleFonts.inter(
-              color: const Color(0xFF94A3B8),
-              fontSize: 11,
+              color: const Color(0xFF64748B),
+              fontSize: 13,
             ),
           ),
         ],
