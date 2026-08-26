@@ -174,12 +174,17 @@ class PaginationWidget extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Page $page of $pages',
+                      // Rendered uppercase on the web (visually confirmed
+                      // against a screenshot — "PAGE 1 OF 10", not "Page 1
+                      // of 10"); Flutter has no CSS text-transform
+                      // equivalent, so the string itself is upper-cased.
+                      'Page $page of $pages'.toUpperCase(),
                       style: GoogleFonts.inter(
                         color: const Color(0xFF94A3B8),
                         fontWeight: FontWeight.w800,
                         fontSize: 12,
                         height: 18 / 12,
+                        letterSpacing: 0.8,
                       ),
                     ),
                   ] else ...[
