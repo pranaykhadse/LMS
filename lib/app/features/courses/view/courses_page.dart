@@ -1479,11 +1479,11 @@ class _CatalogCourseCardState extends ConsumerState<_CatalogCourseCard> {
                         Text(
                           'NEXT AVAILABLE',
                           style: GoogleFonts.inter(
-                            // span.label: color #64748B, font 11px
+                            // CSS ref: .session-info .label
                             color: const Color(0xFF64748B),
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            letterSpacing: 0.8,
+                            letterSpacing: 0.3,
                           ),
                         ),
                         // CSS ref: .session-info gap: 2px !important
