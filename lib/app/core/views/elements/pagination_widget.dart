@@ -233,20 +233,21 @@ class _NavBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 36,
-        height: 36,
+        // CSS ref: .page-item.prev .page-link, .page-item.next .page-link
+        // — width/height 44px, border-radius 50% (full circle), background
+        // #f8fafc, no border, color #475569. Distinct chrome from the
+        // numbered page-links (bordered box, white bg, radius 12).
+        width: 44,
+        height: 44,
         alignment: Alignment.center,
-        // CSS ref: li.page-item.prev/.next — the chevron page-links share
-        // the number links' bordered box chrome and never carry .disabled.
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
-          size: 18,
-          color: _ink,
+          size: 14,
+          color: const Color(0xFF475569),
         ),
       ),
     );
