@@ -2053,10 +2053,9 @@ class _DiscussionBoardRow extends ConsumerWidget {
                       TextSpan(
                         text: ' • ',
                         style: GoogleFonts.inter(
-                            // text-gray-300 = #D1D5DB, smaller fontSize so dot looks smaller
                             color: const Color(0xFFD1D5DB),
-                            fontSize: 8,
-                            height: 16 / 8),
+                            fontSize: 5,
+                            height: 16 / 5),
                       ),
                     ],
                     if (item.lastReply.isNotEmpty) ...[
