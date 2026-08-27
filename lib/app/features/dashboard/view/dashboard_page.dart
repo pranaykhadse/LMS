@@ -2438,13 +2438,16 @@ class _RequiredRow extends ConsumerWidget {
         // Design ref: mr-8 (32px) on the number+title group, before the
         // View button
         const SizedBox(width: 32),
-        // View button — outlined purple, fills on hover. Same 13px/Medium
-        // spec as Discussion Board's View button (both confirmed via live
-        // inspection) - uses _ViewButton's default styling.
+        // View button — outlined purple, fills on hover. Own separately
+        // confirmed spec, distinct from Discussion Board's (which is
+        // text-xs/font-semibold = 12px/600 — the class defaults).
         _ViewButton(
           // Design ref: text-[13px] font-medium = 13px/500
           fontSize: 13,
           fontWeight: FontWeight.w500,
+          // Preserves this button's own previously-established
+          // line-height (unrelated to Discussion Board's 1.3333).
+          height: 19.5 / 13,
           onPressed: viewDisabled
               ? null
               : () => Modular.to.pushNamed(
@@ -2458,26 +2461,32 @@ class _RequiredRow extends ConsumerWidget {
 }
 
 // Outlined purple "View" button — fills solid on hover, matching design ref:
-// border border-[#5b5bd6] text-[#5b5bd6] hover:bg-[#5b5bd6] hover:text-white
+// border border-[#693D94] text-[#693D94] hover:bg-[#693D94] hover:text-white
+// (confirmed via live DevTools inspection on the Discussion Board card).
 class _ViewButton extends StatelessWidget {
   const _ViewButton({
     required this.onPressed,
     // Design ref: text-xs font-semibold = 12px/600
     this.fontSize = 12,
     this.fontWeight = FontWeight.w600,
+    // Design ref: .text-xs line-height = calc(1 / 0.75) = 1.3333 (a
+    // multiplier of fontSize, matching Flutter's TextStyle.height).
+    this.height = 1.3333,
   });
   final VoidCallback? onPressed;
   final double fontSize;
   final FontWeight fontWeight;
+  final double height;
 
   @override
   Widget build(BuildContext context) {
     return HoverBuilder(
       builder: (context, hovering) {
         final filled = hovering && onPressed != null;
-        // Design ref: rounded-xl = 12px on both mobile and desktop
+        // Design ref: rounded-xl = var(--radius) + 4px = 10px + 4px = 14px
+        // (confirmed via live DevTools inspection; was previously 12).
         final borderRadius = BorderRadius.all(
-          Radius.circular(12),
+          Radius.circular(14),
         );
         return Material(
           color: filled ? _purple : Colors.transparent,
@@ -2496,7 +2505,7 @@ class _ViewButton extends StatelessWidget {
                 style: GoogleFonts.inter(
                   color: filled ? Colors.white : _purple,
                   fontSize: fontSize,
-                  height: 19.5 / 13,
+                  height: height,
                   fontWeight: fontWeight,
                 ),
               ),
