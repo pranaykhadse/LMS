@@ -1006,18 +1006,29 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
                   ),
                 ),
                 if (widget.courses.isNotEmpty)
-                  GestureDetector(
-                    onTap: () => Modular.to.pushNamed(
-                      CoursesModule.construct(CoursesModule.inProgressCourses),
-                    ),
-                    child: Text(
-                      'View All',
-                      style: GoogleFonts.inter(
-                        color: _purple,
-                        // Design ref (phone): 16px, line-height 24
-                        fontSize: isTablet ? 12 : 16,
-                        fontWeight: FontWeight.w600,
-                        height: isTablet ? 16 / 12 : 24 / 16,
+                  // Design ref: button.text-xs.font-semibold.text-[#693D94]
+                  // .hover:opacity-70 — 12px/600 on BOTH phone and tablet
+                  // (confirmed via live inspection at a 430px mobile
+                  // viewport; not responsive to text-base like the header
+                  // title next to it, despite an earlier assumption that
+                  // it was).
+                  HoverBuilder(
+                    builder: (context, hovering) => GestureDetector(
+                      onTap: () => Modular.to.pushNamed(
+                        CoursesModule.construct(CoursesModule.inProgressCourses),
+                      ),
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 150),
+                        opacity: hovering ? 0.7 : 1,
+                        child: Text(
+                          'View All',
+                          style: GoogleFonts.inter(
+                            color: _purple,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            height: 16 / 12,
+                          ),
+                        ),
                       ),
                     ),
                   ),
