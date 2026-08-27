@@ -2533,8 +2533,8 @@ class _DotSeparator extends StatelessWidget {
     return Transform.translate(
       offset: const Offset(0, 1.5),
       child: Container(
-        width: 2,
-        height: 2,
+        width: 1.5,
+        height: 1.5,
         margin: const EdgeInsets.symmetric(horizontal: 5),
         decoration: const BoxDecoration(
           color: Color(0xFFD1D5DB),
