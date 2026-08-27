@@ -2530,13 +2530,16 @@ class _DotSeparator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 3,
-      height: 3,
-      margin: const EdgeInsets.symmetric(horizontal: 5),
-      decoration: const BoxDecoration(
-        color: Color(0xFFD1D5DB),
-        shape: BoxShape.circle,
+    return Transform.translate(
+      offset: const Offset(0, 1.5),
+      child: Container(
+        width: 2,
+        height: 2,
+        margin: const EdgeInsets.symmetric(horizontal: 5),
+        decoration: const BoxDecoration(
+          color: Color(0xFFD1D5DB),
+          shape: BoxShape.circle,
+        ),
       ),
     );
   }
