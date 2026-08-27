@@ -2502,6 +2502,14 @@ class _ViewButton extends StatelessWidget {
               ),
               child: Text(
                 'View',
+                // The height (line-height) multiplier otherwise adds extra
+                // leading that Flutter splits unevenly above/below the
+                // glyphs by default, visually pushing the text upward
+                // inside the pill. Distributing it evenly centers it.
+                textHeightBehavior: const TextHeightBehavior(
+                  applyHeightToFirstAscent: false,
+                  applyHeightToLastDescent: false,
+                ),
                 style: GoogleFonts.inter(
                   color: filled ? Colors.white : _purple,
                   fontSize: fontSize,
