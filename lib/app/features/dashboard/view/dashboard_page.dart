@@ -2050,12 +2050,9 @@ class _DiscussionBoardRow extends ConsumerWidget {
                             fontSize: 12,
                             height: 16 / 12),
                       ),
-                      TextSpan(
-                        text: ' • ',
-                        style: GoogleFonts.inter(
-                            color: const Color(0xFFD1D5DB),
-                            fontSize: 5,
-                            height: 16 / 5),
+                      const WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: _DotSeparator(),
                       ),
                     ],
                     if (item.lastReply.isNotEmpty) ...[
@@ -2066,12 +2063,9 @@ class _DiscussionBoardRow extends ConsumerWidget {
                             fontSize: 12,
                             height: 16 / 12),
                       ),
-                      TextSpan(
-                        text: ' • ',
-                        style: GoogleFonts.inter(
-                            color: const Color(0xFFD1D5DB),
-                            fontSize: 12,
-                            height: 16 / 12),
+                      const WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: _DotSeparator(),
                       ),
                     ],
                     TextSpan(
@@ -2524,6 +2518,30 @@ class _ViewButton extends StatelessWidget {
     );
   }
 }
+
+// Small circular dot used as an inline metadata separator (author • time •
+// replies). Wrapped in a WidgetSpan(alignment: PlaceholderAlignment.middle)
+// wherever it's used, so it's vertically centered against the surrounding
+// text's line regardless of font-size mismatches — a plain TextSpan("•")
+// baseline-aligns instead, which sat off-center especially at the tiny
+// font-size (5px) previously used for one of these separators.
+class _DotSeparator extends StatelessWidget {
+  const _DotSeparator();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 3,
+      height: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: const BoxDecoration(
+        color: Color(0xFFD1D5DB),
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+}
+
 // ─── Brand-colored button with an explicit hover state ─────────────────────
 //
 // ElevatedButton's built-in hover handling is driven by InkResponse
