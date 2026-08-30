@@ -7,15 +7,24 @@ import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// Design ref: a.hover:text-gray-600 - the footer links' hover color.
-const _footerTextHover = Color(0xFF4B5563); // gray-600
-// Desktop/tablet footer text
-const _footerText = Color(0xFF9CA3AF); // gray-400
-// Mobile footer text — gray-400 = #9CA3AF (matches reference)
-const _footerTextPhone = Color(0xFF9CA3AF); // gray-400
-// LinkedIn icon on mobile — gray-500 = #6B7280
-const _footerLinkedInPhone = Color(0xFF6B7280);
-const _footerBorder = Color(0xFFE5E7EB); // gray-200
+// CSS ref: #footer .footer-menu ul li a — color var(--text-secondary,
+// #6b7280) !important — this ID-qualified rule (modern-course-cards.css)
+// wins over the plain `.footer-menu ul li a` rule in bluetheme-layout.css
+// (#6A7282/13px) despite loading first, since the ID selector is more
+// specific. Hover: #footer ... a:hover — color var(--primary-first,
+// #693D94) !important.
+const _footerText = Color(0xFF6B7280);
+const _footerTextHover = Color(0xFF693D94);
+// CSS ref: footer#footer — border-top: 1px solid var(--card-border,
+// #E5E7EB), background: var(--bg-light, #F4F5F7).
+const _footerBorder = Color(0xFFE5E7EB);
+const _footerBg = Color(0xFFF4F5F7);
+// CSS ref: #footer .social-link ul li a — 36x36 circle, background
+// var(--border-light, #f3f4f6). #footer .social-link ul li a i — color
+// var(--close-btn-gray, #99A1AF), font-size 18px. The :hover rule sets the
+// identical bg/color — i.e. deliberately no visible hover change.
+const _socialBadgeBg = Color(0xFFF3F4F6);
+const _socialIconColor = Color(0xFF99A1AF);
 
 /// Matches the website's global footer (Terms of Use / Your Profile /
 /// Support + LinkedIn) — shown at the bottom of every main screen.
@@ -25,9 +34,6 @@ class AppFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTablet = Responsive.isTablet(context);
-    final color = isTablet ? _footerText : _footerTextPhone;
-    // LinkedIn icon: gray-500 = #6B7280 on all sizes
-    final linkedInColor = isTablet ? _footerLinkedInPhone : _footerLinkedInPhone;
     final links = Wrap(
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -36,7 +42,6 @@ class AppFooter extends StatelessWidget {
       children: [
         _FooterLink(
           label: 'Terms of Use',
-          color: color,
           onTap: () => InAppWebViewPage.show(
             context,
             url: 'https://www.iubenda.com/terms-and-conditions/26898975',
@@ -45,14 +50,12 @@ class AppFooter extends StatelessWidget {
         ),
         _FooterLink(
           label: 'Your Profile',
-          color: color,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const AccountSettingsPage()),
           ),
         ),
         _FooterLink(
           label: 'Support',
-          color: color,
           // Bare mailto: opens a blank compose window in whichever
           // mail app/account the user already has signed in as
           // the OS default - not something we can address further.
@@ -60,37 +63,39 @@ class AppFooter extends StatelessWidget {
         ),
       ],
     );
-    final linkedIn = _LinkedInBadge(color: linkedInColor);
+    const linkedIn = _LinkedInBadge();
 
-    return Column(
-      children: [
-        const Divider(height: 1, color: _footerBorder),
-        // py-3 (12px) top/bottom, no horizontal padding on any size —
-        // outer page wrapper provides horizontal spacing.
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: isTablet
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [links, linkedIn],
-                )
-              : Column(
-                  children: [
-                    links,
-                    const SizedBox(height: 12),
-                    linkedIn,
-                  ],
-                ),
-        ),
-      ],
+    // CSS ref: footer#footer — padding 20px 32px, border-top 1px
+    // #E5E7EB, background #F4F5F7. Mobile breakpoint overrides to
+    // padding: 20px var(--spacing-md) (16px) and stacks column-wise.
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isTablet ? 32 : 16,
+        vertical: 20,
+      ),
+      decoration: const BoxDecoration(
+        color: _footerBg,
+        border: Border(top: BorderSide(color: _footerBorder)),
+      ),
+      child: isTablet
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [links, linkedIn],
+            )
+          : Column(
+              children: [
+                links,
+                const SizedBox(height: 12),
+                linkedIn,
+              ],
+            ),
     );
   }
 }
 
 class _FooterLink extends StatelessWidget {
-  const _FooterLink({required this.label, required this.color, this.onTap});
+  const _FooterLink({required this.label, this.onTap});
   final String label;
-  final Color color;
   final VoidCallback? onTap;
 
   @override
@@ -100,10 +105,12 @@ class _FooterLink extends StatelessWidget {
         onTap: onTap,
         child: Text(
           label,
+          // CSS ref: #footer .footer-menu ul li a — font-size 14px,
+          // font-weight 500, color #6b7280; :hover — color #693D94.
           style: GoogleFonts.inter(
-            color: hovering ? _footerTextHover : color,
-            fontSize: 13,
-            height: 19.5 / 13,
+            color: hovering ? _footerTextHover : _footerText,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
         ),
       ),
@@ -111,11 +118,11 @@ class _FooterLink extends StatelessWidget {
   }
 }
 
-// Design ref: plain icon-only link (text-gray-500, hover:text-[#0077b5]),
-// no circular badge background - <Linkedin size={16} />, 16x16 measured.
+// CSS ref: #footer .social-link ul li a — 36x36 circle, bg #f3f4f6 (the
+// :hover rule sets the identical bg/color, i.e. no visible hover change).
+// #footer .social-link ul li a i — color #99A1AF, font-size 18px.
 class _LinkedInBadge extends StatelessWidget {
-  const _LinkedInBadge({required this.color});
-  final Color color;
+  const _LinkedInBadge();
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +131,21 @@ class _LinkedInBadge extends StatelessWidget {
         Uri.parse('https://www.linkedin.com/company/looking-forward-consulting'),
         mode: LaunchMode.externalApplication,
       ),
-      child: Icon(LucideIcons.linkedin, size: 16, color: color),
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 36,
+        height: 36,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          color: _socialBadgeBg,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          LucideIcons.linkedin,
+          size: 18,
+          color: _socialIconColor,
+        ),
+      ),
     );
   }
 }

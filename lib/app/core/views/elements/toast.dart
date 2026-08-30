@@ -14,10 +14,7 @@ class Toast {
   }) {
     showToastWidget(
       Container(
-        constraints: const BoxConstraints(
-          minHeight: 50,
-          maxWidth: 500,
-        ),
+        constraints: const BoxConstraints(minHeight: 50, maxWidth: 500),
         child: ErrorToastWidget(
           error: error,
           title: title ?? _errorToTitle(error),
@@ -28,8 +25,10 @@ class Toast {
       context: context,
       animation: StyledToastAnimation.slideFromRight,
       reverseAnimation: StyledToastAnimation.fade,
-      position:
-          const StyledToastPosition(align: Alignment.topRight, offset: 17.0),
+      position: const StyledToastPosition(
+        align: Alignment.topRight,
+        offset: 17.0,
+      ),
     );
   }
 
@@ -40,17 +39,18 @@ class Toast {
   }) {
     showCupertinoDialog(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text(title ?? _errorToTitle(error)),
-        content: Text(error.toString().translate(context)),
-        actions: <Widget>[
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text("ok"),
+      builder:
+          (context) => CupertinoAlertDialog(
+            title: Text(title ?? _errorToTitle(error)),
+            content: Text(error.toString().translate(context)),
+            actions: <Widget>[
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text("ok"),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -112,7 +112,11 @@ class Toast {
             color: color,
             borderRadius: BorderRadius.circular(999),
             boxShadow: const [
-              BoxShadow(color: Color(0x30000000), blurRadius: 10, offset: Offset(0, 3)),
+              BoxShadow(
+                color: Color(0x30000000),
+                blurRadius: 10,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
           child: Row(
@@ -131,9 +135,12 @@ class Toast {
                 ),
               ),
               const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () => dismissAllToast(),
-                child: const Icon(Icons.close, color: Colors.white, size: 18),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => dismissAllToast(),
+                  child: const Icon(Icons.close, color: Colors.white, size: 18),
+                ),
               ),
             ],
           ),
@@ -144,28 +151,33 @@ class Toast {
       animation: StyledToastAnimation.slideFromTop,
       reverseAnimation: StyledToastAnimation.slideToTop,
       animDuration: const Duration(milliseconds: 280),
-      position: const StyledToastPosition(align: Alignment.topCenter, offset: 0),
+      position: const StyledToastPosition(
+        align: Alignment.topCenter,
+        offset: 0,
+      ),
     );
   }
-   static Future<void> successDialog(
+
+  static Future<void> successDialog(
     BuildContext context,
     dynamic message, {
     Duration duration = const Duration(seconds: 10),
     String? title,
   }) {
-   return showCupertinoDialog(
+    return showCupertinoDialog(
       context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text(title ?? "Success"),
-        content: Text(message.toString().translate(context)),
-        actions: <Widget>[
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text("ok"),
+      builder:
+          (context) => CupertinoAlertDialog(
+            title: Text(title ?? "Success"),
+            content: Text(message.toString().translate(context)),
+            actions: <Widget>[
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text("ok"),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

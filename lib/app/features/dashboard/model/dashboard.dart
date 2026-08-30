@@ -108,6 +108,9 @@ class DashboardCourse {
 
   factory DashboardCourse.fromJson(Map<String, dynamic> json) {
     final hasCourseId = json['course_id'] != null;
+    // Confirmed via debug logging: this endpoint's `progress` field is a
+    // string with a literal trailing "%" (e.g. "21.43%"), handled by
+    // _asInt below.
     final progressValue = json['progress'] ?? (hasCourseId ? null : json['status']);
     final nextSessionValue = (json['next_session'] ??
             json['nextSession'] ??
@@ -123,7 +126,7 @@ class DashboardCourse {
             json['completedDate'] ??
             json['completion_date'])
         ?.toString();
-    return DashboardCourse(
+    final course = DashboardCourse(
       // Non-course dev plan items carry their id as `non_course_id`, not
       // `id` - the development-plan API's own "Non Course ID" field (see
       // non-course-development-plan's `id` param). Falling back to `id`
@@ -158,6 +161,7 @@ class DashboardCourse {
               ? null
               : completedDateValue.parseApiUtc(),
     );
+    return course;
   }
 }
 
@@ -237,7 +241,18 @@ class DashboardResource {
 int _asInt(dynamic value) {
   if (value is int) return value;
   if (value is num) return value.toInt();
-  return int.tryParse(value?.toString() ?? '') ?? 0;
+  var str = value?.toString().trim();
+  if (str == null || str.isEmpty) return 0;
+  // API fields like `progress` arrive as e.g. "21.43%" — a decimal string
+  // with a literal trailing percent sign, confirmed via debug logging
+  // (raw payload: progress=21.43%, progress=5.56%, progress=25%, ...).
+  // int.tryParse rejects both the decimal point and the "%" outright and
+  // returns null, which previously collapsed every such value to 0 (the
+  // progress ring rendering with no visible arc regardless of the real
+  // percentage). Stripping a trailing "%" then falling back to a double
+  // parse + truncation handles it.
+  if (str.endsWith('%')) str = str.substring(0, str.length - 1);
+  return int.tryParse(str) ?? double.tryParse(str)?.toInt() ?? 0;
 }
 
 double _asDouble(dynamic value) {

@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
+import 'package:lms/app/core/utils/dev_image_proxy.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
@@ -71,8 +72,9 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _runSupervisorMentorFlow());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _runSupervisorMentorFlow(),
+    );
   }
 
   /// Fetches supervisor then mentor data, and shows each one's confirm
@@ -189,9 +191,16 @@ class _DashboardPageState extends ConsumerState<DashboardPage> {
           hideBack: true,
           useDashboardMobileProfileStyle: true,
           onRefresh: _refetchAll,
-          body: _redirectingUnauthorized
-              ? const Center(child: CircularProgressIndicator(color: _purple))
-              : DashboardBody(auth: auth, state: state, onRefetchAll: _refetchAll),
+          body:
+              _redirectingUnauthorized
+                  ? const Center(
+                    child: CircularProgressIndicator(color: _purple),
+                  )
+                  : DashboardBody(
+                    auth: auth,
+                    state: state,
+                    onRefetchAll: _refetchAll,
+                  ),
         ),
         // Supervisor/mentor confirm overlays, shown in sequence by
         // _runSupervisorMentorFlow - each completer's completion is what
@@ -310,6 +319,7 @@ class DashboardBody extends ConsumerWidget {
   final AuthState? auth;
   final DataState<LearningProgressData> state;
   final VoidCallback onRefetchAll;
+
   /// When false the gradient hero banner is omitted — used by
   /// LearningProgressPage which shares this body but has its own AppBar.
   final bool showBanner;
@@ -322,7 +332,10 @@ class DashboardBody extends ConsumerWidget {
         return const Center(child: CircularProgressIndicator(color: _purple));
       case DataProviderState.error:
         return _ErrorView(
-          message: friendlyErrorMessage(state.error, 'Unable to load dashboard.'),
+          message: friendlyErrorMessage(
+            state.error,
+            'Unable to load dashboard.',
+          ),
           onRetry: onRefetchAll,
         );
       case DataProviderState.data:
@@ -350,14 +363,20 @@ class DashboardBody extends ConsumerWidget {
               return ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  if (showBanner) _BannerSection(quote: state.data?.extras.quote),
+                  if (showBanner)
+                    _BannerSection(quote: state.data?.extras.quote),
                   // Design ref: <p className="hidden sm:block ..."> - the
                   // reference site genuinely hides this on mobile (confirmed
                   // via live inspection - it doesn't render below the sm
                   // breakpoint at all, not just a smaller font size).
                   if (isTablet)
                     Padding(
-                      padding: EdgeInsets.fromLTRB(outerH, containerV, outerH, 0),
+                      padding: EdgeInsets.fromLTRB(
+                        outerH,
+                        containerV,
+                        outerH,
+                        0,
+                      ),
                       child: Text(
                         "Welcome back! Here's what's happening with your courses.",
                         style: GoogleFonts.inter(
@@ -372,7 +391,12 @@ class DashboardBody extends ConsumerWidget {
                     // On mobile this is the first child (the welcome text
                     // above is hidden), so it takes the wrapper's own top
                     // padding (containerV) instead of the inter-sibling gap.
-                    padding: EdgeInsets.fromLTRB(outerH, isTablet ? gapV : containerV, outerH, 0),
+                    padding: EdgeInsets.fromLTRB(
+                      outerH,
+                      isTablet ? gapV : containerV,
+                      outerH,
+                      0,
+                    ),
                     child: _StatRow(
                       isWide: isWide,
                       enrolled: data.summary.enrolledCourses,
@@ -388,111 +412,123 @@ class DashboardBody extends ConsumerWidget {
                     // grow/shrink to match however many sessions Upcoming
                     // Sessions happened to have that load, making its image
                     // and content visibly resize between page loads.
-                    child: isWide
-                        ? Row(
-                            // Continue Learning has a fixed height so start
-                            // alignment is correct here — stretch would
-                            // conflict with the fixed SizedBox height.
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: _ContinueLearningCard(
-                                  courses: _continueLearningCourses(data),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _UpcomingSessionsCard(
-                                  sessions: data.upcomingSessions,
-                                ),
-                              ),
-                            ],
-                          )
-                        : Column(
-                            children: [
-                              _ContinueLearningCard(
-                                courses: _continueLearningCourses(data),
-                              ),
-                              // Mobile only: Overall Progress sits between
-                              // Continue Learning and Upcoming Sessions,
-                              // matching the reference's md:hidden card order.
-                              if (!isTablet) ...[
-                                const SizedBox(height: 16),
-                                _OverallProgressCard(
-                                  overallProgress: data.summary.overallProgress,
-                                ),
-                              ],
-                              const SizedBox(height: 16),
-                              _UpcomingSessionsCard(sessions: data.upcomingSessions),
-                            ],
-                          ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
-                    child: isWide
-                        ? IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child:
+                        isWide
+                            ? Row(
+                              // Continue Learning has a fixed height so start
+                              // alignment is correct here — stretch would
+                              // conflict with the fixed SizedBox height.
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
-                                  child: _CourseProgressCard(
-                                    courses: _progressCourses(data),
+                                  child: _ContinueLearningCard(
+                                    courses: _continueLearningCourses(data),
                                   ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
-                                  child: _OverallProgressCard(
-                                    overallProgress: data.summary.overallProgress,
+                                  child: _UpcomingSessionsCard(
+                                    sessions: data.upcomingSessions,
                                   ),
                                 ),
                               ],
-                            ),
-                          )
-                        : Column(
-                            children: [
-                              _CourseProgressCard(courses: _progressCourses(data)),
-                              // Overall Progress already rendered above on
-                              // mobile (between Continue Learning and
-                              // Upcoming Sessions) — only show here on tablet.
-                              if (isTablet) ...[
+                            )
+                            : Column(
+                              children: [
+                                _ContinueLearningCard(
+                                  courses: _continueLearningCourses(data),
+                                ),
+                                // Mobile only: Overall Progress sits between
+                                // Continue Learning and Upcoming Sessions,
+                                // matching the reference's md:hidden card order.
+                                if (!isTablet) ...[
+                                  const SizedBox(height: 16),
+                                  _OverallProgressCard(
+                                    overallProgress:
+                                        data.summary.overallProgress,
+                                  ),
+                                ],
                                 const SizedBox(height: 16),
-                                _OverallProgressCard(
-                                  overallProgress: data.summary.overallProgress,
+                                _UpcomingSessionsCard(
+                                  sessions: data.upcomingSessions,
                                 ),
                               ],
-                            ],
-                          ),
+                            ),
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
-                    child: isWide
-                        ? IntrinsicHeight(
-                            child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                                Expanded(
-                                  child: _RewardsPointsCard(
-                                    rewards: data.extras.rewards,
+                    child:
+                        isWide
+                            ? IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(
+                                    child: _CourseProgressCard(
+                                      courses: _progressCourses(data),
+                                    ),
                                   ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _OverallProgressCard(
+                                      overallProgress:
+                                          data.summary.overallProgress,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            : Column(
+                              children: [
+                                _CourseProgressCard(
+                                  courses: _progressCourses(data),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _DiscussionBoardsCard(
-                                    boards: data.extras.discussionBoards,
+                                // Overall Progress already rendered above on
+                                // mobile (between Continue Learning and
+                                // Upcoming Sessions) — only show here on tablet.
+                                if (isTablet) ...[
+                                  const SizedBox(height: 16),
+                                  _OverallProgressCard(
+                                    overallProgress:
+                                        data.summary.overallProgress,
                                   ),
+                                ],
+                              ],
+                            ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, 0),
+                    child:
+                        isWide
+                            ? IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(
+                                    child: _RewardsPointsCard(
+                                      rewards: data.extras.rewards,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: _DiscussionBoardsCard(
+                                      boards: data.extras.discussionBoards,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            : Column(
+                              children: [
+                                _RewardsPointsCard(
+                                  rewards: data.extras.rewards,
+                                ),
+                                const SizedBox(height: 16),
+                                _DiscussionBoardsCard(
+                                  boards: data.extras.discussionBoards,
                                 ),
                               ],
                             ),
-                          )
-                        : Column(
-                            children: [
-                              _RewardsPointsCard(
-                                  rewards: data.extras.rewards),
-                              const SizedBox(height: 16),
-                              _DiscussionBoardsCard(
-                                  boards: data.extras.discussionBoards),
-                            ],
-                          ),
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, gapV),
@@ -504,8 +540,8 @@ class DashboardBody extends ConsumerWidget {
                     padding: EdgeInsets.symmetric(horizontal: outerH),
                     child: const AppFooter(),
                   ),
-                  ],
-                );
+                ],
+              );
             },
           ),
         );
@@ -597,9 +633,7 @@ class _BannerSection extends StatelessWidget {
             Image.network(quote!.bannerImage!, fit: BoxFit.cover),
           // Design ref: solid #693D94 tint at 82% opacity (not a two-tone
           // gradient - both linear-gradient stops are the same color).
-          Container(
-            color: FigmaTokens.primaryPurple.withValues(alpha: 0.82),
-          ),
+          Container(color: FigmaTokens.primaryPurple.withValues(alpha: 0.82)),
           // Design ref: absolute inset-0 flex items-center px-5 sm:px-10 -
           // content is vertically centered within the banner, not
           // top-anchored.
@@ -620,9 +654,10 @@ class _BannerSection extends StatelessWidget {
                         color: Colors.white,
                         fontSize: greetingSize,
                         // lg: leading-tight (1.25), sm: leading-[36px]/18px
-                        height: isDesktop
-                            ? greetingSize * 1.25 / greetingSize
-                            : (isTablet ? 36 / 18 : 20 / 16),
+                        height:
+                            isDesktop
+                                ? greetingSize * 1.25 / greetingSize
+                                : (isTablet ? 36 / 18 : 20 / 16),
                         fontWeight: FontWeight.w500,
                         letterSpacing: -0.75,
                       ),
@@ -735,9 +770,10 @@ class _StatCard extends StatelessWidget {
     // Design ref (phone): padding 16/12/16/12, radius 10, label 10px
     // uppercase #99A1AF, value 30px bold #1E2939.
     return Container(
-      padding: isTablet
-          ? const EdgeInsets.symmetric(horizontal: 20, vertical: 16)
-          : const EdgeInsets.fromLTRB(12, 16, 12, 16),
+      padding:
+          isTablet
+              ? const EdgeInsets.symmetric(horizontal: 20, vertical: 16)
+              : const EdgeInsets.fromLTRB(12, 16, 12, 16),
       decoration: BoxDecoration(
         color: Colors.white,
         // rounded-lg = 8px on mobile, keep existing on tablet/desktop
@@ -746,9 +782,8 @@ class _StatCard extends StatelessWidget {
       ),
       child: Column(
         // items-center on mobile (centered), start on tablet/desktop
-        crossAxisAlignment: isTablet
-            ? CrossAxisAlignment.start
-            : CrossAxisAlignment.center,
+        crossAxisAlignment:
+            isTablet ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -761,9 +796,10 @@ class _StatCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
                     // text-gray-400 = #9CA3AF on mobile
-                    color: isTablet
-                        ? const Color(0xFF9CA3AF)
-                        : const Color(0xFF9CA3AF),
+                    color:
+                        isTablet
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF9CA3AF),
                     fontSize: isTablet ? 12 : 10,
                     fontWeight: FontWeight.w600,
                     letterSpacing: isTablet ? 0.6 : 0.5,
@@ -778,9 +814,8 @@ class _StatCard extends StatelessWidget {
             value: value,
             style: GoogleFonts.inter(
               // text-gray-800 = #1F2937 on mobile
-              color: isTablet
-                  ? const Color(0xFF1F2937)
-                  : const Color(0xFF1F2937),
+              color:
+                  isTablet ? const Color(0xFF1F2937) : const Color(0xFF1F2937),
               fontSize: isTablet ? 36 : 30,
               fontWeight: FontWeight.w600,
               height: isTablet ? 40 / 36 : 1.2,
@@ -866,7 +901,8 @@ class _CardHeader extends StatelessWidget {
               onTap: onAction,
               child: Text(
                 actionLabel!,
-                style: actionLabelStyle ??
+                style:
+                    actionLabelStyle ??
                     GoogleFonts.inter(
                       color: _purple,
                       fontSize: 16,
@@ -953,150 +989,165 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
     // reference design.
     const borderColor = Color(0xFFE5E7EB);
     const headerBg = Colors.white;
-    final headerBorder = overdue ? const Color(0xFFFEE2E2) : const Color(0xFFF3F4F6);
+    final headerBorder =
+        overdue ? const Color(0xFFFEE2E2) : const Color(0xFFF3F4F6);
 
     final isTablet = Responsive.isTablet(context);
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: Container(
-      // Design ref: header (pt-4 pb-3 + 24px text line-height) 52 +
-      // content h-[200px] + dots row (py-3 + 6px dot) 30 = 282 - matches
-      // the measured rendered row height (284.8, ~3px of font-metrics
-      // rounding) closer than the earlier 290px guess.
-      // Mobile height: increased from 242 to 252 to prevent overflow on
-      // cards with longer category labels or multi-word titles. Also wrapped
-      // in ClipRect so any residual font-metrics rounding never shows the
-      // yellow overflow banner to the user.
-      height: isTablet ? 286 : 252,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: borderColor),
-      ),
-      // Clip so font-metric rounding can never show the yellow overflow
-      // banner — any excess pixel is silently hidden inside the card.
-      clipBehavior: Clip.hardEdge,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Header ──────────────────────────────────────────────────
-          // Design ref: flex items-center justify-between px-5 pt-4 pb-3
-          // border-b border-gray-100 - text-base font-semibold
-          // text-gray-500 uppercase / text-xs font-semibold text-[#693D94]
-          Container(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
-            decoration: BoxDecoration(
-              color: headerBg,
-              border: Border(bottom: BorderSide(color: headerBorder)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'CONTINUE LEARNING',
-                    style: GoogleFonts.inter(
-                      // text-gray-500 = #6B7280
-                      color: const Color(0xFF6B7280),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.4,
-                      height: 24 / 16,
+        // Design ref: header (pt-4 pb-3 + 24px text line-height) 52 +
+        // content h-[200px] + dots row (py-3 + 6px dot) 30 = 282 - matches
+        // the measured rendered row height (284.8, ~3px of font-metrics
+        // rounding) closer than the earlier 290px guess.
+        // Mobile height: increased from 242 to 252 to prevent overflow on
+        // cards with longer category labels or multi-word titles. Also wrapped
+        // in ClipRect so any residual font-metrics rounding never shows the
+        // yellow overflow banner to the user.
+        height: isTablet ? 286 : 252,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor),
+        ),
+        // Clip so font-metric rounding can never show the yellow overflow
+        // banner — any excess pixel is silently hidden inside the card.
+        clipBehavior: Clip.hardEdge,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ──────────────────────────────────────────────────
+            // Design ref: flex items-center justify-between px-5 pt-4 pb-3
+            // border-b border-gray-100 - text-base font-semibold
+            // text-gray-500 uppercase / text-xs font-semibold text-[#693D94]
+            Container(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
+              decoration: BoxDecoration(
+                color: headerBg,
+                border: Border(bottom: BorderSide(color: headerBorder)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'CONTINUE LEARNING',
+                      style: GoogleFonts.inter(
+                        // text-gray-500 = #6B7280
+                        color: const Color(0xFF6B7280),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.4,
+                        height: 24 / 16,
+                      ),
                     ),
                   ),
+                  if (widget.courses.isNotEmpty)
+                    // Design ref: button.text-xs.font-semibold.text-[#693D94]
+                    // .hover:opacity-70 — 12px/600 on BOTH phone and tablet
+                    // (confirmed via live inspection at a 430px mobile
+                    // viewport; not responsive to text-base like the header
+                    // title next to it, despite an earlier assumption that
+                    // it was).
+                    HoverBuilder(
+                      cursor: SystemMouseCursors.click,
+                      builder:
+                          (context, hovering) => GestureDetector(
+                            onTap:
+                                () => Modular.to.pushNamed(
+                                  CoursesModule.construct(
+                                    CoursesModule.inProgressCourses,
+                                  ),
+                                ),
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 150),
+                              opacity: hovering ? 0.7 : 1,
+                              child: Text(
+                                'View All',
+                                style: GoogleFonts.inter(
+                                  color: _purple,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  height: 16 / 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                    ),
+                ],
+              ),
+            ),
+
+            // ── Course card (PageView) fills remaining space ─────────────
+            if (widget.courses.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'No courses in progress.',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF6B7280),
+                    fontSize: 14,
+                  ),
                 ),
-                if (widget.courses.isNotEmpty)
-                  // Design ref: button.text-xs.font-semibold.text-[#693D94]
-                  // .hover:opacity-70 — 12px/600 on BOTH phone and tablet
-                  // (confirmed via live inspection at a 430px mobile
-                  // viewport; not responsive to text-base like the header
-                  // title next to it, despite an earlier assumption that
-                  // it was).
-                  HoverBuilder(
-                    builder: (context, hovering) => GestureDetector(
-                      onTap: () => Modular.to.pushNamed(
-                        CoursesModule.construct(CoursesModule.inProgressCourses),
+              )
+            else
+              Expanded(
+                child: PageView.builder(
+                  controller: _controller,
+                  onPageChanged: (i) => setState(() => _index = i),
+                  itemCount: widget.courses.length,
+                  itemBuilder:
+                      (context, i) => _ContinueLearningItem(
+                        course: widget.courses[i],
+                        accentColor: accentColor,
                       ),
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 150),
-                        opacity: hovering ? 0.7 : 1,
-                        child: Text(
-                          'View All',
-                          style: GoogleFonts.inter(
-                            color: _purple,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            height: 16 / 12,
+                ),
+              ),
+
+            // ── Dot indicators ───────────────────────────────────────────
+            if (widget.courses.length > 1)
+              Container(
+                // Design ref: flex items-center justify-center gap-1.5 py-3
+                // (no border)
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(widget.courses.length, (i) {
+                    final dotOverdue = _isOverdue(widget.courses[i]);
+                    final dotColor =
+                        dotOverdue ? const Color(0xFFEF4444) : _purple;
+                    return MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () {
+                          _startAutoAdvance();
+                          _controller.animateToPage(
+                            i,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          width: i == _index ? 16 : 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color:
+                                i == _index
+                                    ? dotColor
+                                    : const Color(0xFFD1D5DB),
+                            borderRadius: BorderRadius.circular(3),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          // ── Course card (PageView) fills remaining space ─────────────
-          if (widget.courses.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'No courses in progress.',
-                style: GoogleFonts.inter(color: const Color(0xFF6B7280), fontSize: 14),
-              ),
-            )
-          else
-            Expanded(
-              child: PageView.builder(
-                controller: _controller,
-                onPageChanged: (i) => setState(() => _index = i),
-                itemCount: widget.courses.length,
-                itemBuilder: (context, i) => _ContinueLearningItem(
-                  course: widget.courses[i],
-                  accentColor: accentColor,
+                    );
+                  }),
                 ),
               ),
-            ),
-
-          // ── Dot indicators ───────────────────────────────────────────
-          if (widget.courses.length > 1)
-            Container(
-              // Design ref: flex items-center justify-center gap-1.5 py-3
-              // (no border)
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(widget.courses.length, (i) {
-                  final dotOverdue = _isOverdue(widget.courses[i]);
-                  final dotColor = dotOverdue
-                      ? const Color(0xFFEF4444)
-                      : _purple;
-                  return GestureDetector(
-                    onTap: () {
-                      _startAutoAdvance();
-                      _controller.animateToPage(
-                        i,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: i == _index ? 16 : 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: i == _index ? dotColor : const Color(0xFFD1D5DB),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-        ],
-      ),
-    ), // Container
+          ],
+        ),
+      ), // Container
     ); // MouseRegion
   }
 }
@@ -1180,20 +1231,25 @@ class _ContinueLearningItem extends ConsumerWidget {
               width: double.infinity,
               child: _BrandButton(
                 label: 'Resume',
-                onPressed: viewDisabled
-                    ? null
-                    : () => Modular.to.pushNamed(
+                onPressed:
+                    viewDisabled
+                        ? null
+                        : () => Modular.to.pushNamed(
                           CoursesModule.construct(
                             '${CoursesModule.detail}/${course.id}',
                           ),
                         ),
                 color: accentColor,
-                hoverColor: accentColor == const Color(0xFFDC2626)
-                    ? const Color(0xFFB91C1C)
-                    : FigmaTokens.purpleHover,
+                hoverColor:
+                    accentColor == const Color(0xFFDC2626)
+                        ? const Color(0xFFB91C1C)
+                        : FigmaTokens.purpleHover,
                 // rounded-xl = 12px
                 borderRadius: 12,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 textStyle: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 12,
@@ -1225,10 +1281,10 @@ class _ContinueLearningItem extends ConsumerWidget {
                 children: [
                   course.logo != null
                       ? Image.network(
-                          course.logo!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const _ImgFallback(),
-                        )
+                        course.logo!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const _ImgFallback(),
+                      )
                       : const _ImgFallback(),
                   Positioned(
                     top: 4,
@@ -1262,106 +1318,114 @@ class _ContinueLearningItem extends ConsumerWidget {
             child: Align(
               alignment: Alignment.topLeft,
               child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Category label
-                if (course.category != null)
-                  Text(
-                    course.category!.toUpperCase(),
-                    style: GoogleFonts.inter(
-                      color: accentColor,
-                      fontSize: 13,
-                      height: 19.5 / 13,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.325,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Category label
+                  if (course.category != null)
+                    Text(
+                      course.category!.toUpperCase(),
+                      style: GoogleFonts.inter(
+                        color: accentColor,
+                        fontSize: 13,
+                        height: 19.5 / 13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.325,
+                      ),
                     ),
-                  ),
-                const SizedBox(height: 2),
+                  const SizedBox(height: 2),
 
-                // Course title
-                Text(
-                  course.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    // text-gray-800 = #1F2937
-                    color: const Color(0xFF1F2937),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    height: 22 / 16,
-                  ),
-                ),
-
-                // Description (2 lines max)
-                if (course.description != null) ...[
-                  const SizedBox(height: 4),
+                  // Course title
                   Text(
-                    course.description!,
-                    maxLines: 2,
+                    course.name,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.inter(
-                      // text-gray-400 = #9CA3AF
-                      color: const Color(0xFF9CA3AF),
+                      // text-gray-800 = #1F2937
+                      color: const Color(0xFF1F2937),
                       fontSize: 16,
-                      // Design ref: leading-relaxed = 1.625
-                      height: 1.625,
+                      fontWeight: FontWeight.w700,
+                      height: 22 / 16,
+                    ),
+                  ),
+
+                  // Description (2 lines max)
+                  if (course.description != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      course.description!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        // text-gray-400 = #9CA3AF
+                        color: const Color(0xFF9CA3AF),
+                        fontSize: 16,
+                        // Design ref: leading-relaxed = 1.625
+                        height: 1.625,
+                      ),
+                    ),
+                  ],
+
+                  // Due date — Design ref: mb-2 (8px) below the description
+                  if (course.dueDate != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        // Design ref: <CalendarDays size={10} />
+                        Icon(
+                          LucideIcons.calendarDays,
+                          size: 10,
+                          color: accentColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            '${accentColor == const Color(0xFFDC2626) ? "Overdue: " : "Due: "}${course.dueDate}',
+                            style: GoogleFonts.inter(
+                              color: accentColor,
+                              fontSize: 16,
+                              height: 24 / 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+
+                  // Resume button — Design ref: px-4 py-2 rounded-[20px]
+                  // text-base font-medium; bg matches the overdue accent
+                  // color (red) or purple otherwise, same as the due-date
+                  // text/icon above.
+                  _BrandButton(
+                    label: 'Resume',
+                    onPressed:
+                        viewDisabled
+                            ? null
+                            : () => Modular.to.pushNamed(
+                              CoursesModule.construct(
+                                '${CoursesModule.detail}/${course.id}',
+                              ),
+                            ),
+                    color: accentColor,
+                    hoverColor:
+                        accentColor == const Color(0xFFDC2626)
+                            ? const Color(0xFFB91C1C) // red-700 hover
+                            : FigmaTokens.purpleHover,
+                    borderRadius: 20,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    textStyle: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 16,
+                      height: 24 / 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
-
-                // Due date — Design ref: mb-2 (8px) below the description
-                if (course.dueDate != null) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      // Design ref: <CalendarDays size={10} />
-                      Icon(LucideIcons.calendarDays,
-                          size: 10, color: accentColor),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          '${accentColor == const Color(0xFFDC2626) ? "Overdue: " : "Due: "}${course.dueDate}',
-                          style: GoogleFonts.inter(
-                            color: accentColor,
-                            fontSize: 16,
-                            height: 24 / 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 12),
-
-                // Resume button — Design ref: px-4 py-2 rounded-[20px]
-                // text-base font-medium; bg matches the overdue accent
-                // color (red) or purple otherwise, same as the due-date
-                // text/icon above.
-                _BrandButton(
-                  label: 'Resume',
-                  onPressed: viewDisabled
-                      ? null
-                      : () => Modular.to.pushNamed(
-                            CoursesModule.construct(
-                              '${CoursesModule.detail}/${course.id}',
-                            ),
-                          ),
-                  color: accentColor,
-                  hoverColor: accentColor == const Color(0xFFDC2626)
-                      ? const Color(0xFFB91C1C) // red-700 hover
-                      : FigmaTokens.purpleHover,
-                  borderRadius: 20,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  textStyle: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 16,
-                    height: 24 / 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
               ),
             ),
           ),
@@ -1412,13 +1476,15 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
     final now = DateTime.now();
     // Keep UpcomingSession alongside its CalendarEvent so virtualClassNumber
     // can be passed to _SessionRow without routing through CalendarEvent.
-    final upcomingPairs = widget.sessions
-        .map((s) => (session: s, event: _toCalendarEvent(s)))
-        .where((p) => p.event != null)
-        .where((p) => p.event!.startDateTime.isAfter(now))
-        .toList()
-      ..sort((a, b) =>
-          a.event!.startDateTime.compareTo(b.event!.startDateTime));
+    final upcomingPairs =
+        widget.sessions
+            .map((s) => (session: s, event: _toCalendarEvent(s)))
+            .where((p) => p.event != null)
+            .where((p) => p.event!.startDateTime.isAfter(now))
+            .toList()
+          ..sort(
+            (a, b) => a.event!.startDateTime.compareTo(b.event!.startDateTime),
+          );
     const collapsedCount = 2;
     final visible = upcomingPairs.take(collapsedCount).toList();
     final isTablet = Responsive.isTablet(context);
@@ -1457,7 +1523,10 @@ class _UpcomingSessionsCardState extends State<_UpcomingSessionsCard> {
               padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
                 'No upcoming sessions.',
-                style: GoogleFonts.inter(color: const Color(0xFF6B7280), fontSize: 14),
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF6B7280),
+                  fontSize: 14,
+                ),
               ),
             )
           else
@@ -1482,8 +1551,18 @@ class _SessionRow extends StatelessWidget {
   String _formatDate(DateTime dt) {
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = [
-      'Jan','Feb','Mar','Apr','May','Jun',
-      'Jul','Aug','Sep','Oct','Nov','Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final weekday = weekdays[dt.weekday - 1];
     final month = months[dt.month - 1];
@@ -1498,8 +1577,8 @@ class _SessionRow extends StatelessWidget {
   }
 
   void _openSession(BuildContext context) => Modular.to.pushNamed(
-        CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
-      );
+    CoursesModule.construct('${CoursesModule.detail}/${event.courseId}'),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -1521,35 +1600,34 @@ class _SessionRow extends StatelessWidget {
     final int? vcNum = virtualClassNumber;
     final bool showBadge = vcNum != null && vcNum > 0;
 
-    final badge = showBadge
-        ? Container(
-            margin: const EdgeInsets.only(left: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0E8F7),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'Virtual Class ${vcNum.toString()}',
-              style: GoogleFonts.inter(
-                color: _purple,
-                fontSize: 11,
-                height: 15.125 / 11,
-                fontWeight: FontWeight.w600,
+    final badge =
+        showBadge
+            ? Container(
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0E8F7),
+                borderRadius: BorderRadius.circular(20),
               ),
-            ),
-          )
-        : null;
+              child: Text(
+                'Virtual Class ${vcNum.toString()}',
+                style: GoogleFonts.inter(
+                  color: _purple,
+                  fontSize: 11,
+                  height: 15.125 / 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
+            : null;
 
-    final title = showBadge
-        ? Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Flexible(child: titleText),
-              badge!,
-            ],
-          )
-        : titleText;
+    final title =
+        showBadge
+            ? Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [Flexible(child: titleText), badge!],
+            )
+            : titleText;
     final dateRow = Row(
       children: [
         const Icon(LucideIcons.calendarDays, size: 10, color: _purple),
@@ -1563,10 +1641,16 @@ class _SessionRow extends StatelessWidget {
           ),
         ),
         // Design ref: separator + time are "hidden sm:inline" — desktop only
-        if (isTablet && event.startTime != null && event.startTime!.isNotEmpty) ...[
+        if (isTablet &&
+            event.startTime != null &&
+            event.startTime!.isNotEmpty) ...[
           Text(
             ' • ',
-            style: GoogleFonts.inter(color: const Color(0xFFD1D5DB), fontSize: 12, height: 18 / 12),
+            style: GoogleFonts.inter(
+              color: const Color(0xFFD1D5DB),
+              fontSize: 12,
+              height: 18 / 12,
+            ),
           ),
           Text(
             event.endDateTime != null
@@ -1581,141 +1665,169 @@ class _SessionRow extends StatelessWidget {
         ],
       ],
     );
-    final hostedBy = event.instructor != null && event.instructor!.isNotEmpty
-        ? Text.rich(
-            TextSpan(children: [
+    final hostedBy =
+        event.instructor != null && event.instructor!.isNotEmpty
+            ? Text.rich(
               TextSpan(
-                text: 'Hosted by ',
-                style: GoogleFonts.inter(
-                  // text-gray-400 = #9CA3AF
-                  color: const Color(0xFF9CA3AF),
-                  fontSize: 12,
-                  height: 18 / 12,
-                ),
+                children: [
+                  TextSpan(
+                    text: 'Hosted by ',
+                    style: GoogleFonts.inter(
+                      // text-gray-400 = #9CA3AF
+                      color: const Color(0xFF9CA3AF),
+                      fontSize: 12,
+                      height: 18 / 12,
+                    ),
+                  ),
+                  TextSpan(
+                    text: event.instructor,
+                    style: GoogleFonts.inter(
+                      // text-gray-600 = #4B5563
+                      color: const Color(0xFF4B5563),
+                      fontSize: 12,
+                      height: 18 / 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-              TextSpan(
-                text: event.instructor,
-                style: GoogleFonts.inter(
-                  // text-gray-600 = #4B5563
-                  color: const Color(0xFF4B5563),
-                  fontSize: 12,
-                  height: 18 / 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ]),
-          )
-        : null;
+            )
+            : null;
 
     // Design ref: rounded-lg border border-gray-100 bg-gray-50 p-3
     // hover:border-[#693D94]/30 hover:bg-[#693D94]/5
     return HoverBuilder(
-      builder: (context, hovering) => Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: hovering
-            ? _purple.withValues(alpha: 0.05)
-            : const Color(0xFFF9FAFB),
-        // rounded-lg = 8px on mobile
-        borderRadius: BorderRadius.circular(isTablet ? 10 : 8),
-        border: Border.all(
-          color: hovering
-              ? _purple.withValues(alpha: 0.3)
-              : const Color(0xFFF3F4F6),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: isTablet
-            ? [
-                // Title + Join button row
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: title),
-                    const SizedBox(width: 8),
-                    // Design ref: px-2.5 py-1 rounded-xl, no dot/icon at all -
-                    // just the "Join" label (44.75x26 measured, matching plain
-                    // text at this padding - a pulse dot was inflating the width
-                    // beyond spec and isn't in the reference).
-                    GestureDetector(
-                      onTap: () => _openSession(context),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _purple,
-                          borderRadius: BorderRadius.circular(14),
+      builder:
+          (context, hovering) => Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color:
+                  hovering
+                      ? _purple.withValues(alpha: 0.05)
+                      : const Color(0xFFF9FAFB),
+              // rounded-lg = 8px on mobile
+              borderRadius: BorderRadius.circular(isTablet ? 10 : 8),
+              border: Border.all(
+                color:
+                    hovering
+                        ? _purple.withValues(alpha: 0.3)
+                        : const Color(0xFFF3F4F6),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children:
+                  isTablet
+                      ? [
+                        // Title + Join button row
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: title),
+                            const SizedBox(width: 8),
+                            // Design ref: px-2.5 py-1 rounded-xl, no dot/icon at all -
+                            // just the "Join" label (44.75x26 measured, matching plain
+                            // text at this padding - a pulse dot was inflating the width
+                            // beyond spec and isn't in the reference).
+                            MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                onTap: () => _openSession(context),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _purple,
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Text(
+                                    'Join',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      height: 18 / 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: Text(
-                          'Join',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 12,
-                            height: 18 / 12,
-                            fontWeight: FontWeight.w600,
+                        const SizedBox(height: 6),
+                        dateRow,
+                        if (hostedBy != null) ...[
+                          const SizedBox(height: 2),
+                          hostedBy,
+                        ],
+                      ]
+                      : [
+                        // Mobile: title on first line, badge on separate row below
+                        // (sm:hidden span in reference — badge below title, not inline)
+                        titleText,
+                        if (showBadge) ...[
+                          const SizedBox(height: 2), // mt-0.5 = 2px
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0E8F7),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Virtual Class ${vcNum.toString()}',
+                              style: GoogleFonts.inter(
+                                color: _purple,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 6),
+                        dateRow,
+                        if (hostedBy != null) ...[
+                          const SizedBox(height: 2),
+                          hostedBy,
+                        ],
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap: () => _openSession(context),
+                              child: Container(
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _purple,
+                                  // rounded-xl = 12px on mobile
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  'Join',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    height: 18 / 12,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                dateRow,
-                if (hostedBy != null) ...[const SizedBox(height: 2), hostedBy],
-              ]
-            : [
-                // Mobile: title on first line, badge on separate row below
-                // (sm:hidden span in reference — badge below title, not inline)
-                titleText,
-                if (showBadge) ...[
-                  const SizedBox(height: 2), // mt-0.5 = 2px
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0E8F7),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Virtual Class ${vcNum.toString()}',
-                      style: GoogleFonts.inter(
-                        color: _purple,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 6),
-                dateRow,
-                if (hostedBy != null) ...[const SizedBox(height: 2), hostedBy],
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: GestureDetector(
-                    onTap: () => _openSession(context),
-                    child: Container(
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _purple,
-                        // rounded-xl = 12px on mobile
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'Join',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          height: 18 / 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-      ),
-      ),
+                      ],
+            ),
+          ),
     );
   }
 }
@@ -1755,17 +1867,23 @@ class _CourseProgressCard extends StatelessWidget {
                 ),
               ),
               if (shown.isNotEmpty)
-                GestureDetector(
-                  onTap: () => Modular.to.pushNamed(
-                    CoursesModule.construct(CoursesModule.allCourseProgress),
-                  ),
-                  child: Text(
-                    'View All',
-                    style: GoogleFonts.inter(
-                      color: _purple,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      height: 16 / 12,
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap:
+                        () => Modular.to.pushNamed(
+                          CoursesModule.construct(
+                            CoursesModule.allCourseProgress,
+                          ),
+                        ),
+                    child: Text(
+                      'View All',
+                      style: GoogleFonts.inter(
+                        color: _purple,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        height: 16 / 12,
+                      ),
                     ),
                   ),
                 ),
@@ -1778,7 +1896,9 @@ class _CourseProgressCard extends StatelessWidget {
               child: Text(
                 'No enrolled courses yet.',
                 style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280), fontSize: 14),
+                  color: const Color(0xFF6B7280),
+                  fontSize: 14,
+                ),
               ),
             )
           else
@@ -1883,8 +2003,11 @@ class _OverallProgressCard extends StatelessWidget {
           Row(
             children: [
               // Design ref: <Star size={14} className="text-white opacity-90" />
-              Icon(LucideIcons.star,
-                  color: Colors.white.withValues(alpha: 0.9), size: 14),
+              Icon(
+                LucideIcons.star,
+                color: Colors.white.withValues(alpha: 0.9),
+                size: 14,
+              ),
               const SizedBox(width: 8),
               Text(
                 'OVERALL LEARNING PROGRESS',
@@ -1906,8 +2029,8 @@ class _OverallProgressCard extends StatelessWidget {
             style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: isTablet ? 48 : 30,
-            // text-3xl font-bold = 30px/700 on mobile
-            fontWeight: isTablet ? FontWeight.w600 : FontWeight.w700,
+              // text-3xl font-bold = 30px/700 on mobile
+              fontWeight: isTablet ? FontWeight.w600 : FontWeight.w700,
               height: isTablet ? 1 : 36 / 30,
             ),
           ),
@@ -1919,8 +2042,9 @@ class _OverallProgressCard extends StatelessWidget {
               value: overallProgress / 100,
               minHeight: 6,
               backgroundColor: Colors.white.withValues(alpha: 0.15),
-              valueColor:
-                  AlwaysStoppedAnimation<Color>(Colors.white.withValues(alpha: 0.5)),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Colors.white.withValues(alpha: 0.5),
+              ),
             ),
           ),
         ],
@@ -1969,7 +2093,9 @@ class _DiscussionBoardsCard extends StatelessWidget {
                 // bg-[#f0e8f7] px-2.5 py-1 rounded-full
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF0E8F7),
                     borderRadius: BorderRadius.circular(20),
@@ -1991,7 +2117,9 @@ class _DiscussionBoardsCard extends StatelessWidget {
             Text(
               'No discussion threads yet.',
               style: GoogleFonts.inter(
-                  color: const Color(0xFF6B7280), fontSize: 14),
+                color: const Color(0xFF6B7280),
+                fontSize: 14,
+              ),
             )
           else
             // Design ref: space-y-3 (12px gap, no dividers)
@@ -2014,100 +2142,108 @@ class _DiscussionBoardRow extends ConsumerWidget {
     // Design ref: rounded-lg border border-gray-100 bg-gray-50 p-3
     // hover:border-[#693D94]/30 hover:bg-[#f0e8f7]/30
     return HoverBuilder(
-      builder: (context, hovering) => Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: hovering
-            ? const Color(0xFFF0E8F7).withValues(alpha: 0.3)
-            // bg-gray-50 = #F9FAFB
-            : const Color(0xFFF9FAFB),
-        // rounded-lg = 8px
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: hovering
-              ? _purple.withValues(alpha: 0.3)
-              : const Color(0xFFF3F4F6),
-        ),
-      ),
-      child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  // text-gray-800 = #1F2937
-                  color: const Color(0xFF1F2937),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  height: 19.25 / 14,
-                ),
+      builder:
+          (context, hovering) => Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color:
+                  hovering
+                      ? const Color(0xFFF0E8F7).withValues(alpha: 0.3)
+                      // bg-gray-50 = #F9FAFB
+                      : const Color(0xFFF9FAFB),
+              // rounded-lg = 8px
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color:
+                    hovering
+                        ? _purple.withValues(alpha: 0.3)
+                        : const Color(0xFFF3F4F6),
               ),
-              const SizedBox(height: 2),
-              Text.rich(
-                TextSpan(
-                  children: [
-                    if (item.lastRepliedBy.isNotEmpty) ...[
-                      TextSpan(
-                        text: item.lastRepliedBy,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.inter(
-                            // text-gray-400 = #9CA3AF
-                            color: const Color(0xFF9CA3AF),
-                            fontSize: 12,
-                            height: 16 / 12),
+                          // text-gray-800 = #1F2937
+                          color: const Color(0xFF1F2937),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          height: 19.25 / 14,
+                        ),
                       ),
-                      const WidgetSpan(
-                        alignment: PlaceholderAlignment.middle,
-                        child: _DotSeparator(),
+                      const SizedBox(height: 2),
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            if (item.lastRepliedBy.isNotEmpty) ...[
+                              TextSpan(
+                                text: item.lastRepliedBy,
+                                style: GoogleFonts.inter(
+                                  // text-gray-400 = #9CA3AF
+                                  color: const Color(0xFF9CA3AF),
+                                  fontSize: 12,
+                                  height: 16 / 12,
+                                ),
+                              ),
+                              const WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: _DotSeparator(),
+                              ),
+                            ],
+                            if (item.lastReply.isNotEmpty) ...[
+                              TextSpan(
+                                text: item.lastReply,
+                                style: GoogleFonts.inter(
+                                  color: const Color(0xFF9CA3AF),
+                                  fontSize: 12,
+                                  height: 16 / 12,
+                                ),
+                              ),
+                              const WidgetSpan(
+                                alignment: PlaceholderAlignment.middle,
+                                child: _DotSeparator(),
+                              ),
+                            ],
+                            TextSpan(
+                              text:
+                                  '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
+                              style: GoogleFonts.inter(
+                                color: const Color(0xFF9CA3AF),
+                                fontSize: 12,
+                                height: 16 / 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
-                    if (item.lastReply.isNotEmpty) ...[
-                      TextSpan(
-                        text: item.lastReply,
-                        style: GoogleFonts.inter(
-                            color: const Color(0xFF9CA3AF),
-                            fontSize: 12,
-                            height: 16 / 12),
-                      ),
-                      const WidgetSpan(
-                        alignment: PlaceholderAlignment.middle,
-                        child: _DotSeparator(),
-                      ),
-                    ],
-                    TextSpan(
-                      text:
-                          '${item.replyCount} ${item.replyCount == 1 ? 'reply' : 'replies'}',
-                      style: GoogleFonts.inter(
-                          color: const Color(0xFF9CA3AF),
-                          fontSize: 12,
-                          height: 16 / 12),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                _ViewButton(
+                  onPressed: () {
+                    final origin =
+                        Uri.parse(ref.read(ServerProvider.serverUrl)).origin;
+                    InAppWebViewPage.showWithAuth(
+                      context,
+                      ref,
+                      url:
+                          '$origin/backend/web/forum/index?id=${item.learningEventId}',
+                      title: item.title,
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        _ViewButton(
-          onPressed: () {
-            final origin = Uri.parse(ref.read(ServerProvider.serverUrl)).origin;
-            InAppWebViewPage.showWithAuth(
-              context,
-              ref,
-              url: '$origin/backend/web/forum/index?id=${item.learningEventId}',
-              title: item.title,
-            );
-          },
-        ),
-      ],
-      ),
-      ),
     );
   }
 }
@@ -2152,26 +2288,32 @@ class _RewardsPointsCard extends ConsumerWidget {
                   ),
                 ),
               ),
-              GestureDetector(
-                onTap: () => Modular.to.pushNamed(
-                  CoursesModule.construct(CoursesModule.redeemPoints),
-                ),
-                // Design ref: text-xs text-[#693D94] font-semibold
-                // bg-[#f0e8f7] px-2.5 py-1 rounded-full
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0E8F7),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    'This Month',
-                    style: GoogleFonts.inter(
-                      color: _purple,
-                      fontSize: 12,
-                      height: 16 / 12,
-                      fontWeight: FontWeight.w600,
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap:
+                      () => Modular.to.pushNamed(
+                        CoursesModule.construct(CoursesModule.redeemPoints),
+                      ),
+                  // Design ref: text-xs text-[#693D94] font-semibold
+                  // bg-[#f0e8f7] px-2.5 py-1 rounded-full
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0E8F7),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'This Month',
+                      style: GoogleFonts.inter(
+                        color: _purple,
+                        fontSize: 12,
+                        height: 16 / 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -2191,7 +2333,10 @@ class _RewardsPointsCard extends ConsumerWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
+                    colors: [
+                      FigmaTokens.primaryPurple,
+                      FigmaTokens.gradientEnd,
+                    ],
                   ),
                   shape: BoxShape.circle,
                 ),
@@ -2254,7 +2399,9 @@ class _RewardsPointsCard extends ConsumerWidget {
                         child: Text(
                           'No reward points earned this month yet.',
                           style: GoogleFonts.inter(
-                              color: const Color(0xFF6B7280), fontSize: 12),
+                            color: const Color(0xFF6B7280),
+                            fontSize: 12,
+                          ),
                         ),
                       )
                     else
@@ -2264,7 +2411,8 @@ class _RewardsPointsCard extends ConsumerWidget {
                         padding: const EdgeInsets.only(top: 8),
                         decoration: const BoxDecoration(
                           border: Border(
-                              top: BorderSide(color: Color(0xFFF3F4F6))),
+                            top: BorderSide(color: Color(0xFFF3F4F6)),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2275,7 +2423,9 @@ class _RewardsPointsCard extends ConsumerWidget {
                                 // Design ref: bg-gray-50 rounded-lg px-2.5 py-1.5
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 6),
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
                                   decoration: BoxDecoration(
                                     // bg-gray-50 = #F9FAFB
                                     color: const Color(0xFFF9FAFB),
@@ -2358,14 +2508,15 @@ class _RequiredForYouCard extends StatelessWidget {
               child: Text(
                 'No required courses.',
                 style: GoogleFonts.inter(
-                    color: const Color(0xFF6B7280), fontSize: 14),
+                  color: const Color(0xFF6B7280),
+                  fontSize: 14,
+                ),
               ),
             )
           else ...[
             // Numbered list with dividers
             for (var i = 0; i < shown.length; i++) ...[
-              if (i > 0)
-                const Divider(height: 1, color: Color(0xFFF3F4F6)),
+              if (i > 0) const Divider(height: 1, color: Color(0xFFF3F4F6)),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: _RequiredRow(index: i + 1, item: shown[i]),
@@ -2376,13 +2527,16 @@ class _RequiredForYouCard extends StatelessWidget {
             Center(
               child: _BrandButton(
                 label: 'View All Required Courses',
-                onPressed: () => Modular.to.pushNamed(
-                  CoursesModule.construct(CoursesModule.requiredCourses),
-                ),
+                onPressed:
+                    () => Modular.to.pushNamed(
+                      CoursesModule.construct(CoursesModule.requiredCourses),
+                    ),
                 // rounded-[20px] = 20px on both mobile and tablet
                 borderRadius: 20,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 10),
+                  horizontal: 24,
+                  vertical: 10,
+                ),
                 textStyle: GoogleFonts.inter(
                   color: Colors.white,
                   fontSize: 16,
@@ -2453,11 +2607,13 @@ class _RequiredRow extends ConsumerWidget {
           // Preserves this button's own previously-established
           // line-height (unrelated to Discussion Board's 1.3333).
           height: 19.5 / 13,
-          onPressed: viewDisabled
-              ? null
-              : () => Modular.to.pushNamed(
+          onPressed:
+              viewDisabled
+                  ? null
+                  : () => Modular.to.pushNamed(
                     CoursesModule.construct(
-                        '${CoursesModule.detail}/$courseId'),
+                      '${CoursesModule.detail}/$courseId',
+                    ),
                   ),
         ),
       ],
@@ -2490,9 +2646,7 @@ class _ViewButton extends StatelessWidget {
         final filled = hovering && onPressed != null;
         // Design ref: rounded-xl = var(--radius) + 4px = 10px + 4px = 14px
         // (confirmed via live DevTools inspection; was previously 12).
-        final borderRadius = BorderRadius.all(
-          Radius.circular(14),
-        );
+        final borderRadius = BorderRadius.all(Radius.circular(14));
         return Material(
           color: filled ? _purple : Colors.transparent,
           borderRadius: borderRadius,
@@ -2602,9 +2756,10 @@ class _BrandButtonState extends State<_BrandButton> {
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: Material(
-        color: !enabled
-            ? baseColor.withOpacity(0.5)
-            : _hovering
+        color:
+            !enabled
+                ? baseColor.withOpacity(0.5)
+                : _hovering
                 ? hoverColor
                 : baseColor,
         borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -2639,7 +2794,17 @@ class _ImgFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset('assets/images/login-bg.png', fit: BoxFit.cover);
+    // CSS ref, confirmed against `origin/staging`: the real fallback for a
+    // course with no logo is `/dist/images/course-bg.svg`, not
+    // `assets/images/login-bg.png` (a LOGIN page background), which this
+    // was using apparently by copy/paste.
+    return Image.network(
+      devProxiedImageUrl(
+        'https://staging.trainingpipeline.com/backend/web/dist/images/course-bg.svg',
+      ),
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFFF1F5F9)),
+    );
   }
 }
 
@@ -2675,10 +2840,7 @@ class _AnimatedCounterState extends State<_AnimatedCounter>
   void initState() {
     super.initState();
     _controller = AnimationController(vsync: this, duration: widget.duration);
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
     _controller.forward();
   }
 
@@ -2708,10 +2870,7 @@ class _AnimatedCounterState extends State<_AnimatedCounter>
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, _) {
-        return Text(
-          '$_displayValue${widget.suffix}',
-          style: widget.style,
-        );
+        return Text('$_displayValue${widget.suffix}', style: widget.style);
       },
     );
   }
@@ -2752,7 +2911,13 @@ class _ErrorView extends StatelessWidget {
 
 // Inline variant of the confirm dialog that doesn't use Navigator.pop — used when showDialog is not appearing on the device.
 class _InlineConfirmDialog extends ConsumerStatefulWidget {
-  const _InlineConfirmDialog({super.key, required this.data, required this.title, required this.type, required this.onConfirmed});
+  const _InlineConfirmDialog({
+    super.key,
+    required this.data,
+    required this.title,
+    required this.type,
+    required this.onConfirmed,
+  });
   final MentorModalData data;
   final String title;
 
@@ -2761,7 +2926,8 @@ class _InlineConfirmDialog extends ConsumerStatefulWidget {
   final VoidCallback onConfirmed;
 
   @override
-  ConsumerState<_InlineConfirmDialog> createState() => _InlineConfirmDialogState();
+  ConsumerState<_InlineConfirmDialog> createState() =>
+      _InlineConfirmDialogState();
 }
 
 class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
@@ -2816,7 +2982,9 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
     if (mounted) setState(() => _submitting = true);
 
     try {
-      await ref.read(MentorRepository.provider).confirm(
+      await ref
+          .read(MentorRepository.provider)
+          .confirm(
             type: widget.type,
             firstname: _firstController.text.trim(),
             lastname: _lastController.text.trim(),
@@ -2831,7 +2999,10 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
     }
 
     if (mounted && context.mounted) {
-      Toast.success(context, '${widget.title.replaceFirst('Confirm Your ', '')} details confirmed.');
+      Toast.success(
+        context,
+        '${widget.title.replaceFirst('Confirm Your ', '')} details confirmed.',
+      );
     }
     // NOTE: intentionally NOT gated on `mounted` past this point -
     // onConfirmed() only invokes the callback closure supplied by the
@@ -2863,8 +3034,18 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
             borderRadius: BorderRadius.all(Radius.circular(16)),
             // shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)
             boxShadow: [
-              BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 20), blurRadius: 25, spreadRadius: -5),
-              BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.10), offset: Offset(0, 8), blurRadius: 10, spreadRadius: -6),
+              BoxShadow(
+                color: Color.fromRGBO(0, 0, 0, 0.10),
+                offset: Offset(0, 20),
+                blurRadius: 25,
+                spreadRadius: -5,
+              ),
+              BoxShadow(
+                color: Color.fromRGBO(0, 0, 0, 0.10),
+                offset: Offset(0, 8),
+                blurRadius: 10,
+                spreadRadius: -6,
+              ),
             ],
             // No border in CSS ref (border-width: 0px)
           ),
@@ -2873,213 +3054,295 @@ class _InlineConfirmDialogState extends ConsumerState<_InlineConfirmDialog> {
             padding: const EdgeInsets.all(24),
             child: SingleChildScrollView(
               child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Text(
-                    widget.title,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Text(
+                      widget.title,
+                      style: GoogleFonts.inter(
+                        fontSize: 24,
+                        height: 32 / 24,
+                        fontWeight: FontWeight.w300,
+                        letterSpacing: 0.6,
+                        color: const Color(0xFF364153),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  Text(
+                    'First Name',
                     style: GoogleFonts.inter(
-                      fontSize: 24,
-                      height: 32 / 24,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 0.6,
+                      fontSize: 16,
+                      height: 24 / 16,
+                      fontWeight: FontWeight.w500,
                       color: const Color(0xFF364153),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-
-                Text(
-                  'First Name',
-                  style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: 50,
-                  child: TextField(
-                    controller: _firstController,
-                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF374151)),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    height: 50,
+                    child: TextField(
+                      controller: _firstController,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        height: 24 / 16,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF374151),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFF693D94), width: 1),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: fieldGap),
-
-                Text(
-                  'Last Name',
-                  style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: 50,
-                  child: TextField(
-                    controller: _lastController,
-                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF374151)),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFF693D94), width: 1),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: fieldGap),
-
-                Text(
-                  'Email',
-                  style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w500, color: const Color(0xFF364153)),
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  height: 50,
-                  child: TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    style: GoogleFonts.inter(fontSize: 16, height: 24 / 16, fontWeight: FontWeight.w400, color: const Color(0xFF374151)),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFF693D94), width: 1),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: fieldGap),
-                Padding(
-                  // Design ref: mt-4 px-4 py-3 = margin-top 16, padding 16/12/16/12
-                  // Note: 12px, height 20/12, "Note:" bold #4A5565, body italic #6A7282
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                  child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: 'Note: ',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          height: 20 / 12,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF4A5565),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E7EB),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF693D94),
+                            width: 1,
+                          ),
                         ),
                       ),
-                      TextSpan(
-                        text: widget.title.toLowerCase().contains('supervisor')
-                            ? "We ask that you confirm your supervisor's information every three months. If the above information is correct, click Confirm. You can edit your supervisor's information at anytime through your profile."
-                            : "We ask that you confirm your mentor's information every three months. If the above information is correct, click Confirm. You can edit your mentor's information at anytime through your profile.",
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          height: 20 / 12,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF6A7282),
+                    ),
+                  ),
+                  SizedBox(height: fieldGap),
+
+                  Text(
+                    'Last Name',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      height: 24 / 16,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF364153),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    height: 50,
+                    child: TextField(
+                      controller: _lastController,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        height: 24 / 16,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF374151),
+                      ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E7EB),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF693D94),
+                            width: 1,
+                          ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                  ),
-                ),
-                const SizedBox(height: 16),
+                  SizedBox(height: fieldGap),
 
-                // Skip + Confirm buttons, centered as a pair.
-                // Design ref: flex items-center justify-center gap-4 mt-4
-                // rounded-[20px] = 20 on both mobile+desktop
-                Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        height: 48,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            onTap: null, // Skip is intentionally disabled.
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
-                              ),
-                              alignment: Alignment.center,
-                              // px-8 py-3 = 32/12
-                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                              child: Text(
-                                'Skip',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  height: 24 / 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF6B7280),
+                  Text(
+                    'Email',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      height: 24 / 16,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF364153),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    height: 50,
+                    child: TextField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        height: 24 / 16,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF374151),
+                      ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE5E7EB),
+                            width: 1,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF693D94),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: fieldGap),
+                  Padding(
+                    // Design ref: mt-4 px-4 py-3 = margin-top 16, padding 16/12/16/12
+                    // Note: 12px, height 20/12, "Note:" bold #4A5565, body italic #6A7282
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Note: ',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              height: 20 / 12,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF4A5565),
+                            ),
+                          ),
+                          TextSpan(
+                            text:
+                                widget.title.toLowerCase().contains(
+                                      'supervisor',
+                                    )
+                                    ? "We ask that you confirm your supervisor's information every three months. If the above information is correct, click Confirm. You can edit your supervisor's information at anytime through your profile."
+                                    : "We ask that you confirm your mentor's information every three months. If the above information is correct, click Confirm. You can edit your mentor's information at anytime through your profile.",
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              height: 20 / 12,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xFF6A7282),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Skip + Confirm buttons, centered as a pair.
+                  // Design ref: flex items-center justify-center gap-4 mt-4
+                  // rounded-[20px] = 20 on both mobile+desktop
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          height: 48,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: null, // Skip is intentionally disabled.
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: const Color(0xFFD1D5DB),
+                                    width: 1,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                // px-8 py-3 = 32/12
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                  vertical: 12,
+                                ),
+                                child: Text(
+                                  'Skip',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    height: 24 / 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF6B7280),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      SizedBox(
-                        height: 48,
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(20),
-                            onTap: (!_valid || _submitting) ? null : _confirm,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: _valid ? const Color(0xFF693D94) : const Color(0xFFE5E7EB),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(color: const Color(0xFF000000).withOpacity(0.08), offset: const Offset(0, 8), blurRadius: 10, spreadRadius: -6),
-                                ],
-                              ),
-                              alignment: Alignment.center,
-                              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
-                              child: Text(
-                                _submitting ? 'Confirming...' : 'Confirm',
-                                style: GoogleFonts.inter(
-                                  fontSize: 16,
-                                  height: 24 / 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: _valid ? Colors.white : const Color(0xFF6B7280),
+                        const SizedBox(width: 16),
+                        SizedBox(
+                          height: 48,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: (!_valid || _submitting) ? null : _confirm,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color:
+                                      _valid
+                                          ? const Color(0xFF693D94)
+                                          : const Color(0xFFE5E7EB),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF000000,
+                                      ).withOpacity(0.08),
+                                      offset: const Offset(0, 8),
+                                      blurRadius: 10,
+                                      spreadRadius: -6,
+                                    ),
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 48,
+                                  vertical: 12,
+                                ),
+                                child: Text(
+                                  _submitting ? 'Confirming...' : 'Confirm',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    height: 24 / 16,
+                                    fontWeight: FontWeight.w500,
+                                    color:
+                                        _valid
+                                            ? Colors.white
+                                            : const Color(0xFF6B7280),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
               ),
             ),
           ),
         ),
+      ),
     );
   }
 }

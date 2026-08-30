@@ -141,7 +141,12 @@ class _OfflineCourseAction extends StatelessWidget {
                   child: Icon(
                     icon,
                     size: iconSize,
-                    weight: 1000,
+                    // `weight` is a variable Material Symbols font
+                    // property; passing it with the classic (non-Symbols)
+                    // Icons constants used here was confirmed (in
+                    // courses_page.dart's identical case) to produce a
+                    // wrong/degraded glyph rather than the real icon.
+                    // Dropped.
                     color: filled ? Colors.white : color,
                   ),
                 ),

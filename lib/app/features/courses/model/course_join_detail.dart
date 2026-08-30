@@ -16,6 +16,9 @@ class CourseJoinDetail {
     required this.primaryAction,
     required this.isEnrolled,
     required this.allowRating,
+    required this.displayRating,
+    required this.averageRating,
+    required this.ratingCount,
     required this.skills,
     required this.structures,
   });
@@ -39,6 +42,15 @@ class CourseJoinDetail {
   final String primaryAction;
   final bool isEnrolled;
   final bool allowRating;
+  // CSS/markup ref, confirmed against `origin/staging`'s
+  // _rating_summary.php: `.average-rating-section` shows the star rating +
+  // numeric average + review count whenever `display_rating` is true.
+  // `actionJoinCourseDetail`'s payload dumps the whole Course model
+  // (`$course->toArray()`), which already carries these three DB columns
+  // directly — previously left unparsed.
+  final bool displayRating;
+  final double averageRating;
+  final int ratingCount;
   final List<String> skills;
   final List<CourseStructureItem> structures;
 
@@ -57,7 +69,8 @@ class CourseJoinDetail {
       if (item.typeCode != '2' && item.typeCode != '3') continue;
       // Prefer the earliest still-open/upcoming session; fall back to
       // the latest past session so the server always gets a selection.
-      final event = _earliestUpcomingEventOf(item.learningEvents) ??
+      final event =
+          _earliestUpcomingEventOf(item.learningEvents) ??
           _latestPastEventOf(item.learningEvents);
       final eventId = event?.learningEventClassId;
       if (eventId != null) selections[item.classId!] = eventId;
@@ -71,24 +84,30 @@ class CourseJoinDetail {
   /// with upcoming sessions, which caused the server to reject enrollment
   /// with "some classes require a session selection" when all sessions had
   /// already ended.
-  List<CourseStructureItem> get classesRequiringSessionSelection => structures
-      .where((item) =>
-          item.classId != null &&
-          (item.typeCode == '2' || item.typeCode == '3') &&
-          item.learningEvents.isNotEmpty)
-      .toList();
+  List<CourseStructureItem> get classesRequiringSessionSelection =>
+      structures
+          .where(
+            (item) =>
+                item.classId != null &&
+                (item.typeCode == '2' || item.typeCode == '3') &&
+                item.learningEvents.isNotEmpty,
+          )
+          .toList();
 
   /// Subset of [classesRequiringSessionSelection] that have at least one
   /// upcoming (not-yet-ended) session — only these are shown in the
   /// session-picker dialog. Classes whose sessions have all ended skip the
   /// dialog; their latest past session is auto-selected by
   /// [classLearningEventSelections] instead.
-  List<CourseStructureItem> get classesWithUpcomingSessions => structures
-      .where((item) =>
-          item.classId != null &&
-          (item.typeCode == '2' || item.typeCode == '3') &&
-          item.nextSession.isNotEmpty)
-      .toList();
+  List<CourseStructureItem> get classesWithUpcomingSessions =>
+      structures
+          .where(
+            (item) =>
+                item.classId != null &&
+                (item.typeCode == '2' || item.typeCode == '3') &&
+                item.nextSession.isNotEmpty,
+          )
+          .toList();
 
   factory CourseJoinDetail.fromJson(Map<String, dynamic> json) {
     final root = _payloadMap(json);
@@ -108,11 +127,18 @@ class CourseJoinDetail {
     final courseRegistered = _isRegistered(course);
     final actionCancel = _actionMeansCancel(actionLabel);
     final isEnrolled = rootRegistered || courseRegistered || actionCancel;
-    final structures = classes
-        .whereType<Map>()
-        .map((value) => CourseStructureItem.fromJson(Map<String, dynamic>.from(value)))
-        .toList();
-    final nextVirtualClassEvent = _earliestUpcomingVirtualClassEvent(structures);
+    final structures =
+        classes
+            .whereType<Map>()
+            .map(
+              (value) => CourseStructureItem.fromJson(
+                Map<String, dynamic>.from(value),
+              ),
+            )
+            .toList();
+    final nextVirtualClassEvent = _earliestUpcomingVirtualClassEvent(
+      structures,
+    );
     return CourseJoinDetail(
       id: _asInt(
         _firstValue(root, course, const ['course_id', 'courseId', 'id']),
@@ -197,6 +223,15 @@ class CourseJoinDetail {
       allowRating: _asBool(
         _firstValue(root, course, const ['allow_rating', 'allowRating']),
       ),
+      displayRating: _asBool(
+        _firstValue(root, course, const ['display_rating', 'displayRating']),
+      ),
+      averageRating: _asDouble(
+        _firstValue(root, course, const ['average_rating', 'averageRating']),
+      ),
+      ratingCount: _asInt(
+        _firstValue(root, course, const ['rating_count', 'ratingCount']),
+      ),
       skills: _skillNames(root, course),
       structures: structures,
     );
@@ -223,6 +258,10 @@ class CourseStructureItem {
     this.downloadUrl,
     this.videoLinkUrl,
     this.certificateHtml,
+    this.articleLinkUrl,
+    this.webpageLinkText,
+    this.peerCoachingLinkUrl,
+    this.webAppUrl,
   });
 
   final String title;
@@ -253,6 +292,26 @@ class CourseStructureItem {
   /// this at all; the Download button saves this string directly instead of
   /// fetching from a URL.
   final String? certificateHtml;
+
+  /// Read Article (typeCode '5') / Agreement (typeCode '19') only - the
+  /// external "Article link" from content.read_article_link, separate from
+  /// [downloadUrl] (the uploaded file from content.article_file). Mirrors
+  /// [videoLinkUrl]'s link-vs-file split for Watch Video.
+  final String? articleLinkUrl;
+
+  /// Read Webpage (typeCode '6') / LinkedIn Certification (typeCode '13')
+  /// only - the custom button text (content.read_webpage_text) the real
+  /// site shows instead of the raw URL for [contentUrl]'s link.
+  final String? webpageLinkText;
+
+  /// Peer Coaching (typeCode '15') only - the external "Peer Coaching Link"
+  /// from content.peer_coaching_link, separate from [downloadUrl] (the
+  /// uploaded file from content.peer_coaching_file).
+  final String? peerCoachingLinkUrl;
+
+  /// Web App (typeCode '23') only - content.one_pager_pro, the "Web
+  /// Application" link.
+  final String? webAppUrl;
 
   factory CourseStructureItem.fromJson(Map<String, dynamic> json) {
     final classMap =
@@ -291,57 +350,77 @@ class CourseStructureItem {
           ]),
         ) ??
         _typeActionLabel(typeCode);
-    final enrollmentMap = json['enrollment'] is Map
-        ? Map<String, dynamic>.from(json['enrollment'] as Map)
-        : null;
-    final enrollmentStatus = enrollmentMap != null ? _asInt(enrollmentMap['status']) : 0;
+    final enrollmentMap =
+        json['enrollment'] is Map
+            ? Map<String, dynamic>.from(json['enrollment'] as Map)
+            : null;
+    final enrollmentStatus =
+        enrollmentMap != null ? _asInt(enrollmentMap['status']) : 0;
     final isEnrolledInClass = enrollmentStatus > 0;
-    final classStatus = enrollmentStatus == 3
-        ? 'Completed'
-        : enrollmentStatus == 1
-        ? 'Registered'
-        : _clean(_firstValue(json, classMap, const [
-            'status', 'status_label', 'statusLabel', 'completion_status', 'completionStatus',
-          ])) ?? '';
-    final effectiveActionLabel = isEnrolledInClass && typeCode == '1'
-        ? 'Launch'
-        : isEnrolledInClass && typeCode == '20'
-        ? 'Launch Assessment'
-        : isEnrolledInClass && typeCode == '3'
-        ? 'Attend Class'
-        : actionLabel;
+    final classStatus =
+        enrollmentStatus == 3
+            ? 'Completed'
+            : enrollmentStatus == 1
+            ? 'Registered'
+            : _clean(
+                  _firstValue(json, classMap, const [
+                    'status',
+                    'status_label',
+                    'statusLabel',
+                    'completion_status',
+                    'completionStatus',
+                  ]),
+                ) ??
+                '';
+    final effectiveActionLabel =
+        isEnrolledInClass && typeCode == '1'
+            ? 'Launch'
+            : isEnrolledInClass && typeCode == '20'
+            ? 'Launch Assessment'
+            : isEnrolledInClass && typeCode == '3'
+            ? 'Attend Class'
+            : actionLabel;
     // Parse recording URLs from all learning events (e.g. Virtual Class recordings)
-    final rawEventsAll = (json['learning_events'] ?? json['learningEvents'] ?? const []) as List? ?? const [];
-    final recordingUrls = rawEventsAll
-        .whereType<Map>()
-        .expand<String>((event) {
+    final rawEventsAll =
+        (json['learning_events'] ?? json['learningEvents'] ?? const [])
+            as List? ??
+        const [];
+    final recordingUrls =
+        rawEventsAll.whereType<Map>().expand<String>((event) {
           final recs = (event['recordings'] as List? ?? []);
-          return recs.whereType<Map>()
+          return recs
+              .whereType<Map>()
               .map((r) => _url(r['recording_local_url']?.toString()))
               .whereType<String>();
-        })
-        .toList();
+        }).toList();
 
     // Parse content URLs from the `content` field
     final contentObj = json['content'];
-    final contentMap = contentObj is Map
-        ? Map<String, dynamic>.from(contentObj)
-        : <String, dynamic>{};
+    final contentMap =
+        contentObj is Map
+            ? Map<String, dynamic>.from(contentObj)
+            : <String, dynamic>{};
     String? contentUrl;
     String? downloadUrl;
     String? videoLinkUrl;
     String? certificateHtml;
+    String? articleLinkUrl;
+    String? webpageLinkText;
+    String? peerCoachingLinkUrl;
+    String? webAppUrl;
     switch (typeCode) {
       case '4': // Watch Video — videoUploadUrl lives in classMap, not contentMap
-        contentUrl = _url(classMap['video_upload_url'])
-            ?? _url(contentMap['video_upload_url'])
-            ?? _url(json['video_upload_url']);
+        contentUrl =
+            _url(classMap['video_upload_url']) ??
+            _url(contentMap['video_upload_url']) ??
+            _url(json['video_upload_url']);
         downloadUrl = contentUrl;
         // The external link (e.g. YouTube) a class can carry alongside - or
         // instead of - an actually-uploaded file.
-        videoLinkUrl = _url(contentMap['watch_video_link'])
-            ?? _url(classMap['watch_video_link'])
-            ?? _url(json['watch_video_link']);
+        videoLinkUrl =
+            _url(contentMap['watch_video_link']) ??
+            _url(classMap['watch_video_link']) ??
+            _url(json['watch_video_link']);
         break;
       case '12': // Certificate — raw printable-certificate HTML, no file URL.
         // Not _clean() - that strips HTML tags, which would destroy the
@@ -355,15 +434,22 @@ class CourseStructureItem {
       case '5': // Read Article
         contentUrl = _url(contentMap['article_file']);
         downloadUrl = contentUrl;
+        // The real Details modal shows this as a separate "Article link"
+        // card alongside the uploaded file, not just the file itself.
+        articleLinkUrl = _url(contentMap['read_article_link']);
         break;
       case '6': // Read Webpage
         contentUrl = _url(contentMap['read_webpage_link']);
+        // The real link's button text (falls back to "Open Webpage" when
+        // unset, same as the website).
+        webpageLinkText = _clean(contentMap['read_webpage_text']?.toString());
         break;
       case '7': // Discussion Board
         contentUrl = _url(contentMap['discussion_forum_link']);
         break;
       case '13': // LinkedIn Certification
         contentUrl = _url(contentMap['read_webpage_link']);
+        webpageLinkText = _clean(contentMap['read_webpage_text']?.toString());
         break;
       case '14': // Discussion Guru
         contentUrl = _url(contentMap['discussion_guru_link']);
@@ -371,6 +457,9 @@ class CourseStructureItem {
       case '15': // Peer Coaching (PDF)
         contentUrl = _url(contentMap['peer_coaching_file']);
         downloadUrl = contentUrl;
+        // The real Details modal shows this as a separate "Peer Coaching
+        // Link" card alongside the uploaded file.
+        peerCoachingLinkUrl = _url(contentMap['peer_coaching_link']);
         break;
       case '17': // OnePage Pro
         contentUrl = _url(contentMap['read_webpage_link']);
@@ -381,6 +470,10 @@ class CourseStructureItem {
       case '19': // Agreement (PDF)
         contentUrl = _url(contentMap['article_file']);
         downloadUrl = contentUrl;
+        articleLinkUrl = _url(contentMap['read_article_link']);
+        break;
+      case '23': // Web App
+        webAppUrl = _url(contentMap['one_pager_pro']);
         break;
       case '3': // Virtual Class — pick the nearest future session link;
         // fall back to the nearest past session if all have ended.
@@ -395,20 +488,21 @@ class CourseStructureItem {
           if (link == null) continue;
           // Try to parse start date + time
           final startStr = e['start_date']?.toString() ?? '';
-          final timeStr  = e['start_time']?.toString() ?? '';
+          final timeStr = e['start_time']?.toString() ?? '';
           DateTime? dt;
           if (startStr.isNotEmpty) {
-            dt = DateTime.tryParse('$startStr ${timeStr.isNotEmpty ? timeStr : '00:00:00'}');
+            dt = DateTime.tryParse(
+              '$startStr ${timeStr.isNotEmpty ? timeStr : '00:00:00'}',
+            );
           }
           candidates.add((start: dt ?? DateTime(0), link: link));
         }
 
         if (candidates.isNotEmpty) {
           // Prefer nearest future; fall back to nearest past
-          final future = candidates
-              .where((c) => c.start.isAfter(now3))
-              .toList()
-            ..sort((a, b) => a.start.compareTo(b.start));
+          final future =
+              candidates.where((c) => c.start.isAfter(now3)).toList()
+                ..sort((a, b) => a.start.compareTo(b.start));
           if (future.isNotEmpty) {
             contentUrl = future.first.link;
           } else {
@@ -424,10 +518,13 @@ class CourseStructureItem {
     // to the first learning event's own start date/time - the website's
     // "Next Session" for a class often only lives nested there, not as a
     // direct field on the class itself.
-    final learningEvents = ((json['learning_events'] ?? json['learningEvents'] ?? const []) as List? ?? const [])
-        .whereType<Map>()
-        .map((e) => LearningEvent.fromJson(Map<String, dynamic>.from(e)))
-        .toList();
+    final learningEvents =
+        ((json['learning_events'] ?? json['learningEvents'] ?? const [])
+                    as List? ??
+                const [])
+            .whereType<Map>()
+            .map((e) => LearningEvent.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
     final directNextSession = _clean(
       _firstValue(json, classMap, const [
         'next_session',
@@ -448,9 +545,10 @@ class CourseStructureItem {
     // through end) selection as registration, formatted from the already
     // UTC->local-corrected DateTime rather than pasting the raw strings.
     final upcomingEvent = _earliestUpcomingEventOf(learningEvents);
-    final eventNextSession = upcomingEvent?.startDateTime != null
-        ? _formatNextSessionMoment(upcomingEvent!.startDateTime!)
-        : null;
+    final eventNextSession =
+        upcomingEvent?.startDateTime != null
+            ? _formatNextSessionMoment(upcomingEvent!.startDateTime!)
+            : null;
 
     return CourseStructureItem(
       title:
@@ -472,15 +570,24 @@ class CourseStructureItem {
       // *first* choice was the bug - it kept showing a session that had
       // already ended, since nothing ever cleared it once eventNextSession
       // correctly went empty.
-      nextSession: learningEvents.isNotEmpty
-          ? (eventNextSession ?? '')
-          : (directNextSession ?? ''),
+      nextSession:
+          learningEvents.isNotEmpty
+              ? (eventNextSession ?? '')
+              : (directNextSession ?? ''),
       status: classStatus,
       actionLabel: effectiveActionLabel,
       icon: _structureIcon(typeCode),
       showDetails: _typeShowDetails(typeCode),
       showAction: effectiveActionLabel.isNotEmpty,
-      description: _clean(_firstValue(json, classMap, const ['description', 'class_description', 'classDescription'])) ?? '',
+      description:
+          _clean(
+            _firstValue(json, classMap, const [
+              'description',
+              'class_description',
+              'classDescription',
+            ]),
+          ) ??
+          '',
       learningEvents: learningEvents,
       typeCode: typeCode ?? '',
       isEnrolledInClass: isEnrolledInClass,
@@ -492,6 +599,10 @@ class CourseStructureItem {
       downloadUrl: downloadUrl,
       videoLinkUrl: videoLinkUrl,
       certificateHtml: certificateHtml,
+      articleLinkUrl: articleLinkUrl,
+      webpageLinkText: webpageLinkText,
+      peerCoachingLinkUrl: peerCoachingLinkUrl,
+      webAppUrl: webAppUrl,
     );
   }
 }
@@ -523,6 +634,8 @@ class LearningEvent {
     required this.instructions,
     this.sessionLink,
     this.learningEventClassId,
+    this.maxRegistrations = 0,
+    this.registeredCount = 0,
   });
 
   final String startDate;
@@ -536,9 +649,17 @@ class LearningEvent {
   // Required by POST lms-screen/register-course to select this specific
   // session when registering for a class that has one (virtual/in-person).
   final int? learningEventClassId;
+  // From LearningEventClass::getAvailableSeats()/getRegistrationStatus():
+  // available seats = max(0, maxRegistrations - registeredCount); the
+  // event's `.event-status-badge` reads "Waitlist" once that hits zero,
+  // "Available" otherwise.
+  final int maxRegistrations;
+  final int registeredCount;
 
   DateTime? get startDateTime => _combineDateAndTime(startDate, startTime);
   DateTime? get endDateTime => _combineDateAndTime(endDate, endTime);
+
+  bool get isWaitlist => (maxRegistrations - registeredCount) <= 0;
 
   factory LearningEvent.fromJson(Map<String, dynamic> json) {
     return LearningEvent(
@@ -550,7 +671,11 @@ class LearningEvent {
       location: json['location']?.toString() ?? '',
       instructions: json['instructions']?.toString() ?? '',
       sessionLink: _clean(json['training_session_link']?.toString()),
-      learningEventClassId: _asIntOrNull(json['learning_event_class_id'] ?? json['id']),
+      learningEventClassId: _asIntOrNull(
+        json['learning_event_class_id'] ?? json['id'],
+      ),
+      maxRegistrations: _asIntOrNull(json['max_registrations']) ?? 0,
+      registeredCount: _asIntOrNull(json['registered_count']) ?? 0,
     );
   }
 }
@@ -584,7 +709,9 @@ class LearningEvent {
 /// surface an already-started session while a genuinely upcoming one
 /// existed, ignored In Person ('2') classes entirely, and didn't check
 /// registration at all.
-LearningEvent? _earliestUpcomingVirtualClassEvent(List<CourseStructureItem> structures) {
+LearningEvent? _earliestUpcomingVirtualClassEvent(
+  List<CourseStructureItem> structures,
+) {
   final now = DateTime.now();
   LearningEvent? soonestFuture;
   LearningEvent? mostRecentlyEnded;
@@ -597,16 +724,19 @@ LearningEvent? _earliestUpcomingVirtualClassEvent(List<CourseStructureItem> stru
       if (start == null) continue;
 
       if (start.isAfter(now)) {
-        if (soonestFuture == null || start.isBefore(soonestFuture.startDateTime!)) {
+        if (soonestFuture == null ||
+            start.isBefore(soonestFuture.startDateTime!)) {
           soonestFuture = event;
         }
         continue;
       }
 
       final end = event.endDateTime ?? start;
-      final currentEnd = mostRecentlyEnded == null
-          ? null
-          : (mostRecentlyEnded.endDateTime ?? mostRecentlyEnded.startDateTime!);
+      final currentEnd =
+          mostRecentlyEnded == null
+              ? null
+              : (mostRecentlyEnded.endDateTime ??
+                  mostRecentlyEnded.startDateTime!);
       if (mostRecentlyEnded == null || end.isAfter(currentEnd!)) {
         mostRecentlyEnded = event;
       }
@@ -630,7 +760,8 @@ LearningEvent? _earliestUpcomingEventOf(List<LearningEvent> events) {
     final end = event.endDateTime;
     final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
     if (!stillOpen) continue;
-    if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
+    if (earliest == null || start.isBefore(earliest.startDateTime!))
+      earliest = event;
   }
   return earliest;
 }
@@ -664,12 +795,20 @@ String _formatNextSessionMoment(DateTime dt) {
 DateTime? _combineDateAndTime(String dateStr, String timeStr) {
   final date = DateTime.tryParse(dateStr);
   if (date == null) return null;
-  if (timeStr.isEmpty) return DateTime.utc(date.year, date.month, date.day).toLocal();
+  if (timeStr.isEmpty)
+    return DateTime.utc(date.year, date.month, date.day).toLocal();
   final parts = timeStr.split(':');
   final hour = int.tryParse(parts.isNotEmpty ? parts[0] : '') ?? 0;
   final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
   final second = parts.length > 2 ? int.tryParse(parts[2]) ?? 0 : 0;
-  return DateTime.utc(date.year, date.month, date.day, hour, minute, second).toLocal();
+  return DateTime.utc(
+    date.year,
+    date.month,
+    date.day,
+    hour,
+    minute,
+    second,
+  ).toLocal();
 }
 
 double _progressPercent(
@@ -996,6 +1135,12 @@ int _asInt(dynamic value) {
   return int.tryParse(value?.toString() ?? '') ?? 0;
 }
 
+double _asDouble(dynamic value) {
+  if (value is double) return value;
+  if (value is num) return value.toDouble();
+  return double.tryParse(value?.toString() ?? '') ?? 0.0;
+}
+
 int? _asIntOrNull(dynamic value) {
   if (value == null) return null;
   if (value is int) return value;
@@ -1011,28 +1156,50 @@ bool _asBool(dynamic value) {
 
 String _typeDisplayName(String? typeCode) {
   switch (typeCode) {
-    case '1':  return 'eLearning Module';
-    case '2':  return 'In Person';
-    case '3':  return 'Virtual Class';
-    case '4':  return 'Watch Video';
-    case '5':  return 'Read Article';
-    case '6':  return 'Read Webpage';
-    case '7':  return 'Discussion Board';
-    case '8':  return 'Perform Task With Observation';
-    case '9':  return 'Perform Task Without Observation';
-    case '10': return 'Receive Coaching';
-    case '11': return 'Insight Report';
-    case '12': return 'Certificate';
-    case '13': return 'LinkedIn Certification';
-    case '14': return 'Discussion Guru';
-    case '15': return 'Peer Coaching';
-    case '17': return 'OnePage Pro';
-    case '18': return 'Custom Prompt';
-    case '19': return 'Agreement';
-    case '20': return 'Test Out Assessment';
-    case '22': return 'Text Message';
-    case '23': return 'Web Application';
-    default:   return '';
+    case '1':
+      return 'eLearning Module';
+    case '2':
+      return 'In Person';
+    case '3':
+      return 'Virtual Class';
+    case '4':
+      return 'Watch Video';
+    case '5':
+      return 'Read Article';
+    case '6':
+      return 'Read Webpage';
+    case '7':
+      return 'Discussion Board';
+    case '8':
+      return 'Perform Task With Observation';
+    case '9':
+      return 'Perform Task Without Observation';
+    case '10':
+      return 'Receive Coaching';
+    case '11':
+      return 'Insight Report';
+    case '12':
+      return 'Certificate';
+    case '13':
+      return 'LinkedIn Certification';
+    case '14':
+      return 'Discussion Guru';
+    case '15':
+      return 'Peer Coaching';
+    case '17':
+      return 'OnePage Pro';
+    case '18':
+      return 'Custom Prompt';
+    case '19':
+      return 'Agreement';
+    case '20':
+      return 'Test Out Assessment';
+    case '22':
+      return 'Text Message';
+    case '23':
+      return 'Web Application';
+    default:
+      return '';
   }
 }
 
@@ -1040,22 +1207,37 @@ String _typeActionLabel(String? typeCode) {
   switch (typeCode) {
     case '1':
     case '2':
-    case '3':  return 'Register';
-    case '4':  return 'Video';
-    case '5':  return 'Article';
-    case '6':  return 'Webpage';
-    case '7':  return 'Discussion Board';
+    case '3':
+      return 'Register';
+    case '4':
+      return 'Video';
+    case '5':
+      return 'Article';
+    case '6':
+      return 'Webpage';
+    case '7':
+      return 'Discussion Board';
     case '8':
-    case '9':  return 'Tasks';
-    case '10': return 'Coaches';
-    case '11': return 'Insights';
-    case '13': return 'Certification';
-    case '14': return 'Discussion Guru';
-    case '17': return 'OnePage Pro';
-    case '18': return 'Bridgework Link';
-    case '19': return 'Agreement';
-    case '23': return 'Launch Web Application';
-    default:   return '';
+    case '9':
+      return 'Tasks';
+    case '10':
+      return 'Coaches';
+    case '11':
+      return 'Insights';
+    case '13':
+      return 'Certification';
+    case '14':
+      return 'Discussion Guru';
+    case '17':
+      return 'OnePage Pro';
+    case '18':
+      return 'Bridgework Link';
+    case '19':
+      return 'Agreement';
+    case '23':
+      return 'Launch Web Application';
+    default:
+      return '';
   }
 }
 
@@ -1075,21 +1257,34 @@ CourseStructureIcon _structureIcon(String? typeCode) {
   switch (typeCode) {
     case '1':
     case '2':
-    case '3':  return CourseStructureIcon.register;
-    case '4':  return CourseStructureIcon.video;
-    case '5':  return CourseStructureIcon.article;
-    case '6':  return CourseStructureIcon.webpage;
-    case '7':  return CourseStructureIcon.discussionBoard;
+    case '3':
+      return CourseStructureIcon.register;
+    case '4':
+      return CourseStructureIcon.video;
+    case '5':
+      return CourseStructureIcon.article;
+    case '6':
+      return CourseStructureIcon.webpage;
+    case '7':
+      return CourseStructureIcon.discussionBoard;
     case '8':
-    case '9':  return CourseStructureIcon.tasks;
-    case '10': return CourseStructureIcon.coaches;
-    case '11': return CourseStructureIcon.insights;
-    case '13': return CourseStructureIcon.certification;
-    case '14': return CourseStructureIcon.discussionGuru;
+    case '9':
+      return CourseStructureIcon.tasks;
+    case '10':
+      return CourseStructureIcon.coaches;
+    case '11':
+      return CourseStructureIcon.insights;
+    case '13':
+      return CourseStructureIcon.certification;
+    case '14':
+      return CourseStructureIcon.discussionGuru;
     case '17':
     case '18':
-    case '23': return CourseStructureIcon.link;
-    case '19': return CourseStructureIcon.agreement;
-    default:   return CourseStructureIcon.details;
+    case '23':
+      return CourseStructureIcon.link;
+    case '19':
+      return CourseStructureIcon.agreement;
+    default:
+      return CourseStructureIcon.details;
   }
 }

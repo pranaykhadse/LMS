@@ -49,6 +49,11 @@ dependencies:
   google_fonts: ^6.2.1
   hugeicons: ^0.0.7
   lucide_icons: ^0.257.0
+  # Renders the real site's .svg icon assets (nav dropdown icons, and
+  # every other .svg this app loads by URL) — plain Image.network
+  # cannot decode SVG on any platform, a hard Flutter limitation, not
+  # a bug in how those images were being loaded.
+  flutter_svg: ^2.0.10+1
 
   # ------------------------------------------------------------------------------
   # Localization

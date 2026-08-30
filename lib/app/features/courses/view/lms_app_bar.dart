@@ -1,14 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/providers/shell_destination_provider.dart';
+import 'package:lms/app/core/utils/dev_image_proxy.dart';
 import 'package:lms/app/core/views/elements/contact_links.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/logo.dart';
@@ -25,8 +29,21 @@ import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page
 
 const _appPurple = FigmaTokens.primaryPurple;
 const _appMuted = FigmaTokens.noteBodyText;
+// CSS ref, confirmed straight from `origin/staging`'s bluetheme-layout
+// .css (`#navbarMenu .sub-nav-item a:hover{color:var(--primary-color)
+// !important}`, `--primary-color:#693D94`): matches `FigmaTokens
+// .primaryPurple` already.
 const _navActive = FigmaTokens.primaryPurple;
-const _navDefault = Color(0xFF6B7280); // gray-500
+// CSS ref, confirmed straight from `origin/staging`'s bluetheme-layout
+// .css: `#navbarMenu .sub-nav-item a{color:#64748b!important}` — was
+// wrongly `#6B7280` (Tailwind gray-500, visually close but a
+// different, unconfirmed value).
+const _navDefault = Color(0xFF64748B);
+// CSS/markup ref: real `#homeSubMenu` item icons, from
+// `origin/staging`'s bluetheme_layout.php `'icon' => '<img
+// src="...">'` config for each nav item.
+const _navIconBase =
+    'https://staging.trainingpipeline.com/backend/web/dist/images/';
 
 bool watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -450,15 +467,17 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 // Phone-only: avatar sits inside a small rounded box with a
                 // dropdown chevron, instead of desktop's bare avatar + name.
                 child: Container(
-                  padding: useDashboardMobileProfileStyle
-                      ? EdgeInsets.zero
-                      : const EdgeInsets.fromLTRB(4, 4, 6, 4),
-                  decoration: useDashboardMobileProfileStyle
-                      ? null
-                      : BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
+                  padding:
+                      useDashboardMobileProfileStyle
+                          ? EdgeInsets.zero
+                          : const EdgeInsets.fromLTRB(4, 4, 6, 4),
+                  decoration:
+                      useDashboardMobileProfileStyle
+                          ? null
+                          : BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -521,17 +540,18 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             ),
             // Right: hamburger — p-1.5 text-gray-500
             Builder(
-              builder: (ctx) => GestureDetector(
-                onTap: () => Scaffold.of(ctx).openDrawer(),
-                child: Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: Icon(
-                    Icons.menu_rounded,
-                    size: 20,
-                    color: const Color(0xFF6B7280),
+              builder:
+                  (ctx) => GestureDetector(
+                    onTap: () => Scaffold.of(ctx).openDrawer(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(
+                        Icons.menu_rounded,
+                        size: 20,
+                        color: const Color(0xFF6B7280),
+                      ),
+                    ),
                   ),
-                ),
-              ),
             ),
           ],
         ),
@@ -687,6 +707,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                       items: [
                         _NavSubItem(
                           label: 'My Enrolled Courses',
+                          iconAsset: '${_navIconBase}courses-icon.svg',
                           selected: selectedSubLabel == 'My Enrolled Courses',
                           onTap:
                               () => _goTo(
@@ -700,6 +721,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                         ),
                         _NavSubItem(
                           label: 'My Completed Courses',
+                          iconAsset: '${_navIconBase}courses-icon.svg',
                           selected: selectedSubLabel == 'My Completed Courses',
                           onTap:
                               () => _goTo(
@@ -713,6 +735,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                         ),
                         _NavSubItem(
                           label: 'My Development Plan',
+                          iconAsset: '${_navIconBase}development-plan-icon.svg',
                           selected: selectedSubLabel == 'My Development Plan',
                           onTap:
                               () => _goTo(
@@ -726,6 +749,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                         ),
                         _NavSubItem(
                           label: 'My Required Courses',
+                          iconAsset: '${_navIconBase}required-courses-icon.svg',
                           selected: selectedSubLabel == 'My Required Courses',
                           onTap:
                               () => _goTo(
@@ -762,6 +786,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                       items: [
                         _NavSubItem(
                           label: 'Redeem your Points',
+                          iconAsset: '${_navIconBase}redeem-icon.svg',
                           selected: selectedSubLabel == 'Redeem your Points',
                           onTap:
                               () => _goTo(
@@ -775,6 +800,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                         ),
                         _NavSubItem(
                           label: 'Badges',
+                          iconAsset: '${_navIconBase}badges-icon.svg',
                           selected: selectedSubLabel == 'Badges',
                           onTap:
                               () => _goTo(
@@ -794,11 +820,16 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                       items: [
                         _NavSubItem(
                           label: 'Contact a Development Pro',
+                          iconAsset: '${_navIconBase}coach.svg',
                           disabled: !isOnline,
                           onTap: () => launchContactCoachUrl(ref, context),
                         ),
                         _NavSubItem(
                           label: 'Virtual Development Pro',
+                          // Nav ref: real markup reuses the "Badges"
+                          // icon here — not a mistake, straight from
+                          // the PHP config.
+                          iconAsset: '${_navIconBase}badges-icon.svg',
                           disabled: !isOnline,
                           onTap: () => launchVirtualDevUrl(context, ref),
                         ),
@@ -865,14 +896,112 @@ class _NavItem extends StatelessWidget {
 class _NavSubItem {
   const _NavSubItem({
     required this.label,
+    required this.iconAsset,
     this.selected = false,
     this.disabled = false,
     required this.onTap,
   });
   final String label;
+  // CSS/markup ref, confirmed against `origin/staging`'s
+  // bluetheme_layout.php: every `#homeSubMenu` item renders its own
+  // `<img>` icon (`'icon' => '<img src="...">'` in the dropdown
+  // config).
+  final String iconAsset;
   final bool selected;
   final bool disabled;
   final VoidCallback onTap;
+}
+
+// Several of these real icon assets (e.g. development-plan-icon.svg,
+// required-courses-icon.svg, coach.svg) are Figma exports that embed a
+// raster PNG inside an SVG `<pattern>` fill (`<image xlink:href="data:
+// image/png;base64,...">`) rather than real vector paths — confirmed by
+// fetching the raw asset text directly. `flutter_svg`'s renderer has no
+// support for `<pattern>` fills at all, so `SvgPicture.network` on
+// those specific files silently renders nothing (not a network/CORS
+// problem — plain SVGs like courses-icon.svg render fine through the
+// exact same proxy). Fetches the raw SVG text once, extracts the
+// embedded PNG and paints it with `Image.memory` when present, and
+// falls back to `SvgPicture.string` (parsing the already-fetched text,
+// no second network round-trip) for real vector icons that have no
+// embedded raster at all.
+class _NavIcon extends StatefulWidget {
+  const _NavIcon({required this.url});
+  final String url;
+  // CSS ref: `#navbarMenu .nav-link img{width:14px;height:14px}` — the
+  // one size every dropdown item icon uses; not exposed as a
+  // constructor param since nothing needs a different size.
+  static const _size = 14.0;
+
+  @override
+  State<_NavIcon> createState() => _NavIconState();
+}
+
+class _NavIconState extends State<_NavIcon> {
+  static final _embeddedPngPattern = RegExp(r'data:image/png;base64,([^"]+)');
+
+  Widget? _resolved;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final response = await Dio().get<String>(
+        devProxiedImageUrl(widget.url),
+        options: Options(responseType: ResponseType.plain),
+      );
+      final body = response.data ?? '';
+      final embeddedPng = _embeddedPngPattern.firstMatch(body);
+      final resolved =
+          embeddedPng != null
+              // App-only fix, per explicit request: the raster art
+              // extracted from these `<pattern>`-fill icons renders
+              // much darker/heavier than the flat, naturally-light
+              // vector icons (`courses-icon.svg`) sitting beside it in
+              // the same dropdown — no way to derive a "right" opacity
+              // for this from the real CSS, since the real site never
+              // actually renders these `<pattern>`-fill icons at all.
+              // A fixed `Opacity` here (rather than on the outer hover-
+              // driven one, which both icon kinds already share)
+              // lightens only the raster path, bringing it in line
+              // with the vector icons' natural lightness.
+              ? Opacity(
+                // Lowered further than the previous 0.55 per explicit
+                // follow-up request — still read as too dark next to
+                // the vector icon.
+                opacity: 0.35,
+                child: Image.memory(
+                  base64Decode(embeddedPng.group(1)!),
+                  width: _NavIcon._size,
+                  height: _NavIcon._size,
+                  fit: BoxFit.contain,
+                ),
+              )
+              : SvgPicture.string(
+                body,
+                width: _NavIcon._size,
+                height: _NavIcon._size,
+              );
+      if (mounted) setState(() => _resolved = resolved);
+    } catch (_) {
+      // Leave `_resolved` null — renders as a correctly-sized blank
+      // box instead of collapsing the icon slot and shifting the
+      // label over.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: _NavIcon._size,
+      height: _NavIcon._size,
+      child: _resolved,
+    );
+  }
 }
 
 class _ProfileMenuButton extends StatefulWidget {
@@ -969,96 +1098,243 @@ class _NavDropdownState extends State<_NavDropdown> {
     final selected = widget.selected;
     final items = widget.items;
     final color = selected ? _navActive : _navDefault;
-    return PopupMenuButton<int>(
-      offset: const Offset(0, 40),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onOpened: () => setState(() => _isOpen = true),
-      onCanceled: () => setState(() => _isOpen = false),
-      onSelected: (index) {
-        setState(() => _isOpen = false);
-        final item = items[index];
-        if (!item.disabled) item.onTap();
-      },
-      itemBuilder:
-          (context) => [
-            // Matches the reference site's #navbarMenu .sub-nav-item a exactly:
-            // 14px, #64748b, 10px/15px padding, 8px radius.
-            for (var i = 0; i < items.length; i++)
-              PopupMenuItem<int>(
-                value: i,
-                enabled: !items[i].disabled,
-                padding: EdgeInsets.zero,
-                child: HoverBuilder(
-                  builder: (context, hovering) {
-                    final highlighted =
-                        !items[i].disabled && (hovering || items[i].selected);
-                    return Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: highlighted ? FigmaTokens.badgeBackground : null,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        items[i].label,
-                        style: GoogleFonts.inter(
-                          color:
-                              items[i].disabled
-                                  ? FigmaTokens.noteBodyText
-                                  : (highlighted ? _navActive : _navDefault),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
-                    );
-                  },
+    // `PopupMenuButton` captures the ambient `Theme` from THIS
+    // context when it opens (via `InheritedTheme.capture`) and re-
+    // applies it inside the popup route, which otherwise renders in
+    // the root `Overlay`, outside this widget's own position in the
+    // tree. Wrapping the override here — not around each item's own
+    // `child:` content further down, which sits INSIDE (below) each
+    // `PopupMenuItem`'s own hover `InkWell` and so can never reach
+    // back up to affect it — is what actually reaches that `InkWell`
+    // and suppresses its default full-item-width grey hover/splash
+    // overlay, leaving only the app's own inset, rounded, purple-
+    // tinted pill (built per-item below) visible on hover/selection.
+    return Theme(
+      data: Theme.of(context).copyWith(
+        hoverColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+      ),
+      child: PopupMenuButton<int>(
+        offset: const Offset(0, 40),
+        // CSS ref, confirmed straight from `origin/staging`'s
+        // bluetheme-layout.css: `#navbarMenu #homeSubMenu{background:#fff
+        // !important;border-radius:16px!important;box-shadow:0 10px 40px
+        // rgba(0,0,0,.1)!important;padding:8px 0!important}` (reaffirmed
+        // by `#navbarMenu .nav-item.show > #homeSubMenu{border-
+        // radius:16px!important;padding:8px 0!important}`) — was wrongly
+        // radius 12 with no shadow/background override at all. Flutter's
+        // Material elevation shadow shape doesn't literally reproduce a
+        // CSS box-shadow, so `elevation:8` is an approximation, not an
+        // exact match; `surfaceTintColor:transparent` keeps the panel
+        // pure white instead of Material 3's default tint.
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onOpened: () => setState(() => _isOpen = true),
+        onCanceled: () => setState(() => _isOpen = false),
+        onSelected: (index) {
+          setState(() => _isOpen = false);
+          final item = items[index];
+          if (!item.disabled) item.onTap();
+        },
+        itemBuilder:
+            (context) => [
+              // CSS ref, confirmed straight from `origin/staging`'s
+              // dist/app.css (`@media(min-width:992px){#homeSubMenu li{
+              // padding:0 .5rem!important;height:2.2rem}}`) and
+              // bluetheme-layout.css (`@media(max-width:1200px){
+              // #homeSubMenu li{margin:.1rem 0!important}}` — wins over
+              // dist/app.css's own `margin:.5rem 0` at that width, loses
+              // above 1200px; used here as the confirmed value since a
+              // live devtools measurement showed it winning): each
+              // `<li>` is 35.2px tall + 1.6px top/bottom margin (38.4px
+              // total slot) with its own 8px horizontal padding, outside
+              // the `<a>`'s own padding. `#navbarMenu .sub-nav-item a`:
+              // `height:100%` (fills the li via flex), `padding:10px
+              // 15px`, `border-radius:8px`, `display:flex;gap:10px`,
+              // `color:#64748b`. `#homeSubMenu .sub-nav-item:hover{
+              // background-color:transparent!important}` (unscoped,
+              // always wins) — the `<li>` itself never gets a background;
+              // the highlight lives on the `<a>`:
+              // `#navbarMenu .sub-nav-item a:hover{background:var(--
+              // primary-soft)!important;color:var(--primary-color)
+              // !important}` (`--primary-soft`=`#F0E8F7`=`FigmaTokens
+              // .badgeBackground`, `--primary-color`=`#693D94`=
+              // `FigmaTokens.primaryPurple`).
+              for (var i = 0; i < items.length; i++)
+                PopupMenuItem<int>(
+                  value: i,
+                  enabled: !items[i].disabled,
+                  height: 38.4,
+                  padding: EdgeInsets.zero,
+                  // `PopupMenuItem` paints its OWN default grey hover/
+                  // splash overlay (from the ambient `Theme`'s
+                  // `hoverColor`) underneath whatever `child` renders —
+                  // a full-item-width strip, separate from and visible
+                  // behind our own inset, rounded, purple-tinted pill
+                  // built below via `HoverBuilder`+`Container`.
+                  // Suppressed by wrapping the WHOLE `PopupMenuButton` in
+                  // a transparent-hover `Theme` above (not here — this
+                  // subtree sits INSIDE `PopupMenuItem`'s own hover
+                  // `InkWell`, below it in the tree, so a `Theme`
+                  // override placed here could never reach back up to
+                  // affect that `InkWell`; the override has to be an
+                  // ancestor of the button itself, captured into the
+                  // popup route when it opens).
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 1.6,
+                    ),
+                    child: HoverBuilder(
+                      builder: (context, hovering) {
+                        final highlighted =
+                            !items[i].disabled &&
+                            (hovering || items[i].selected);
+                        return Container(
+                          // No explicit `width` here — a `Container(width:
+                          // double.infinity)` lies about its own
+                          // intrinsic width to `_PopupMenu`'s internal
+                          // `IntrinsicWidth` pass (which measures every
+                          // item to compute one shared menu width),
+                          // throwing that computation off and rendering
+                          // this box narrower than the real menu width.
+                          // `_PopupMenu` already stretches every item to
+                          // the determined width via its own
+                          // `crossAxisAlignment.stretch` during the real
+                          // layout pass, so the ambient tight constraint
+                          // fills this box regardless.
+                          height: 35.2,
+                          alignment: Alignment.centerLeft,
+                          // Right padding padded past the real CSS's 15px
+                          // — the shared menu width comes from an
+                          // `IntrinsicWidth` pass that runs before Google
+                          // Fonts' network-loaded "Inter" finishes
+                          // fetching, so it measures each label with a
+                          // narrower system fallback font; once Inter
+                          // actually loads, the real (wider) painted text
+                          // can overflow that already-locked-in width by
+                          // a few pixels (confirmed: "My Completed
+                          // Courses" overflowed by 11px). This buffer
+                          // absorbs that font-metric mismatch rather than
+                          // trying to force `IntrinsicWidth` to wait for
+                          // the font load — trimmed down to 20 (was 27)
+                          // per explicit request for a narrower panel;
+                          // still enough headroom to avoid the overflow.
+                          padding: const EdgeInsets.fromLTRB(15, 0, 20, 0),
+                          decoration: BoxDecoration(
+                            color:
+                                highlighted
+                                    ? FigmaTokens.badgeBackground
+                                    : null,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // CSS ref: `#navbarMenu .nav-link img{
+                              // width:14px;height:14px;opacity:.8}`,
+                              // `.navbar-menu .nav-link img{margin-
+                              // right:8px}` (on top of the `<a>`'s own
+                              // `gap:10px` flex spacing — the two stack,
+                              // ~18px total gap to the label). `#navbar
+                              // Menu .nav-link:hover img{opacity:1
+                              // !important}` — was previously missing
+                              // entirely (text-only).
+                              //
+                              // A prior pass wrapped this in a
+                              // `ColorFiltered`/`BlendMode.srcIn` tint,
+                              // guessing these should be monochrome like
+                              // the real site's separate `.nav-icon-mask`
+                              // class (`background-color:currentColor`)
+                              // — but that class only applies to a
+                              // different, unused icon-rendering path
+                              // (a `<span>`/`<i>` with that class), never
+                              // to the real `<img>` markup these items
+                              // actually use, which has no color/filter
+                              // rule at all. A live screenshot confirmed
+                              // the real icons render in their own native
+                              // color, not tinted — removed the filter.
+                              Opacity(
+                                opacity: highlighted ? 1 : 0.8,
+                                child: _NavIcon(url: items[i].iconAsset),
+                              ),
+                              const SizedBox(width: 18),
+                              // No `Flexible`/`overflow:ellipsis` here —
+                              // wrapping it that way was truncating "My
+                              // Completed Courses" even though the menu
+                              // had room to grow. `_PopupMenu` sizes the
+                              // whole panel from each item's own natural
+                              // intrinsic width via `IntrinsicWidth`; a
+                              // bare `Text` reports its full, untruncated
+                              // width into that measurement, so the panel
+                              // simply grows wide enough for every label,
+                              // per explicit request.
+                              Text(
+                                items[i].label,
+                                style: GoogleFonts.inter(
+                                  color:
+                                      items[i].disabled
+                                          ? FigmaTokens.noteBodyText
+                                          : (highlighted
+                                              ? _navActive
+                                              : _navDefault),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+            ],
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Transform.translate(
+                offset: const Offset(0, 1),
+                child: Icon(icon, size: 13, color: color),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: color,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  height: 16 / 12,
                 ),
               ),
-          ],
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Transform.translate(
-              offset: const Offset(0, 1),
-              child: Icon(icon, size: 13, color: color),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                height: 16 / 12,
-              ),
-            ),
-            const SizedBox(width: 2),
-            // Empirically-tuned offset to match the label's visual (not
-            // geometric) center - see commit history if this needs
-            // further adjustment.
-            Transform.translate(
-              offset: const Offset(0, 1.0),
-              child: SizedBox(
-                height: 16,
-                child: Center(
-                  child: Icon(
-                    _isOpen
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
-                    // Design ref: svg w-[11px] h-[11px] opacity-60
-                    size: 11,
-                    color: color.withValues(alpha: 0.6),
+              const SizedBox(width: 2),
+              // Empirically-tuned offset to match the label's visual (not
+              // geometric) center - see commit history if this needs
+              // further adjustment.
+              Transform.translate(
+                offset: const Offset(0, 1.0),
+                child: SizedBox(
+                  height: 16,
+                  child: Center(
+                    child: Icon(
+                      _isOpen
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      // Design ref: svg w-[11px] h-[11px] opacity-60
+                      size: 11,
+                      color: color.withValues(alpha: 0.6),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -12,14 +12,16 @@ enum ShellDestination {
   myCompletedCourses,
   myDevelopmentPlan,
   myRequiredCourses,
+  myRecommendedCourses,
   learningPaths,
   badges,
   redeemPoints,
 }
 
 /// Which shell tab is currently showing.
-final currentShellDestinationProvider =
-    StateProvider<ShellDestination>((ref) => ShellDestination.dashboard);
+final currentShellDestinationProvider = StateProvider<ShellDestination>(
+  (ref) => ShellDestination.dashboard,
+);
 
 /// Every shell tab visited before the current one, oldest first - lets the
 /// header's back button reverse through tab switches the same way it
@@ -49,8 +51,10 @@ bool goBackInShell(WidgetRef ref) {
   final history = ref.read(shellHistoryProvider);
   if (history.isEmpty) return false;
   final previous = history.last;
-  ref.read(shellHistoryProvider.notifier).state =
-      history.sublist(0, history.length - 1);
+  ref.read(shellHistoryProvider.notifier).state = history.sublist(
+    0,
+    history.length - 1,
+  );
   ref.read(currentShellDestinationProvider.notifier).state = previous;
   return true;
 }
@@ -60,8 +64,9 @@ bool goBackInShell(WidgetRef ref) {
 /// so MainShell's single persistent LmsAppBar can render the right
 /// title/selected-nav-highlight/refresh-button for whichever tab is active,
 /// without each tab owning its own AppBar.
-final shellHeaderConfigProvider =
-    StateProvider<ShellHeaderConfig>((ref) => const ShellHeaderConfig());
+final shellHeaderConfigProvider = StateProvider<ShellHeaderConfig>(
+  (ref) => const ShellHeaderConfig(),
+);
 
 class ShellHeaderConfig {
   const ShellHeaderConfig({

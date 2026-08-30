@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/providers/shell_destination_provider.dart';
 import 'package:lms/app/core/views/elements/tablet_nav_bar.dart';
-import 'package:lms/app/features/courses/view/courses_page_v2.dart';
+import 'package:lms/app/features/courses/view/courses_page.dart';
 import 'package:lms/app/features/courses/view/lms_app_bar.dart';
 import 'package:lms/app/features/dashboard/view/badges_page.dart';
 import 'package:lms/app/features/dashboard/view/completed_courses_page.dart';
@@ -12,6 +12,7 @@ import 'package:lms/app/features/dashboard/view/development_plan_page.dart';
 import 'package:lms/app/features/dashboard/view/enrolled_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/item_inventory_page.dart';
 import 'package:lms/app/features/dashboard/view/learning_paths_page.dart';
+import 'package:lms/app/features/dashboard/view/recommended_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/required_courses_page.dart';
 
 /// Top-level navigation shell. Handles three device tiers:
@@ -38,7 +39,7 @@ class MainShell extends ConsumerWidget {
       case ShellDestination.dashboard:
         return const DashboardPage();
       case ShellDestination.courseCatalog:
-        return const CoursesPageV2();
+        return const CoursesPage();
       case ShellDestination.myEnrolledCourses:
         return const EnrolledCoursesPage();
       case ShellDestination.myCompletedCourses:
@@ -47,6 +48,8 @@ class MainShell extends ConsumerWidget {
         return const DevelopmentPlanPage();
       case ShellDestination.myRequiredCourses:
         return const RequiredCoursesPage();
+      case ShellDestination.myRecommendedCourses:
+        return const RecommendedCoursesPage();
       case ShellDestination.learningPaths:
         return const LearningPathsPage();
       case ShellDestination.badges:

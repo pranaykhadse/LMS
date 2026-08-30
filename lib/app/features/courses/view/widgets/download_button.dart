@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/features/courses/view/widgets/link_button.dart' show appActionChip;
+import 'package:lms/app/features/courses/view/widgets/link_button.dart'
+    show appActionChip;
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
@@ -44,7 +45,11 @@ class DownloadButton extends ConsumerWidget {
   /// a real downloadable file URL.
   final List<int> Function()? rawContent;
 
-  Future<void> _open(BuildContext context, WidgetRef ref, FileCacheState file) async {
+  Future<void> _open(
+    BuildContext context,
+    WidgetRef ref,
+    FileCacheState file,
+  ) async {
     if (courseClass != null) {
       ref
           .read(RoasterViewModel.provider(courseClass!.courseId).notifier)
@@ -86,7 +91,8 @@ class DownloadButton extends ConsumerWidget {
     // Show toast when a download transitions from in-progress → cached
     ref.listen<FileCacheViewModel>(FileCacheViewModel.provider, (prev, next) {
       if (url == null) return;
-      final wasDownloading = prev?.getSync(url!)?.progress != null &&
+      final wasDownloading =
+          prev?.getSync(url!)?.progress != null &&
           prev?.getSync(url!)?.file == null;
       final isNowCached = next.getSync(url!)?.file != null;
       if (wasDownloading && isNowCached && context.mounted) {
@@ -144,9 +150,11 @@ class DownloadButton extends ConsumerWidget {
     // ── ① ONLINE + NOT DOWNLOADED ────────────────────────────────────────
     return _DownloadTriggerButton(
       label: label,
-      onTap: () => rawContent != null
-          ? fileCacheVM.saveContent(url!, rawContent!())
-          : fileCacheVM.downloadFile(url!),
+      onTap:
+          () =>
+              rawContent != null
+                  ? fileCacheVM.saveContent(url!, rawContent!())
+                  : fileCacheVM.downloadFile(url!),
       fullWidth: fullWidth,
     );
   }
@@ -170,6 +178,12 @@ class _DownloadTriggerButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = FigmaTokens.primaryPurple;
     if (fullWidth) {
+      // CSS ref, confirmed against `origin/staging`'s joinCourse.php:
+      // this button only ever renders inside the Course Structure
+      // table's ACTION column, so it shares
+      // `#course-structure .static-list-action-btn .btn-ul`'s spec —
+      // radius 10 (was 8), 13px/weight600 (was default/800), min-height
+      // 38 (was a flat 39, close but not exact).
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
@@ -179,10 +193,15 @@ class _DownloadTriggerButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: primary,
             foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(39),
+            minimumSize: const Size.fromHeight(38),
             elevation: 0,
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            textStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         ),
       );
@@ -235,8 +254,9 @@ class _DownloadingRow extends StatelessWidget {
               children: [
                 Text(
                   "Downloading $label…",
-                  style: context.textTheme.bodySmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: context.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 Text(
                   "${(pct * 100).toInt()}%",
@@ -278,9 +298,12 @@ class _DownloadedRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final primary = FigmaTokens.primaryPurple;
     final playLabel = _isVideo ? "Play $label" : "Open $label";
-    final playIcon = _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded;
+    final playIcon =
+        _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded;
 
     if (fullWidth) {
+      // CSS ref: same `.static-list-action-btn` spec as the download
+      // trigger above — radius 10 (was 8), 13px/weight600 (was 800).
       return Row(
         children: [
           Expanded(
@@ -291,10 +314,15 @@ class _DownloadedRow extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: primary,
                 foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(39),
+                minimumSize: const Size.fromHeight(38),
                 elevation: 0,
-                textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ),
@@ -310,7 +338,11 @@ class _DownloadedRow extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.red.shade300),
                 ),
-                child: Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red.shade400),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: Colors.red.shade400,
+                ),
               ),
             ),
           ),
@@ -345,7 +377,11 @@ class _DownloadedRow extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.red.shade300),
               ),
-              child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red.shade400),
+              child: Icon(
+                Icons.delete_outline_rounded,
+                size: 16,
+                color: Colors.red.shade400,
+              ),
             ),
           ),
         ),
@@ -383,5 +419,3 @@ class _NotAvailableOfflinePill extends StatelessWidget {
     );
   }
 }
-
-

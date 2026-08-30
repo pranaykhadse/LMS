@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/core/utils/dev_image_proxy.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/model/course.dart';
@@ -69,10 +71,10 @@ class CourseGridCard extends StatelessWidget {
               children: [
                 imageUrl != null
                     ? Image.network(
-                        devProxiedImageUrl(imageUrl!),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImgFallback(),
-                      )
+                      devProxiedImageUrl(imageUrl!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const _ImgFallback(),
+                    )
                     : const _ImgFallback(),
                 // Offline save button — top-left
                 if (offlineCourse != null)
@@ -83,11 +85,7 @@ class CourseGridCard extends StatelessWidget {
                   ),
                 // Dev plan / extra overlay — top-right
                 if (overlayButtons != null)
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: overlayButtons!,
-                  ),
+                  Positioned(top: 10, right: 10, child: overlayButtons!),
                 // Progress ring — bottom-right
                 if (progress != null && progress! > 0)
                   Positioned(
@@ -128,10 +126,7 @@ class CourseGridCard extends StatelessWidget {
                   // Spacer pushes button to 15px from bottom
                   const Spacer(),
                   // Full-width outlined View Course button
-                  ViewCourseButton(
-                    label: buttonLabel,
-                    onPressed: onPressed,
-                  ),
+                  ViewCourseButton(label: buttonLabel, onPressed: onPressed),
                 ],
               ),
             ),
@@ -170,7 +165,9 @@ class _ProgressRing extends StatelessWidget {
             value: progress / 100,
             strokeWidth: 2.5,
             backgroundColor: const Color(0xFFE8E7F8),
-            valueColor: const AlwaysStoppedAnimation<Color>(FigmaTokens.primaryPurple),
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              FigmaTokens.primaryPurple,
+            ),
           ),
           Text(
             '$progress',
@@ -186,12 +183,23 @@ class _ProgressRing extends StatelessWidget {
   }
 }
 
-class _ImgFallback extends StatelessWidget {
+class _ImgFallback extends ConsumerWidget {
   const _ImgFallback();
 
   @override
-  Widget build(BuildContext context) {
-    return Image.asset('assets/images/login-bg.png', fit: BoxFit.cover);
+  Widget build(BuildContext context, WidgetRef ref) {
+    // CSS ref, confirmed against `origin/staging`: the real fallback for
+    // a course with no logo is a dedicated "no course image" graphic
+    // (`/dist/images/course-bg.svg`) served from the backend — not
+    // `assets/images/login-bg.png` (a LOGIN page background), which this
+    // was using apparently by copy/paste.
+    final origin = Uri.parse(ref.watch(ServerProvider.serverUrl)).origin;
+    final fallbackUrl = '$origin/backend/web/dist/images/course-bg.svg';
+    return Image.network(
+      devProxiedImageUrl(fallbackUrl),
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFFF1F5F9)),
+    );
   }
 }
 
@@ -214,6 +222,7 @@ class ViewCourseButton extends StatelessWidget {
 
   final String label;
   final VoidCallback? onPressed;
+
   /// Defaults to full-width; pass a fixed value for inline/narrow contexts.
   final double width;
 
@@ -224,20 +233,21 @@ class ViewCourseButton extends StatelessWidget {
     final disabled = onPressed == null;
 
     return HoverBuilder(
+      cursor: disabled ? SystemMouseCursors.basic : SystemMouseCursors.click,
       builder: (context, hovering) {
-        final bg = disabled
-            ? const Color(0xFFF8FAFC).withValues(alpha: 0.5)
-            : hovering
+        final bg =
+            disabled
+                ? const Color(0xFFF8FAFC).withValues(alpha: 0.5)
+                : hovering
                 ? _purple
                 : const Color(0xFFF8FAFC);
-        final textColor = disabled
-            ? _purple.withValues(alpha: 0.4)
-            : hovering
+        final textColor =
+            disabled
+                ? _purple.withValues(alpha: 0.4)
+                : hovering
                 ? Colors.white
                 : _purple;
-        final borderColor = disabled
-            ? _purple.withValues(alpha: 0.3)
-            : _purple;
+        final borderColor = disabled ? _purple.withValues(alpha: 0.3) : _purple;
 
         return SizedBox(
           width: width,

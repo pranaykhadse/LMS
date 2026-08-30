@@ -32,11 +32,7 @@ bool _watchIsOnline(WidgetRef ref) {
 /// The phone slide-out navigation drawer. Desktop/tablet use a horizontal
 /// nav bar in LmsAppBar instead (see that file's `_DesktopNavBar`).
 class AppDrawer extends ConsumerWidget {
-  const AppDrawer({
-    super.key,
-    this.selectedLabel,
-    this.selectedSubLabel,
-  });
+  const AppDrawer({super.key, this.selectedLabel, this.selectedSubLabel});
 
   /// The top-level nav item label that should appear highlighted
   /// (e.g. 'Dashboard', 'Course Catalog', or a group label like
@@ -68,6 +64,7 @@ class AppDrawer extends ConsumerWidget {
       'My Completed Courses',
       'My Development Plan',
       'My Required Courses',
+      'My Recomended Courses',
     ];
     const pointsBadgesChildren = ['Redeem your Points', 'Badges'];
 
@@ -181,6 +178,23 @@ class AppDrawer extends ConsumerWidget {
                               context,
                               CoursesModule.construct(
                                 CoursesModule.requiredCourses,
+                              ),
+                            );
+                          },
+                        ),
+                        // Nav ref: sub-nav label is literally "My
+                        // Recomended Courses" (typo, confirmed against
+                        // `origin/staging`'s bluetheme_layout.php).
+                        _SubNavItem(
+                          icon: LucideIcons.clipboardList,
+                          label: 'My Recomended Courses',
+                          selected: subSel == 'My Recomended Courses',
+                          onTap: () {
+                            _close(context);
+                            _goTo(
+                              context,
+                              CoursesModule.construct(
+                                CoursesModule.recommendedCourses,
                               ),
                             );
                           },
@@ -351,11 +365,7 @@ class _NavCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: 22,
-                color: selected ? _purple : _itemText,
-              ),
+              Icon(icon, size: 22, color: selected ? _purple : _itemText),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
@@ -409,10 +419,7 @@ class _ExpandableNavCardState extends State<_ExpandableNavCard>
       duration: const Duration(milliseconds: 220),
       value: widget.selected ? 1.0 : 0.0,
     );
-    _expandAnim = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
+    _expandAnim = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
   }
 
   @override
@@ -459,10 +466,7 @@ class _ExpandableNavCardState extends State<_ExpandableNavCard>
             onTap: _toggle,
             borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
                 children: [
                   Icon(
@@ -522,9 +526,7 @@ class _CardShell extends StatelessWidget {
         color: selected ? _lavender : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: selected
-              ? _purple.withOpacity(0.18)
-              : FigmaTokens.cardBorders,
+          color: selected ? _purple.withOpacity(0.18) : FigmaTokens.cardBorders,
           width: 1,
         ),
       ),
@@ -612,9 +614,8 @@ class _SubItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = item.disabled
-        ? _muted
-        : (item.selected ? _purple : _itemText);
+    final color =
+        item.disabled ? _muted : (item.selected ? _purple : _itemText);
 
     return Material(
       color: Colors.transparent,
@@ -626,15 +627,16 @@ class _SubItemTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: item.selected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            boxShadow: item.selected
-                ? [
-                    const BoxShadow(
-                      color: Color(0x14000000),
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ]
-                : null,
+            boxShadow:
+                item.selected
+                    ? [
+                      const BoxShadow(
+                        color: Color(0x14000000),
+                        blurRadius: 6,
+                        offset: Offset(0, 2),
+                      ),
+                    ]
+                    : null,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
@@ -651,9 +653,8 @@ class _SubItemTile extends StatelessWidget {
                   style: TextStyle(
                     color: color,
                     fontSize: 13.5,
-                    fontWeight: item.selected
-                        ? FontWeight.w700
-                        : FontWeight.w500,
+                    fontWeight:
+                        item.selected ? FontWeight.w700 : FontWeight.w500,
                     height: 1.3,
                   ),
                 ),

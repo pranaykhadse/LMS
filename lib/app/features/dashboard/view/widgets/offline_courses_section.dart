@@ -6,6 +6,7 @@ import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
+import 'package:lms/app/core/utils/dev_image_proxy.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
@@ -256,6 +257,17 @@ class _ImgFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset('assets/images/login-bg.png', fit: BoxFit.cover);
+    // CSS ref, confirmed against `origin/staging`: the real fallback for a
+    // course with no logo is `/dist/images/course-bg.svg`, not
+    // `assets/images/login-bg.png` (a LOGIN page background), which this
+    // was using apparently by copy/paste.
+    return Image.network(
+      devProxiedImageUrl(
+        'https://staging.trainingpipeline.com/backend/web/dist/images/course-bg.svg',
+      ),
+      fit: BoxFit.cover,
+      errorBuilder:
+          (_, __, ___) => const ColoredBox(color: Color(0xFFF1F5F9)),
+    );
   }
 }

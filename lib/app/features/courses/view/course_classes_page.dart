@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -27,11 +27,13 @@ import 'package:lms/app/features/courses/view/content_viewer/pdf_content_viewer.
 import 'package:lms/app/features/courses/view/content_viewer/video_content_viewer.dart';
 import 'package:lms/app/features/courses/view/widgets/class_status_chip.dart';
 import 'package:lms/app/features/courses/view/widgets/download_button.dart';
+import 'package:lms/app/features/courses/view/widgets/reviews_modal.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 bool _watchIsOnline(WidgetRef ref) {
   final isManualOffline = ref.watch(OfflineModeNotifier.provider);
@@ -83,8 +85,11 @@ class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
       backgroundColor: _detailBackground,
       selectedLabel: 'Course Catalog',
       onBack: () => _goBackToCatalog(context, ref),
-      onRefresh: () =>
-          ref.read(CourseJoinDetailViewModel.provider(courseId).notifier).fetch(),
+      onRefresh:
+          () =>
+              ref
+                  .read(CourseJoinDetailViewModel.provider(courseId).notifier)
+                  .fetch(),
       body: _DetailBody(courseId: courseId, state: state),
     );
   }
@@ -111,7 +116,10 @@ class _DetailBody extends ConsumerWidget {
           );
         }
         return _DetailError(
-          message: friendlyErrorMessage(state.error, 'Unable to load course details.'),
+          message: friendlyErrorMessage(
+            state.error,
+            'Unable to load course details.',
+          ),
           onRetry:
               () =>
                   ref
@@ -148,7 +156,15 @@ class _DetailBody extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: 16),
-                        _CourseHero(detail: detail),
+                        _CourseHero(
+                          detail: detail,
+                          onTapReviews:
+                              () => showReviewsModal(
+                                context,
+                                ref,
+                                courseId: detail.id,
+                              ),
+                        ),
                         Transform.translate(
                           offset: const Offset(0, -18),
                           child: _LaunchPanel(detail: detail),
@@ -157,7 +173,8 @@ class _DetailBody extends ConsumerWidget {
                         // through DownloadButton (encrypted, in-app-only,
                         // never a raw external link) rather than opened via
                         // the system browser/default PDF app.
-                        if (detail.participantGuide != null && detail.isEnrolled)
+                        if (detail.participantGuide != null &&
+                            detail.isEnrolled)
                           _InfoCard(
                             child: Align(
                               alignment: Alignment.centerLeft,
@@ -166,7 +183,8 @@ class _DetailBody extends ConsumerWidget {
                                 label: 'Participant Guide',
                                 icon: Icons.picture_as_pdf_rounded,
                                 courseClass: null,
-                                builder: (ctx, file) => PdfContentViewer(file: file),
+                                builder:
+                                    (ctx, file) => PdfContentViewer(file: file),
                               ),
                             ),
                           ),
@@ -174,8 +192,14 @@ class _DetailBody extends ConsumerWidget {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(flex: 3, child: _DescriptionCard(detail: detail)),
-                              Expanded(flex: 2, child: _CourseImageCard(url: detail.logo)),
+                              Expanded(
+                                flex: 3,
+                                child: _DescriptionCard(detail: detail),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: _CourseImageCard(url: detail.logo),
+                              ),
                             ],
                           )
                         else ...[
@@ -187,7 +211,6 @@ class _DetailBody extends ConsumerWidget {
                           courseId: detail.id,
                           items: detail.structures,
                           isEnrolled: detail.isEnrolled,
-                          courseObjective: detail.objective,
                           courseTitle: detail.title,
                         ),
                         const AppFooter(),
@@ -212,7 +235,8 @@ void _goBackToCatalog(BuildContext context, WidgetRef ref) {
   // whatever got left behind if something else invalidated it while this
   // detail page was open.
   final catalog = ref.read(CourseCatalogViewModel.provider);
-  final hasFilter = catalog.search.isNotEmpty ||
+  final hasFilter =
+      catalog.search.isNotEmpty ||
       catalog.skillId != null ||
       catalog.behaviorId != null;
   if (hasFilter) {
@@ -227,8 +251,9 @@ void _goBackToCatalog(BuildContext context, WidgetRef ref) {
 }
 
 class _CourseHero extends StatelessWidget {
-  const _CourseHero({required this.detail});
+  const _CourseHero({required this.detail, required this.onTapReviews});
   final CourseJoinDetail detail;
+  final VoidCallback onTapReviews;
 
   @override
   Widget build(BuildContext context) {
@@ -239,33 +264,129 @@ class _CourseHero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // CSS ref, confirmed against `origin/staging`'s joinCourse.php:
+          // #page-heading h2 — 32px/weight700 (was 24px/800), letter-
+          // spacing -0.5px.
           Text(
             detail.title,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
+              fontSize: 32,
+              fontWeight: FontWeight.w700,
               height: 1.18,
+              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 10),
-          if (detail.isEnrolled && detail.allowRating)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .15),
-                border: Border.all(color: Colors.white.withValues(alpha: .36)),
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: const Text(
-                'Add Rating',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
+          // CSS/markup ref, confirmed against `origin/staging`'s
+          // _rating_summary.php: `.average-rating-section` — inline-flex
+          // row, gap 12px, containing (in order): star rating, numeric
+          // average, and (if `display_rating`) a review-count pill, then
+          // (if `allow_rating`) the "Add Rating" pill — both pills share
+          // `#page-heading .course-rating-summary a`'s styling (bg
+          // white@.15, border white@.25, radius 30, padding 4px 12px).
+          // `CourseJoinDetail.displayRating`/`averageRating`/
+          // `ratingCount` now parsed from `actionJoinCourseDetail`'s
+          // payload, which already dumps the whole Course model
+          // (including these columns) — was previously left unparsed and
+          // flagged as a backend gap that, on closer look, isn't one.
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              if (detail.displayRating) ...[
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _HeroStars(rating: detail.averageRating),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${detail.averageRating.toStringAsFixed(1)}/5',
+                      style: const TextStyle(
+                        color: Color(0xE6FFFFFF),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
+                _HeroPill(
+                  onTap: onTapReviews,
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: '${detail.ratingCount} '),
+                        TextSpan(
+                          text: detail.ratingCount == 1 ? 'review' : 'reviews',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              if (detail.allowRating)
+                const _HeroPill(child: Text('Add Rating')),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeroStars extends StatelessWidget {
+  const _HeroStars({required this.rating});
+  final double rating;
+
+  @override
+  Widget build(BuildContext context) {
+    // CSS ref: .rating-stars { color: #ffa534; font-size: 16px; }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (i) {
+        IconData icon;
+        if (i < rating.floor()) {
+          icon = Icons.star_rounded;
+        } else if (i < rating) {
+          icon = Icons.star_half_rounded;
+        } else {
+          icon = Icons.star_border_rounded;
+        }
+        return Icon(icon, color: const Color(0xFFFFA534), size: 16);
+      }),
+    );
+  }
+}
+
+class _HeroPill extends StatelessWidget {
+  const _HeroPill({required this.child, this.onTap});
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .15),
+            border: Border.all(color: Colors.white.withValues(alpha: .25)),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: DefaultTextStyle(
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            child: child,
+          ),
+        ),
       ),
     );
   }
@@ -293,11 +414,12 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     if (classes.isNotEmpty) {
       await showDialog(
         context: context,
-        builder: (_) => _MultiClassRegisterDialog(
-          courseTitle: widget.detail.title,
-          classes: classes,
-          onConfirm: _doEnroll,
-        ),
+        builder:
+            (_) => _MultiClassRegisterDialog(
+              courseTitle: widget.detail.title,
+              classes: classes,
+              onConfirm: _doEnroll,
+            ),
       );
     } else {
       await _doEnroll(widget.detail.classLearningEventSelections);
@@ -315,23 +437,31 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       Toast.success(context, result.message ?? 'Enrolled successfully.');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message ?? 'Unable to enroll in this course.')),
+        SnackBar(
+          content: Text(result.message ?? 'Unable to enroll in this course.'),
+        ),
       );
     }
   }
 
   Future<void> _cancel() async {
     setState(() => _cancelling = true);
-    final result = await ref
-        .read(CourseJoinDetailViewModel.provider(widget.detail.id).notifier)
-        .cancelRegistration();
+    final result =
+        await ref
+            .read(CourseJoinDetailViewModel.provider(widget.detail.id).notifier)
+            .cancelRegistration();
     if (!mounted) return;
     setState(() => _cancelling = false);
     if (result.success) {
-      Toast.success(context, result.message ?? 'Registration cancelled successfully.');
+      Toast.success(
+        context,
+        result.message ?? 'Registration cancelled successfully.',
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message ?? 'Unable to cancel registration.')),
+        SnackBar(
+          content: Text(result.message ?? 'Unable to cancel registration.'),
+        ),
       );
     }
   }
@@ -424,74 +554,96 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
         margin: EdgeInsets.zero,
         child: Column(
           children: [
-          // Only show the countdown once the learner is actually enrolled -
-          // showing a countdown toward a session they haven't registered
-          // for is misleading. On wide screens it sits inline with the
-          // primary action button, matching the reference's single header
-          // bar instead of stacking them.
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final statusBadge = _statusBadge(detail);
-              if (constraints.maxWidth < 620) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            // Only show the countdown once the learner is actually enrolled -
+            // showing a countdown toward a session they haven't registered
+            // for is misleading. On wide screens it sits inline with the
+            // primary action button, matching the reference's single header
+            // bar instead of stacking them.
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final statusBadge = _statusBadge(detail);
+                if (constraints.maxWidth < 620) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (hasCountdown) ...[
+                        countdown,
+                        const SizedBox(height: 20),
+                      ],
+                      statusBadge,
+                      const SizedBox(height: 20),
+                      SizedBox(width: double.infinity, child: _actionButton()),
+                    ],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    if (hasCountdown) ...[countdown, const SizedBox(height: 20)],
-                    statusBadge,
-                    const SizedBox(height: 20),
-                    SizedBox(width: double.infinity, child: _actionButton()),
+                    if (hasCountdown) countdown,
+                    Expanded(child: Center(child: statusBadge)),
+                    _actionButton(),
                   ],
                 );
-              }
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (hasCountdown) countdown,
-                  Expanded(child: Center(child: statusBadge)),
-                  _actionButton(),
-                ],
-              );
-            },
-          ),
-          if (detail.learningPath != null) ...[
-            const SizedBox(height: 26),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF4F1FF),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Wrap(
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  const Text(
-                    'Learning Path: ',
-                    style: TextStyle(
-                      color: _detailInk,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF6F3FF),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Text(
-                      detail.learningPath!,
-                      style: const TextStyle(color: _detailPurple),
-                    ),
-                  ),
-                ],
-              ),
+              },
             ),
+            if (detail.learningPath != null) ...[
+              const SizedBox(height: 26),
+              // CSS ref, confirmed against `origin/staging`'s
+              // joinCourse.php: `#launches-haad .learning-path` is
+              // `flex-item-3` — a sibling of the countdown/status/enroll-
+              // button in the SAME flex row on desktop with no box of its
+              // own, but this app is mobile-only, and the `@media
+              // (max-width:768px)` override IS boxed: bg
+              // `--purple-tint-bg` (#F5F3FF, was #F4F1FF), padding 12px
+              // uniform (was 16/20), radius 10 (was 8), centered. `.learning-
+              // path h3` is plain 14px/weight600/text-dark (was 800-weight,
+              // implying a bolder "label"), and the pill (`.learning-path
+              // span`) is a light BLUE badge (bg #E0F2FE, color #0369A1,
+              // padding 4px 12px, radius 20, 12px/600) — not a purple pill
+              // at all (was bg #F6F3FF/purple text/padding 14/12/radius22).
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F3FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    const Text(
+                      'Learning Path: ',
+                      style: TextStyle(
+                        color: _detailInk,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(left: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0F2FE),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        detail.learningPath!,
+                        style: const TextStyle(
+                          color: Color(0xFF0369A1),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
-        ],
         ),
       ),
     );
@@ -503,11 +655,20 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   Widget _statusBadge(CourseJoinDetail detail) {
     final isClosed = detail.launchStatus.toLowerCase().contains('closed');
     final progress = isClosed ? 1.0 : detail.progressPercentage;
+    // CSS ref: #launches-haad .booked — bg #F5F3FF (was #F6F3FF), border
+    // 1px rgba(92,82,212,.08) — a distinct indigo (was the generic
+    // cardBorders token, then briefly this app's purple in an earlier
+    // fix — `rgb(92,82,212)` is `#5C52D4`, not `--primary-first`
+    // `#693D94`), padding 8px 16px. .booked h3 — 13px/weight700/
+    // uppercase/letter-spacing .5px (was unspecified size, weight 800,
+    // no letter-spacing). .pie_progress — 32x32 (was 36x36).
     return Container(
-      padding: const EdgeInsets.fromLTRB(17, 8, 10, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF6F3FF),
-        border: Border.all(color: FigmaTokens.cardBorders),
+        color: const Color(0xFFF5F3FF),
+        border: Border.all(
+          color: const Color(0xFF5C52D4).withValues(alpha: 0.08),
+        ),
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(
@@ -517,13 +678,15 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
             detail.launchStatus.toUpperCase(),
             style: const TextStyle(
               color: _detailPurple,
-              fontWeight: FontWeight.w800,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
           ),
           const SizedBox(width: 12),
           SizedBox(
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -551,47 +714,80 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
 
   Widget _actionButton() {
     final detail = widget.detail;
+    // CSS ref: #launches-haad .primary-btn — padding 12px 28px (was 20
+    // horizontal only), radius 12 (was 10), 14px/weight600 (was 800),
+    // shadow 0 4px 14px var(--purple-shadow) i.e. rgba(92,82,212,.2) —
+    // was no shadow at all (elevation 0); hover shadow 0 6px 20px
+    // rgba(92,82,212,.35). Wrapped in a Container to get the exact CSS
+    // shadow shape/color, since Material's elevation model can't
+    // reproduce it via ElevatedButton's own shadowColor/elevation.
     return HoverBuilder(
-      builder: (context, hovering) => ElevatedButton.icon(
-        onPressed: (_enrolling || _cancelling)
-            ? null
-            : () {
-                if (detail.isEnrolled) {
-                  _showCancelConfirmationDialog(context, onConfirm: _cancel);
-                } else {
-                  _enroll();
-                }
-              },
-        icon: (_enrolling || _cancelling)
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              )
-            : const Icon(Icons.app_registration_rounded, size: 18),
-        label: Text(
-          _enrolling
-              ? 'Enrolling…'
-              : _cancelling
-                  ? 'Cancelling…'
-                  : detail.primaryAction,
-        ),
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(0, 47),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          backgroundColor:
-              hovering ? FigmaTokens.purpleHover : _detailPurple,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
+      builder:
+          (context, hovering) => Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(
+                    0xFF5C52D4,
+                  ).withValues(alpha: hovering ? 0.35 : 0.2),
+                  blurRadius: hovering ? 20 : 14,
+                  offset: Offset(0, hovering ? 6 : 4),
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed:
+                  (_enrolling || _cancelling)
+                      ? null
+                      : () {
+                        if (detail.isEnrolled) {
+                          _showCancelConfirmationDialog(
+                            context,
+                            onConfirm: _cancel,
+                          );
+                        } else {
+                          _enroll();
+                        }
+                      },
+              icon:
+                  (_enrolling || _cancelling)
+                      ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                      : const Icon(Icons.app_registration_rounded, size: 18),
+              label: Text(
+                _enrolling
+                    ? 'Enrolling…'
+                    : _cancelling
+                    ? 'Cancelling…'
+                    : detail.primaryAction,
+              ),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(0, 47),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 12,
+                ),
+                backgroundColor:
+                    hovering ? FigmaTokens.purpleHover : _detailPurple,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                textStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      ),
     );
   }
 
@@ -616,32 +812,37 @@ class _DescriptionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // CSS ref: .content-text h1 margin-bottom 14 (was 28); .content-
+          // text p — 15px/lh1.7/#6B7280 (was 16/1.55/noteBodyText's
+          // #6A7282, one hex digit off).
           const _SectionTitle('Course Description'),
           if (detail.description.isNotEmpty) ...[
-            const SizedBox(height: 28),
+            const SizedBox(height: 14),
             Text(
               detail.description,
               maxLines: 5,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: _detailMuted,
-                height: 1.55,
-                fontSize: 16,
+                color: Color(0xFF6B7280),
+                height: 1.7,
+                fontSize: 15,
               ),
             ),
           ],
-          const SizedBox(height: 28),
+          // CSS ref: .content-text h1:not(:first-child) — margin-top 24,
+          // padding-top 20, border-top 1px solid var(--border-light).
+          const SizedBox(height: 24),
           const Divider(color: FigmaTokens.cardBorders),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           const _SectionTitle('Learning Objectives'),
           if (detail.objective.isNotEmpty) ...[
-            const SizedBox(height: 28),
+            const SizedBox(height: 14),
             Text(
               detail.objective,
               style: const TextStyle(
-                color: _detailMuted,
-                height: 1.55,
-                fontSize: 16,
+                color: Color(0xFF6B7280),
+                height: 1.7,
+                fontSize: 15,
               ),
             ),
           ],
@@ -657,21 +858,29 @@ class _CourseImageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: .emotional-leadership — the card's own 16px padding
+    // applies here too (unlike before, which zeroed it out to run the
+    // image edge-to-edge); the image itself gets its own 12px radius
+    // (distinct from the card's 16px) and a 380px max-height (was a flat
+    // 220px).
     return _InfoCard(
-      padding: EdgeInsets.zero,
-      child: SizedBox(
-        width: double.infinity,
-        height: 220,
-        child:
-            url == null
-                ? const _ImageFallback()
-                : Image.network(
-                  url!,
-                  width: double.infinity,
-                  height: 220,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const _ImageFallback(),
-                ),
+      padding: const EdgeInsets.all(16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          width: double.infinity,
+          height: 380,
+          child:
+              url == null
+                  ? const _ImageFallback()
+                  : Image.network(
+                    url!,
+                    width: double.infinity,
+                    height: 380,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const _ImageFallback(),
+                  ),
+        ),
       ),
     );
   }
@@ -689,28 +898,41 @@ class _SkillsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionTitle('Skills or Behaviors'),
+          // CSS ref: #skills-behavior .skills h2 { margin-bottom: 16px }.
           if (skills.isNotEmpty) ...[
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            // CSS ref: .skills-list li — bg var(--purple-tint-bg) #F5F3FF
+            // (was #F6F3FF, one hex digit off), border 1px rgba(92,82,
+            // 212,.08) (was the generic cardBorders token), radius 20
+            // (was 22). .skills-list li a — padding 6px 16px (was
+            // 12/18), 13px/weight600 (was default size).
             Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 8,
+              runSpacing: 8,
               children:
                   skills
                       .map(
                         (skill) => Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
+                            horizontal: 16,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF6F3FF),
-                            border: Border.all(color: FigmaTokens.cardBorders),
-                            borderRadius: BorderRadius.circular(22),
+                            color: const Color(0xFFF5F3FF),
+                            // rgba(92,82,212,.08) — the same distinct
+                            // indigo (#5C52D4), not this app's purple.
+                            border: Border.all(
+                              color: const Color(
+                                0xFF5C52D4,
+                              ).withValues(alpha: 0.08),
+                            ),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             skill,
                             style: const TextStyle(
                               color: _detailPurple,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -730,27 +952,28 @@ class _StructureCard extends StatelessWidget {
     required this.courseId,
     required this.items,
     required this.isEnrolled,
-    required this.courseObjective,
     required this.courseTitle,
   });
   final int courseId;
   final List<CourseStructureItem> items;
   final bool isEnrolled;
-  final String courseObjective;
   final String courseTitle;
 
   @override
   Widget build(BuildContext context) {
     return _InfoCard(
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 88),
-      padding: items.isEmpty
-          ? const EdgeInsets.all(22)
-          : const EdgeInsets.fromLTRB(22, 22, 22, 8),
+      padding:
+          items.isEmpty
+              ? const EdgeInsets.all(22)
+              : const EdgeInsets.fromLTRB(22, 22, 22, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionTitle('Course Structure'),
-          const SizedBox(height: 28),
+          // CSS ref: .structure-block h1 — 22px, margin-bottom 24px
+          // (was 20px sized, 28px gap).
+          const _SectionTitle('Course Structure', large: true),
+          const SizedBox(height: 24),
           if (items.isEmpty)
             const Text(
               'No course structure is available.',
@@ -773,7 +996,11 @@ class _StructureCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.swipe_rounded, size: 14, color: _detailMuted),
+                            Icon(
+                              Icons.swipe_rounded,
+                              size: 14,
+                              color: _detailMuted,
+                            ),
                             SizedBox(width: 4),
                             Text(
                               'Swipe to see Next Session, Status & Actions',
@@ -801,7 +1028,6 @@ class _StructureCard extends StatelessWidget {
                                 courseId: courseId,
                                 item: items[i],
                                 isEnrolled: isEnrolled,
-                                courseObjective: courseObjective,
                                 courseTitle: courseTitle,
                               ),
                             ),
@@ -829,7 +1055,8 @@ class _StructureTableScroller extends StatefulWidget {
   final Widget child;
 
   @override
-  State<_StructureTableScroller> createState() => _StructureTableScrollerState();
+  State<_StructureTableScroller> createState() =>
+      _StructureTableScrollerState();
 }
 
 class _StructureTableScrollerState extends State<_StructureTableScroller> {
@@ -861,16 +1088,20 @@ class _StructureHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: #course-class-report table thead th — bg #F8FAFC (was an
+    // invented purple tint #EDEAF6), color #475569 (was the muted
+    // token), 12px/weight600/letter-spacing 0.5px (was 11px/800/0.3),
+    // padding 16px 20px (was 16/12/16/12).
     const style = TextStyle(
-      color: _detailMuted,
-      fontSize: 11,
-      fontWeight: FontWeight.w800,
-      letterSpacing: .3,
+      color: Color(0xFF475569),
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      letterSpacing: .5,
     );
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFEDEAF6),
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
       ),
       child: const Row(
@@ -912,14 +1143,12 @@ class _StructureItemCard extends ConsumerStatefulWidget {
     required this.courseId,
     required this.item,
     required this.isEnrolled,
-    required this.courseObjective,
     required this.courseTitle,
   });
   final int index;
   final int courseId;
   final CourseStructureItem item;
   final bool isEnrolled;
-  final String courseObjective;
   final String courseTitle;
 
   @override
@@ -959,10 +1188,15 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     if (!mounted) return;
     setState(() => _cancelling = false);
     if (result.success) {
-      Toast.success(context, result.message ?? 'Registration cancelled successfully.');
+      Toast.success(
+        context,
+        result.message ?? 'Registration cancelled successfully.',
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.message ?? 'Unable to cancel registration.')),
+        SnackBar(
+          content: Text(result.message ?? 'Unable to cancel registration.'),
+        ),
       );
     }
   }
@@ -987,18 +1221,23 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     }
     await showDialog(
       context: context,
-      builder: (_) => _SessionRegisterDialog(
-        courseTitle: widget.courseTitle,
-        event: event,
-        onConfirm: () => _registerClass(classId, event.learningEventClassId),
-      ),
+      builder:
+          (_) => _SessionRegisterDialog(
+            courseTitle: widget.courseTitle,
+            event: event,
+            onConfirm:
+                () => _registerClass(classId, event.learningEventClassId),
+          ),
     );
   }
 
   Future<void> _registerClass(int classId, int? learningEventClassId) async {
     final result = await ref
         .read(CourseJoinDetailViewModel.provider(widget.courseId).notifier)
-        .registerClass(classId: classId, learningEventClassId: learningEventClassId);
+        .registerClass(
+          classId: classId,
+          learningEventClassId: learningEventClassId,
+        );
     if (!mounted) return;
     if (result.success) {
       Toast.success(context, result.message ?? 'Registered successfully.');
@@ -1060,17 +1299,18 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     if (classId == null) return;
     ref
         .read(RoasterViewModel.provider(widget.courseId.toString()).notifier)
-        .markAsRead(CourseClass(
-          courseId: widget.courseId.toString(),
-          classId: classId.toString(),
-        ));
+        .markAsRead(
+          CourseClass(
+            courseId: widget.courseId.toString(),
+            classId: classId.toString(),
+          ),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
     final isEnrolled = widget.isEnrolled;
-    final courseObjective = widget.courseObjective;
     final courseTitle = widget.courseTitle;
     // Recomputed against DateTime.now() on every rebuild (see the ticking
     // _timer above) rather than read from item.nextSession, which is a
@@ -1082,21 +1322,24 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     // once its start time passes it's no longer "next", so this uses a
     // strictly-future selector rather than the still-open-through-end one
     // Register/Attend use below.
-    final upcomingEvent = item.learningEvents.isNotEmpty
-        ? _earliestNotYetStartedEvent(item.learningEvents)
-        : null;
-    final liveNextSession = item.learningEvents.isNotEmpty
-        ? (upcomingEvent?.startDateTime != null
-            ? _formatFriendlyMoment(upcomingEvent!.startDateTime!)
-            : null)
-        : (item.nextSession.isNotEmpty ? item.nextSession : null);
+    final upcomingEvent =
+        item.learningEvents.isNotEmpty
+            ? _earliestNotYetStartedEvent(item.learningEvents)
+            : null;
+    final liveNextSession =
+        item.learningEvents.isNotEmpty
+            ? (upcomingEvent?.startDateTime != null
+                ? _formatFriendlyMoment(upcomingEvent!.startDateTime!)
+                : null)
+            : (item.nextSession.isNotEmpty ? item.nextSession : null);
     // Registration/attendance stays open for a session's whole duration -
     // from start through end, not just before it starts - matching the
     // website, so this uses the still-open selector rather than
     // upcomingEvent above.
-    final liveEvent = item.learningEvents.isNotEmpty
-        ? _earliestUpcomingEvent(item.learningEvents)
-        : null;
+    final liveEvent =
+        item.learningEvents.isNotEmpty
+            ? _earliestUpcomingEvent(item.learningEvents)
+            : null;
     // A class with learning_events but none still open has nothing left to
     // register for - hide the Register action instead of leaving it
     // clickable only to fail with a toast.
@@ -1106,24 +1349,67 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     // they can be laid out as a compact Wrap in the ACTION column instead of
     // a full-width stacked Column.
     final actions = <Widget>[
+      // CSS ref: #course-structure .static-list-action-btn .btn-ul
+      // a[title="Details"] — the "Outline CTA" variant: bg white, border
+      // 1.5px var(--border-medium) #E5E7EB, color var(--text-dark)
+      // #111827 (was 32px height/8px radius/ink-token/generic border);
+      // hover: border+text purple, bg var(--purple-tint-bg) #F5F3FF.
+      // Shares the same padding 8/16, radius 10, 13px/weight600, min-
+      // height 38, shadow 0 2px4px rgba(0,0,0,.02) as every action-
+      // column button.
       if (item.showDetails)
-        OutlinedButton.icon(
-          onPressed: () => _showClassDetails(context, courseTitle, courseObjective, item),
-          icon: const Icon(Icons.info_rounded, size: 14),
-          label: const Text('Details'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: _detailInk,
-            side: const BorderSide(color: FigmaTokens.cardBorders),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            minimumSize: const Size(0, 32),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
+        HoverBuilder(
+          builder:
+              (context, hovering) => Container(
+                constraints: const BoxConstraints(minHeight: 38),
+                decoration: const BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x05000000),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: OutlinedButton.icon(
+                  onPressed:
+                      () => _showClassDetails(context, courseTitle, item),
+                  icon: Icon(
+                    Icons.info_rounded,
+                    size: 14,
+                    color: hovering ? _detailPurple : const Color(0xFF111827),
+                  ),
+                  label: const Text('Details'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor:
+                        hovering ? _detailPurple : const Color(0xFF111827),
+                    backgroundColor:
+                        hovering ? const Color(0xFFF5F3FF) : Colors.white,
+                    side: BorderSide(
+                      color: hovering ? _detailPurple : const Color(0xFFE5E7EB),
+                      width: 1.5,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    minimumSize: const Size(0, 38),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
         ),
       // Registered Virtual Class or In Person class: Attend Class
       // (Virtual only, via contentUrl) + optional recordings + Cancel
-      if ((item.typeCode == '3' || item.typeCode == '2') && item.isEnrolledInClass) ...[
+      if ((item.typeCode == '3' || item.typeCode == '2') &&
+          item.isEnrolledInClass) ...[
         // Shown for any enrolled Virtual Class regardless of whether a
         // qualifying session link currently exists - the domain/expiry
         // filtering happens at click time in _attendClass, which tells the
@@ -1155,17 +1441,23 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             label: 'Recording',
             icon: Icons.videocam_rounded,
             courseClass: null,
-            builder: (ctx, file) => VideoContentViewer(
-              file: file,
-              courseId: widget.courseId.toString(),
-              classId: item.classId?.toString(),
-            ),
+            builder:
+                (ctx, file) => VideoContentViewer(
+                  file: file,
+                  courseId: widget.courseId.toString(),
+                  classId: item.classId?.toString(),
+                ),
           ),
         ],
         _OnlineActionButton(
           icon: Icons.cancel_outlined,
           label: _cancelling ? 'Cancelling…' : 'Cancel Registration',
-          onPressed: () => _showCancelConfirmationDialog(context, onConfirm: _cancelClass),
+          danger: true,
+          onPressed:
+              () => _showCancelConfirmationDialog(
+                context,
+                onConfirm: _cancelClass,
+              ),
         ),
       ] else if (item.typeCode == '4') ...[
         // Watch Video — the external link (e.g. YouTube, content.
@@ -1176,26 +1468,33 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           _OnlineActionButton(
             icon: Icons.play_circle_outline_rounded,
             label: 'Watch Video',
-            onPressed: () => _openUrl(context, ref, item.videoLinkUrl!, title: item.title),
+            onPressed:
+                () => _openUrl(
+                  context,
+                  ref,
+                  item.videoLinkUrl!,
+                  title: item.title,
+                ),
           ),
       ] else
-        // A Virtual Class or In Person class with no live open session left
-        // has nothing to register for anymore - hide Register instead of
-        // leaving a dead button (see hasRegisterableSession above).
-        if (item.showAction &&
-            ((item.typeCode != '3' && item.typeCode != '2') || hasRegisterableSession))
-          (item.typeCode == '3' || item.typeCode == '2') && isEnrolled
-              ? _OnlineActionButton(
-                  icon: _actionIcon(item.icon),
-                  label: item.actionLabel,
-                  onPressed: _registerForSession,
-                )
-              : _EnrollActionButton(
-                  isEnrolled: isEnrolled,
-                  icon: _actionIcon(item.icon),
-                  label: item.actionLabel,
-                  item: item,
-                ),
+      // A Virtual Class or In Person class with no live open session left
+      // has nothing to register for anymore - hide Register instead of
+      // leaving a dead button (see hasRegisterableSession above).
+      if (item.showAction &&
+          ((item.typeCode != '3' && item.typeCode != '2') ||
+              hasRegisterableSession))
+        (item.typeCode == '3' || item.typeCode == '2') && isEnrolled
+            ? _OnlineActionButton(
+              icon: _actionIcon(item.icon),
+              label: item.actionLabel,
+              onPressed: _registerForSession,
+            )
+            : _EnrollActionButton(
+              isEnrolled: isEnrolled,
+              icon: _actionIcon(item.icon),
+              label: item.actionLabel,
+              item: item,
+            ),
       // downloadUrl is populated straight from the course-structure API
       // response regardless of enrollment, so gate visibility on isEnrolled
       // here too - otherwise non-enrolled learners can see (and use) the
@@ -1207,11 +1506,12 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             label: _downloadLabel(item.typeCode),
             icon: Icons.videocam_rounded,
             courseClass: null,
-            builder: (ctx, file) => VideoContentViewer(
-              file: file,
-              courseId: widget.courseId.toString(),
-              classId: item.classId?.toString(),
-            ),
+            builder:
+                (ctx, file) => VideoContentViewer(
+                  file: file,
+                  courseId: widget.courseId.toString(),
+                  classId: item.classId?.toString(),
+                ),
           )
         else
           DownloadButton(
@@ -1249,7 +1549,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             width: 28,
             child: Text(
               '${widget.index}',
-              style: const TextStyle(color: _detailMuted, fontSize: 13, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                color: _detailMuted,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -1261,19 +1565,28 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // CSS ref: #course-class-report td h6.number — 15px/
+                  // weight600/color var(--text-dark) #111827 (was 14.5/
+                  // 800/ink-token #1E2939). #course-class-report td i —
+                  // 12px/weight500/color var(--text-muted) #9CA3AF (was
+                  // 12.5/unspecified-weight/a bespoke #9AA4B5).
                   Text(
                     item.title,
                     style: const TextStyle(
-                      color: _detailInk,
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF111827),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   if (item.subtitle.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(
                       item.subtitle,
-                      style: const TextStyle(color: Color(0xFF9AA4B5), fontSize: 12.5),
+                      style: const TextStyle(
+                        color: Color(0xFF9CA3AF),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ],
@@ -1291,19 +1604,26 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
               // per-class registration - a learner can be enrolled in the
               // course but still unregistered for a given Virtual Class
               // session.)
-              child: (liveNextSession != null && item.isEnrolledInClass)
-                  // upcomingEvent can be null here even though
-                  // liveNextSession isn't - the raw item.nextSession
-                  // fallback (classes with no learning_events array) has a
-                  // date string but no structured DateTime to count down
-                  // to.
-                  ? (upcomingEvent != null
-                      ? _CompactLaunchCountdown(target: upcomingEvent.startDateTime!)
-                      : Text(
-                          liveNextSession,
-                          style: const TextStyle(color: _detailMuted, fontSize: 12.5, fontWeight: FontWeight.w700),
-                        ))
-                  : const SizedBox.shrink(),
+              child:
+                  (liveNextSession != null && item.isEnrolledInClass)
+                      // upcomingEvent can be null here even though
+                      // liveNextSession isn't - the raw item.nextSession
+                      // fallback (classes with no learning_events array) has a
+                      // date string but no structured DateTime to count down
+                      // to.
+                      ? (upcomingEvent != null
+                          ? _CompactLaunchCountdown(
+                            target: upcomingEvent.startDateTime!,
+                          )
+                          : Text(
+                            liveNextSession,
+                            style: const TextStyle(
+                              color: _detailMuted,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ))
+                      : const SizedBox.shrink(),
             ),
           ),
           // Fixed width, not Expanded(flex: 1) - that squeezed down to
@@ -1312,37 +1632,40 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           // lines. 120px comfortably fits either on one.
           SizedBox(
             width: 120,
-            child: item.status.isEmpty
-                ? const SizedBox.shrink()
-                : Align(
-                    alignment: Alignment.centerLeft,
-                    child: item.classId != null
-                        ? ClassStatusChip(
-                            courseClass: CourseClass(
-                              courseId: widget.courseId.toString(),
-                              classId: item.classId!.toString(),
-                            ),
-                            fallbackStatus: item.status,
-                          )
-                        : _StatusChip(status: item.status),
-                  ),
+            child:
+                item.status.isEmpty
+                    ? const SizedBox.shrink()
+                    : Align(
+                      alignment: Alignment.centerLeft,
+                      child:
+                          item.classId != null
+                              ? ClassStatusChip(
+                                courseClass: CourseClass(
+                                  courseId: widget.courseId.toString(),
+                                  classId: item.classId!.toString(),
+                                ),
+                                fallbackStatus: item.status,
+                              )
+                              : _StatusChip(status: item.status),
+                    ),
           ),
           const SizedBox(width: 16),
           Expanded(
             flex: 6,
-            child: actions.isEmpty
-                ? const SizedBox.shrink()
-                // center, not the default start - Details (an
-                // OutlinedButton) and the chip-styled action buttons don't
-                // render at quite the same height, so top-aligning them in
-                // the Wrap made Details look shifted upward relative to
-                // its neighbors.
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: actions,
-                  ),
+            child:
+                actions.isEmpty
+                    ? const SizedBox.shrink()
+                    // center, not the default start - Details (an
+                    // OutlinedButton) and the chip-styled action buttons don't
+                    // render at quite the same height, so top-aligning them in
+                    // the Wrap made Details look shifted upward relative to
+                    // its neighbors.
+                    : Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: actions,
+                    ),
           ),
         ],
       ),
@@ -1359,37 +1682,104 @@ class _OnlineActionButton extends ConsumerWidget {
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.danger = false,
   });
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
+  // CSS ref: #course-structure .static-list-action-btn .btn-ul
+  // a[title="Cancel"]/.cancelBtn — a distinct "Danger CTA" variant (bg
+  // #FEF2F2, border 1px #FEE2E2, color #DC2626; hover bg #FEE2E2) used
+  // only for Cancel Registration — was rendering identically to every
+  // other action (the purple primary CTA).
+  final bool danger;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOnline = _watchIsOnline(ref);
+    // CSS ref: #course-structure .static-list-action-btn .btn-ul a/button
+    // — padding 8px 16px (was 12 horizontal only), radius 10 (was 8),
+    // 13px/weight600 (was 12.5/700), min-height 38 (was 32), shadow
+    // 0 2px 4px rgba(0,0,0,.02) (was none).
     return HoverBuilder(
-      builder: (context, hovering) => SizedBox(
-        height: 32,
-        child: ElevatedButton.icon(
-          onPressed: isOnline ? onPressed : null,
-          icon: Icon(isOnline ? icon : Icons.cloud_off_rounded, size: 14),
-          label: Text(isOnline ? label : 'Internet required'),
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: !isOnline
-                ? Colors.grey.shade400
-                : (hovering ? FigmaTokens.purpleHover : _detailPurple),
-            disabledBackgroundColor: Colors.grey.shade400,
-            disabledForegroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            elevation: 0,
-            textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      builder:
+          (context, hovering) => Container(
+            constraints: const BoxConstraints(minHeight: 38),
+            decoration: const BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x05000000),
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child:
+                danger
+                    ? OutlinedButton.icon(
+                      onPressed: isOnline ? onPressed : null,
+                      icon: Icon(
+                        isOnline ? icon : Icons.cloud_off_rounded,
+                        size: 14,
+                        color: const Color(0xFFDC2626),
+                      ),
+                      label: Text(isOnline ? label : 'Internet required'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFDC2626),
+                        backgroundColor:
+                            hovering
+                                ? const Color(0xFFFEE2E2)
+                                : const Color(0xFFFEF2F2),
+                        side: const BorderSide(color: Color(0xFFFEE2E2)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        minimumSize: const Size(0, 38),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    )
+                    : ElevatedButton.icon(
+                      onPressed: isOnline ? onPressed : null,
+                      icon: Icon(
+                        isOnline ? icon : Icons.cloud_off_rounded,
+                        size: 14,
+                      ),
+                      label: Text(isOnline ? label : 'Internet required'),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor:
+                            !isOnline
+                                ? Colors.grey.shade400
+                                : (hovering
+                                    ? FigmaTokens.purpleHover
+                                    : _detailPurple),
+                        disabledBackgroundColor: Colors.grey.shade400,
+                        disabledForegroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        minimumSize: const Size(0, 38),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        elevation: 0,
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -1413,26 +1803,47 @@ class _EnrollActionButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (!isEnrolled) {
+      // CSS ref: same #course-structure .static-list-action-btn spec as
+      // _OnlineActionButton — padding 8/16, radius 10, 13px/weight600,
+      // min-height 38, shadow 0 2px 4px rgba(0,0,0,.02).
       return HoverBuilder(
-        builder: (context, hovering) => SizedBox(
-          height: 32,
-          child: ElevatedButton.icon(
-            onPressed: () => _showNotEnrolledDialog(context),
-            icon: Icon(icon, size: 14),
-            label: Text(label),
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor:
-                  hovering ? FigmaTokens.purpleHover : _detailPurple,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              elevation: 0,
-              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        builder:
+            (context, hovering) => Container(
+              constraints: const BoxConstraints(minHeight: 38),
+              decoration: const BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0x05000000),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () => _showNotEnrolledDialog(context),
+                icon: Icon(icon, size: 14),
+                label: Text(label),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor:
+                      hovering ? FigmaTokens.purpleHover : _detailPurple,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  minimumSize: const Size(0, 38),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  elevation: 0,
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
       );
     }
     return _OnlineActionButton(
@@ -1447,7 +1858,9 @@ class _InfoCard extends StatelessWidget {
   const _InfoCard({
     required this.child,
     this.margin = const EdgeInsets.fromLTRB(12, 0, 12, 24),
-    this.padding = const EdgeInsets.all(22),
+    // CSS ref: .content-text/.skills/#course-structure's card all use
+    // padding: 24px (was 22).
+    this.padding = const EdgeInsets.all(24),
   });
 
   final Widget child;
@@ -1456,17 +1869,24 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref, confirmed against `origin/staging`'s joinCourse.php: every
+    // section on this page (launches-box, content-text, skills, course-
+    // structure) shares the same `--card-bg`/`--card-radius`/`--card-
+    // border`/`--card-shadow` tokens — white, radius 16px (was 12), border
+    // 1px solid #F3F4F6 (was missing), shadow 0 1px 3px rgba(0,0,0,.02)
+    // (was a much heavier ad-hoc 0 10px 20px @.03).
     return Container(
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x08000000),
-            blurRadius: 20,
-            offset: Offset(0, 10),
+            color: Color(0x05000000),
+            blurRadius: 3,
+            offset: Offset(0, 1),
           ),
         ],
       ),
@@ -1476,8 +1896,14 @@ class _InfoCard extends StatelessWidget {
 }
 
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
+  const _SectionTitle(this.text, {this.large = false});
   final String text;
+  // CSS ref: `.structure-block h1` ("Course Structure") is 22px with a
+  // 4×20 accent bar — every other section heading on this page
+  // (`.content-text h1`, `#skills-behavior .skills h2`) is 20px/4×18.
+  // One shared widget, so the Course Structure caller opts into the
+  // larger size explicitly rather than everything being sized the same.
+  final bool large;
 
   @override
   Widget build(BuildContext context) {
@@ -1486,20 +1912,20 @@ class _SectionTitle extends StatelessWidget {
       children: [
         Container(
           width: 4,
-          height: 20,
+          height: large ? 20 : 18,
           decoration: BoxDecoration(
             color: _detailPurple,
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               color: _detailInk,
-              fontSize: 21,
-              fontWeight: FontWeight.w900,
+              fontSize: large ? 22 : 20,
+              fontWeight: FontWeight.w700,
               height: 1.1,
             ),
           ),
@@ -1527,7 +1953,8 @@ class _CompactLaunchCountdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final remaining = target.difference(DateTime.now());
     if (remaining.isNegative) return const SizedBox.shrink();
-    final text = '${remaining.inDays}D - ${remaining.inHours % 24}H - '
+    final text =
+        '${remaining.inDays}D - ${remaining.inHours % 24}H - '
         '${remaining.inMinutes % 60}M - ${remaining.inSeconds % 60}S';
     return Text(
       text,
@@ -1540,7 +1967,6 @@ class _CompactLaunchCountdown extends StatelessWidget {
   }
 }
 
-
 class _TimeBox extends StatelessWidget {
   const _TimeBox({required this.value, required this.label});
   final int value;
@@ -1548,14 +1974,30 @@ class _TimeBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: #launches-haad .timer .count — bg #F5F3FF (was #FAF9FF),
+    // border 1px rgba(92,82,212,.08) (the same distinct indigo, was the
+    // generic cardBorders token), padding 8px 12px (was 14 vertical
+    // only), radius 10, shadow 0 2px 6px rgba(92,82,212,.02) (was none).
+    // .count span (the number) — 18px/weight700/lh1.1 (was 26px/800 —
+    // significantly oversized). .count p (the label) — 10px/weight600/
+    // uppercase/color text-secondary #6B7280 (was 9px/800/muted token).
     return Container(
       width: 62,
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: const Color(0xFFFAF9FF),
-        border: Border.all(color: FigmaTokens.cardBorders),
+        color: const Color(0xFFF5F3FF),
+        border: Border.all(
+          color: const Color(0xFF5C52D4).withValues(alpha: 0.08),
+        ),
         borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF5C52D4).withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1564,17 +2006,18 @@ class _TimeBox extends StatelessWidget {
             value.toString().padLeft(2, '0'),
             style: const TextStyle(
               color: _detailPurple,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              height: 1.1,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: const TextStyle(
-              color: _detailMuted,
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
+              color: Color(0xFF6B7280),
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -1625,23 +2068,40 @@ class _DetailError extends StatelessWidget {
 
 IconData _actionIcon(CourseStructureIcon icon) {
   switch (icon) {
-    case CourseStructureIcon.register:       return Icons.how_to_reg_rounded;
-    case CourseStructureIcon.video:          return Icons.videocam_rounded;
-    case CourseStructureIcon.article:        return Icons.article_rounded;
-    case CourseStructureIcon.webpage:        return Icons.language_rounded;
-    case CourseStructureIcon.discussionBoard: return Icons.forum_rounded;
-    case CourseStructureIcon.tasks:          return Icons.task_alt_rounded;
-    case CourseStructureIcon.coaches:        return Icons.people_rounded;
-    case CourseStructureIcon.insights:       return Icons.bar_chart_rounded;
-    case CourseStructureIcon.certification:  return Icons.workspace_premium_rounded;
-    case CourseStructureIcon.discussionGuru: return Icons.chat_rounded;
-    case CourseStructureIcon.link:           return Icons.link_rounded;
-    case CourseStructureIcon.agreement:      return Icons.edit_rounded;
-    case CourseStructureIcon.details:        return Icons.info_rounded;
+    case CourseStructureIcon.register:
+      return Icons.how_to_reg_rounded;
+    case CourseStructureIcon.video:
+      return Icons.videocam_rounded;
+    case CourseStructureIcon.article:
+      return Icons.article_rounded;
+    case CourseStructureIcon.webpage:
+      return Icons.language_rounded;
+    case CourseStructureIcon.discussionBoard:
+      return Icons.forum_rounded;
+    case CourseStructureIcon.tasks:
+      return Icons.task_alt_rounded;
+    case CourseStructureIcon.coaches:
+      return Icons.people_rounded;
+    case CourseStructureIcon.insights:
+      return Icons.bar_chart_rounded;
+    case CourseStructureIcon.certification:
+      return Icons.workspace_premium_rounded;
+    case CourseStructureIcon.discussionGuru:
+      return Icons.chat_rounded;
+    case CourseStructureIcon.link:
+      return Icons.link_rounded;
+    case CourseStructureIcon.agreement:
+      return Icons.edit_rounded;
+    case CourseStructureIcon.details:
+      return Icons.info_rounded;
   }
 }
 
-void _handleClassAction(BuildContext context, WidgetRef ref, CourseStructureItem item) {
+void _handleClassAction(
+  BuildContext context,
+  WidgetRef ref,
+  CourseStructureItem item,
+) {
   final url = item.contentUrl;
   switch (item.typeCode) {
     case '4':
@@ -1664,16 +2124,25 @@ void _handleClassAction(BuildContext context, WidgetRef ref, CourseStructureItem
 
 String _downloadLabel(String typeCode) {
   switch (typeCode) {
-    case '4': return 'Video';
-    case '5': return 'Article';
-    case '15': return 'Guide';
-    case '19': return 'Agreement';
-    default: return 'File';
+    case '4':
+      return 'Video';
+    case '5':
+      return 'Article';
+    case '15':
+      return 'Guide';
+    case '19':
+      return 'Agreement';
+    default:
+      return 'File';
   }
 }
 
-Future<void> _openUrl(BuildContext context, WidgetRef ref, String url,
-    {String? title}) async {
+Future<void> _openUrl(
+  BuildContext context,
+  WidgetRef ref,
+  String url, {
+  String? title,
+}) async {
   await InAppWebViewPage.showWithAuth(context, ref, url: url, title: title);
 }
 
@@ -1696,7 +2165,8 @@ LearningEvent? _earliestUpcomingEvent(List<LearningEvent> events) {
     // through end - not just before it starts, matching the website.
     final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
     if (!stillOpen) continue;
-    if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
+    if (earliest == null || start.isBefore(earliest.startDateTime!))
+      earliest = event;
   }
   return earliest;
 }
@@ -1710,7 +2180,10 @@ LearningEvent? _earliestUpcomingEvent(List<LearningEvent> events) {
 /// expired link. Whatever's left, the one starting soonest wins - whether
 /// it's already in progress (started but not yet ended) or hasn't started
 /// yet. Returns null when nothing qualifies.
-LearningEvent? _selectAttendClassEvent(List<LearningEvent> events, String appHost) {
+LearningEvent? _selectAttendClassEvent(
+  List<LearningEvent> events,
+  String appHost,
+) {
   final now = DateTime.now();
   LearningEvent? earliest;
   for (final event in events) {
@@ -1726,7 +2199,8 @@ LearningEvent? _selectAttendClassEvent(List<LearningEvent> events, String appHos
     final stillOpen = end == null ? !start.isBefore(now) : now.isBefore(end);
     if (!stillOpen) continue;
 
-    if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
+    if (earliest == null || start.isBefore(earliest.startDateTime!))
+      earliest = event;
   }
   return earliest;
 }
@@ -1741,7 +2215,8 @@ LearningEvent? _earliestNotYetStartedEvent(List<LearningEvent> events) {
   for (final event in events) {
     final start = event.startDateTime;
     if (start == null || !start.isAfter(now)) continue;
-    if (earliest == null || start.isBefore(earliest.startDateTime!)) earliest = event;
+    if (earliest == null || start.isBefore(earliest.startDateTime!))
+      earliest = event;
   }
   return earliest;
 }
@@ -1790,7 +2265,9 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 44),
               decoration: const BoxDecoration(
-                gradient: LinearGradient(colors: [_detailPurple, _detailPurple2]),
+                gradient: LinearGradient(
+                  colors: [_detailPurple, _detailPurple2],
+                ),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Stack(
@@ -1809,7 +2286,10 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                     right: -16,
                     child: IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded, color: Colors.white),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -1833,19 +2313,49 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
         const SizedBox(height: 18),
         SizedBox(
           width: double.infinity,
+          // CSS ref: .btn-modal-primary — radius 10 (was 8), 14px/
+          // weight600 (was default/700), hover shadow 0 6px 16px
+          // rgba(92,82,212,.3) — the same indigo used throughout this
+          // page (was no shadow at all).
           child: HoverBuilder(
-            builder: (context, hovering) => ElevatedButton(
-              onPressed: () => setState(() => _confirming = true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    hovering ? FigmaTokens.purpleHover : _detailPurple,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                minimumSize: const Size(0, 46),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Register', style: TextStyle(fontWeight: FontWeight.w700)),
-            ),
+            builder:
+                (context, hovering) => Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow:
+                        hovering
+                            ? [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF5C52D4,
+                                ).withValues(alpha: 0.3),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ]
+                            : null,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () => setState(() => _confirming = true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          hovering ? FigmaTokens.purpleHover : _detailPurple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(0, 46),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Register',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
           ),
         ),
       ],
@@ -1872,36 +2382,89 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            // CSS ref: .btn-modal-secondary — bg #F3F4F6 (was
+            // transparent), color #374151 (was ink token), border 1px
+            // #E5E7EB (already correct — matches the cardBorders token
+            // value exactly), radius 10 (was 8), padding 8px 20px (was
+            // 18/12), 14px/weight600 (was default/700).
             OutlinedButton(
-              onPressed: _submitting ? null : () => setState(() => _confirming = false),
+              onPressed:
+                  _submitting
+                      ? null
+                      : () => setState(() => _confirming = false),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _detailInk,
+                backgroundColor: const Color(0xFFF3F4F6),
+                foregroundColor: const Color(0xFF374151),
                 side: const BorderSide(color: FigmaTokens.cardBorders),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
               ),
-              child: const Text('Previous', style: TextStyle(fontWeight: FontWeight.w700)),
+              child: const Text(
+                'Previous',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
             ),
             const SizedBox(width: 10),
+            // CSS ref: .btn-modal-primary — radius 10 (was 8), 14px/
+            // weight600 (was default/700), hover shadow 0 6px 16px
+            // rgba(92,82,212,.3).
             HoverBuilder(
-              builder: (context, hovering) => ElevatedButton(
-                onPressed: _submitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      hovering ? FigmaTokens.purpleHover : _detailPurple,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: _submitting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
-              ),
+              builder:
+                  (context, hovering) => Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow:
+                          hovering
+                              ? [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF5C52D4,
+                                  ).withValues(alpha: 0.3),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ]
+                              : null,
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _submitting ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            hovering ? FigmaTokens.purpleHover : _detailPurple,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child:
+                          _submitting
+                              ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : const Text(
+                                'Confirm',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                    ),
+                  ),
             ),
           ],
         ),
@@ -1909,97 +2472,16 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
     );
   }
 
-  Widget _sessionCard() {
-    final event = widget.event;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border.all(color: FigmaTokens.cardBorders),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _sessionField('START', _formatSessionMoment(event.startDateTime)),
-              ),
-              Expanded(
-                child: _sessionField('END', _formatSessionMoment(event.endDateTime)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: FigmaTokens.cardBorders),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _sessionField(
-                  'INSTRUCTOR',
-                  event.instructor.isEmpty ? '—' : event.instructor,
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'STATUS',
-                      style: TextStyle(
-                        color: _detailMuted,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: .3,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFD4EDDA),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Available',
-                        style: TextStyle(
-                          color: Color(0xFF276036),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _sessionField(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: _detailMuted,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: .3,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(color: _detailInk, fontWeight: FontWeight.w600)),
-      ],
-    );
-  }
+  // CSS ref: real markup wraps this same Start/End/Instructor/Status content
+  // in `.event-card` (radius 12, padding 14px 18px), the same class used by
+  // the website's radio-select session picker — not `.le-detail-card`
+  // (radius 10), which is a visually-similar but unrelated card style used
+  // by the read-only Details modal (`_classDetails.php`). This dialog skips
+  // the picker step (it always registers for the single earliest upcoming
+  // session), so it renders the non-selectable, no-radio variant of
+  // `.event-card` — the same shape `confirmationPage()`'s JS builds for the
+  // confirm step.
+  Widget _sessionCard() => _EventCard(event: widget.event, showLocation: true);
 }
 
 // ─── Multi-class Register -> Confirm wizard ────────────────────────────────
@@ -2022,7 +2504,8 @@ class _MultiClassRegisterDialog extends StatefulWidget {
   final Future<void> Function(Map<int, int> classLearningEvents) onConfirm;
 
   @override
-  State<_MultiClassRegisterDialog> createState() => _MultiClassRegisterDialogState();
+  State<_MultiClassRegisterDialog> createState() =>
+      _MultiClassRegisterDialogState();
 }
 
 class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
@@ -2033,16 +2516,23 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
   @override
   void initState() {
     super.initState();
-    _selectedEventId = widget.classes
-        .map((item) => _earliestUpcomingEvent(item.learningEvents)?.learningEventClassId)
-        .toList();
+    _selectedEventId =
+        widget.classes
+            .map(
+              (item) =>
+                  _earliestUpcomingEvent(
+                    item.learningEvents,
+                  )?.learningEventClassId,
+            )
+            .toList();
   }
 
   bool get _isConfirmStep => _step >= widget.classes.length;
 
   void _toggleSelection(int index, int? eventId) {
     setState(() {
-      _selectedEventId[index] = _selectedEventId[index] == eventId ? null : eventId;
+      _selectedEventId[index] =
+          _selectedEventId[index] == eventId ? null : eventId;
     });
   }
 
@@ -2050,12 +2540,13 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
     final now = DateTime.now();
     // A session stays selectable through its whole duration - from start
     // through end, not just before it starts - matching the website.
-    final events = item.learningEvents.where((e) {
-      final start = e.startDateTime;
-      if (start == null) return false;
-      final end = e.endDateTime;
-      return end == null ? !start.isBefore(now) : now.isBefore(end);
-    }).toList();
+    final events =
+        item.learningEvents.where((e) {
+          final start = e.startDateTime;
+          if (start == null) return false;
+          final end = e.endDateTime;
+          return end == null ? !start.isBefore(now) : now.isBefore(end);
+        }).toList();
     events.sort((a, b) => a.startDateTime!.compareTo(b.startDateTime!));
     return events;
   }
@@ -2086,7 +2577,9 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 44),
               decoration: const BoxDecoration(
-                gradient: LinearGradient(colors: [_detailPurple, _detailPurple2]),
+                gradient: LinearGradient(
+                  colors: [_detailPurple, _detailPurple2],
+                ),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Stack(
@@ -2105,7 +2598,10 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                     right: -16,
                     child: IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded, color: Colors.white),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -2113,7 +2609,8 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
             ),
             Padding(
               padding: const EdgeInsets.all(20),
-              child: _isConfirmStep ? _buildConfirmStep() : _buildClassStep(_step),
+              child:
+                  _isConfirmStep ? _buildConfirmStep() : _buildClassStep(_step),
             ),
           ],
         ),
@@ -2130,7 +2627,11 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
       children: [
         Text(
           item.title,
-          style: const TextStyle(color: _detailInk, fontSize: 15, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            color: _detailInk,
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
@@ -2141,7 +2642,29 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
         ),
         const SizedBox(height: 12),
         if (events.isEmpty)
-          _sessionCardFor(null)
+          // CSS ref: the placeholder `.event-card` the real JS drops into
+          // `#enroll-class-grid-*` when every session is hidden — plain
+          // centered 13px/#6B7280 text, no label/value grid.
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFFF3F4F6)),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 3,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: const Text(
+              'Currently no classes available!',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+            ),
+          )
         else
           // Always shown as a radio - even with a single session - so the
           // learner explicitly confirms their pick, matching the reference
@@ -2151,44 +2674,61 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
           ...events.map(
             (event) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: InkWell(
-                onTap: () => _toggleSelection(index, event.learningEventClassId),
-                borderRadius: BorderRadius.circular(10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Radio<int?>(
-                      value: event.learningEventClassId,
-                      groupValue: _selectedEventId[index],
-                      toggleable: true,
-                      onChanged: (value) => setState(() => _selectedEventId[index] = value),
-                      activeColor: _detailPurple,
-                    ),
-                    Expanded(child: _sessionCardFor(event)),
-                  ],
-                ),
+              child: _EventCard(
+                event: event,
+                selectable: true,
+                selected: _selectedEventId[index] == event.learningEventClassId,
+                showLocation: true,
+                onTap:
+                    () => _toggleSelection(index, event.learningEventClassId),
               ),
             ),
           ),
         const SizedBox(height: 8),
+        // CSS ref: .btn-modal-primary — radius 10 (was 8), 14px/
+        // weight600 (was default/700), hover shadow 0 6px 16px
+        // rgba(92,82,212,.3).
         SizedBox(
           width: double.infinity,
           child: HoverBuilder(
-            builder: (context, hovering) => ElevatedButton(
-              onPressed: () => setState(() => _step = index + 1),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    hovering ? FigmaTokens.purpleHover : _detailPurple,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                minimumSize: const Size(0, 46),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: Text(
-                isLastClass ? 'Register' : 'Next',
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
+            builder:
+                (context, hovering) => Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow:
+                        hovering
+                            ? [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF5C52D4,
+                                ).withValues(alpha: 0.3),
+                                blurRadius: 16,
+                                offset: const Offset(0, 6),
+                              ),
+                            ]
+                            : null,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () => setState(() => _step = index + 1),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          hovering ? FigmaTokens.purpleHover : _detailPurple,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      minimumSize: const Size(0, 46),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      isLastClass ? 'Register' : 'Next',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
           ),
         ),
       ],
@@ -2213,60 +2753,112 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
         for (var i = 0; i < widget.classes.length; i++) ...[
           Text(
             widget.classes[i].title,
-            style: const TextStyle(color: _detailInk, fontSize: 13, fontWeight: FontWeight.w800),
+            style: const TextStyle(
+              color: _detailInk,
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 8),
           _selectedEventId[i] == null
               ? Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: FigmaTokens.cardBorders),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Text(
-                    'Skipped - this class will not be registered.',
-                    style: TextStyle(color: _detailMuted),
-                  ),
-                )
-              : _sessionCardFor(_selectedEventFor(i)),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  border: Border.all(color: FigmaTokens.cardBorders),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'Skipped - this class will not be registered.',
+                  style: TextStyle(color: _detailMuted),
+                ),
+              )
+              : _EventCard(event: _selectedEventFor(i)!, showLocation: true),
           if (i != widget.classes.length - 1) const SizedBox(height: 16),
         ],
         const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            // CSS ref: .btn-modal-secondary — bg #F3F4F6, color #374151,
+            // border already-correct #E5E7EB, radius 10, padding
+            // 8px 20px, 14px/weight600.
             OutlinedButton(
-              onPressed: _submitting
-                  ? null
-                  : () => setState(() => _step = widget.classes.length - 1),
+              onPressed:
+                  _submitting
+                      ? null
+                      : () => setState(() => _step = widget.classes.length - 1),
               style: OutlinedButton.styleFrom(
-                foregroundColor: _detailInk,
+                backgroundColor: const Color(0xFFF3F4F6),
+                foregroundColor: const Color(0xFF374151),
                 side: const BorderSide(color: FigmaTokens.cardBorders),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
               ),
-              child: const Text('Previous', style: TextStyle(fontWeight: FontWeight.w700)),
+              child: const Text(
+                'Previous',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
             ),
             const SizedBox(width: 10),
+            // CSS ref: .btn-modal-primary — radius 10, 14px/weight600,
+            // hover shadow 0 6px 16px rgba(92,82,212,.3).
             HoverBuilder(
-              builder: (context, hovering) => ElevatedButton(
-                onPressed: _submitting ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      hovering ? FigmaTokens.purpleHover : _detailPurple,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: _submitting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Confirm', style: TextStyle(fontWeight: FontWeight.w700)),
-              ),
+              builder:
+                  (context, hovering) => Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow:
+                          hovering
+                              ? [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFF5C52D4,
+                                  ).withValues(alpha: 0.3),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ]
+                              : null,
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _submitting ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            hovering ? FigmaTokens.purpleHover : _detailPurple,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child:
+                          _submitting
+                              ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : const Text(
+                                'Confirm',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                    ),
+                  ),
             ),
           ],
         ),
@@ -2282,71 +2874,23 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
     }
     return null;
   }
-
-  Widget _sessionCardFor(LearningEvent? event) {
-    if (event == null) {
-      return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          border: Border.all(color: FigmaTokens.cardBorders),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: const Text(
-          'No upcoming session available.',
-          style: TextStyle(color: _detailMuted),
-        ),
-      );
-    }
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        border: Border.all(color: FigmaTokens.cardBorders),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _sessionField('START', _formatSessionMoment(event.startDateTime))),
-              Expanded(child: _sessionField('END', _formatSessionMoment(event.endDateTime))),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: FigmaTokens.cardBorders),
-          const SizedBox(height: 12),
-          _sessionField('INSTRUCTOR', event.instructor.isEmpty ? '—' : event.instructor),
-        ],
-      ),
-    );
-  }
-
-  Widget _sessionField(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: _detailMuted,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: .3,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(color: _detailInk, fontWeight: FontWeight.w600)),
-      ],
-    );
-  }
 }
 
 String _formatSessionMoment(DateTime? dt) {
   if (dt == null) return '—';
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
   final minute = dt.minute.toString().padLeft(2, '0');
@@ -2355,24 +2899,282 @@ String _formatSessionMoment(DateTime? dt) {
       '$hour12:$minute $ampm';
 }
 
+// ─── Event card (radio-select) ─────────────────────────────────────────────
+//
+// CSS ref: `.event-card`/`.event-card--selectable`/`.event-card-radio`/
+// `.event-radio-circle`/`.event-card-body` from `_enroll_partial-class-
+// register.php` (the AJAX partial `/course/enroll-class-register` renders
+// into `#course_details_modal`) — the real session picker used by whole-
+// course enrollment. White bg, border 1px #F3F4F6, radius 12, shadow
+// 0 1px 3px rgba(0,0,0,.02); when selectable, hover -> border #693D94 +
+// shadow 0 4px 12px rgba(0,0,0,.06). This is a different, unrelated card
+// style from `.le-detail-card` (radius 10) used by the read-only Details
+// modal - the two look similar but are never the same element in the real
+// markup, a mix-up this file made in an earlier pass.
+class _EventCard extends StatelessWidget {
+  const _EventCard({
+    required this.event,
+    this.selectable = false,
+    this.selected = false,
+    this.onTap,
+    this.showLocation = false,
+  });
+
+  final LearningEvent event;
+  final bool selectable;
+  final bool selected;
+  final VoidCallback? onTap;
+  final bool showLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    final location = event.location.trim();
+    // .event-card-body / (padding 14px 18px inline override for the
+    // non-selectable confirm-step card, 10px 14px for the picker step).
+    final body = Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: selectable ? 14 : 18,
+        vertical: selectable ? 10 : 14,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _dateField('Start', event.startDateTime)),
+              Expanded(child: _dateField('End', event.endDateTime)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Divider(height: 1, color: Color(0xFFF3F4F6)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 10,
+            runSpacing: 6,
+            children: [
+              SizedBox(
+                width: 130,
+                child: _field(
+                  'Instructor',
+                  event.instructor.isEmpty ? '—' : event.instructor,
+                ),
+              ),
+              SizedBox(width: 130, child: _statusField()),
+              if (showLocation && location.isNotEmpty)
+                SizedBox(width: 130, child: _field('Location', location)),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    final content = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (selectable)
+          // .event-card-radio — padding 10px 0 10px 12px.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 0, 10),
+            child: _EventRadioCircle(selected: selected),
+          ),
+        Expanded(child: body),
+      ],
+    );
+
+    return HoverBuilder(
+      builder: (context, hovering) {
+        final activeHover = selectable && hovering;
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+              color: activeHover ? _detailPurple : const Color(0xFFF3F4F6),
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(
+                  alpha: activeHover ? 0.06 : 0.02,
+                ),
+                blurRadius: activeHover ? 12 : 3,
+                offset: Offset(0, activeHover ? 4 : 1),
+              ),
+            ],
+          ),
+          child:
+              onTap == null
+                  ? content
+                  : Material(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: onTap,
+                      child: content,
+                    ),
+                  ),
+        );
+      },
+    );
+  }
+
+  // .event-value.event-date + the plain time span right after it — date
+  // at 14px/#374151, time at 12px/#9CA3AF underneath.
+  Widget _dateField(String label, DateTime? dt) {
+    final formatted = _formatSessionMoment(dt).split('\n');
+    final date = formatted.first;
+    final time = formatted.length > 1 ? formatted[1] : '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _label(label),
+        const SizedBox(height: 2),
+        Text(
+          date,
+          style: const TextStyle(
+            color: Color(0xFF374151),
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        if (time.isNotEmpty)
+          Text(
+            time,
+            style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
+          ),
+      ],
+    );
+  }
+
+  Widget _field(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _label(label),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Color(0xFF374151),
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // .event-status-badge / .status-available / .status-waitlist — computed
+  // from LearningEventClass::getRegistrationStatus() (available seats =
+  // max(0, maxRegistrations - registeredCount)) since the mobile API
+  // doesn't send a precomputed status string.
+  Widget _statusField() {
+    final waitlist = event.isWaitlist;
+    final bg = waitlist ? const Color(0xFFFEF3C7) : const Color(0xFFD1FAE5);
+    final fg = waitlist ? const Color(0xFFB45309) : const Color(0xFF059669);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _label('Status'),
+        const SizedBox(height: 2),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            waitlist ? 'Waitlist' : 'Available',
+            style: TextStyle(
+              color: fg,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // .event-label — 11px/weight600/#9CA3AF/uppercase/letter-spacing .3px
+  // (was .5px on the unrelated `.le-detail-card-label`).
+  Widget _label(String text) => Text(
+    text.toUpperCase(),
+    style: const TextStyle(
+      color: Color(0xFF9CA3AF),
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      letterSpacing: .3,
+    ),
+  );
+}
+
+// CSS ref: .event-radio-circle — 20x20, border 2px #D1D5DB, radius 50%;
+// checked -> border+bg #693D94 with an 8x8 white dot centered inside.
+class _EventRadioCircle extends StatelessWidget {
+  const _EventRadioCircle({required this.selected});
+
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: selected ? _detailPurple : Colors.transparent,
+        border: Border.all(
+          color: selected ? _detailPurple : const Color(0xFFD1D5DB),
+          width: 2,
+        ),
+      ),
+      child:
+          selected
+              ? Center(
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                  ),
+                ),
+              )
+              : null,
+    );
+  }
+}
+
 void _showNotEnrolledDialog(BuildContext context) {
   showDialog(
     context: context,
-    builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-      content: const Text(
-        'You are not enrolled for this course. Click the Enroll Now button at the top of this page to continue.',
-        style: TextStyle(color: _detailMuted, height: 1.5),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          style: TextButton.styleFrom(foregroundColor: _detailPurple),
-          child: const Text('OK', style: TextStyle(fontWeight: FontWeight.w700)),
+    builder:
+        (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          content: const Text(
+            'You are not enrolled for this course. Click the Enroll Now button at the top of this page to continue.',
+            style: TextStyle(color: _detailMuted, height: 1.5),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(foregroundColor: _detailPurple),
+              child: const Text(
+                'OK',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
         ),
-      ],
-    ),
   );
 }
 
@@ -2380,195 +3182,312 @@ void _showCancelConfirmationDialog(
   BuildContext context, {
   required VoidCallback onConfirm,
 }) {
+  // CSS/markup ref, confirmed against `origin/staging`'s joinCourse.php:
+  // `#cancel_confirm_modal` — content radius 12 (already correct), shadow
+  // 0 10px 25px rgba(0,0,0,.1) (was none); a gradient header (135deg
+  // #693D94→#AA399F, white 18px/700 title, padding 16/20) was entirely
+  // missing — the title rendered as plain dark text with no header bar at
+  // all. Body padding 24, message centered/16px/#333 (was left-aligned/
+  // muted-token/no explicit size). "Yes, Cancel" is `.btn-modal-primary`
+  // with an inline override to Bootstrap danger red (`#DC3545`, not this
+  // app's `#DC2626`) — was solid purple, i.e. visually identical to
+  // "confirm" rather than "destroy."
   showDialog(
     context: context,
-    builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: const Text(
-        'Confirm Cancellation',
-        style: TextStyle(
-          color: _detailInk,
-          fontWeight: FontWeight.w700,
-          fontSize: 17,
-        ),
-      ),
-      content: const Text(
-        'Would you like to cancel your registration for this course?',
-        style: TextStyle(color: _detailMuted, height: 1.5),
-      ),
-      actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.pop(context),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: _detailInk,
-            side: const BorderSide(color: FigmaTokens.cardBorders),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+    builder:
+        (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: const Text(
-            'No, Keep It',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ),
-        HoverBuilder(
-          builder: (context, hovering) => ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              onConfirm();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  hovering ? FigmaTokens.purpleHover : _detailPurple,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF693D94), Color(0xFFAA399F)],
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    const Text(
+                      'Confirm Cancellation',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Positioned(
+                      right: -6,
+                      top: -2,
+                      child: IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            ),
-            child: const Text(
-              'Yes, Cancel',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: const Text(
+                  'Would you like to cancel your registration for this course?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Color(0xFF333333), fontSize: 16),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF3F4F6),
+                        foregroundColor: const Color(0xFF374151),
+                        side: const BorderSide(color: FigmaTokens.cardBorders),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: const Text(
+                        'No, Keep It',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        onConfirm();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFDC3545),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 10,
+                        ),
+                      ),
+                      child: const Text(
+                        'Yes, Cancel',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-      ],
-    ),
   );
 }
 
 void _showClassDetails(
   BuildContext context,
   String courseTitle,
-  String courseObjective,
   CourseStructureItem item,
 ) {
   showDialog(
     context: context,
-    builder: (context) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      insetPadding: const EdgeInsets.all(20),
-      child: _ClassDetailsDialog(
-        courseTitle: courseTitle,
-        courseObjective: courseObjective,
-        item: item,
-      ),
-    ),
+    builder:
+        (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          insetPadding: const EdgeInsets.all(20),
+          child: _ClassDetailsDialog(courseTitle: courseTitle, item: item),
+        ),
   );
 }
 
+// CSS ref: `_classDetails.php` never shows the *course's* objective here —
+// only the class's own `objective`/`description` (In-Person/Virtual Class
+// route through the Schedule partial instead; every other type uses
+// `Lmsclass::getAttribDetail()`'s type-specific attribute list, built
+// below by `_attributeCards`). The course-level objective this dialog
+// used to display here was the wrong data source entirely, not just
+// mis-styled - removed rather than kept as an approximation.
 class _ClassDetailsDialog extends StatelessWidget {
-  const _ClassDetailsDialog({
-    required this.courseTitle,
-    required this.courseObjective,
-    required this.item,
-  });
+  const _ClassDetailsDialog({required this.courseTitle, required this.item});
 
   final String courseTitle;
-  final String courseObjective;
   final CourseStructureItem item;
 
   @override
   Widget build(BuildContext context) {
-    final typeName = item.subtitle.length > 2
-        ? item.subtitle.substring(1, item.subtitle.length - 1)
-        : '';
+    final typeName =
+        item.subtitle.length > 2
+            ? item.subtitle.substring(1, item.subtitle.length - 1)
+            : '';
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 540),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // CSS ref, confirmed against `origin/staging`'s joinCourse.php:
+          // `#class_details_modal .modal-header.gradient` — gradient bg
+          // 135deg #693D94→#AA399F (was solid purple), padding 16/20
+          // (was 20/18/16/18); h3 18px/700 (was 15/800). `.course-type-
+          // badge` — bg white@.2 (was .18, and had an extra border not
+          // in the real spec), padding 3/10 (was 10/5), 11px/weight600
+          // (was 700). Close button is the shared circular "blurred"
+          // button (32x32, gradient white→indigo tint, radius 50%,
+          // absolute top:12/right:14) — was a bare Icon.
           Container(
-            padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: const BoxDecoration(
-              color: _detailPurple,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF693D94), Color(0xFFAA399F)],
+              ),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
               ),
             ),
-            child: Row(
+            child: Stack(
               children: [
-                Expanded(
-                  child: Text(
-                    courseTitle,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                    ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 32),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          courseTitle,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (typeName.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: .2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            typeName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                if (typeName.isNotEmpty) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: .18),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: .35),
-                      ),
-                    ),
-                    child: Text(
-                      typeName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                Positioned(
+                  right: -6,
+                  top: -2,
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Material(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                       ),
                     ),
                   ),
-                ],
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close, color: Colors.white, size: 20),
                 ),
               ],
             ),
           ),
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              // CSS ref: `.class-events-section` — padding 12px 20px 16px
+              // (was a flat 20 all round).
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (courseObjective.isNotEmpty) ...[
-                    const _DialogLabel('OBJECTIVE'),
-                    const SizedBox(height: 8),
-                    Text(
-                      courseObjective,
-                      style: const TextStyle(color: _detailMuted, height: 1.5),
-                    ),
-                    const SizedBox(height: 16),
-                    const Divider(color: FigmaTokens.cardBorders),
-                    const SizedBox(height: 16),
-                  ],
-                  if (item.description.isNotEmpty) ...[
-                    const _DialogLabel('DESCRIPTION'),
-                    const SizedBox(height: 8),
-                    Text(
-                      item.description,
-                      style: const TextStyle(color: _detailMuted, height: 1.5),
-                    ),
-                  ],
-                  if (item.learningEvents.isNotEmpty) ...[
+                  // CSS ref: `_classDetails.php` branches on class type —
+                  // In-Person/Virtual Class render the Schedule partial
+                  // (`_partial-class-detail.php`); every other type renders
+                  // `Lmsclass::getAttribDetail()`'s type-specific attribute
+                  // list as `.le-detail-card`s instead. This used to always
+                  // show Objective/Description/Schedule regardless of type
+                  // (bare text, no card chrome), which was correct for
+                  // neither branch.
+                  if (item.typeCode == '2' || item.typeCode == '3') ...[
                     if (item.description.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      const Divider(color: FigmaTokens.cardBorders),
-                      const SizedBox(height: 16),
+                      _LeDetailCard(
+                        label: 'Description',
+                        value: item.description,
+                      ),
                     ],
-                    const _DialogLabel('SCHEDULE'),
-                    const SizedBox(height: 12),
-                    for (final event in item.learningEvents)
-                      _LearningEventCard(event: event),
-                  ],
+                    if (item.learningEvents.isNotEmpty) ...[
+                      if (item.description.isNotEmpty)
+                        const SizedBox(height: 12),
+                      // CSS ref: `.lc-section-label` — 12px/weight600/
+                      // #9CA3AF/uppercase/letter-spacing .8px, margin 12px 0
+                      // 8px (was reusing the same 11px/weight800 style as
+                      // the card labels above, which is a different class).
+                      const Padding(
+                        padding: EdgeInsets.only(top: 12, bottom: 8),
+                        child: Text(
+                          'SCHEDULE',
+                          style: TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                      // `.event-cards` — column, 10px gaps.
+                      for (var i = 0; i < item.learningEvents.length; i++) ...[
+                        if (i != 0) const SizedBox(height: 10),
+                        _LearningEventCard(event: item.learningEvents[i]),
+                      ],
+                    ],
+                  ] else
+                    ..._attributeCards(item),
                 ],
               ),
             ),
@@ -2579,24 +3498,275 @@ class _ClassDetailsDialog extends StatelessWidget {
   }
 }
 
-class _DialogLabel extends StatelessWidget {
-  const _DialogLabel(this.text);
-  final String text;
+// CSS ref: `.le-detail-card`/`.le-detail-card-label`/`.le-detail-card-
+// value` — white bg, border 1px #F3F4F6, radius 10, padding 12px 16px,
+// shadow 0 1px 3px rgba(0,0,0,.02); label 11px/weight600/#9CA3AF/
+// uppercase/letter-spacing .5px; value 14px/#374151/lh1.5.
+class _LeDetailCard extends StatelessWidget {
+  const _LeDetailCard({required this.label, required this.value});
+  final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: _detailMuted,
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0.8,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: .5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Color(0xFF374151),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
+// CSS ref: `Lmsclass::getAttribDetail()` — every content-type class other
+// than In-Person/Virtual Class (routed to the Schedule branch above) shows
+// its own type-specific attribute list here instead, each as a
+// `.le-detail-card`. Built from data the mobile API already sends
+// (`content.*` fields, already parsed onto [CourseStructureItem] for the
+// action buttons elsewhere on this page) rather than the class's own
+// `objective`/`instruction` fields, which the API does not send at all —
+// see the "Still open" note in the audit doc.
+List<Widget> _attributeCards(CourseStructureItem item) {
+  final cards = <Widget>[];
+  void add(Widget card) {
+    if (cards.isNotEmpty) cards.add(const SizedBox(height: 12));
+    cards.add(card);
+  }
+
+  switch (item.typeCode) {
+    case '1': // eLearning
+      if (item.description.isNotEmpty) {
+        add(_LeDetailCard(label: 'Description', value: item.description));
+      }
+      break;
+    case '4': // Watch Video
+      if (item.videoLinkUrl != null) {
+        add(
+          _LinkDetailCard(
+            label: 'Upload Video',
+            linkText: 'Video Link',
+            url: item.videoLinkUrl!,
+          ),
+        );
+      }
+      break;
+    case '5': // Read Article
+    case '19': // Agreement — same two fields as Read Article
+      if (item.articleLinkUrl != null) {
+        add(
+          _LinkDetailCard(
+            label: 'Read Article Link',
+            linkText: 'Article link',
+            url: item.articleLinkUrl!,
+          ),
+        );
+      }
+      if (item.downloadUrl != null) {
+        add(
+          _LinkDetailCard(
+            label: 'Article File',
+            linkText: 'Uploaded File',
+            url: item.downloadUrl!,
+          ),
+        );
+      }
+      break;
+    case '6': // Read Webpage
+    case '13': // LinkedIn Certification — reuses the webpage link fields
+      if (item.contentUrl != null) {
+        add(
+          _LinkDetailCard(
+            label: 'Read Webpage Link',
+            linkText:
+                item.webpageLinkText?.isNotEmpty == true
+                    ? item.webpageLinkText!
+                    : 'Open Webpage',
+            url: item.contentUrl!,
+          ),
+        );
+      }
+      break;
+    case '7': // Discussion Board
+      if (item.contentUrl != null) {
+        add(
+          _LinkDetailCard(
+            label: 'Discussion Board',
+            linkText: 'Discussion Board link',
+            url: item.contentUrl!,
+          ),
+        );
+      }
+      break;
+    case '14': // Discussion Guru
+      if (item.contentUrl != null) {
+        add(
+          _LinkDetailCard(
+            label: 'Discussion Guru Link',
+            linkText: item.contentUrl!,
+            url: item.contentUrl!,
+          ),
+        );
+      }
+      break;
+    case '15': // Peer Coaching
+      if (item.peerCoachingLinkUrl != null) {
+        add(
+          _LinkDetailCard(
+            label: 'Peer Coaching Link',
+            linkText: item.peerCoachingLinkUrl!,
+            url: item.peerCoachingLinkUrl!,
+          ),
+        );
+      }
+      if (item.downloadUrl != null) {
+        add(
+          _LinkDetailCard(
+            label: 'Peer Coaching File',
+            linkText: 'Uploaded File',
+            url: item.downloadUrl!,
+          ),
+        );
+      }
+      break;
+    case '17': // OnePage Pro
+      if (item.contentUrl != null) {
+        add(
+          _LinkDetailCard(
+            label: 'Read Webpage Link',
+            linkText: 'OnePage Pro',
+            url: item.contentUrl!,
+          ),
+        );
+      }
+      break;
+    case '23': // Web App
+      if (item.webAppUrl != null) {
+        add(
+          _LinkDetailCard(
+            label: 'One Pager Pro',
+            linkText: 'Web Application',
+            url: item.webAppUrl!,
+          ),
+        );
+      }
+      break;
+    // '18' (Custom Prompt), '8'/'9' (Task w/wo Observation), '10' (Receive
+    // Coaching), '11' (Insight Report), '12' (Certificate), '20' (Test-Out),
+    // '22' (Text Message) all show an empty attribute list in the real
+    // `getAttribDetail()` switch - no cards here either.
+  }
+  return cards;
+}
+
+// CSS ref: a `.le-detail-card` whose value is a clickable `<a>` link
+// instead of plain text — same card chrome as `_LeDetailCard`, with the
+// value styled as a link (primary purple, underlined) and wired to
+// url_launcher instead of being inert text.
+class _LinkDetailCard extends StatelessWidget {
+  const _LinkDetailCard({
+    required this.label,
+    required this.linkText,
+    required this.url,
+  });
+  final String label;
+  final String linkText;
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: .5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          InkWell(
+            onTap:
+                () => launchUrl(
+                  Uri.parse(url),
+                  mode: LaunchMode.externalApplication,
+                ),
+            child: Text(
+              linkText,
+              style: const TextStyle(
+                color: _detailPurple,
+                fontSize: 14,
+                height: 1.5,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// CSS ref: `_partial-class-detail.php`'s Schedule section — `.event-card`
+// (white bg, border 1px #F3F4F6, radius 12, shadow 0 1px 3px
+// rgba(0,0,0,.02)) with a 4px left `.event-card-badge` gradient accent bar
+// (135deg -> here vertical, 180deg #693D94 -> #AA399F) and an
+// `.event-card-inner` body (padding 10px 14px) of `.ec-row`/`.ec-block`
+// pairs separated by `.ec-divider`s, Start/End joined by a `.ec-arrow`
+// "→". This is a third, distinct real card shape from both `.le-detail-
+// card` and the radio-select `.event-card` variant in `_EventCard` above
+// — same base class, no radio, plus the left accent bar this dialog's
+// old plain-bordered box never had.
 class _LearningEventCard extends StatelessWidget {
   const _LearningEventCard({required this.event});
   final LearningEvent event;
@@ -2604,99 +3774,176 @@ class _LearningEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        border: Border.all(color: FigmaTokens.cardBorders),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _ScheduleField(
-                  label: 'START',
-                  value: _formatEventMoment(event.startDateTime, event.startTime),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _ScheduleField(
-                  label: 'END',
-                  value: _formatEventMoment(event.endDateTime, event.endTime),
-                ),
-              ),
-            ],
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
           ),
-          if (event.instructor.isNotEmpty || event.location.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            const Divider(height: 1, color: FigmaTokens.cardBorders),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (event.instructor.isNotEmpty)
-                  Expanded(
-                    child: _ScheduleField(
-                      label: 'INSTRUCTOR',
-                      value: event.instructor,
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 4,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFF693D94), Color(0xFFAA399F)],
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _EcField.dateTime(
+                            label: 'Start',
+                            dateTime: event.startDateTime,
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 14),
+                          child: Text(
+                            '→',
+                            style: TextStyle(
+                              color: Color(0xFFD1D5DB),
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: _EcField.dateTime(
+                            label: 'End',
+                            dateTime: event.endDateTime,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                if (event.instructor.isNotEmpty && event.location.isNotEmpty)
-                  const SizedBox(width: 16),
-                if (event.location.isNotEmpty)
-                  Expanded(
-                    child: _ScheduleField(
-                      label: 'LOCATION',
-                      value: event.location,
-                    ),
-                  ),
-              ],
+                    if (event.instructor.isNotEmpty ||
+                        event.location.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                      const SizedBox(height: 6),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (event.instructor.isNotEmpty)
+                            Expanded(
+                              child: _EcField(
+                                label: 'Instructor',
+                                value: event.instructor,
+                              ),
+                            ),
+                          if (event.instructor.isNotEmpty &&
+                              event.location.isNotEmpty)
+                            const SizedBox(width: 8),
+                          if (event.location.isNotEmpty)
+                            Expanded(
+                              child: _EcField(
+                                label: 'Location',
+                                value: event.location,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                    if (event.instructions.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                      const SizedBox(height: 6),
+                      _EcField(
+                        label: 'Instructions',
+                        value: event.instructions,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ],
-          if (event.instructions.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            const Divider(height: 1, color: FigmaTokens.cardBorders),
-            const SizedBox(height: 12),
-            _ScheduleField(label: 'INSTRUCTIONS', value: event.instructions),
-          ],
-        ],
+        ),
       ),
     );
   }
 }
 
-class _ScheduleField extends StatelessWidget {
-  const _ScheduleField({required this.label, required this.value});
+// CSS ref: `.ec-label`/`.ec-value` — same spec as `.event-label`/
+// `.event-value` (11px/weight600/#9CA3AF/uppercase/letter-spacing .3px
+// label; 14px/#374151/lh1.4 value). Start/End additionally carry a
+// `.ec-sub` time line (12px/#9CA3AF) below the date, matching the real
+// markup's separate date/time spans.
+class _EcField extends StatelessWidget {
+  const _EcField({required this.label, required this.value, this.sub});
+
+  // Start/End: splits the shared `Mon-DD-YYYY\nh:mm A` formatter's output
+  // into a 14px date value and a 12px/#9CA3AF `.ec-sub` time line, matching
+  // the real markup's separate `.ec-value`/`.ec-sub` spans.
+  factory _EcField.dateTime({
+    required String label,
+    required DateTime? dateTime,
+  }) {
+    final parts = _formatSessionMoment(dateTime).split('\n');
+    return _EcField(
+      label: label,
+      value: parts.first,
+      sub: parts.length > 1 ? parts[1] : null,
+    );
+  }
+
   final String label;
   final String value;
+  final String? sub;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          label,
+          label.toUpperCase(),
           style: const TextStyle(
-            color: _detailMuted,
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.8,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value.isEmpty ? 'â€”' : value,
-          style: const TextStyle(
-            color: _detailInk,
-            fontSize: 13,
+            color: Color(0xFF9CA3AF),
+            fontSize: 11,
             fontWeight: FontWeight.w600,
+            letterSpacing: .3,
           ),
         ),
+        const SizedBox(height: 2),
+        Text(
+          value.isEmpty ? '—' : value,
+          style: const TextStyle(
+            color: Color(0xFF374151),
+            fontSize: 14,
+            height: 1.4,
+          ),
+        ),
+        if (sub != null && sub!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Text(
+              sub!,
+              style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
+            ),
+          ),
       ],
     );
   }
@@ -2706,57 +3953,74 @@ class _StatusChip extends StatelessWidget {
   const _StatusChip({required this.status});
   final String status;
 
+  // CSS ref, confirmed against `origin/staging`'s joinCourse.php: a full
+  // 7-state palette (`.btn-registered`/`.btn-started`/`.btn-complete`/
+  // `.btn-passed`/`.btn-waitlist`/`.btn-cancelled`/`.btn-pending`/
+  // `.btn-failed`) — was collapsed to just 2 states (green for
+  // "completed", one generic purple for everything else), so Registered/
+  // Started/Waitlisted/Cancelled/Pending all showed identically.
+  static const _states = <String, (Color bg, Color fg)>{
+    'registered': (Color(0xFFE0E7FF), Color(0xFF4338CA)),
+    'started': (Color(0xFFFEF3C7), Color(0xFFB45309)),
+    'complete': (Color(0xFFD1FAE5), Color(0xFF059669)),
+    'completed': (Color(0xFFD1FAE5), Color(0xFF059669)),
+    'passed': (Color(0xFFD1FAE5), Color(0xFF059669)),
+    'waitlist': (Color(0xFFF3E8FF), Color(0xFF7C3AED)),
+    'waitlisted': (Color(0xFFF3E8FF), Color(0xFF7C3AED)),
+    'cancelled': (Color(0xFFF3F4F6), Color(0xFF6B7280)),
+    'canceled': (Color(0xFFF3F4F6), Color(0xFF6B7280)),
+    'pending': (Color(0xFFFEF3C7), Color(0xFFB45309)),
+    'failed': (Color(0xFFFEE2E2), Color(0xFFDC2626)),
+  };
+
   @override
   Widget build(BuildContext context) {
-    final isCompleted = status.toLowerCase() == 'completed';
+    final (bg, fg) =
+        _states[status.toLowerCase().trim()] ??
+        (const Color(0xFFE0E7FF), const Color(0xFF4338CA));
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: isCompleted ? const Color(0xFFE8F5E9) : const Color(0xFFEEECFF),
+        color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         status,
         softWrap: false,
         overflow: TextOverflow.visible,
-        style: TextStyle(
-          color: isCompleted ? const Color(0xFF2E7D32) : _detailPurple,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }
 }
 
-// Formats an already timezone-corrected DateTime (LearningEvent.startDateTime
-// / endDateTime, which convert the API's UTC values to local time - see
-// course_join_detail.dart's _combineDateAndTime) rather than reparsing the
-// raw date/time strings naively. Reparsing them here directly used to skip
-// that UTC->local conversion, so this schedule display drifted out of sync
-// with the website by exactly the device's UTC offset (5:30 on an IST
-// device) even though the register/countdown flow elsewhere was correct.
-String _formatEventMoment(DateTime? dateTime, String rawTime) {
-  if (dateTime == null) return _formatTime(rawTime);
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-  final month = months[dateTime.month - 1];
-  final hour = dateTime.hour;
-  final minute = dateTime.minute.toString().padLeft(2, '0');
-  final amPm = hour >= 12 ? 'PM' : 'AM';
-  final hour12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-  return '$month ${dateTime.day}\n$hour12:$minute $amPm';
-}
-
 // "02 Aug 2026 03:40 PM" - used for the "Next Session" line, which (unlike
-// _formatEventMoment's compact two-line schedule-card format) needs the
-// full date on one line since it's read out of context of a specific card.
+// `_EcField.dateTime`/`_formatSessionMoment`'s compact two-line schedule-
+// card format) needs the full date on one line since it's read out of
+// context of a specific card.
+//
+// Both formatters read the already timezone-corrected DateTime
+// (LearningEvent.startDateTime/endDateTime, which convert the API's UTC
+// values to local time - see course_join_detail.dart's
+// _combineDateAndTime) rather than reparsing the raw date/time strings
+// naively. Reparsing them directly used to skip that UTC->local
+// conversion, so schedule displays drifted out of sync with the website
+// by exactly the device's UTC offset (5:30 on an IST device) even though
+// the register/countdown flow elsewhere was correct.
 String _formatFriendlyMoment(DateTime dateTime) {
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   final day = dateTime.day.toString().padLeft(2, '0');
   final month = months[dateTime.month - 1];
@@ -2768,15 +4032,3 @@ String _formatFriendlyMoment(DateTime dateTime) {
       .padLeft(2, '0');
   return '$day $month ${dateTime.year} $hour12:$minute $amPm';
 }
-
-String _formatTime(String time) {
-  if (time.isEmpty) return '';
-  final parts = time.split(':');
-  if (parts.length < 2) return time;
-  final hour = int.tryParse(parts[0]) ?? 0;
-  final minute = parts[1].padLeft(2, '0');
-  final amPm = hour >= 12 ? 'PM' : 'AM';
-  final hour12 = hour == 0 ? 12 : (hour > 12 ? hour - 12 : hour);
-  return '$hour12:$minute $amPm';
-}
-

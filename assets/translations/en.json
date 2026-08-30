@@ -1,8 +1,8 @@
 {
     "begin":"Begin",
-    "login":"Login",
-    "email":"Email",
-    "password":"Password",
+    "login":"Log in",
+    "email":"Email/User Name",
+    "password":"Enter Password",
     "keep_me_logged_in":"Keep me logged in",
     "end":"End"
 }

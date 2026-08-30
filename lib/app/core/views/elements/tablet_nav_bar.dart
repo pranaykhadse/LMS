@@ -39,7 +39,11 @@ class TabletNavBar extends ConsumerWidget {
     final destination = ref.watch(currentShellDestinationProvider);
 
     // Map the current destination to a tab index so the active tab lights up.
-    final activeTab = _tabIndexFor(destination, selectedLabel, selectedSubLabel);
+    final activeTab = _tabIndexFor(
+      destination,
+      selectedLabel,
+      selectedSubLabel,
+    );
 
     return Container(
       decoration: const BoxDecoration(
@@ -64,24 +68,26 @@ class TabletNavBar extends ConsumerWidget {
                 activeIcon: Icons.dashboard_rounded,
                 label: 'Dashboard',
                 active: activeTab == 0,
-                onTap: () => _goTo(
-                  context,
-                  ref,
-                  ShellDestination.dashboard,
-                  CoursesModule.construct(CoursesModule.dashboard),
-                ),
+                onTap:
+                    () => _goTo(
+                      context,
+                      ref,
+                      ShellDestination.dashboard,
+                      CoursesModule.construct(CoursesModule.dashboard),
+                    ),
               ),
               _NavTab(
                 icon: Icons.menu_book_outlined,
                 activeIcon: Icons.menu_book_rounded,
                 label: 'Catalog',
                 active: activeTab == 1,
-                onTap: () => _goTo(
-                  context,
-                  ref,
-                  ShellDestination.courseCatalog,
-                  CoursesModule.construct(CoursesModule.root),
-                ),
+                onTap:
+                    () => _goTo(
+                      context,
+                      ref,
+                      ShellDestination.courseCatalog,
+                      CoursesModule.construct(CoursesModule.root),
+                    ),
               ),
               _NavTab(
                 icon: Icons.library_books_outlined,
@@ -95,12 +101,13 @@ class TabletNavBar extends ConsumerWidget {
                 activeIcon: Icons.account_tree_rounded,
                 label: 'Learning',
                 active: activeTab == 3,
-                onTap: () => _goTo(
-                  context,
-                  ref,
-                  ShellDestination.learningPaths,
-                  CoursesModule.construct(CoursesModule.learningPaths),
-                ),
+                onTap:
+                    () => _goTo(
+                      context,
+                      ref,
+                      ShellDestination.learningPaths,
+                      CoursesModule.construct(CoursesModule.learningPaths),
+                    ),
               ),
               _NavTab(
                 icon: Icons.workspace_premium_outlined,
@@ -141,70 +148,88 @@ class TabletNavBar extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => _SubSheet(
-        title: 'My Courses',
-        items: [
-          _SheetItem(
-            icon: Icons.school_outlined,
-            label: 'My Enrolled Courses',
-            onTap: () {
-              Navigator.pop(ctx);
-              _goTo(
-                context,
-                ref,
-                ShellDestination.myEnrolledCourses,
-                CoursesModule.construct(CoursesModule.enrolledCourses),
-              );
-            },
+      builder:
+          (ctx) => _SubSheet(
+            title: 'My Courses',
+            items: [
+              _SheetItem(
+                icon: Icons.school_outlined,
+                label: 'My Enrolled Courses',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _goTo(
+                    context,
+                    ref,
+                    ShellDestination.myEnrolledCourses,
+                    CoursesModule.construct(CoursesModule.enrolledCourses),
+                  );
+                },
+              ),
+              _SheetItem(
+                icon: Icons.task_alt,
+                label: 'My Completed Courses',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _goTo(
+                    context,
+                    ref,
+                    ShellDestination.myCompletedCourses,
+                    CoursesModule.construct(CoursesModule.completedCourses),
+                  );
+                },
+              ),
+              _SheetItem(
+                icon: Icons.timeline_outlined,
+                label: 'My Development Plan',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _goTo(
+                    context,
+                    ref,
+                    ShellDestination.myDevelopmentPlan,
+                    CoursesModule.construct(CoursesModule.developmentPlan),
+                  );
+                },
+              ),
+              _SheetItem(
+                icon: Icons.assignment_outlined,
+                label: 'My Required Courses',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _goTo(
+                    context,
+                    ref,
+                    ShellDestination.myRequiredCourses,
+                    CoursesModule.construct(CoursesModule.requiredCourses),
+                  );
+                },
+              ),
+              // Nav ref, confirmed against `origin/staging`'s
+              // bluetheme_layout.php sub-nav item — label is literally "My
+              // Recomended Courses" (typo, missing an 'm') in the real markup.
+              _SheetItem(
+                icon: Icons.assignment_outlined,
+                label: 'My Recomended Courses',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _goTo(
+                    context,
+                    ref,
+                    ShellDestination.myRecommendedCourses,
+                    CoursesModule.construct(CoursesModule.recommendedCourses),
+                  );
+                },
+              ),
+            ],
           ),
-          _SheetItem(
-            icon: Icons.task_alt,
-            label: 'My Completed Courses',
-            onTap: () {
-              Navigator.pop(ctx);
-              _goTo(
-                context,
-                ref,
-                ShellDestination.myCompletedCourses,
-                CoursesModule.construct(CoursesModule.completedCourses),
-              );
-            },
-          ),
-          _SheetItem(
-            icon: Icons.timeline_outlined,
-            label: 'My Development Plan',
-            onTap: () {
-              Navigator.pop(ctx);
-              _goTo(
-                context,
-                ref,
-                ShellDestination.myDevelopmentPlan,
-                CoursesModule.construct(CoursesModule.developmentPlan),
-              );
-            },
-          ),
-          _SheetItem(
-            icon: Icons.assignment_outlined,
-            label: 'My Required Courses',
-            onTap: () {
-              Navigator.pop(ctx);
-              _goTo(
-                context,
-                ref,
-                ShellDestination.myRequiredCourses,
-                CoursesModule.construct(CoursesModule.requiredCourses),
-              );
-            },
-          ),
-        ],
-      ),
     );
   }
 
   // ── More sheet ────────────────────────────────────────────────────────────
 
   void _showMoreSheet(BuildContext context, WidgetRef ref) {
-    final isOnline = ref.read(InternetConnectionProvider.provider).isConnected &&
+    final isOnline =
+        ref.read(InternetConnectionProvider.provider).isConnected &&
         !ref.read(OfflineModeNotifier.provider);
 
     showModalBottomSheet<void>(
@@ -213,55 +238,56 @@ class TabletNavBar extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => _SubSheet(
-        title: 'More',
-        items: [
-          _SheetItem(
-            icon: Icons.redeem_outlined,
-            label: 'Redeem your Points',
-            onTap: () {
-              Navigator.pop(ctx);
-              _goTo(
-                context,
-                ref,
-                ShellDestination.redeemPoints,
-                CoursesModule.construct(CoursesModule.redeemPoints),
-              );
-            },
+      builder:
+          (ctx) => _SubSheet(
+            title: 'More',
+            items: [
+              _SheetItem(
+                icon: Icons.redeem_outlined,
+                label: 'Redeem your Points',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _goTo(
+                    context,
+                    ref,
+                    ShellDestination.redeemPoints,
+                    CoursesModule.construct(CoursesModule.redeemPoints),
+                  );
+                },
+              ),
+              _SheetItem(
+                icon: Icons.military_tech_outlined,
+                label: 'Badges',
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _goTo(
+                    context,
+                    ref,
+                    ShellDestination.badges,
+                    CoursesModule.construct(CoursesModule.badges),
+                  );
+                },
+              ),
+              _SheetItem(
+                icon: Icons.person_outline_rounded,
+                label: 'Contact a Development Pro',
+                disabled: !isOnline,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  launchContactCoachUrl(ref, context);
+                },
+              ),
+              _SheetItem(
+                icon: Icons.smart_toy_outlined,
+                label: 'Virtual Development Pro',
+                disabled: !isOnline,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  launchVirtualDevUrl(context, ref);
+                },
+              ),
+            ],
           ),
-          _SheetItem(
-            icon: Icons.military_tech_outlined,
-            label: 'Badges',
-            onTap: () {
-              Navigator.pop(ctx);
-              _goTo(
-                context,
-                ref,
-                ShellDestination.badges,
-                CoursesModule.construct(CoursesModule.badges),
-              );
-            },
-          ),
-          _SheetItem(
-            icon: Icons.person_outline_rounded,
-            label: 'Contact a Development Pro',
-            disabled: !isOnline,
-            onTap: () {
-              Navigator.pop(ctx);
-              launchContactCoachUrl(ref, context);
-            },
-          ),
-          _SheetItem(
-            icon: Icons.smart_toy_outlined,
-            label: 'Virtual Development Pro',
-            disabled: !isOnline,
-            onTap: () {
-              Navigator.pop(ctx);
-              launchVirtualDevUrl(context, ref);
-            },
-          ),
-        ],
-      ),
     );
   }
 
@@ -281,6 +307,7 @@ class TabletNavBar extends ConsumerWidget {
       case ShellDestination.myCompletedCourses:
       case ShellDestination.myDevelopmentPlan:
       case ShellDestination.myRequiredCourses:
+      case ShellDestination.myRecommendedCourses:
         return 2;
       case ShellDestination.learningPaths:
         return 3;
@@ -417,7 +444,8 @@ class _SheetRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = item.disabled ? FigmaTokens.noteBodyText : FigmaTokens.cardTitles;
+    final color =
+        item.disabled ? FigmaTokens.noteBodyText : FigmaTokens.cardTitles;
     return InkWell(
       onTap: item.disabled ? null : item.onTap,
       child: Padding(

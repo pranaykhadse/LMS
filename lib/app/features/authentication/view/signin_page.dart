@@ -113,7 +113,10 @@ class SignInPage extends ConsumerWidget {
                                       }
                                     },
                                     onError: (error) {
-                                      Toast.error(context, _loginErrorText(error));
+                                      Toast.error(
+                                        context,
+                                        _loginErrorText(error),
+                                      );
                                     },
                                   );
                             },
@@ -124,21 +127,55 @@ class SignInPage extends ConsumerWidget {
                           ),
                           SizedBox(height: context.mediumSpace),
 
-                          // ── Privacy Policy link (required by App Store) ──
-                          GestureDetector(
-                            onTap: () => InAppWebViewPage.show(
-                              context,
-                              url: 'https://leadershipedgelive.com/privacy-policy',
-                              title: 'Privacy Policy',
+                          // ── Forgot Password ── CSS/markup ref, confirmed
+                          // against `origin/staging`'s sign-in/login.php:
+                          // `<p class="forgot-password"><a href=".../sign-
+                          // in/request-password-reset">Forgot Password</a>
+                          // </p>` — was entirely missing from this screen.
+                          MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap:
+                                  () => InAppWebViewPage.show(
+                                    context,
+                                    url:
+                                        'https://staging.trainingpipeline.com/backend/web/sign-in/request-password-reset',
+                                    title: 'Forgot Password',
+                                  ),
+                              child: Text(
+                                'Forgot Password',
+                                textAlign: TextAlign.center,
+                                style: context.textTheme.bodySmall?.copyWith(
+                                  color: context.appColorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor:
+                                      context.appColorScheme.primary,
+                                ),
+                              ),
                             ),
-                            child: Text(
-                              'Privacy Policy',
-                              textAlign: TextAlign.center,
-                              style: context.textTheme.bodySmall?.copyWith(
-                                color: context.appColorScheme.primary,
-                                decoration: TextDecoration.underline,
-                                decorationColor:
-                                    context.appColorScheme.primary,
+                          ),
+                          SizedBox(height: context.smallSpace),
+
+                          // ── Privacy Policy link (required by App Store) ──
+                          MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: GestureDetector(
+                              onTap:
+                                  () => InAppWebViewPage.show(
+                                    context,
+                                    url:
+                                        'https://leadershipedgelive.com/privacy-policy',
+                                    title: 'Privacy Policy',
+                                  ),
+                              child: Text(
+                                'Privacy Policy',
+                                textAlign: TextAlign.center,
+                                style: context.textTheme.bodySmall?.copyWith(
+                                  color: context.appColorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                  decorationColor:
+                                      context.appColorScheme.primary,
+                                ),
                               ),
                             ),
                           ),
@@ -161,7 +198,8 @@ class SignInPage extends ConsumerWidget {
 /// term for the credential it checks), but this screen only ever shows the
 /// user a "Password" field — so that wording is rewritten before display.
 String _loginErrorText(Object error) {
-  return error
-      .toString()
-      .replaceAll(RegExp(r'auth\s*key', caseSensitive: false), 'Password');
+  return error.toString().replaceAll(
+    RegExp(r'auth\s*key', caseSensitive: false),
+    'Password',
+  );
 }

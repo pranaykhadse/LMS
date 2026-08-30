@@ -49,10 +49,14 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // CSS ref: px-4 sm:px-6 py-6 sm:py-8
+    // CSS ref, confirmed against `origin/staging`'s all-course-progress.php
+    // (`<div class="cl-container cl-all-course-progress p-3">`, same
+    // structure as continue-learning.php — see course_catalog audit
+    // Round 20/21): Bootstrap's `.p-3` utility is `padding:1rem
+    // !important`, which beats both `.cl-container`'s own padding and the
+    // mobile override, leaving a flat 16px on every side, both breakpoints.
     final isWide = MediaQuery.of(context).size.width >= 600;
-    final hPad = isWide ? 24.0 : 16.0;
-    final vPad = isWide ? 32.0 : 24.0;
+    const pad = 16.0;
 
     switch (state.providerState) {
       case DataProviderState.loading:
@@ -61,72 +65,110 @@ class _Body extends StatelessWidget {
       case DataProviderState.error:
         return _ErrorView(
           message: friendlyErrorMessage(
-              state.error, 'Unable to load course progress.'),
+            state.error,
+            'Unable to load course progress.',
+          ),
           onRetry: () => notifier.fetch(),
         );
       case DataProviderState.data:
         if (state.courses.isEmpty) return const _EmptyState();
         return Column(
           children: [
+            // CSS ref: `.cl-header` margin-bottom 24px desktop; mobile
+            // override replaces it with `margin: 0 2px 16px`.
             Padding(
-              padding: EdgeInsets.fromLTRB(hPad, vPad, hPad, 24),
-              child: _Header(count: state.totalCourses),
+              padding:
+                  isWide
+                      ? const EdgeInsets.fromLTRB(pad, pad, pad, 24)
+                      : const EdgeInsets.fromLTRB(pad + 2, pad, pad + 2, 16),
+              child: _Header(count: state.totalCourses, isWide: isWide),
             ),
             Expanded(
               child: RefreshIndicator(
                 color: _purple,
                 onRefresh: () async => notifier.fetch(page: state.page),
                 child: ListView(
-                  padding: EdgeInsets.fromLTRB(hPad, 0, hPad, vPad),
+                  padding: const EdgeInsets.fromLTRB(pad, 0, pad, pad),
                   children: [
                     if (isWide) const HorizontalScrollHint(),
+                    // CSS ref: `.cl-card` — radius 24px/no border of its
+                    // own on desktop (edge comes from Bootstrap `.card`+
+                    // `.shadow-sm`); mobile override: border #E7EAF0,
+                    // radius 14px, no shadow.
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                        borderRadius: BorderRadius.circular(isWide ? 24 : 14),
+                        border: Border.all(
+                          color:
+                              isWide
+                                  ? const Color(0xFFE5E7EB)
+                                  : const Color(0xFFE7EAF0),
+                        ),
+                        boxShadow:
+                            isWide
+                                ? [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(
+                                      alpha: 0.075,
+                                    ),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                                : null,
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: isWide
-                          // Desktop: horizontal scroll when narrower than _minTableWidth
-                          ? LayoutBuilder(
-                              builder: (context, constraints) {
-                                final tableWidth = constraints.maxWidth < _minTableWidth
-                                    ? _minTableWidth
-                                    : constraints.maxWidth;
-                                return SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: SizedBox(
-                                    width: tableWidth,
-                                    child: Column(
-                                      children: [
-                                        const _TableHeaderRow(isWide: true),
-                                        for (var i = 0; i < state.courses.length; i++)
-                                          _CourseRow(
-                                            index: (state.page - 1) * 100 + i + 1,
-                                            item: state.courses[i],
-                                            showDivider: i < state.courses.length - 1,
-                                            isWide: true,
-                                          ),
-                                      ],
+                      child:
+                          isWide
+                              // Desktop: horizontal scroll when narrower than _minTableWidth
+                              ? LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final tableWidth =
+                                      constraints.maxWidth < _minTableWidth
+                                          ? _minTableWidth
+                                          : constraints.maxWidth;
+                                  return SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: SizedBox(
+                                      width: tableWidth,
+                                      child: Column(
+                                        children: [
+                                          const _TableHeaderRow(isWide: true),
+                                          for (
+                                            var i = 0;
+                                            i < state.courses.length;
+                                            i++
+                                          )
+                                            _CourseRow(
+                                              index:
+                                                  (state.page - 1) * 100 +
+                                                  i +
+                                                  1,
+                                              item: state.courses[i],
+                                              showDivider:
+                                                  i < state.courses.length - 1,
+                                              isWide: true,
+                                            ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                );
-                              },
-                            )
-                          // Mobile: columns flex, no horizontal scroll
-                          : Column(
-                              children: [
-                                const _TableHeaderRow(isWide: false),
-                                for (var i = 0; i < state.courses.length; i++)
-                                  _CourseRow(
-                                    index: (state.page - 1) * 100 + i + 1,
-                                    item: state.courses[i],
-                                    showDivider: i < state.courses.length - 1,
-                                    isWide: false,
-                                  ),
-                              ],
-                            ),
+                                  );
+                                },
+                              )
+                              // Mobile: columns flex, no horizontal scroll
+                              : Column(
+                                children: [
+                                  const _TableHeaderRow(isWide: false),
+                                  for (var i = 0; i < state.courses.length; i++)
+                                    _CourseRow(
+                                      index: (state.page - 1) * 100 + i + 1,
+                                      item: state.courses[i],
+                                      showDivider: i < state.courses.length - 1,
+                                      isWide: false,
+                                    ),
+                                ],
+                              ),
                     ),
                   ],
                 ),
@@ -155,10 +197,21 @@ class _Body extends StatelessWidget {
 }
 
 // ─── In-page header ──────────────────────────────────────────────────────────
+// CSS ref, confirmed against `origin/staging`'s all-course-progress.php and
+// bluetheme-layout.css: same `.cl-back-link`/`.cl-divider-vertical` as
+// In-Progress Courses, but a *different* mobile back-link override here —
+// weight700 only, font-size stays 14px (In-Progress's mobile back-link
+// bumps to 16px; this page's doesn't). `.cl-title`/`.cl-count-text` remain
+// dead for this page too — the real `<h4>`/`<span>` carry plain `text-sm
+// font-semibold text-gray-800` / `text-sm text-gray-400 bg-gray-100
+// rounded-full px-2.5 py-0.5`, both unconditional `text-sm` (14px) with no
+// responsive variant — so the count badge should be a flat 14px on every
+// width, not the invented "12px mobile / 14px desktop" split this had.
 
 class _Header extends StatelessWidget {
-  const _Header({required this.count});
+  const _Header({required this.count, this.isWide = true});
   final int count;
+  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +231,7 @@ class _Header extends StatelessWidget {
                   style: GoogleFonts.inter(
                     color: _purple,
                     fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: isWide ? FontWeight.w600 : FontWeight.w700,
                     height: 20 / 14,
                   ),
                 ),
@@ -186,15 +239,15 @@ class _Header extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        Text(
-          '|',
-          style: GoogleFonts.inter(
-            color: const Color(0xFFD1D5DB),
-            fontSize: 14,
-          ),
+        SizedBox(width: isWide ? 12 : 14),
+        // .cl-divider-vertical — 1px vertical line, #E5E7EB, height 18px
+        // desktop / 24px mobile (was a "|" text glyph in the wrong color).
+        Container(
+          width: 1,
+          height: isWide ? 18 : 24,
+          color: const Color(0xFFE5E7EB),
         ),
-        const SizedBox(width: 12),
+        SizedBox(width: isWide ? 12 : 14),
         Text(
           'All Course Progress',
           style: GoogleFonts.inter(
@@ -214,10 +267,9 @@ class _Header extends StatelessWidget {
           child: Text(
             '$count courses',
             style: GoogleFonts.inter(
-              // text-xs on mobile, text-sm on desktop
               color: const Color(0xFF9CA3AF),
-              fontSize: 12,
-              height: 16 / 12,
+              fontSize: 14, // text-sm, unconditional — no mobile variant
+              height: 20 / 14,
             ),
           ),
         ),
@@ -227,6 +279,13 @@ class _Header extends StatelessWidget {
 }
 
 // ─── Table header row ─────────────────────────────────────────────────────────
+// CSS ref: `.cl-table th` — bg #F9FBFA (was #F9FAFB typo), color #99A1AF
+// (was gray-400 #9CA3AF), 11px/letterSpacing.8 desktop (was a flat 10px
+// on every width — 10px/.7 is only the mobile value), vertical padding
+// 16px (was 12). `.cl-all-course-progress .cl-progress-column{display:
+// none}` hides the PROGRESS column entirely on mobile — unlike In-
+// Progress's Resume button, hiding this loses no functionality (the row
+// still opens the course), so it's replicated exactly rather than kept.
 
 class _TableHeaderRow extends StatelessWidget {
   const _TableHeaderRow({this.isWide = true});
@@ -235,36 +294,47 @@ class _TableHeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = GoogleFonts.inter(
-      color: const Color(0xFF9CA3AF),
-      // text-[10px] on both mobile and desktop
-      fontSize: 10,
+      color: const Color(0xFF99A1AF),
+      fontSize: isWide ? 11 : 10,
       fontWeight: FontWeight.w600,
-      letterSpacing: 0.8,
-      height: 16 / 10,
+      letterSpacing: isWide ? 0.8 : 0.7,
+      height: 16 / 11,
     );
 
-    // Both mobile and desktop: gap-4 (16px), PROGRESS 140px, text-[10px]
-    final colGap = 16.0;
-    final progressW = 140.0;
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding:
+          isWide
+              ? const EdgeInsets.symmetric(horizontal: 8, vertical: 16)
+              : const EdgeInsets.symmetric(horizontal: 8),
+      height: isWide ? null : 40,
+      alignment: isWide ? null : Alignment.center,
       decoration: const BoxDecoration(
-        color: Color(0xFFF9FAFB),
+        color: Color(0xFFF9FBFA),
         border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
       ),
       child: Row(
         children: [
-          SizedBox(width: isWide ? 32.0 : 24.0, child: Text('#', style: style)),
-          SizedBox(width: colGap),
-          Expanded(
-            child: Text('COURSE / CATEGORY / DUE DATE', style: style),
-          ),
-          SizedBox(width: colGap),
+          // # column — ps-4 (24px) on the left desktop only.
           SizedBox(
-            width: progressW,
-            child: Text('PROGRESS', style: style),
+            width: isWide ? 32.0 + 16 : 24.0,
+            child: Padding(
+              padding: EdgeInsets.only(left: isWide ? 16 : 0),
+              child: Text('#', style: style),
+            ),
           ),
+          const SizedBox(width: 16),
+          Expanded(child: Text('COURSE / CATEGORY / DUE DATE', style: style)),
+          if (isWide) ...[
+            const SizedBox(width: 16),
+            // PROGRESS — pe-4 (24px) on the right, hidden on mobile.
+            SizedBox(
+              width: 140.0 + 16,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Text('PROGRESS', style: style),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -302,9 +372,10 @@ class _CourseRowState extends State<_CourseRow> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: _hovering ? const Color(0xFFF8F8FF) : Colors.white,
-          border: widget.showDivider
-              ? const Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))
-              : null,
+          border:
+              widget.showDivider
+                  ? const Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))
+                  : null,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -329,31 +400,50 @@ class _CourseRowState extends State<_CourseRow> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  GestureDetector(
-                    onTap: () => Modular.to.pushNamed(
-                      CoursesModule.construct(
-                          '${CoursesModule.detail}/${widget.item.courseId}'),
-                    ),
-                    child: Text(
-                      widget.item.courseName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF1F2937),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        height: 1.375,
+                  // CSS ref: `<div class="course-name fw-bold">` —
+                  // `.cl-table .course-name` gives color var(--card-title)
+                  // =#1E2939/15px/marginBottom3 (was gray-800 #1F2937/
+                  // 14px, no bottom gap); `.fw-bold` is redefined by this
+                  // theme to weight 600 (not Bootstrap's default 700,
+                  // already matched by luck). Mobile override: 14px/
+                  // lineHeight18/marginBottom4 (smaller than desktop, the
+                  // same "shrinks on mobile" pattern as the page header).
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap:
+                          () => Modular.to.pushNamed(
+                            CoursesModule.construct(
+                              '${CoursesModule.detail}/${widget.item.courseId}',
+                            ),
+                          ),
+                      child: Text(
+                        widget.item.courseName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF1E2939),
+                          fontSize: widget.isWide ? 15 : 14,
+                          fontWeight: FontWeight.w600,
+                          height: widget.isWide ? 1.2 : 18 / 14,
+                        ),
                       ),
                     ),
                   ),
-                  if (widget.item.category.isNotEmpty || widget.item.dueDate.isNotEmpty) ...[
-                    const SizedBox(height: 2), // mt-0.5
-                    // Category on its own line with dot, date on next line
-                    // Uses Wrap with gap-y-0.5 (2px) so date naturally wraps below
+                  if (widget.item.category.isNotEmpty ||
+                      widget.item.dueDate.isNotEmpty) ...[
+                    SizedBox(height: widget.isWide ? 3 : 4),
+                    // CSS ref: `.cl-table .class-info` — every child
+                    // (category, dot, date) is #99A1AF/13px, inherited
+                    // from this one flex container (was a per-span
+                    // gray-400/gray-300/gray-500 rainbow); only the
+                    // calendar `<i>` icon itself gets its own explicit
+                    // #6B7280/12px (`text-xs text-gray-500`). Mobile:
+                    // 12px/lineHeight16, wraps.
                     Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,    // gap-x-2
-                      runSpacing: 2, // gap-y-0.5
+                      spacing: 5, // gap:5px
+                      runSpacing: 2,
                       children: [
                         if (widget.item.category.isNotEmpty)
                           Row(
@@ -362,18 +452,18 @@ class _CourseRowState extends State<_CourseRow> {
                               Text(
                                 widget.item.category,
                                 style: GoogleFonts.inter(
-                                  color: const Color(0xFF9CA3AF), // text-xs text-gray-400
-                                  fontSize: 12,
-                                  height: 16 / 12,
+                                  color: const Color(0xFF99A1AF),
+                                  fontSize: widget.isWide ? 13 : 12,
+                                  height: widget.isWide ? 1.2 : 16 / 12,
                                 ),
                               ),
                               if (widget.item.dueDate.isNotEmpty) ...[
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 4),
                                 Text(
                                   '·',
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFFD1D5DB), // text-gray-300
-                                    fontSize: 12,
+                                    color: const Color(0xFF99A1AF),
+                                    fontSize: widget.isWide ? 13 : 12,
                                   ),
                                 ),
                               ],
@@ -383,15 +473,20 @@ class _CourseRowState extends State<_CourseRow> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(LucideIcons.calendarDays,
-                                  size: 10, color: _purple),
+                              const Icon(
+                                LucideIcons.calendarDays,
+                                size: 10,
+                                color: _purple,
+                              ),
                               const SizedBox(width: 4), // gap-1
                               Flexible(
                                 child: Text(
                                   widget.item.dueDate,
                                   softWrap: true,
                                   style: GoogleFonts.inter(
-                                    color: const Color(0xFF6B7280), // text-xs text-gray-500
+                                    color: const Color(
+                                      0xFF6B7280,
+                                    ), // text-xs text-gray-500
                                     fontSize: 12,
                                     height: 16 / 12,
                                   ),
@@ -405,12 +500,19 @@ class _CourseRowState extends State<_CourseRow> {
                 ],
               ),
             ),
-            SizedBox(width: 16), // gap-4
-            // Progress — 140px on both mobile and desktop
-            SizedBox(
-              width: 140.0,
-              child: _ProgressCell(percent: widget.item.progress),
-            ),
+            // CSS ref: `.cl-all-course-progress .cl-progress-column
+            // {display:none}` — the PROGRESS column is hidden entirely
+            // on mobile in the real markup. Unlike In-Progress's Resume
+            // button (an action with no other way to trigger it), the
+            // row itself still opens the course with or without this
+            // column visible, so it's hidden here to match exactly.
+            if (widget.isWide) ...[
+              const SizedBox(width: 16),
+              SizedBox(
+                width: 140.0,
+                child: _ProgressCell(percent: widget.item.progress),
+              ),
+            ],
           ],
         ),
       ),
@@ -429,17 +531,18 @@ class _ProgressCell extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // text-xs font-semibold text-[#693D94]
+        // CSS ref: `.cl-progress-percent` — 13px/weight700/var(--primary-
+        // color), margin-bottom 6px (was 12px/weight600, gap 4).
         Text(
           '$percent%',
           style: GoogleFonts.inter(
             color: _purple,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            height: 16 / 12,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            height: 16 / 13,
           ),
         ),
-        const SizedBox(height: 4), // gap-1
+        const SizedBox(height: 6),
         // w-full bg-gray-100 rounded-full h-1.5
         ClipRRect(
           borderRadius: BorderRadius.circular(999),
@@ -475,14 +578,20 @@ class _EmptyState extends StatelessWidget {
                 color: const Color(0xFFF0ECFF),
                 borderRadius: BorderRadius.circular(50),
               ),
-              child: const Icon(Icons.donut_large_rounded,
-                  color: _purple, size: 52),
+              child: const Icon(
+                Icons.donut_large_rounded,
+                color: _purple,
+                size: 52,
+              ),
             ),
             const SizedBox(height: 24),
             const Text(
               'No Course Progress Yet',
               style: TextStyle(
-                  color: _ink, fontSize: 20, fontWeight: FontWeight.w900),
+                color: _ink,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -512,9 +621,11 @@ class _ErrorView extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, color: _muted, size: 48),
             const SizedBox(height: 16),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: _muted)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: _muted),
+            ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               RetryButton(onRetry: onRetry!, errorMessage: message),

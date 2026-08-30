@@ -23,6 +23,17 @@ const _ink = FigmaTokens.cardTitles;
 const _muted = FigmaTokens.noteBodyText;
 const _bg = FigmaTokens.pageBackground;
 
+/// CSS ref, confirmed against `origin/staging`'s item-inventory/inventory
+/// .php: each item is `col-lg-3 col-md-6 col-sm-6 col-12` — 4 per row at
+/// ≥992px, 2 per row at 576-991px, 1 per row below that — not the shared
+/// `Responsive` helper's generic 700/1024 thresholds (which this screen
+/// was wrongly using: phone:1/tablet:4/desktop:5).
+int _inventoryColumnsFor(double width) {
+  if (width >= 992) return 4;
+  if (width >= 576) return 2;
+  return 1;
+}
+
 class ItemInventoryPage extends ConsumerStatefulWidget {
   const ItemInventoryPage({super.key});
 
@@ -64,7 +75,11 @@ class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
     );
   }
 
-  void _goToPage(BuildContext context, ItemInventoryViewModel notifier, int page) {
+  void _goToPage(
+    BuildContext context,
+    ItemInventoryViewModel notifier,
+    int page,
+  ) {
     notifier.goToPage(page).then((error) {
       if (error != null && context.mounted) Toast.error(context, error);
     });
@@ -98,8 +113,12 @@ class _Body extends ConsumerWidget {
     if (state.result == null) {
       if (state.providerState == DataProviderState.error) {
         return _ErrorView(
-            message: friendlyErrorMessage(state.error, 'Unable to load inventory.'),
-            onRetry: onRetry);
+          message: friendlyErrorMessage(
+            state.error,
+            'Unable to load inventory.',
+          ),
+          onRetry: onRetry,
+        );
       }
       return const Center(child: CircularProgressIndicator(color: _purple));
     }
@@ -108,7 +127,11 @@ class _Body extends ConsumerWidget {
     return _buildList(context, ref, items);
   }
 
-  Widget _buildList(BuildContext context, WidgetRef ref, List<InventoryItem> items) {
+  Widget _buildList(
+    BuildContext context,
+    WidgetRef ref,
+    List<InventoryItem> items,
+  ) {
     final result = state.result!;
     // Search/clear-search both hit the live API with no offline fallback -
     // offering them while there's no real connection just invites a tap
@@ -138,7 +161,11 @@ class _Body extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // folder icon
-                      const Icon(Icons.folder_outlined, color: _purple, size: 20),
+                      const Icon(
+                        Icons.folder_outlined,
+                        color: _purple,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -157,7 +184,10 @@ class _Body extends ConsumerWidget {
                             // CSS ref: .inventory-header p — 13px, #6B7280
                             const Text(
                               'Items available to redeem with your points',
-                              style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+                              style: TextStyle(
+                                color: Color(0xFF6B7280),
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
@@ -169,27 +199,40 @@ class _Body extends ConsumerWidget {
                       SizedBox(
                         height: 36,
                         child: HoverBuilder(
-                          builder: (context, hovering) => ElevatedButton.icon(
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (_) => const RedeemHistoryPage()),
-                            ),
-                            icon: const Icon(Icons.history_rounded, size: 15),
-                            label: const Text('Redeem History'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: hovering
-                                  ? const Color(0xFF4B3FC2)
-                                  : const Color(0xFF5C52D4),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 10),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                              textStyle: const TextStyle(
-                                  fontWeight: FontWeight.w500, fontSize: 13),
-                            ),
-                          ),
+                          builder:
+                              (context, hovering) => ElevatedButton.icon(
+                                onPressed:
+                                    () => Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => const RedeemHistoryPage(),
+                                      ),
+                                    ),
+                                icon: const Icon(
+                                  Icons.history_rounded,
+                                  size: 15,
+                                ),
+                                label: const Text('Redeem History'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      hovering
+                                          ? const Color(0xFF4B3FC2)
+                                          : const Color(0xFF5C52D4),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 10,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
                         ),
                       ),
                     ],
@@ -212,13 +255,18 @@ class _Body extends ConsumerWidget {
                         decoration: InputDecoration(
                           hintText:
                               offline ? "You're offline" : 'Search items...',
-                          hintStyle:
-                              const TextStyle(color: _muted, fontSize: 14),
+                          hintStyle: const TextStyle(
+                            color: _muted,
+                            fontSize: 14,
+                          ),
                           filled: true,
                           fillColor: Colors.white,
                           // CSS ref: .search-icon 16px, #9CA3AF
-                          prefixIcon: const Icon(Icons.search_rounded,
-                              color: Color(0xFF9CA3AF), size: 16),
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            color: Color(0xFF9CA3AF),
+                            size: 16,
+                          ),
                           contentPadding: const EdgeInsets.symmetric(
                             vertical: 12,
                             horizontal: 16,
@@ -227,12 +275,14 @@ class _Body extends ConsumerWidget {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: const BorderSide(
-                                color: Color(0xFFE2E8F0)),
+                              color: Color(0xFFE2E8F0),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: const BorderSide(
-                                color: Color(0xFFE2E8F0)),
+                              color: Color(0xFFE2E8F0),
+                            ),
                           ),
                         ),
                       ),
@@ -245,9 +295,10 @@ class _Body extends ConsumerWidget {
                   if (items.isEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
-                      child: state.query.isNotEmpty
-                          ? const _NoSearchResults()
-                          : const _EmptyState(),
+                      child:
+                          state.query.isNotEmpty
+                              ? const _NoSearchResults()
+                              : const _EmptyState(),
                     )
                   else ...[
                     const SizedBox(height: 16),
@@ -256,23 +307,28 @@ class _Body extends ConsumerWidget {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: items.length,
-                      itemBuilder: (context, index) => _ItemCard(
-                        item: items[index],
-                        isRedeeming: state.redeemingId == items[index].id,
-                        onRedeem: () =>
-                            _showRedeemDialog(context, items[index], notifier),
-                        onView: () => _showDetail(context, items[index]),
-                      ),
+                      itemBuilder:
+                          (context, index) => _ItemCard(
+                            item: items[index],
+                            isRedeeming: state.redeemingId == items[index].id,
+                            onRedeem:
+                                () => _showRedeemDialog(
+                                  context,
+                                  items[index],
+                                  notifier,
+                                ),
+                            onView: () => _showDetail(context, items[index]),
+                          ),
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: Responsive.columns(
-                          context,
-                          phone: 1,
-                          tablet: 4,
-                          desktop: 5,
+                        crossAxisCount: _inventoryColumnsFor(
+                          MediaQuery.sizeOf(context).width,
                         ),
                         mainAxisSpacing: 14,
                         crossAxisSpacing: 14,
-                        childAspectRatio: Responsive.isTablet(context) ? 0.72 : 1.4,
+                        childAspectRatio:
+                            MediaQuery.sizeOf(context).width >= 576
+                                ? 0.72
+                                : 1.4,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -298,10 +354,7 @@ class _Body extends ConsumerWidget {
   }
 
   void _showDetail(BuildContext context, InventoryItem item) {
-    showDialog(
-      context: context,
-      builder: (_) => _ItemDetailDialog(item: item),
-    );
+    showDialog(context: context, builder: (_) => _ItemDetailDialog(item: item));
   }
 
   void _showRedeemDialog(
@@ -311,23 +364,30 @@ class _Body extends ConsumerWidget {
   ) {
     showDialog(
       context: context,
-      builder: (dialogContext) => _RedeemDialog(
-        item: item,
-        onConfirm: (address, note) async {
-          final result = await notifier.redeem(
-            item.id,
-            address: address,
-            note: note.isNotEmpty ? note : null,
-          );
-          if (dialogContext.mounted) Navigator.pop(dialogContext);
-          if (!context.mounted) return;
-          if (result.success) {
-            Toast.success(context, result.message ?? 'Item redeemed successfully.');
-          } else {
-            Toast.error(context, result.message ?? 'Failed to redeem. Please try again.');
-          }
-        },
-      ),
+      builder:
+          (dialogContext) => _RedeemDialog(
+            item: item,
+            onConfirm: (address, note) async {
+              final result = await notifier.redeem(
+                item.id,
+                address: address,
+                note: note.isNotEmpty ? note : null,
+              );
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+              if (!context.mounted) return;
+              if (result.success) {
+                Toast.success(
+                  context,
+                  result.message ?? 'Item redeemed successfully.',
+                );
+              } else {
+                Toast.error(
+                  context,
+                  result.message ?? 'Failed to redeem. Please try again.',
+                );
+              }
+            },
+          ),
     );
   }
 }
@@ -373,56 +433,60 @@ class _PointsBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Container(
-      padding: const EdgeInsets.fromLTRB(32, 28, 32, 28),
-      margin: const EdgeInsets.only(bottom: 24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
+        padding: const EdgeInsets.fromLTRB(32, 28, 32, 28),
+        margin: const EdgeInsets.only(bottom: 24),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: const LinearGradient(
+            colors: [FigmaTokens.primaryPurple, FigmaTokens.gradientEnd],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          // CSS ref: .points-card-icon — 56x56, radius 14
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: .2),
-              borderRadius: BorderRadius.circular(14),
+        child: Row(
+          children: [
+            // CSS ref: .points-card-icon — 56x56, radius 14
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .2),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.star_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
             ),
-            child: const Icon(Icons.star_rounded, color: Colors.white, size: 26),
-          ),
-          const SizedBox(width: 14),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // CSS ref: .points-value — 32px, weight 700
-              Text(
-                '$points',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  height: 1,
+            const SizedBox(width: 14),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // CSS ref: .points-value — 32px, weight 700
+                Text(
+                  '$points',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.w700,
+                    height: 1,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              // CSS ref: .points-label — 14px, weight 500, white@0.85
-              const Text(
-                'Available Points',
-                style: TextStyle(
-                  color: Color(0xD9FFFFFF),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                const SizedBox(height: 2),
+                // CSS ref: .points-label — 14px, weight 500, white@0.85
+                const Text(
+                  'Available Points',
+                  style: TextStyle(
+                    color: Color(0xD9FFFFFF),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -477,7 +541,8 @@ class _PointSystemExplainer extends StatelessWidget {
                     final width = constraints.maxWidth;
                     const height = 240.0;
                     final points = [
-                      for (final s in _steps) Offset(s.xFraction * width, s.yFraction * height)
+                      for (final s in _steps)
+                        Offset(s.xFraction * width, s.yFraction * height),
                     ];
                     return SizedBox(
                       width: width,
@@ -485,7 +550,9 @@ class _PointSystemExplainer extends StatelessWidget {
                       child: Stack(
                         children: [
                           Positioned.fill(
-                            child: CustomPaint(painter: _StepConnectorPainter(points)),
+                            child: CustomPaint(
+                              painter: _StepConnectorPainter(points),
+                            ),
                           ),
                           for (var i = 0; i < _steps.length; i++)
                             Positioned(
@@ -539,7 +606,10 @@ class _PointSystemStepList extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE4D9EF), width: 1.5),
+                  border: Border.all(
+                    color: const Color(0xFFE4D9EF),
+                    width: 1.5,
+                  ),
                 ),
                 alignment: Alignment.center,
                 child: Icon(steps[i].icon, color: _purple, size: 20),
@@ -565,7 +635,11 @@ class _PointSystemStepList extends StatelessWidget {
 }
 
 class _StepBadge extends StatelessWidget {
-  const _StepBadge({required this.icon, required this.label, required this.labelAbove});
+  const _StepBadge({
+    required this.icon,
+    required this.label,
+    required this.labelAbove,
+  });
   final IconData icon;
   final String label;
   final bool labelAbove;
@@ -586,13 +660,19 @@ class _StepBadge extends StatelessWidget {
     final text = Text(
       label,
       textAlign: TextAlign.center,
-      style: const TextStyle(color: _ink, fontSize: 12, fontWeight: FontWeight.w700, height: 1.3),
+      style: const TextStyle(
+        color: _ink,
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        height: 1.3,
+      ),
     );
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: labelAbove
-          ? [text, const SizedBox(height: 8), circle]
-          : [circle, const SizedBox(height: 8), text],
+      children:
+          labelAbove
+              ? [text, const SizedBox(height: 8), circle]
+              : [circle, const SizedBox(height: 8), text],
     );
   }
 }
@@ -605,10 +685,11 @@ class _StepConnectorPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFD9CBEA)
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
+    final paint =
+        Paint()
+          ..color = const Color(0xFFD9CBEA)
+          ..strokeWidth = 2
+          ..style = PaintingStyle.stroke;
     for (var i = 0; i < points.length - 1; i++) {
       final a = points[i];
       final b = points[i + 1];
@@ -633,7 +714,8 @@ class _StepConnectorPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _StepConnectorPainter oldDelegate) => oldDelegate.points != points;
+  bool shouldRepaint(covariant _StepConnectorPainter oldDelegate) =>
+      oldDelegate.points != points;
 }
 
 /// Dashed rounded-rectangle border used around the explainer panel, since
@@ -646,10 +728,11 @@ class _DashedBorderPainter extends CustomPainter {
       const Radius.circular(6),
     );
     final path = Path()..addRRect(rrect);
-    final paint = Paint()
-      ..color = FigmaTokens.cardBorders
-      ..strokeWidth = 1.2
-      ..style = PaintingStyle.stroke;
+    final paint =
+        Paint()
+          ..color = FigmaTokens.cardBorders
+          ..strokeWidth = 1.2
+          ..style = PaintingStyle.stroke;
     for (final metric in path.computeMetrics()) {
       var distance = 0.0;
       const dashWidth = 5.0;
@@ -682,8 +765,7 @@ class _ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // CSS ref: .item-card — bg white, radius 16, border 0.8px #F3F4F6
-    // (no box-shadow in the blueprint).
+    // CSS ref: .item-card — bg white, radius 16, border 1px #F3F4F6.
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -694,9 +776,7 @@ class _ItemCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: _ItemImage(imageUrl: item.image),
-          ),
+          Expanded(child: _ItemImage(imageUrl: item.image)),
           // ── Item name — CSS ref: .item-card-name 15px/weight600/#111827 ──
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 0),
@@ -764,55 +844,63 @@ class _ItemCard extends StatelessWidget {
                   child: Consumer(
                     builder: (context, ref, _) {
                       final isOnline = watchIsOnline(ref);
-                      final canAct = item.canRedeem &&
+                      final canAct =
+                          item.canRedeem &&
                           !item.isRedeemed &&
                           !isRedeeming &&
                           isOnline;
                       return HoverBuilder(
-                        builder: (context, hovering) => ElevatedButton.icon(
-                          onPressed: canAct ? onRedeem : null,
-                          icon: isRedeeming
-                              ? const SizedBox(
-                                  width: 12,
-                                  height: 12,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Icon(
-                                  item.isRedeemed
-                                      ? Icons.check_circle_outline_rounded
-                                      : Icons.redeem_rounded,
-                                  size: 14,
+                        builder:
+                            (context, hovering) => ElevatedButton.icon(
+                              onPressed: canAct ? onRedeem : null,
+                              icon:
+                                  isRedeeming
+                                      ? const SizedBox(
+                                        width: 12,
+                                        height: 12,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                      : Icon(
+                                        item.isRedeemed
+                                            ? Icons.check_circle_outline_rounded
+                                            : Icons.redeem_rounded,
+                                        size: 14,
+                                      ),
+                              label: Text(
+                                item.isRedeemed
+                                    ? 'Redeemed'
+                                    : (!isOnline && item.canRedeem
+                                        ? 'Offline'
+                                        : 'Redeem'),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
                                 ),
-                          label: Text(
-                            item.isRedeemed
-                                ? 'Redeemed'
-                                : (!isOnline && item.canRedeem
-                                    ? 'Offline'
-                                    : 'Redeem'),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            minimumSize: const Size(0, 37),
-                            backgroundColor: hovering
-                                ? const Color(0xFF4B3FC2)
-                                : const Color(0xFF5C52D4),
-                            foregroundColor: Colors.white,
-                            // greyed out when redeemed / offline / can't redeem
-                            disabledBackgroundColor: const Color(0xFFB0AFD4),
-                            disabledForegroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                                minimumSize: const Size(0, 37),
+                                backgroundColor:
+                                    hovering
+                                        ? const Color(0xFF4B3FC2)
+                                        : const Color(0xFF5C52D4),
+                                foregroundColor: Colors.white,
+                                // greyed out when redeemed / offline / can't redeem
+                                disabledBackgroundColor: const Color(
+                                  0xFFB0AFD4,
+                                ),
+                                disabledForegroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ),
-                            textStyle: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
                       );
                     },
                   ),
@@ -843,17 +931,18 @@ class _ItemImage extends StatelessWidget {
       fit: BoxFit.cover,
       width: double.infinity,
       errorBuilder: (_, __, ___) => fallback,
-      loadingBuilder: (context, child, progress) =>
-          progress == null
-              ? child
-              : Container(
-                  color: const Color(0xFFF0ECFF),
-                  alignment: Alignment.center,
-                  child: const CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: _purple,
+      loadingBuilder:
+          (context, child, progress) =>
+              progress == null
+                  ? child
+                  : Container(
+                    color: const Color(0xFFF0ECFF),
+                    alignment: Alignment.center,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: _purple,
+                    ),
                   ),
-                ),
     );
   }
 }
@@ -873,75 +962,87 @@ class _ItemDetailDialog extends StatelessWidget {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                const Text(
-                  'Item Details',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: _ink,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Text(
+                    'Item Details',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _ink,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                Positioned(
-                  right: 0,
-                  top: -6,
-                  child: IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded, color: _muted, size: 20),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
+                  Positioned(
+                    right: 0,
+                    top: -6,
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: _muted,
+                        size: 20,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: 16 / 10,
-                child: item.image != null
-                    ? Image.network(
-                        item.image!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _DialogImageFallback(),
-                      )
-                    : const _DialogImageFallback(),
+                ],
               ),
-            ),
-            const SizedBox(height: 18),
-            _DetailRow(label: 'Name:', value: item.name),
-            if (item.groupName != null)
-              _DetailRow(label: 'Group:', value: item.groupName!),
-            if (item.managedBy != null)
-              _DetailRow(label: 'Managed by:', value: item.managedBy!),
-            _DetailRow(label: 'Points required:', value: '${item.points}'),
-            if (item.description.isNotEmpty)
-              _DetailRow(label: 'Description:', value: item.description),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.center,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: FigmaTokens.cardBorders),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 10),
-                ),
-                child: const Text(
-                  'Close',
-                  style: TextStyle(color: _muted, fontWeight: FontWeight.w600),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: AspectRatio(
+                  aspectRatio: 16 / 10,
+                  child:
+                      item.image != null
+                          ? Image.network(
+                            item.image!,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (_, __, ___) => const _DialogImageFallback(),
+                          )
+                          : const _DialogImageFallback(),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 18),
+              _DetailRow(label: 'Name:', value: item.name),
+              if (item.groupName != null)
+                _DetailRow(label: 'Group:', value: item.groupName!),
+              if (item.managedBy != null)
+                _DetailRow(label: 'Managed by:', value: item.managedBy!),
+              _DetailRow(label: 'Points required:', value: '${item.points}'),
+              if (item.description.isNotEmpty)
+                _DetailRow(label: 'Description:', value: item.description),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.center,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: FigmaTokens.cardBorders),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 10,
+                    ),
+                  ),
+                  child: const Text(
+                    'Close',
+                    style: TextStyle(
+                      color: _muted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1040,32 +1141,47 @@ class _RedeemDialogState extends State<_RedeemDialog> {
               const SizedBox(height: 16),
               const Text(
                 'Address *',
-                style: TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: _ink,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _addressCtrl,
                 maxLines: 3,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Address is required' : null,
+                validator:
+                    (v) =>
+                        v == null || v.trim().isEmpty
+                            ? 'Address is required'
+                            : null,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: _bg,
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
+                    borderSide: const BorderSide(
+                      color: FigmaTokens.cardBorders,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
+                    borderSide: const BorderSide(
+                      color: FigmaTokens.cardBorders,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 14),
               const Text(
                 'Note',
-                style: TextStyle(color: _ink, fontSize: 13, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  color: _ink,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 6),
               TextFormField(
@@ -1076,11 +1192,15 @@ class _RedeemDialogState extends State<_RedeemDialog> {
                   contentPadding: const EdgeInsets.all(12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
+                    borderSide: const BorderSide(
+                      color: FigmaTokens.cardBorders,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: FigmaTokens.cardBorders),
+                    borderSide: const BorderSide(
+                      color: FigmaTokens.cardBorders,
+                    ),
                   ),
                 ),
               ),
@@ -1088,43 +1208,50 @@ class _RedeemDialogState extends State<_RedeemDialog> {
               SizedBox(
                 width: double.infinity,
                 child: HoverBuilder(
-                  builder: (context, hovering) => ElevatedButton(
-                    onPressed: _submitting
-                        ? null
-                        : () async {
-                            if (!_formKey.currentState!.validate()) return;
-                            setState(() => _submitting = true);
-                            await widget.onConfirm(
-                              _addressCtrl.text.trim(),
-                              _noteCtrl.text.trim(),
-                            );
-                            if (mounted) setState(() => _submitting = false);
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          hovering ? FigmaTokens.purpleHover : _purple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      disabledBackgroundColor: _purple.withValues(alpha: 0.6),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      minimumSize: const Size(0, 44),
-                    ),
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Confirm',
-                            style: TextStyle(fontWeight: FontWeight.w700),
+                  builder:
+                      (context, hovering) => ElevatedButton(
+                        onPressed:
+                            _submitting
+                                ? null
+                                : () async {
+                                  if (!_formKey.currentState!.validate())
+                                    return;
+                                  setState(() => _submitting = true);
+                                  await widget.onConfirm(
+                                    _addressCtrl.text.trim(),
+                                    _noteCtrl.text.trim(),
+                                  );
+                                  if (mounted)
+                                    setState(() => _submitting = false);
+                                },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              hovering ? FigmaTokens.purpleHover : _purple,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          disabledBackgroundColor: _purple.withValues(
+                            alpha: 0.6,
                           ),
-                  ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          minimumSize: const Size(0, 44),
+                        ),
+                        child:
+                            _submitting
+                                ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : const Text(
+                                  'Confirm',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                      ),
                 ),
               ),
             ],
@@ -1173,12 +1300,20 @@ class _EmptyState extends StatelessWidget {
                 color: const Color(0xFFF0ECFF),
                 borderRadius: BorderRadius.circular(50),
               ),
-              child: const Icon(Icons.redeem_outlined, color: _purple, size: 52),
+              child: const Icon(
+                Icons.redeem_outlined,
+                color: _purple,
+                size: 52,
+              ),
             ),
             const SizedBox(height: 24),
             const Text(
               'No Items Available',
-              style: TextStyle(color: _ink, fontSize: 20, fontWeight: FontWeight.w900),
+              style: TextStyle(
+                color: _ink,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -1225,4 +1360,3 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
-

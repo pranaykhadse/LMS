@@ -26,7 +26,8 @@ class AccountSettingsPage extends ConsumerStatefulWidget {
   const AccountSettingsPage({super.key});
 
   @override
-  ConsumerState<AccountSettingsPage> createState() => _AccountSettingsPageState();
+  ConsumerState<AccountSettingsPage> createState() =>
+      _AccountSettingsPageState();
 }
 
 class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
@@ -48,21 +49,30 @@ class _AccountSettingsPageState extends ConsumerState<AccountSettingsPage> {
 
     return AppScaffold(
       backgroundColor: _asBg,
-      onRefresh: () => ref.read(AccountSettingsViewModel.provider.notifier).fetch(),
+      onRefresh:
+          () => ref.read(AccountSettingsViewModel.provider.notifier).fetch(),
       body: switch (state.state) {
-        DataProviderState.idle ||
-        DataProviderState.loading =>
-          const Center(child: CircularProgressIndicator(color: _asPurple)),
-        DataProviderState.error => _redirectingUnauthorized
-            ? const Center(child: CircularProgressIndicator(color: _asPurple))
-            : _ErrorView(
-                message: friendlyErrorMessage(state.error, 'Unable to load your profile.'),
-                onRetry: () =>
-                    ref.read(AccountSettingsViewModel.provider.notifier).fetch(),
+        DataProviderState.idle || DataProviderState.loading => const Center(
+          child: CircularProgressIndicator(color: _asPurple),
+        ),
+        DataProviderState.error =>
+          _redirectingUnauthorized
+              ? const Center(child: CircularProgressIndicator(color: _asPurple))
+              : _ErrorView(
+                message: friendlyErrorMessage(
+                  state.error,
+                  'Unable to load your profile.',
+                ),
+                onRetry:
+                    () =>
+                        ref
+                            .read(AccountSettingsViewModel.provider.notifier)
+                            .fetch(),
               ),
-        DataProviderState.data => state.data == null
-            ? const _ErrorView(message: 'No profile data found.')
-            : _AccountSettingsBody(detail: state.data!),
+        DataProviderState.data =>
+          state.data == null
+              ? const _ErrorView(message: 'No profile data found.')
+              : _AccountSettingsBody(detail: state.data!),
       },
     );
   }
@@ -83,7 +93,11 @@ class _ErrorView extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, color: _asMuted, size: 48),
             const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center, style: const TextStyle(color: _asMuted)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: _asMuted),
+            ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               RetryButton(onRetry: onRetry!, errorMessage: message),
@@ -100,7 +114,8 @@ class _AccountSettingsBody extends ConsumerStatefulWidget {
   final UserProfileDetail detail;
 
   @override
-  ConsumerState<_AccountSettingsBody> createState() => _AccountSettingsBodyState();
+  ConsumerState<_AccountSettingsBody> createState() =>
+      _AccountSettingsBodyState();
 }
 
 class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
@@ -263,9 +278,10 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   Widget build(BuildContext context) {
     final profile = widget.detail.profile;
     final user = widget.detail.user;
-    final name = [profile.firstname, profile.lastname]
-        .where((s) => (s ?? '').trim().isNotEmpty)
-        .join(' ');
+    final name = [
+      profile.firstname,
+      profile.lastname,
+    ].where((s) => (s ?? '').trim().isNotEmpty).join(' ');
     final notificationTypeSelection =
         (profile.notificationType?.toString() ?? '').toLowerCase();
 
@@ -285,170 +301,215 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-        const Text(
-          'Account Settings',
-          style: TextStyle(color: _asInk, fontSize: 20, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 16),
-        _ProfileHeaderCard(
-          name: name.isEmpty ? 'User' : name,
-          email: user.email ?? '',
-          profile: profile,
-          isEditing: _isEditing,
-          isSaving: _isSaving,
-          firstnameController: _firstnameCtrl,
-          lastnameController: _lastnameCtrl,
-          isUploadingAvatar: _isUploadingAvatar,
-          onPickAvatar: _pickAndUploadAvatar,
-          onEdit: _startEditing,
-          onCancel: _cancelEditing,
-          onSave: _save,
-        ),
-        const SizedBox(height: 16),
-        // ── Each section is its own bordered, rounded-corner box ───────
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-              // ── Personal Details ──────────────────────────────────
-              _SectionBlock(
-                icon: Icons.person_outline_rounded,
-                title: 'Personal Details',
-                children: [
-                  // Not yet returned by the profile API - shown as
-                  // "Not provided" like Supervisor Name/Email below, ready
-                  // to wire up once the backend exposes it.
-                  const _FieldRow(label: 'State', value: null),
-                  _FieldRow(
-                    label: 'Location',
-                    value: profile.location,
-                    controller: _isEditing ? _locationCtrl : null,
-                  ),
-                  _FieldRow(
-                    label: 'Website',
-                    value: profile.website?.toString(),
-                    controller: _isEditing ? _websiteCtrl : null,
-                  ),
-                  _FieldRow(
-                    label: 'LinkedIn',
-                    value: profile.linkedIn?.toString(),
-                    controller: _isEditing ? _linkedInCtrl : null,
-                  ),
-                  _PhoneFieldRow(
-                    label: 'Phone Number',
-                    value: widget.detail.phoneNumber,
-                    controller: _isEditing ? _phoneCtrl : null,
-                    countryCode: _countryCode,
-                    countryIso: _countryIso,
-                    onCountryChanged: _isEditing
-                        ? (country) => setState(() {
-                              _countryCode = country.dialCode;
-                              _countryIso = country.iso2;
-                            })
-                        : null,
-                  ),
-                  _ToggleRow(
-                    label: 'Receive Text Message Reminders',
-                    value: widget.detail.enableTextMessages,
-                    onChanged:
-                        _isSavingReminders ? null : _toggleTextReminders,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // ── Work Information ──────────────────────────────────
-              _SectionBlock(
-                icon: Icons.work_outline_rounded,
-                title: 'Work Information',
-                children: [
-                  _FieldRow(
-                    label: 'Division',
-                    value: profile.division,
-                    controller: _isEditing ? _divisionCtrl : null,
-                  ),
-                  _FieldRow(
-                    label: 'Department',
-                    value: profile.department,
-                    controller: _isEditing ? _departmentCtrl : null,
-                  ),
-                  _FieldRow(label: 'Cost Code', value: user.costCode),
-                  _FieldRow(label: 'Employee ID', value: user.employeeId?.toString()),
-                  const _FieldRow(label: 'Supervisor Name', value: null),
-                  const _FieldRow(label: 'Supervisor Email', value: null),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // ── Preferences ───────────────────────────────────────
-              _SectionBlock(
-                icon: Icons.tune_rounded,
-                title: 'Preferences',
-                children: [
-                  _ToggleRow(
-                    label: 'Two-Factor Auth',
-                    sublabel: 'Add an extra layer of security',
-                    value: user.enableTwoFactorAuth == 1,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // ── Primary Group ─────────────────────────────────────
-              _SectionBlock(
-                icon: Icons.groups_outlined,
-                title: 'Primary Group',
-                children: [
-                  _SelectedChip(label: user.primaryGroupLabel ?? 'Not assigned'),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // ── Notification Type ─────────────────────────────────
-              _SectionBlock(
-                icon: Icons.notifications_outlined,
-                title: 'Notification Type',
-                children: [
-                  ..._notificationOptions.map((label) => _RadioRow(
-                        label: label,
-                        selected: notificationTypeSelection
-                            .contains(label.split(' ').first.toLowerCase()),
-                      )),
-                  // The number that channel actually sends to - only shown
-                  // once that channel is selected, matching the reference.
-                  if (notificationTypeSelection.contains('text') ||
-                      notificationTypeSelection.contains('sms'))
-                    _PlainValueBox(value: profile.textPhoneNumber?.toString())
-                  else if (notificationTypeSelection.contains('whatsapp'))
-                    _PlainValueBox(value: profile.whatsappPhoneNumber?.toString()),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // ── Security ──────────────────────────────────────────
-              _SectionBlock(
-                icon: Icons.security_rounded,
-                title: 'Security',
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => showDialog(
-                        context: context,
-                        builder: (_) => const _ResetPasswordDialog(),
-                      ),
-                      icon: const Icon(Icons.lock_outline_rounded, size: 16),
-                      label: const Text('Reset Password'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _asInk,
-                        side: const BorderSide(
-                            color: Color(0xFFD1D5DB), width: 1),
-                        minimumSize: const Size.fromHeight(44),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        textStyle: const TextStyle(
-                            fontWeight: FontWeight.w600, fontSize: 13),
-                      ),
+                  const Text(
+                    'Account Settings',
+                    style: TextStyle(
+                      color: _asInk,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                  const SizedBox(height: 16),
+                  _ProfileHeaderCard(
+                    name: name.isEmpty ? 'User' : name,
+                    email: user.email ?? '',
+                    profile: profile,
+                    isEditing: _isEditing,
+                    isSaving: _isSaving,
+                    firstnameController: _firstnameCtrl,
+                    lastnameController: _lastnameCtrl,
+                    isUploadingAvatar: _isUploadingAvatar,
+                    onPickAvatar: _pickAndUploadAvatar,
+                    onEdit: _startEditing,
+                    onCancel: _cancelEditing,
+                    onSave: _save,
+                  ),
+                  const SizedBox(height: 16),
+                  // ── Each section is its own bordered, rounded-corner box ───────
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Personal Details ──────────────────────────────────
+                      _SectionBlock(
+                        icon: Icons.person_outline_rounded,
+                        title: 'Personal Details',
+                        children: [
+                          // Not yet returned by the profile API - shown as
+                          // "Not provided" like Supervisor Name/Email below, ready
+                          // to wire up once the backend exposes it.
+                          const _FieldRow(label: 'State', value: null),
+                          _FieldRow(
+                            label: 'Location',
+                            value: profile.location,
+                            controller: _isEditing ? _locationCtrl : null,
+                          ),
+                          _FieldRow(
+                            label: 'Website',
+                            value: profile.website?.toString(),
+                            controller: _isEditing ? _websiteCtrl : null,
+                          ),
+                          _FieldRow(
+                            label: 'LinkedIn',
+                            value: profile.linkedIn?.toString(),
+                            controller: _isEditing ? _linkedInCtrl : null,
+                          ),
+                          _PhoneFieldRow(
+                            label: 'Phone Number',
+                            value: widget.detail.phoneNumber,
+                            controller: _isEditing ? _phoneCtrl : null,
+                            countryCode: _countryCode,
+                            countryIso: _countryIso,
+                            onCountryChanged:
+                                _isEditing
+                                    ? (country) => setState(() {
+                                      _countryCode = country.dialCode;
+                                      _countryIso = country.iso2;
+                                    })
+                                    : null,
+                          ),
+                          _ToggleRow(
+                            label: 'Receive Text Message Reminders',
+                            value: widget.detail.enableTextMessages,
+                            onChanged:
+                                _isSavingReminders
+                                    ? null
+                                    : _toggleTextReminders,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // ── Work Information ──────────────────────────────────
+                      _SectionBlock(
+                        icon: Icons.work_outline_rounded,
+                        title: 'Work Information',
+                        children: [
+                          _FieldRow(
+                            label: 'Division',
+                            value: profile.division,
+                            controller: _isEditing ? _divisionCtrl : null,
+                          ),
+                          _FieldRow(
+                            label: 'Department',
+                            value: profile.department,
+                            controller: _isEditing ? _departmentCtrl : null,
+                          ),
+                          // CSS ref: real Work Information section is
+                          // Division/Department/Cost Code/Supervisor Name/
+                          // Supervisor Email only — "Employee ID" doesn't
+                          // exist anywhere in `account.php`, removed.
+                          _FieldRow(label: 'Cost Code', value: user.costCode),
+                          const _FieldRow(
+                            label: 'Supervisor Name',
+                            value: null,
+                          ),
+                          const _FieldRow(
+                            label: 'Supervisor Email',
+                            value: null,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // ── Preferences (Two-Factor Auth) ─────────────────
+                      // CSS ref, confirmed against `origin/staging`'s
+                      // sign-in/auth.php (rendered via
+                      // `renderPartial('auth')` between Work Information
+                      // and Primary Group in account.php — missed on an
+                      // earlier pass because it lives in a separate
+                      // partial file, not account.php itself, and was
+                      // wrongly deleted as if invented; restored here).
+                      _SectionBlock(
+                        icon: Icons.tune_rounded,
+                        title: 'Preferences',
+                        children: [
+                          _ToggleRow(
+                            label: 'Two-Factor Auth',
+                            sublabel: 'Add an extra layer of security',
+                            value: user.enableTwoFactorAuth == 1,
+                            boxed: true,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // ── Primary Group ─────────────────────────────────────
+                      _SectionBlock(
+                        icon: Icons.groups_outlined,
+                        title: 'Primary Group',
+                        children: [
+                          _SelectedChip(
+                            label: user.primaryGroupLabel ?? 'Not assigned',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // ── Notification Type ─────────────────────────────────
+                      _SectionBlock(
+                        icon: Icons.notifications_outlined,
+                        title: 'Notification Type',
+                        children: [
+                          ..._notificationOptions.map(
+                            (label) => _RadioRow(
+                              label: label,
+                              selected: notificationTypeSelection.contains(
+                                label.split(' ').first.toLowerCase(),
+                              ),
+                            ),
+                          ),
+                          // The number that channel actually sends to - only shown
+                          // once that channel is selected, matching the reference.
+                          if (notificationTypeSelection.contains('text') ||
+                              notificationTypeSelection.contains('sms'))
+                            _PlainValueBox(
+                              value: profile.textPhoneNumber?.toString(),
+                            )
+                          else if (notificationTypeSelection.contains(
+                            'whatsapp',
+                          ))
+                            _PlainValueBox(
+                              value: profile.whatsappPhoneNumber?.toString(),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // ── Security ──────────────────────────────────────────
+                      _SectionBlock(
+                        icon: Icons.security_rounded,
+                        title: 'Security',
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed:
+                                  () => showDialog(
+                                    context: context,
+                                    builder:
+                                        (_) => const _ResetPasswordDialog(),
+                                  ),
+                              icon: const Icon(
+                                Icons.lock_outline_rounded,
+                                size: 16,
+                              ),
+                              label: const Text('Reset Password'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _asInk,
+                                side: const BorderSide(
+                                  color: Color(0xFFD1D5DB),
+                                  width: 1,
+                                ),
+                                minimumSize: const Size.fromHeight(44),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -461,7 +522,13 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   }
 }
 
-const _notificationOptions = ['Email', 'Slack', 'Teams', 'Text Message (SMS)', 'WhatsApp'];
+const _notificationOptions = [
+  'Email',
+  'Slack',
+  'Teams',
+  'Text Message (SMS)',
+  'WhatsApp',
+];
 
 class _ProfileHeaderCard extends StatelessWidget {
   const _ProfileHeaderCard({
@@ -506,66 +573,90 @@ class _ProfileHeaderCard extends StatelessWidget {
           // ── Top row: Profile label + Edit/Save/Cancel ─────────────
           Row(
             children: [
-              const Icon(Icons.person_outline_rounded, color: _asPurple, size: 18),
+              const Icon(
+                Icons.person_outline_rounded,
+                color: _asPurple,
+                size: 18,
+              ),
               const SizedBox(width: 6),
-              const Text('Profile',
-                  style: TextStyle(
-                      color: _asInk,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15)),
+              const Text(
+                'Profile',
+                style: TextStyle(
+                  color: _asInk,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                ),
+              ),
               const Spacer(),
               if (isEditing) ...[
                 TextButton(
                   onPressed: isSaving ? null : onCancel,
                   style: TextButton.styleFrom(foregroundColor: _asMuted),
-                  child: const Text('Cancel',
-                      style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
                 const SizedBox(width: 4),
                 HoverBuilder(
-                  builder: (context, hovering) => ElevatedButton(
-                    onPressed: isSaving ? null : onSave,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          hovering ? FigmaTokens.purpleHover : _asPurple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 18, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      textStyle: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 13),
-                    ),
-                    child: isSaving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text('Save'),
-                  ),
+                  builder:
+                      (context, hovering) => ElevatedButton(
+                        onPressed: isSaving ? null : onSave,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              hovering ? FigmaTokens.purpleHover : _asPurple,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                        child:
+                            isSaving
+                                ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : const Text('Save'),
+                      ),
                 ),
               ] else
                 HoverBuilder(
-                  builder: (context, hovering) => ElevatedButton.icon(
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined, size: 15),
-                    label: const Text('Edit'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          hovering ? FigmaTokens.purpleHover : _asPurple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      textStyle: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 13),
-                    ),
-                  ),
+                  builder:
+                      (context, hovering) => ElevatedButton.icon(
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit_outlined, size: 15),
+                        label: const Text('Edit'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              hovering ? FigmaTokens.purpleHover : _asPurple,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                 ),
             ],
           ),
@@ -588,7 +679,9 @@ class _ProfileHeaderCard extends StatelessWidget {
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -603,8 +696,11 @@ class _ProfileHeaderCard extends StatelessWidget {
                         customBorder: const CircleBorder(),
                         child: const Padding(
                           padding: EdgeInsets.all(7),
-                          child: Icon(Icons.camera_alt_rounded,
-                              size: 16, color: Colors.white),
+                          child: Icon(
+                            Icons.camera_alt_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -614,35 +710,45 @@ class _ProfileHeaderCard extends StatelessWidget {
               const SizedBox(width: 20),
               // Name + email (or edit fields)
               Expanded(
-                child: isEditing
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const _FieldLabel('First Name'),
-                          _EditableName(
+                child:
+                    isEditing
+                        ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const _FieldLabel('First Name'),
+                            _EditableName(
                               controller: firstnameController,
-                              hint: 'First name'),
-                          const SizedBox(height: 10),
-                          const _FieldLabel('Last Name'),
-                          _EditableName(
+                              hint: 'First name',
+                            ),
+                            const SizedBox(height: 10),
+                            const _FieldLabel('Last Name'),
+                            _EditableName(
                               controller: lastnameController,
-                              hint: 'Last name'),
-                        ],
-                      )
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(name,
+                              hint: 'Last name',
+                            ),
+                          ],
+                        )
+                        : Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              name,
                               style: const TextStyle(
-                                  color: _asInk,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 18)),
-                          const SizedBox(height: 4),
-                          Text(email,
+                                color: _asInk,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 18,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              email,
                               style: const TextStyle(
-                                  color: _asMuted, fontSize: 13)),
-                        ],
-                      ),
+                                color: _asMuted,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
               ),
             ],
           ),
@@ -662,7 +768,11 @@ class _FieldLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
-        style: const TextStyle(color: _asMuted, fontSize: 12, fontWeight: FontWeight.w700),
+        style: const TextStyle(
+          color: _asMuted,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -680,7 +790,10 @@ class _Avatar extends StatelessWidget {
       backgroundColor: const Color(0xFF10121B),
       backgroundImage: valid ? NetworkImage(url) : null,
       onBackgroundImageError: valid ? (_, __) {} : null,
-      child: valid ? null : const Icon(Icons.person, color: Colors.white, size: 40),
+      child:
+          valid
+              ? null
+              : const Icon(Icons.person, color: Colors.white, size: 40),
     );
   }
 }
@@ -695,12 +808,19 @@ class _EditableName extends StatelessWidget {
     return TextField(
       controller: controller,
       textAlign: TextAlign.center,
-      style: const TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 18),
+      style: const TextStyle(
+        color: _asInk,
+        fontWeight: FontWeight.w800,
+        fontSize: 18,
+      ),
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
         fillColor: _asFieldBg,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
@@ -714,7 +834,8 @@ class _ResetPasswordDialog extends ConsumerStatefulWidget {
   const _ResetPasswordDialog();
 
   @override
-  ConsumerState<_ResetPasswordDialog> createState() => _ResetPasswordDialogState();
+  ConsumerState<_ResetPasswordDialog> createState() =>
+      _ResetPasswordDialogState();
 }
 
 class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
@@ -742,7 +863,9 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
       return;
     }
     if (newPassword != confirmPassword) {
-      setState(() => _errorText = 'New password and confirm password do not match.');
+      setState(
+        () => _errorText = 'New password and confirm password do not match.',
+      );
       return;
     }
 
@@ -787,13 +910,20 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
                 const Text(
                   'Reset Password',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: _asInk, fontWeight: FontWeight.w800, fontSize: 18),
+                  style: TextStyle(
+                    color: _asInk,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
                 ),
                 Positioned(
                   right: 0,
                   top: -4,
                   child: IconButton(
-                    onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                    onPressed:
+                        _isSubmitting
+                            ? null
+                            : () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close, size: 20, color: _asMuted),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -806,7 +936,10 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
             const SizedBox(height: 14),
             _PasswordField(label: 'New Password', controller: _newPasswordCtrl),
             const SizedBox(height: 14),
-            _PasswordField(label: 'Confirm Password', controller: _confirmPasswordCtrl),
+            _PasswordField(
+              label: 'Confirm Password',
+              controller: _confirmPasswordCtrl,
+            ),
             if (_errorText != null) ...[
               const SizedBox(height: 10),
               Text(
@@ -819,36 +952,52 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 HoverBuilder(
-                  builder: (context, hovering) => ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          hovering ? FigmaTokens.purpleHover : _asPurple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      minimumSize: const Size(90, 42),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text('Okay', style: TextStyle(fontWeight: FontWeight.w700)),
-                  ),
+                  builder:
+                      (context, hovering) => ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              hovering ? FigmaTokens.purpleHover : _asPurple,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          minimumSize: const Size(90, 42),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child:
+                            _isSubmitting
+                                ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : const Text(
+                                  'Okay',
+                                  style: TextStyle(fontWeight: FontWeight.w700),
+                                ),
+                      ),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
-                  onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                  onPressed:
+                      _isSubmitting ? null : () => Navigator.of(context).pop(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE53935),
                     foregroundColor: Colors.white,
                     elevation: 0,
                     minimumSize: const Size(90, 42),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
-                  child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w700)),
+                  child: const Text(
+                    'Cancel',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ],
             ),
@@ -878,7 +1027,11 @@ class _PasswordFieldState extends State<_PasswordField> {
       children: [
         RichText(
           text: TextSpan(
-            style: const TextStyle(color: _asInk, fontSize: 13, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: _asInk,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
             children: [
               TextSpan(text: widget.label),
               const TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
@@ -893,7 +1046,10 @@ class _PasswordFieldState extends State<_PasswordField> {
           decoration: InputDecoration(
             filled: true,
             fillColor: _asFieldBg,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none,
@@ -901,7 +1057,9 @@ class _PasswordFieldState extends State<_PasswordField> {
             suffixIcon: IconButton(
               onPressed: () => setState(() => _obscure = !_obscure),
               icon: Icon(
-                _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                _obscure
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 size: 18,
                 color: _asMuted,
               ),
@@ -938,18 +1096,22 @@ class _SectionBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section title row
+          // Section title row — CSS ref, confirmed against
+          // `origin/staging`'s sign-in/account.php: inline-styled h2 —
+          // 13px/weight700/color #374151/letter-spacing 0.5px, icon color
+          // #6B7280 (a neutral gray, not the app's purple) — was 11px/900/
+          // 0.6/ink with a purple icon.
           Row(
             children: [
-              Icon(icon, size: 15, color: _asPurple),
-              const SizedBox(width: 6),
+              Icon(icon, size: 15, color: const Color(0xFF6B7280)),
+              const SizedBox(width: 8),
               Text(
                 title.toUpperCase(),
                 style: const TextStyle(
-                  color: _asInk,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 11,
-                  letterSpacing: 0.6,
+                  color: Color(0xFF374151),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
@@ -965,7 +1127,6 @@ class _SectionBlock extends StatelessWidget {
     );
   }
 }
-
 
 class _FieldRow extends StatelessWidget {
   const _FieldRow({
@@ -989,62 +1150,68 @@ class _FieldRow extends StatelessWidget {
         fontWeight: FontWeight.w500,
       ),
     );
-    final field = controller != null
-        ? TextField(
-            controller: controller,
-            keyboardType: keyboardType,
-            style: const TextStyle(
-                color: _asInk, fontSize: 13, fontWeight: FontWeight.w500),
-            decoration: InputDecoration(
-              hintText: 'Not provided',
-              hintStyle: const TextStyle(color: _asMuted, fontSize: 13),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide:
-                    const BorderSide(color: Color(0xFFD1D5DB), width: 1),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide:
-                    const BorderSide(color: Color(0xFFD1D5DB), width: 1),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: const BorderSide(color: _asPurple, width: 1.5),
-              ),
-            ),
-          )
-        : Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
-            ),
-            child: Text(
-              (value ?? '').trim().isNotEmpty ? value! : 'Not provided',
-              style: TextStyle(
-                color: (value ?? '').trim().isNotEmpty ? _asInk : _asMuted,
+    final field =
+        controller != null
+            ? TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              style: const TextStyle(
+                color: _asInk,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
-            ),
-          );
+              decoration: InputDecoration(
+                hintText: 'Not provided',
+                hintStyle: const TextStyle(color: _asMuted, fontSize: 13),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFD1D5DB),
+                    width: 1,
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFD1D5DB),
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: const BorderSide(color: _asPurple, width: 1.5),
+                ),
+              ),
+            )
+            : Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
+              ),
+              child: Text(
+                (value ?? '').trim().isNotEmpty ? value! : 'Not provided',
+                style: TextStyle(
+                  color: (value ?? '').trim().isNotEmpty ? _asInk : _asMuted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
 
     // Phone (<700px): label above field, full-width - a 160px fixed label
     // leaves too little room for the input on a narrow screen.
     if (!Responsive.isTablet(context)) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          labelText,
-          const SizedBox(height: 6),
-          field,
-        ],
+        children: [labelText, const SizedBox(height: 6), field],
       );
     }
 
@@ -1099,100 +1266,101 @@ class _PhoneFieldRow extends StatelessWidget {
         fontWeight: FontWeight.w500,
       ),
     );
-    final field = isEditing
-              ? Row(
-                  children: [
-                    _CountryCodePicker(
-                      country: country,
-                      onSelected: (c) => onCountryChanged?.call(c),
+    final field =
+        isEditing
+            ? Row(
+              children: [
+                _CountryCodePicker(
+                  country: country,
+                  onSelected: (c) => onCountryChanged?.call(c),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    keyboardType: TextInputType.phone,
+                    style: const TextStyle(
+                      color: _asInk,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Not provided',
+                      hintStyle: const TextStyle(color: _asMuted, fontSize: 13),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFD1D5DB),
+                          width: 1,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(
+                          color: Color(0xFFD1D5DB),
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(
+                          color: _asPurple,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+            : Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
+              ),
+              child: Row(
+                children: [
+                  if (country != null && (value ?? '').trim().isNotEmpty) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: CountryFlag.fromCountryCode(
+                        country.iso2,
+                        height: 14,
+                        width: 20,
+                      ),
                     ),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: controller,
-                        keyboardType: TextInputType.phone,
-                        style: const TextStyle(
-                            color: _asInk,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500),
-                        decoration: InputDecoration(
-                          hintText: 'Not provided',
-                          hintStyle:
-                              const TextStyle(color: _asMuted, fontSize: 13),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                                color: Color(0xFFD1D5DB), width: 1),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                                color: Color(0xFFD1D5DB), width: 1),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                            borderSide: const BorderSide(
-                                color: _asPurple, width: 1.5),
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
-                )
-              : Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                        color: const Color(0xFFD1D5DB), width: 1),
+                  Text(
+                    (value ?? '').trim().isNotEmpty
+                        ? [
+                          if (country != null) '+${country.dialCode}',
+                          value!.trim(),
+                        ].join(' ')
+                        : 'Not provided',
+                    style: TextStyle(
+                      color:
+                          (value ?? '').trim().isNotEmpty ? _asInk : _asMuted,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      if (country != null &&
-                          (value ?? '').trim().isNotEmpty) ...[
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(2),
-                          child: CountryFlag.fromCountryCode(
-                            country.iso2,
-                            height: 14,
-                            width: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      Text(
-                        (value ?? '').trim().isNotEmpty
-                            ? [
-                                if (country != null) '+${country.dialCode}',
-                                value!.trim(),
-                              ].join(' ')
-                            : 'Not provided',
-                        style: TextStyle(
-                          color: (value ?? '').trim().isNotEmpty
-                              ? _asInk
-                              : _asMuted,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
+                ],
+              ),
+            );
 
     if (!Responsive.isTablet(context)) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          labelText,
-          const SizedBox(height: 6),
-          field,
-        ],
+        children: [labelText, const SizedBox(height: 6), field],
       );
     }
 
@@ -1241,23 +1409,29 @@ class _CountryCodePicker extends StatelessWidget {
           children: [
             country != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: CountryFlag.fromCountryCode(
-                      country!.iso2,
-                      height: 14,
-                      width: 20,
-                    ),
-                  )
+                  borderRadius: BorderRadius.circular(2),
+                  child: CountryFlag.fromCountryCode(
+                    country!.iso2,
+                    height: 14,
+                    width: 20,
+                  ),
+                )
                 : const Icon(Icons.public_rounded, size: 16, color: _asMuted),
             const SizedBox(width: 6),
             Text(
               country != null ? '+${country!.dialCode}' : 'Code',
               style: const TextStyle(
-                  color: _asInk, fontSize: 13, fontWeight: FontWeight.w500),
+                color: _asInk,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down_rounded,
-                size: 16, color: _asMuted),
+            const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 16,
+              color: _asMuted,
+            ),
           ],
         ),
       ),
@@ -1280,13 +1454,16 @@ class _CountryPickerDialogState extends State<_CountryPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final query = _query.trim().toLowerCase();
-    final results = query.isEmpty
-        ? kCountries
-        : kCountries
-            .where((c) =>
-                c.name.toLowerCase().contains(query) ||
-                c.dialCode.contains(query))
-            .toList();
+    final results =
+        query.isEmpty
+            ? kCountries
+            : kCountries
+                .where(
+                  (c) =>
+                      c.name.toLowerCase().contains(query) ||
+                      c.dialCode.contains(query),
+                )
+                .toList();
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1300,7 +1477,10 @@ class _CountryPickerDialogState extends State<_CountryPickerDialog> {
               const Text(
                 'Select country',
                 style: TextStyle(
-                    color: _asInk, fontSize: 15, fontWeight: FontWeight.w700),
+                  color: _asInk,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -1312,7 +1492,9 @@ class _CountryPickerDialogState extends State<_CountryPickerDialog> {
                   prefixIcon: const Icon(Icons.search, size: 18),
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(6),
                     borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
@@ -1321,37 +1503,47 @@ class _CountryPickerDialogState extends State<_CountryPickerDialog> {
               ),
               const SizedBox(height: 8),
               Expanded(
-                child: results.isEmpty
-                    ? const Center(
-                        child: Text('No matches',
-                            style: TextStyle(color: _asMuted, fontSize: 13)),
-                      )
-                    : ListView.builder(
-                        itemCount: results.length,
-                        itemBuilder: (context, i) {
-                          final c = results[i];
-                          return ListTile(
-                            dense: true,
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(2),
-                              child: CountryFlag.fromCountryCode(
-                                c.iso2,
-                                height: 16,
-                                width: 22,
+                child:
+                    results.isEmpty
+                        ? const Center(
+                          child: Text(
+                            'No matches',
+                            style: TextStyle(color: _asMuted, fontSize: 13),
+                          ),
+                        )
+                        : ListView.builder(
+                          itemCount: results.length,
+                          itemBuilder: (context, i) {
+                            final c = results[i];
+                            return ListTile(
+                              dense: true,
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(2),
+                                child: CountryFlag.fromCountryCode(
+                                  c.iso2,
+                                  height: 16,
+                                  width: 22,
+                                ),
                               ),
-                            ),
-                            title: Text(c.name,
+                              title: Text(
+                                c.name,
                                 style: const TextStyle(
-                                    fontSize: 13, color: _asInk)),
-                            trailing: Text('+${c.dialCode}',
+                                  fontSize: 13,
+                                  color: _asInk,
+                                ),
+                              ),
+                              trailing: Text(
+                                '+${c.dialCode}',
                                 style: const TextStyle(
-                                    fontSize: 13,
-                                    color: _asMuted,
-                                    fontWeight: FontWeight.w600)),
-                            onTap: () => Navigator.of(context).pop(c),
-                          );
-                        },
-                      ),
+                                  fontSize: 13,
+                                  color: _asMuted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              onTap: () => Navigator.of(context).pop(c),
+                            );
+                          },
+                        ),
               ),
             ],
           ),
@@ -1367,6 +1559,7 @@ class _ToggleRow extends StatelessWidget {
     this.sublabel,
     required this.value,
     this.onChanged,
+    this.boxed = false,
   });
   final String label;
   final String? sublabel;
@@ -1374,15 +1567,22 @@ class _ToggleRow extends StatelessWidget {
   // Null keeps the old placeholder behavior (a "Coming soon" toast) for
   // toggles not wired to a real save yet, e.g. Two-Factor Auth.
   final ValueChanged<bool>? onChanged;
+  // CSS ref: only the Two-Factor Auth row (sign-in/auth.php) gets the
+  // distinct bg #F9FAFB/radius12/border #E5E7EB box + 15px/600/#111827
+  // label + 13px/#6B7280 sublabel — other toggles on this page render
+  // as plain field rows with no special box.
+  final bool boxed;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: boxed ? 16 : 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
+        color: boxed ? const Color(0xFFF9FAFB) : Colors.white,
+        borderRadius: BorderRadius.circular(boxed ? 12 : 6),
+        border: Border.all(
+          color: boxed ? const Color(0xFFE5E7EB) : const Color(0xFFD1D5DB),
+        ),
       ),
       child: Row(
         children: [
@@ -1390,16 +1590,23 @@ class _ToggleRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: const TextStyle(
-                        color: _asInk,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: boxed ? const Color(0xFF111827) : _asInk,
+                    fontWeight: FontWeight.w600,
+                    fontSize: boxed ? 15 : 13,
+                  ),
+                ),
                 if (sublabel != null) ...[
                   const SizedBox(height: 2),
-                  Text(sublabel!,
-                      style:
-                          const TextStyle(color: _asMuted, fontSize: 12)),
+                  Text(
+                    sublabel!,
+                    style: TextStyle(
+                      color: boxed ? const Color(0xFF6B7280) : _asMuted,
+                      fontSize: boxed ? 13 : 12,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -1462,11 +1669,14 @@ class _SelectedChip extends StatelessWidget {
         children: [
           const Icon(Icons.radio_button_checked, color: _asPurple, size: 17),
           const SizedBox(width: 10),
-          Text(label,
-              style: const TextStyle(
-                  color: _asPurple,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: _asPurple,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );
