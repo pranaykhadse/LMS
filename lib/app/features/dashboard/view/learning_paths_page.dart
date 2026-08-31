@@ -93,6 +93,24 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(LearningPathsViewModel.provider);
     final notifier = ref.read(LearningPathsViewModel.provider.notifier);
+    // CSS ref: real `div.container` on this page — `width:100%; margin:auto`
+    // but padding changes with breakpoint:
+    // `@media (max-width:640px){.container{padding:5px !important}}` and
+    // `@media (max-width:991.98px){.container{padding-left:15px !important;
+    // padding-right:15px !important; max-width:100% !important}}`.
+    // At iPhone SE (375px) the live box model shows 5px on all sides
+    // (365.2 content inside 375.2 outer). Reproduce that here so the
+    // search block and structure-block sit inside the same container
+    // inset as the web page.
+    final w = MediaQuery.sizeOf(context).width;
+    final EdgeInsets containerPadding;
+    if (w <= 640) {
+      containerPadding = const EdgeInsets.all(5);
+    } else if (w <= 991.98) {
+      containerPadding = const EdgeInsets.symmetric(horizontal: 15);
+    } else {
+      containerPadding = EdgeInsets.zero;
+    }
 
     return AppScaffold(
       backgroundColor: _bg,
@@ -105,15 +123,18 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
                     ? null
                     : _searchController.text.trim(),
           ),
-      body: Column(
-        children: [
-          _SearchBar(
-            controller: _searchController,
-            onSearch: _onSearch,
-            onReset: _onReset,
-          ),
-          Expanded(child: _Body(state: state, onRetry: () => notifier.fetch())),
-        ],
+      body: Padding(
+        padding: containerPadding,
+        child: Column(
+          children: [
+            _SearchBar(
+              controller: _searchController,
+              onSearch: _onSearch,
+              onReset: _onReset,
+            ),
+            Expanded(child: _Body(state: state, onRetry: () => notifier.fetch())),
+          ],
+        ),
       ),
     );
   }
@@ -164,20 +185,26 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
     final offline = isEffectivelyOffline(ref);
     final isTablet = Responsive.isTablet(context);
 
-    // Design ref, per explicit request: reuses the Course Catalog search
-    // field's own visual treatment (`_fieldDecoration`/`_SearchField` in
-    // courses_page.dart) — filled #F8FAFC (white when focused), radius 12,
-    // #E2E8F0 border (purple 1.5px when focused, plus a soft focus glow the
-    // real `.search-blcok .searchInput:focus` box-shadow also has), 18px
-    // muted-grey search icon, letter-spacing 1 — instead of this screen's
-    // own real (but visually inconsistent) CSS from Round 43.
+    // CSS ref — mobile inspection on iPhone SE (375×667):
+    // `div.search-blcok` margin 0 0 15 at ≤767; `div.row` flex-wrap;
+    // `.col-*` padding 15 each side; `.form-group` margin-bottom 1rem (16);
+    // `input.searchInput.form-control.pl-5` height 42, `pl-5{padding-left:
+    // 3rem !important}` (48), `:where(input[type=text],...)` wins with
+    // `background:var(--bg-white) #FFFFFF`, `border:1px solid
+    // var(--border-light) #E2E8F0`, `border-radius:8px !important`,
+    // `padding:10px 12px`, `font:14px Inter`, `color:#2D3748`,
+    // `height:42` from `.form-control`; `.search i` absolute `left:10
+    // top:12 color:#693D94 font-size:20`. Box model at 375px:
+    // container 5 → search-blcok 365.2×87 → row 365.2×87 →
+    // col-lg-11 365.2×58 (content 335.2+15+15, 42+16) → input
+    // 335.2×42 with icon 20×20 inside. Applied below.
     final searchField = Focus(
       onFocusChange: (focused) => setState(() => _focused = focused),
       child: SizedBox(
         height: 42,
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             boxShadow:
                 _focused
                     ? [
@@ -218,10 +245,17 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
                   fontSize: 15,
                   letterSpacing: 1.0,
                 ),
-                prefixIcon: const Icon(
-                  Icons.search,
-                  color: Color(0xFF94A3B8),
-                  size: 18,
+                prefixIcon: const Padding(
+                  padding: EdgeInsets.fromLTRB(10, 12, 0, 12),
+                  child: Icon(
+                    Icons.search,
+                    color: Color(0xFF693D94),
+                    size: 20,
+                  ),
+                ),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 30,
+                  minHeight: 20,
                 ),
                 suffixIcon:
                     _hasText && !offline
@@ -238,31 +272,24 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
                         )
                         : null,
                 filled: true,
-                // Always white, per explicit request — Course
-                // Catalog's own field swaps #F8FAFC->white on
-                // focus, but this one should stay white
-                // regardless of focus state.
                 fillColor: Colors.white,
                 hoverColor: Colors.transparent,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
+                contentPadding: const EdgeInsets.fromLTRB(48, 10, 12, 10),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: _inputBorder),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: _inputBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: _purple, width: 1.5),
                 ),
                 disabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   borderSide: const BorderSide(color: _inputBorder),
                 ),
               ),
@@ -272,24 +299,24 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
       ),
     );
 
-    // CSS ref, confirmed via a live devtools cascade dump on the
-    // real `<a class="btn btn-primary undo-btn"><i class="fa
-    // fa-undo"></i></a>`: same site-wide `.btn,button,input[type=
-    // submit]{border-radius:8px!important;padding:4px 4px
-    // !important;border:none!important}` override as every other
-    // `.btn` in the app (Round 36) — `.undo-btn`'s own `padding:
-    // 7px 15px!important` loses to it (same specificity, later
-    // load order). `.btn-primary,.btn-purple,.btn-default{
-    // background:var(--primary-color)!important;color:white
-    // !important}` confirms the fill/icon color. Icon itself
-    // measured 14x14 (not this screen's previous 20px), and the
-    // real `.btn{line-height:21px}` (unopposed) plus the 4px
-    // padding gives the whole button a real ~22x29 footprint —
-    // not a flat 44x44 box. Was previously radius 10 with no
-    // real-CSS basis and a much larger box/icon.
-    // Per a real mobile screenshot: on phone this button sits BELOW
-    // the search field (not beside it) and is a full circle, not the
-    // desktop's rounded-square — same fill/icon otherwise.
+    // CSS ref, iPhone SE (375px) on `a.btn.btn-primary.undo-btn`
+    // wrapping `i.fa.fa-undo` (352857):
+    // `.col-* {padding-left/right:15}` positions the column; its content
+    // box is `335.2` inside `365.2` (container 5 + row flex-wrap `365.2×29`
+    // for this column, `365.2×58` for the input column above).
+    // This link itself box is `21×29` with `335.2×29` column content
+    // (padding 4 on all sides → `13×21` content). Winning rules:
+    // `.btn,button,...{border-radius:8px!important;padding:4px 4px!important;
+    // border:none!important;font:600 14px Inter;line-height:21px}` +
+    // `.btn-primary{background:var(--primary-color)#693D94;color:white!important}`
+    // beat `.undo-btn{padding:7px 15px}`; at `≤991.98` `padding:4px 6px`,
+    // at `≤768` `width:100%;padding:4px`, at `≤767` `width:auto;padding:6px 12px`,
+    // at `≤480` `padding:4px` — at 375 the cascade resolves to `4px`
+    // all sides, `radius:8`, `weight:600`, `size:14`, `auto` width.
+    // `i.fa-undo` itself is `13×13` (`::before 13×12.8`), `font-weight:900`.
+    // Not a circle — plain rounded `8px` rectangle, stacked below the
+    // input (`form-group` margin `1rem/16` separates them), left-aligned
+    // inside its `15px` padded column.
     final resetButton = HoverBuilder(
       cursor: offline ? SystemMouseCursors.basic : SystemMouseCursors.click,
       builder:
@@ -317,21 +344,19 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
                   offline
                       ? _muted.withValues(alpha: 0.4)
                       : (hovering ? FigmaTokens.purpleHover : _purple),
-              shape: isTablet ? null : const CircleBorder(),
-              borderRadius: isTablet ? BorderRadius.circular(8) : null,
+              borderRadius: BorderRadius.circular(8),
               child: InkWell(
                 onTap: offline ? null : widget.onReset,
-                customBorder: isTablet ? null : const CircleBorder(),
-                borderRadius: isTablet ? BorderRadius.circular(8) : null,
+                borderRadius: BorderRadius.circular(8),
                 child: const Padding(
                   padding: EdgeInsets.all(4),
                   child: SizedBox(
-                    width: 14,
+                    width: 13,
                     height: 21,
                     child: Icon(
                       Icons.undo_rounded,
                       color: Colors.white,
-                      size: 14,
+                      size: 13,
                     ),
                   ),
                 ),
@@ -340,25 +365,63 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
           ),
     );
 
+    // CSS ref: real `.search-blcok` — `@media (max-width:767px){
+    // .search-blcok{margin:0 0 15px 0}}`. At iPhone SE (375px) the
+    // box model shows 365.2×87 content inside the 5px container padding,
+    // with a 15px bottom margin separating it from the structure-block
+    // below. Inside: `div.row{flex-wrap:wrap}` with
+    // `.col-* {padding-left/right:15px; width:100%}` and `.form-group
+    // {margin-bottom:1rem (16)}`. On phone both search cols are
+    // `col-12` (100% stacked): col-lg-11 holds the 335.2×42 input with
+    // 16 bottom margin (58 total), col-lg-1 holds the reset button
+    // below it, row totals 87 (58+29). Reproduce with symmetric 15
+    // insets and 16 gap.
+    final w2 = MediaQuery.sizeOf(context).width;
+    final isSearchPhone = w2 <= 767;
+    // Exact: `.search-blcok` only has `margin:0 0 15px 0` at `≤767`; no
+    // top/bottom on desktop. Gap to structure-block is via
+    // `structure-block{margin:30px 0 10px}` desktop vs `0 0 10` phone.
+    final EdgeInsets searchOuter;
+    if (isSearchPhone) {
+      searchOuter = const EdgeInsets.only(bottom: 15);
+    } else {
+      searchOuter = EdgeInsets.zero;
+    }
+    if (isTablet) {
+      return Padding(
+        padding: searchOuter,
+        child: Row(
+          children: [
+            Expanded(child: searchField),
+            const SizedBox(width: 8),
+            resetButton,
+          ],
+        ),
+      );
+    }
+    // Phone: Row flex-wrap → stacked col-12's, each with 15 side padding;
+    // form-group margin-bottom 16 between input and button row.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child:
-          isTablet
-              ? Row(
-                children: [
-                  Expanded(child: searchField),
-                  const SizedBox(width: 8),
-                  resetButton,
-                ],
-              )
-              : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  searchField,
-                  const SizedBox(height: 10),
-                  resetButton,
-                ],
-              ),
+      padding: searchOuter,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: searchField,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: resetButton,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -387,100 +450,145 @@ class _Body extends StatelessWidget {
       case DataProviderState.data:
         if (state.paths.isEmpty) return const _EmptyState();
         final total = state.paths.length;
+        // Outer `div.container` (5px at ≤640px, 15px horiz at ≤991.98px)
+        // now provides the outer inset, the `.row` is `display:flex;
+        // flex-wrap:wrap` and each `.col-*` has `padding-left/right:15px;
+        // width:100%; max-width:100%; flex:0 0 100%`. For the structure
+        // block this is `div.row > div.col-lg-12.col-md-12.col-12` (15
+        // each side) wrapping `div.structure-block`. The old 16/16/16/24
+        // here double-counted (search bottom 14 + list top 16 =30px plus
+        // 16 horiz on top of container's 5/15). On phone iPhone SE the
+        // combined inset is container 5 + col 15 =20 each side (col 15
+        // applied here).
+        // CSS ref for structure-block: base
+        // `background:var(--white);padding:20px;margin:30px 0 10px;
+        // border:1px solid #E7E4FF;border-radius:16px`; at `≤767`
+        // `margin:0 0 10px` and `.structure-block>div{flex-direction:column}`
+        // + `.table-responsive{overflow-x:visible}` and
+        // `.float-right{order:-1;margin-bottom:15px;font-size:0.85rem;
+        // color:#6c757d}`; at `≤640` `padding:15px`; `h1{24px/28 Inter
+        // #A20067}` at `≤767` `{order:-2;font-size:1.5rem(24);margin:10px 0 5px}`;
+        // `.clearfix{display:none}`; parent row `365.2×304.4` → col
+        // `365.2×304.4` (15 pad → 335.2) → structure-block `335.2×294.4`
+        // (15 pad → 303.6 content, 10 bottom margin).
+        final w3 = MediaQuery.sizeOf(context).width;
+        final isListPhone = w3 <= 767;
+        final isCompact = w3 <= 640;
         return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: EdgeInsets.fromLTRB(0, 0, 0, isListPhone ? 12 : 16),
           children: [
-            // CSS ref, confirmed via a live devtools cascade dump on the
-            // real `.structure-block` wrapping this table: `background:
-            // var(--white);padding:20px;border:1px solid #E7E4FF;
-            // border-radius:16px` — no box-shadow at all (was an
-            // invented `0 6px 16px rgba(0,0,0,.04)`, radius 14). Same
-            // real class every other My Courses screen's white card
-            // already uses (see Round 40/Required Courses).
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE7E4FF)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Builder(
-                      builder: (context) {
-                        final isTablet = Responsive.isTablet(context);
-                        // CSS ref, confirmed via a live devtools cascade
-                        // dump on the real `.structure-block h1`: 24px/
-                        // w400/line-height:28, color var(--primary-
-                        // second)=#A20067 (site-wide h1 rule also gives
-                        // it Inter via `font-family:var(--primary-font)
-                        // !important`) — was wrongly 20px/w800/#B0006D
-                        // with no font-family set at all. Per explicit
-                        // request, sized down further on phone (18, was
-                        // the same 24 as tablet) to match a real mobile
-                        // screenshot.
-                        final title = Text(
-                          'Learning Paths',
-                          style: GoogleFonts.inter(
-                            color: _sectionTitle,
-                            fontSize: isTablet ? 24 : 18,
-                            fontWeight: FontWeight.w400,
-                            height: 28 / 24,
-                          ),
-                        );
-                        final subtitle = RichText(
-                          text: TextSpan(
-                            style: TextStyle(
-                              color: _muted,
-                              fontSize: isTablet ? 12.5 : 11,
+            // `div.row (365.2×304.4) > div.col-12 (15 pad)` already via
+            // the Padding below; `div.structure-block` itself:
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: isListPhone ? 15 : 0),
+              child: Container(
+                // `≤640:15px` else `20px` per `.structure-block` media;
+                // `margin:30px 0 10px` desktop vs `0 0 10px` at `≤767`.
+                padding: EdgeInsets.all(isCompact ? 15 : 20),
+                margin: EdgeInsets.only(
+                  top: isListPhone ? 0 : 30,
+                  bottom: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE7E4FF)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Mobile: `.structure-block>div{flex-direction:column}` +
+                    // `.structure-block h1{order:-2;font-size:1.5rem(24);margin:10px 0 5px}`
+                    // + `.float-right{order:-1;margin-bottom:15px;font-size:0.85rem(13.6);
+                    // color:#6c757d}` + `.clearfix{display:none}` + overflow visible.
+                    // At iPhone SE the visible header is h1 `303.6×28`
+                    // (15 pad → 303.6 content) and summary `303.6×20.4` (0.85rem)
+                    // below it, then the table `303.6×262.8`.
+                    Padding(
+                      padding: EdgeInsets.only(bottom: isListPhone ? 0 : 12),
+                      child: Builder(
+                        builder: (context) {
+                          final isTablet = Responsive.isTablet(context);
+                          // CSS ref, confirmed via a live devtools cascade
+                          // dump on the real `.structure-block h1`: 24px/
+                          // w400/line-height:28, color var(--primary-
+                          // second)=#A20067; at `≤767` `{order:-2;
+                          // font-size:1.5rem(24);margin-top:10px;
+                          // margin-bottom:5px}`. Previously reduced to 18
+                          // on phone per screenshot request — now aligned
+                          // to the inspected `1.5rem` per latest dump.
+                          final title = Padding(
+                            padding: EdgeInsets.only(
+                              top: isListPhone ? 10 : 0,
+                              bottom: isListPhone ? 5 : 0,
                             ),
-                            children: [
-                              const TextSpan(text: 'Showing '),
-                              TextSpan(
-                                text: '1-$total',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: _ink,
-                                ),
+                            child: Text(
+                              'Learning Paths',
+                              style: GoogleFonts.inter(
+                                color: _sectionTitle,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w400,
+                                height: 28 / 24,
                               ),
-                              const TextSpan(text: ' of '),
-                              TextSpan(
-                                text: '$total',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: _ink,
+                            ),
+                          );
+                          final subtitle = Padding(
+                            padding: EdgeInsets.only(
+                              bottom: isListPhone ? 15 : 0,
+                            ),
+                            child: RichText(
+                              text: TextSpan(
+                                style: TextStyle(
+                                  color:
+                                      isListPhone
+                                          ? const Color(0xFF6C757D)
+                                          : _muted,
+                                  fontSize: isListPhone ? 13.6 : 12.5,
                                 ),
+                                children: [
+                                  const TextSpan(text: 'Showing '),
+                                  TextSpan(
+                                    text: '1-$total',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      color: _ink,
+                                    ),
+                                  ),
+                                  const TextSpan(text: ' of '),
+                                  TextSpan(
+                                    text: '$total',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      color: _ink,
+                                    ),
+                                  ),
+                                  const TextSpan(text: ' items.'),
+                                ],
                               ),
-                              const TextSpan(text: ' items.'),
-                            ],
-                          ),
-                        );
-                        // Per a real mobile screenshot: title and
-                        // subtitle stack (both left-aligned), not the
-                        // desktop's same-line `spaceBetween` Row — with
-                        // a bit more breathing room between them than a
-                        // bare stack gives (per explicit request).
-                        return isTablet
-                            ? Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [title, subtitle],
-                            )
-                            : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                title,
-                                const SizedBox(height: 6),
-                                subtitle,
-                              ],
-                            );
-                      },
+                            ),
+                          );
+                          // Per a real mobile screenshot: title and
+                          // subtitle stack (both left-aligned), not the
+                          // desktop's same-line `spaceBetween` Row.
+                          // On phone the `h1` margin `5 bottom` plus the
+                          // summary's own `0` top provides the gap; the
+                          // previous `6px` request is covered by the `h1`
+                          // `10/5` + summary `15 bottom` inspected.
+                          return isTablet
+                              ? Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [title, subtitle],
+                              )
+                              : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [title, subtitle],
+                              );
+                        },
+                      ),
                     ),
-                  ),
-                  _PathsTable(paths: state.paths),
-                ],
+                    _PathsTable(paths: state.paths),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -492,6 +600,21 @@ class _Body extends StatelessWidget {
 }
 
 // ─── Paths table ──────────────────────────────────────────────────────────────
+// CSS ref, iPhone SE (375px) — latest batch:
+// `.table-responsive{display:block;width:100%;overflow-x:auto}` vs
+// `@767 {overflow-x:visible !important}` (so phone grid is NOT
+// horizontally scrollable) + `.table{width:100%;margin-bottom:1rem;
+// color:#212529}` overridden by `.table{margin-bottom:0!important}`
+// (no bottom gap) + `col/colgroup` are `display:table-column(*)`
+// with `colgroup` widths driven by kartik `col` widths (skip-export
+// `309.08×622.8` etc) but collapsed to `0×0` on phone for the hidden
+// expand-icon/number columns; visible `303.6×262.8` (`w0`) inside
+// `335.2×294.4` structure-block → `303.6×184.4` grid-container →
+// `309.08×184.4` table → `col 309.08×622.8` reflects the stacked
+// card height on phone. Flutter replicates as non-scrollable
+// `Column` of `_PathRow` cards with no header on phone, no
+// horizontal scroll, and `303.6` content width via the
+// container5 + col15 + structure15 + border0.8 chain above.
 
 /// Owns which rows are expanded so the header's +/- can expand or collapse
 /// every row at once, alongside each row's own individual toggle.
@@ -693,129 +816,196 @@ class _PathRow extends StatelessWidget {
     // by the `Divider` the parent `_PathsTable` already places between
     // rows.
     final isTablet = Responsive.isTablet(context);
-    // CSS ref: same `fa-plus-square`/`fa-minus-square` glyph as the
-    // header toggle — see `_TableHeaderRow` for the full note on why
-    // this is the FILLED Material icon (the glyph's own cut-out plus/
-    // minus, not a real background chip) at 16px, not the `_outlined`
-    // variant at 20px.
-    final icon = Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: InkWell(
-        onTap: onToggle,
-        child: Icon(
-          expanded ? Icons.indeterminate_check_box : Icons.add_box,
-          color: _purple,
-          size: 16,
-        ),
+    // Pixel-perfect expand icon — inspected iPhone SE (375):
+    // `td:first-child` `24.5×42` (`width:50px` desktop, absolute
+    // `right15 top50% translateY-50% width:auto` at ≤767) containing
+    // `div.kv-expand-row 24.5×42` → `div.kv-expand-icon 24.5×42` →
+    // `span.fa.fa-plus-square` `24.5×28` (`::before 24.5×28`) `color:
+    // var(--primary-first)#693D94` `font:900 14px/1 FA`. Tablet
+    // keeps previous `16` to match `12px` th padding; phone uses the
+    // inspected `24.5×28` bounding box. No top padding offset — the
+    // `42` cell is vertically centered via `top50%` already.
+    final icon = InkWell(
+      onTap: onToggle,
+      child: Icon(
+        expanded ? Icons.indeterminate_check_box : Icons.add_box,
+        color: _purple,
+        size: isTablet ? 16 : 24.5,
       ),
     );
+    // Phone vs tablet branching per latest batch:
+    // `@767 .table tbody tr{display:block;position:relative;border:1px solid #c5c5c5;
+    // radius:8;margin-bottom:15;background:#fff;padding:15px 60px 15px 40px}`
+    // + `@640 {display:flex;align-items:center;justify-content:center;
+    // border:1px solid #F3F4F6!important}` (at 375 flex wins, border #F3F4F6).
+    // `@767 td:first-child{position:absolute;right15;top50%;translateY-50%;width:auto}`
+    // (expand icon `24.5×42` cell, `24.5×28` icon) +
+    // `td:nth-child(2){position:absolute;left15;top15;color:#5b62a5}` (number)
+    // + `td:nth-child(3){display:block;width:100%;font-weight:400;color:#2c3e50}`
+    // (name) + `td:nth-child(4){font-size:0.85rem(13.6);color:#808b96;margin-top:5}`
+    // (group) + `td{display:block;border:none;padding:0;text-align:left}`
+    // + `.number{font:400 16px/19 #693D94}` (overridden by #5b62a5 at phone) +
+    // `tr 309.08×77.2` inside `303.6` table. Tablet keeps the 12px flex row.
+    final isCompact640 = MediaQuery.sizeOf(context).width <= 640;
+    if (isTablet) {
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                icon,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 12,
+                        child: Text(
+                          '$index.',
+                          style: GoogleFonts.inter(
+                            color: _purple,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 61,
+                        child: Text(
+                          path.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            color: _ink,
+                            fontWeight: FontWeight.w400,
+                            fontSize: 15,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 23,
+                        child:
+                            path.groupName.isEmpty
+                                ? const SizedBox.shrink()
+                                : Padding(
+                                  padding: const EdgeInsets.only(top: 3),
+                                  child: Text(
+                                    path.groupName,
+                                    style: GoogleFonts.inter(
+                                      color: _ink,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
+                                ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(42, 0, 12, 12),
+              child: _CompetencyPreview(path: path),
+            ),
+        ],
+      );
+    }
+    // Phone: card `block` (flex at ≤640 centered) `309.08×77.2` with
+    // `40` left / `60` right reservation for absolute number/icon.
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Container(
+          margin: const EdgeInsets.only(bottom: 15),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+              color:
+                  isCompact640
+                      ? const Color(0xFFF3F4F6)
+                      : const Color(0xFFC5C5C5),
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          // `padding:15 60 15 40` from tr spec — implemented via Stack
+          // with centered content. At ≤640 `display:flex;center` so
+          // content is centered.
+          child: Stack(
             children: [
-              // Per a real mobile screenshot: the toggle icon sits at
-              // the END of the row on phone (trailing), not the start
-              // — the opposite of the tablet/desktop layout confirmed
-              // earlier. Only shown leading here on tablet+.
-              if (isTablet) ...[icon, const SizedBox(width: 10)],
-              Expanded(
-                child:
-                    isTablet
-                        ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // CSS ref: same real `<colgroup>` as
-                            // `_TableHeaderRow` — a blank-labelled
-                            // serial-number column (11.97%) sits
-                            // between the expand icon and the
-                            // "Learning Path" name column (61.42%),
-                            // with "Group" at 23.2%; flex 12:61:23
-                            // matches. Was the index digit run right
-                            // up against the name with only an 8px
-                            // gap, inside the same flex:6 column as
-                            // the name.
-                            // Per explicit request: this index digit is
-                            // purple, not plain body text.
-                            Expanded(
-                              flex: 12,
-                              child: Text(
-                                '$index.',
-                                style: GoogleFonts.inter(
-                                  color: _purple,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 61,
-                              child: Text(
-                                path.name,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(
-                                  color: _ink,
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 15,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 23,
-                              child:
-                                  path.groupName.isEmpty
-                                      ? const SizedBox.shrink()
-                                      : Padding(
-                                        padding: const EdgeInsets.only(top: 3),
-                                        child: Text(
-                                          path.groupName,
-                                          style: GoogleFonts.inter(
-                                            color: _ink,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ),
-                                      ),
-                            ),
-                          ],
-                        )
-                        : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _pathNameLine(index),
-                            if (path.groupName.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                path.groupName,
-                                style: GoogleFonts.inter(
-                                  color: _ink,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ],
-                          ],
+              // Centered name/group column (width 100% per nth-child(3))
+              Padding(
+                padding: const EdgeInsets.fromLTRB(40, 15, 60, 15),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        path.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF2C3E50),
+                          fontWeight: FontWeight.w400,
+                          fontSize: 14,
+                          height: 1.4,
                         ),
+                      ),
+                      if (path.groupName.isNotEmpty) ...[
+                        const SizedBox(height: 5),
+                        Text(
+                          path.groupName,
+                          style: GoogleFonts.inter(
+                            color: const Color(0xFF808B96),
+                            fontSize: 13.6,
+                            fontWeight: FontWeight.w400,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
-              if (!isTablet) ...[const SizedBox(width: 10), icon],
+              // Number `1.` at `left15 top15` `#5b62a5` (overrides `.number #693D94`)
+              Positioned(
+                left: 15,
+                top: 15,
+                child: Text(
+                  '$index.',
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF5B62A5),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    height: 19 / 16,
+                  ),
+                ),
+              ),
+              // Expand icon at `right15` centered vertically `24.5×42`
+              Positioned(
+                right: 15,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: SizedBox(
+                    width: 24.5,
+                    height: 42,
+                    child: Center(child: icon),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
         if (expanded)
           Padding(
-            // Tablet: left-aligned with the path name text above (row
-            // padding 12 + the 20px expand icon + the 10px gap after
-            // it). Phone: the icon moved to the trailing edge (see
-            // above), so the content starts right after the row's own
-            // 12px padding, with no extra icon-width offset needed.
-            padding:
-                isTablet
-                    ? const EdgeInsets.fromLTRB(42, 0, 12, 12)
-                    : const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: _CompetencyPreview(path: path),
           ),
       ],
