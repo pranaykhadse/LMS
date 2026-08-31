@@ -4925,3 +4925,16 @@ changing the shared Column's alignment).
 
 `flutter analyze`: file clean (same pre-existing baseline warnings,
 no new ones), full-project count holds at 59, no regressions.
+
+## Course image fallback switched from icon placeholder to the login page's own background image
+
+Per explicit request: `CourseImageFallback` no longer renders the
+gradient+book-icon placeholder — it now reuses the login page's own
+bundled background image (`Assets.images.loginBg`, the same asset
+`signin_page.dart` already uses), rendered with `BoxFit.cover`. Still
+a local asset with no network fetch, so the earlier fix (real default
+instead of the unrenderable remote SVG) stands — only which local
+image is shown changed.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.

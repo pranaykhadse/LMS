@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/gen/assets.gen.dart';
 
 /// Shown wherever a course/resource card's own image is missing or fails to
 /// load — a plain local placeholder, not a network fetch.
@@ -13,26 +13,15 @@ import 'package:lms/app/core/design/figma_tokens.dart';
 /// at an asset this app can never actually paint, this is a real local
 /// placeholder that always renders, works offline, and needs no network
 /// round-trip at all.
+///
+/// Per explicit request, this reuses the login page's own background image
+/// (`Assets.images.loginBg`) — the same bundled asset already used at
+/// `signin_page.dart` — rather than an icon-based placeholder.
 class CourseImageFallback extends StatelessWidget {
   const CourseImageFallback({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [FigmaTokens.badgeBackground, Color(0xFFE0D4F0)],
-        ),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.menu_book_rounded,
-          size: 40,
-          color: FigmaTokens.primaryPurple,
-        ),
-      ),
-    );
+    return Assets.images.loginBg.image(fit: BoxFit.cover);
   }
 }
