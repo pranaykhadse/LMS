@@ -4910,3 +4910,18 @@ files.
 
 `flutter analyze`: every touched file clean (0 new issues), full-
 project count holds at 59, no regressions.
+
+## Dashboard page — "Upcoming Virtual Classes" card not full width on phone
+
+The mobile stacked `Column` (`Continue Learning` → `Overall Progress`
+→ `Upcoming Sessions`) has no `crossAxisAlignment.stretch`, and
+`_UpcomingSessionsCard`'s own `Container` has no explicit width of its
+own — so on phone it was shrink-wrapping to the "Upcoming Virtual
+Classes" text width and centering, instead of filling the row like
+its sibling cards. Wrapped it in `SizedBox(width: double.infinity)`
+at its call site (the other two siblings apparently already fill via
+their own internal width handling, so left untouched rather than
+changing the shared Column's alignment).
+
+`flutter analyze`: file clean (same pre-existing baseline warnings,
+no new ones), full-project count holds at 59, no regressions.

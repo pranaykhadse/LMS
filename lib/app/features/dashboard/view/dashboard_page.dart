@@ -449,8 +449,17 @@ class DashboardBody extends ConsumerWidget {
                                   ),
                                 ],
                                 const SizedBox(height: 16),
-                                _UpcomingSessionsCard(
-                                  sessions: data.upcomingSessions,
+                                // The `Column` above has no `crossAxis
+                                // Alignment.stretch`, and `_UpcomingSessions
+                                // Card`'s own `Container` has no explicit
+                                // width — without this it shrink-wraps to
+                                // the "Upcoming Virtual Classes" text width
+                                // instead of filling the row.
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: _UpcomingSessionsCard(
+                                    sessions: data.upcomingSessions,
+                                  ),
                                 ),
                               ],
                             ),
