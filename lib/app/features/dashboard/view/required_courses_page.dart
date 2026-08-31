@@ -7,6 +7,7 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/utils/dev_image_proxy.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/course_image_fallback.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
@@ -479,20 +480,11 @@ class _ImgFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // CSS ref, confirmed against `origin/staging`: the real fallback for a
-    // course with no logo is `/dist/images/course-bg.svg`, not
-    // `assets/images/login-bg.png` (a LOGIN page background), which this
-    // was using apparently by copy/paste.
-    return Container(
-      color: const Color(0xFFF1F5F9),
-      child: Image.network(
-        devProxiedImageUrl(
-          'https://staging.trainingpipeline.com/backend/web/dist/images/course-bg.svg',
-        ),
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-      ),
-    );
+    // The real fallback (`/dist/images/course-bg.svg`) can never actually
+    // render in this app — see `CourseImageFallback`'s own doc comment —
+    // so a real local placeholder is used instead of a broken network
+    // fetch that always ends up blank.
+    return const CourseImageFallback();
   }
 }
 

@@ -6,8 +6,8 @@ import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
-import 'package:lms/app/core/utils/dev_image_proxy.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
+import 'package:lms/app/core/views/elements/course_image_fallback.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/view/widgets/course_grid_card.dart';
@@ -51,7 +51,9 @@ class OfflineCoursesSection extends ConsumerWidget {
     switch (offlineState.state) {
       case DataProviderState.loading:
       case DataProviderState.idle:
-        return const Center(child: CircularProgressIndicator(color: _offlinePurple));
+        return const Center(
+          child: CircularProgressIndicator(color: _offlinePurple),
+        );
       case DataProviderState.error:
         return const Center(
           child: Text(
@@ -60,7 +62,8 @@ class OfflineCoursesSection extends ConsumerWidget {
           ),
         );
       case DataProviderState.data:
-        final courses = (offlineState.data ?? const <Course>[]).where(matches).toList();
+        final courses =
+            (offlineState.data ?? const <Course>[]).where(matches).toList();
         if (courses.isEmpty) {
           return Center(
             child: Padding(
@@ -68,7 +71,11 @@ class OfflineCoursesSection extends ConsumerWidget {
               child: Text(
                 emptyMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: _offlineMuted, fontSize: 14, height: 1.5),
+                style: const TextStyle(
+                  color: _offlineMuted,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
               ),
             ),
           );
@@ -80,7 +87,11 @@ class OfflineCoursesSection extends ConsumerWidget {
               padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
               child: Text(
                 'Offline Courses',
-                style: TextStyle(color: _offlinePink, fontSize: 17, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  color: _offlinePink,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             GridView.builder(
@@ -88,7 +99,12 @@ class OfflineCoursesSection extends ConsumerWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: Responsive.columns(context, phone: 2, tablet: 3, desktop: 4),
+                crossAxisCount: Responsive.columns(
+                  context,
+                  phone: 2,
+                  tablet: 3,
+                  desktop: 4,
+                ),
                 crossAxisSpacing: 14,
                 mainAxisSpacing: 14,
                 childAspectRatio: 0.62,
@@ -115,7 +131,9 @@ class _OfflineCourseCard extends StatelessWidget {
     final progress = (course.percentage * 100).round();
     final displayRating = course.displayRating == 1;
     final averageRating =
-        course.averageRating is num ? (course.averageRating as num).toDouble() : 0.0;
+        course.averageRating is num
+            ? (course.averageRating as num).toDouble()
+            : 0.0;
     final ratingCount = course.ratingCount ?? 0;
 
     return Container(
@@ -123,7 +141,11 @@ class _OfflineCourseCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         boxShadow: const [
-          BoxShadow(color: Color(0x0A000000), blurRadius: 16, offset: Offset(0, 6)),
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
@@ -138,12 +160,16 @@ class _OfflineCourseCard extends StatelessWidget {
               children: [
                 course.logoLink != null
                     ? Image.network(
-                        course.logoLink!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const _ImgFallback(),
-                      )
+                      course.logoLink!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const _ImgFallback(),
+                    )
                     : const _ImgFallback(),
-                Positioned(top: 6, left: 6, child: OfflineCourseButton(course: course)),
+                Positioned(
+                  top: 6,
+                  left: 6,
+                  child: OfflineCourseButton(course: course),
+                ),
               ],
             ),
           ),
@@ -178,9 +204,12 @@ class _OfflineCourseCard extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ViewCourseButton(
-                      onPressed: () => Modular.to.pushNamed(
-                        CoursesModule.construct('${CoursesModule.detail}/${course.id}'),
-                      ),
+                      onPressed:
+                          () => Modular.to.pushNamed(
+                            CoursesModule.construct(
+                              '${CoursesModule.detail}/${course.id}',
+                            ),
+                          ),
                     ),
                   ),
                 ],
@@ -214,7 +243,10 @@ class _ProgressRow extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 3),
-        Text('$progress% complete', style: const TextStyle(color: _offlineMuted, fontSize: 10)),
+        Text(
+          '$progress% complete',
+          style: const TextStyle(color: _offlineMuted, fontSize: 10),
+        ),
       ],
     );
   }
@@ -233,12 +265,24 @@ class _StarRow extends StatelessWidget {
       children: [
         ...List.generate(5, (i) {
           if (i < rating.floor()) {
-            return const Icon(Icons.star_rounded, color: Color(0xFFFFC107), size: 15);
+            return const Icon(
+              Icons.star_rounded,
+              color: Color(0xFFFFC107),
+              size: 15,
+            );
           }
           if (i < rating) {
-            return const Icon(Icons.star_half_rounded, color: Color(0xFFFFC107), size: 15);
+            return const Icon(
+              Icons.star_half_rounded,
+              color: Color(0xFFFFC107),
+              size: 15,
+            );
           }
-          return const Icon(Icons.star_border_rounded, color: Color(0xFFFFC107), size: 15);
+          return const Icon(
+            Icons.star_border_rounded,
+            color: Color(0xFFFFC107),
+            size: 15,
+          );
         }),
         const SizedBox(width: 4),
         Text(
@@ -257,17 +301,10 @@ class _ImgFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // CSS ref, confirmed against `origin/staging`: the real fallback for a
-    // course with no logo is `/dist/images/course-bg.svg`, not
-    // `assets/images/login-bg.png` (a LOGIN page background), which this
-    // was using apparently by copy/paste.
-    return Image.network(
-      devProxiedImageUrl(
-        'https://staging.trainingpipeline.com/backend/web/dist/images/course-bg.svg',
-      ),
-      fit: BoxFit.cover,
-      errorBuilder:
-          (_, __, ___) => const ColoredBox(color: Color(0xFFF1F5F9)),
-    );
+    // The real fallback (`/dist/images/course-bg.svg`) can never actually
+    // render in this app — see `CourseImageFallback`'s own doc comment —
+    // so a real local placeholder is used instead of a broken network
+    // fetch that always ends up blank.
+    return const CourseImageFallback();
   }
 }

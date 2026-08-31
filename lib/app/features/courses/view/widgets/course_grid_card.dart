@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/core/utils/dev_image_proxy.dart';
+import 'package:lms/app/core/views/elements/course_image_fallback.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/model/course.dart';
 import 'package:lms/app/features/courses/view/widgets/offline_course_action.dart';
@@ -183,23 +182,16 @@ class _ProgressRing extends StatelessWidget {
   }
 }
 
-class _ImgFallback extends ConsumerWidget {
+class _ImgFallback extends StatelessWidget {
   const _ImgFallback();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // CSS ref, confirmed against `origin/staging`: the real fallback for
-    // a course with no logo is a dedicated "no course image" graphic
-    // (`/dist/images/course-bg.svg`) served from the backend — not
-    // `assets/images/login-bg.png` (a LOGIN page background), which this
-    // was using apparently by copy/paste.
-    final origin = Uri.parse(ref.watch(ServerProvider.serverUrl)).origin;
-    final fallbackUrl = '$origin/backend/web/dist/images/course-bg.svg';
-    return Image.network(
-      devProxiedImageUrl(fallbackUrl),
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFFF1F5F9)),
-    );
+  Widget build(BuildContext context) {
+    // The real fallback (`/dist/images/course-bg.svg`) can never actually
+    // render in this app — see `CourseImageFallback`'s own doc comment —
+    // so a real local placeholder is used instead of a broken network
+    // fetch that always ends up blank.
+    return const CourseImageFallback();
   }
 }
 

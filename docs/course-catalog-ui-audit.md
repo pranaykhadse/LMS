@@ -4880,3 +4880,33 @@ pattern):
 
 `flutter analyze`: both files clean (0 issues), full-project count
 holds at 59, no regressions.
+
+## App-wide: broken course-image fallback replaced with a real local default
+
+Every course card's "no logo" fallback pointed at the real site's own
+`/dist/images/course-bg.svg` — but that file embeds its artwork via an
+SVG `<pattern>` fill with a base64 PNG tiled across it (confirmed by
+fetching the raw SVG), the same `<pattern>`-fill limitation already
+found and worked around for a couple of nav icons earlier in this
+audit: `flutter_svg` has no support for `<pattern>` fills at all, and
+`Image.network` can't decode SVG regardless. The fallback was silently
+rendering nothing every time it was hit — visible in a real screenshot
+as a blank card ("kuk", no logo, no fallback graphic).
+
+Added a new shared `CourseImageFallback` widget
+(`lib/app/core/views/elements/course_image_fallback.dart`) — a real
+local placeholder (soft purple gradient + a book icon), no network
+fetch at all, so it always renders and works offline too. Replaced the
+broken remote-SVG fallback with it everywhere it was duplicated:
+`enrolled_courses_page.dart`, `required_courses_page.dart`,
+`completed_courses_page.dart`, `my_courses_page.dart`,
+`dashboard_page.dart`, `recommended_courses_page.dart`,
+`widgets/offline_courses_section.dart`,
+`courses/view/widgets/course_grid_card.dart`, and
+`courses/view/courses_page.dart`. Removed now-unused imports
+(`devProxiedImageUrl`, `ServerProvider`, `flutter_riverpod`) that had
+existed only to build the broken fallback URL in a couple of those
+files.
+
+`flutter analyze`: every touched file clean (0 new issues), full-
+project count holds at 59, no regressions.

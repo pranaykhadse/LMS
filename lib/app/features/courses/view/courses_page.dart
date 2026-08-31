@@ -9,9 +9,9 @@ import 'package:lms/app/core/utils/dev_image_proxy.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
-import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/course_image_fallback.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
@@ -2815,24 +2815,12 @@ class _CourseImage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // CSS ref, confirmed against `origin/staging`'s
-    // _courseCatalogContainer.php: `$logo = !empty($course->logo_link) ?
-    // $course->logo_link : Yii::getAlias('@backendUrl') .
-    // "/dist/images/course-bg.svg";` — the real fallback is a dedicated
-    // "no course image" graphic served from the backend, not an unrelated
-    // bundled asset. `assets/images/login-bg.png` (a LOGIN page
-    // background) was being used here — and identically across every
-    // other course-card widget in the app — apparently by copy/paste;
-    // fixed for Course Catalog specifically per the current scope.
-    final origin = Uri.parse(ref.watch(ServerProvider.serverUrl)).origin;
-    final fallbackUrl = '$origin/backend/web/dist/images/course-bg.svg';
-    final fallback = Image.network(
-      devProxiedImageUrl(fallbackUrl),
-      fit: BoxFit.cover,
-      // If even the fallback can't load (offline, proxy down), fall back
-      // to a plain tinted box rather than an unrelated bundled image.
-      errorBuilder: (_, __, ___) => const ColoredBox(color: Color(0xFFF1F5F9)),
-    );
+    // The real fallback (`/dist/images/course-bg.svg`) can never actually
+    // render in this app — see `CourseImageFallback`'s own doc comment —
+    // so a real local placeholder is used instead of a broken network
+    // fetch that always ends up blank. Also used as the `errorBuilder`
+    // below when the course's own logo URL fails to load.
+    const fallback = CourseImageFallback();
     if (url == null) return fallback;
     return Image.network(
       devProxiedImageUrl(url!),
