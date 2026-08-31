@@ -4969,3 +4969,46 @@ collapse to "due date only, no dot" for those rows.
 **Verification**: `dart format` + `flutter analyze` on the repository file
 — 0 issues. Full-project `flutter analyze` — 59 issues (stable baseline,
 unchanged).
+
+## Follow-up: All Course Progress — PROGRESS column now shown on mobile too
+
+**Report**: user asked "Have you done this for all breakpoints?" (re: the
+category fix above), then flagged with a phone-width screenshot of the
+real site itself: "I think, Progress Column is not there for mobile
+view." Confirmed with the user that the screenshot is the real website,
+not this app — it shows the percent + progress bar still rendered per
+row at phone width, just in a narrower right-hand column, same layout
+shape as desktop.
+
+**Root cause / correction of an earlier assumption**: `_CourseRow` and
+`_TableHeaderRow` in
+`lib/app/features/dashboard/view/all_course_progress_page.dart` hid the
+PROGRESS column entirely below the app's `isWide` (600px) breakpoint,
+per a code comment citing `origin/staging`'s
+`.cl-all-course-progress .cl-progress-column { display: none; }` inside
+its `@media (max-width: 767px)` block
+(`backend/web/css/bluetheme-layout.css:3061-3063`). That CSS is real and
+still in the repo, but the user's live phone-width screenshot of the
+actual deployed site directly contradicts it — the column is visibly
+rendered there. Per the standing rule that live screenshots override
+static CSS-source reasoning, the screenshot wins; the earlier "hidden on
+mobile" fix (documented in an earlier follow-up this file) is superseded.
+
+Also incidentally: even taken at face value, that CSS's 767px cutoff
+never matched this app's 600px `isWide` threshold — there was always a
+600-767px gap where the two would have disagreed regardless.
+
+**Fix**:
+- `_TableHeaderRow`: PROGRESS header now always renders (was
+  `if (isWide) ...`), width `140.0` desktop / `80.0` mobile.
+- `_CourseRow`: the progress `SizedBox` now always renders (was
+  `if (widget.isWide) ...`), same `140.0`/`80.0` width split, wrapping
+  `_ProgressCell` with a new `isWide` param.
+- `_ProgressCell`: added `isWide` (default `true`) to size its percent
+  text down to 12px on mobile (was fixed 13px), matching the screenshot's
+  slightly smaller mobile numerals; the bar itself is unchanged (6px
+  height at every width).
+
+**Verification**: `dart format` + `flutter analyze` on
+`all_course_progress_page.dart` — 0 issues. Full-project `flutter
+analyze` — 59 issues (stable baseline, unchanged).

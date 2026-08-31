@@ -325,12 +325,17 @@ class _TableHeaderRow extends StatelessWidget {
           SizedBox(width: isWide ? 32.0 : 24.0, child: Text('#', style: style)),
           const SizedBox(width: 16),
           Expanded(child: Text('COURSE / CATEGORY / DUE DATE', style: style)),
-          if (isWide) ...[
-            const SizedBox(width: 16),
-            // PROGRESS — matches `_CourseRow`'s progress column width;
-            // hidden on mobile same as the row's.
-            SizedBox(width: 140.0, child: Text('PROGRESS', style: style)),
-          ],
+          const SizedBox(width: 16),
+          // PROGRESS — matches `_CourseRow`'s progress column width.
+          // The real site's own CSS hides this column below 767px, but a
+          // live phone-width screenshot of the actual site shows it still
+          // rendered there (percent + bar, right-aligned, just narrower)
+          // — that screenshot overrides the stale CSS reading, so this
+          // column stays visible at every width.
+          SizedBox(
+            width: isWide ? 140.0 : 80.0,
+            child: Text('PROGRESS', style: style),
+          ),
         ],
       ),
     );
@@ -497,18 +502,19 @@ class _CourseRowState extends State<_CourseRow> {
               ),
             ),
             // CSS ref: `.cl-all-course-progress .cl-progress-column
-            // {display:none}` — the PROGRESS column is hidden entirely
-            // on mobile in the real markup. Unlike In-Progress's Resume
-            // button (an action with no other way to trigger it), the
-            // row itself still opens the course with or without this
-            // column visible, so it's hidden here to match exactly.
-            if (widget.isWide) ...[
-              const SizedBox(width: 16),
-              SizedBox(
-                width: 140.0,
-                child: _ProgressCell(percent: widget.item.progress),
+            // {display:none}` claims this is hidden below 767px, but a
+            // live phone-width screenshot of the real site shows the
+            // percent + bar still rendered there (just a narrower
+            // column) — trusting that screenshot over the stale CSS
+            // reading, so this always renders now.
+            const SizedBox(width: 16),
+            SizedBox(
+              width: widget.isWide ? 140.0 : 80.0,
+              child: _ProgressCell(
+                percent: widget.item.progress,
+                isWide: widget.isWide,
               ),
-            ],
+            ),
           ],
         ),
       ),
@@ -517,8 +523,9 @@ class _CourseRowState extends State<_CourseRow> {
 }
 
 class _ProgressCell extends StatelessWidget {
-  const _ProgressCell({required this.percent});
+  const _ProgressCell({required this.percent, this.isWide = true});
   final int percent;
+  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
@@ -533,7 +540,7 @@ class _ProgressCell extends StatelessWidget {
           '$percent%',
           style: GoogleFonts.inter(
             color: _purple,
-            fontSize: 13,
+            fontSize: isWide ? 13 : 12,
             fontWeight: FontWeight.w700,
             height: 16 / 13,
           ),
