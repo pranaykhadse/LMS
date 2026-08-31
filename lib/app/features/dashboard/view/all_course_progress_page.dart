@@ -301,11 +301,18 @@ class _TableHeaderRow extends StatelessWidget {
       height: 16 / 11,
     );
 
+    // Per explicit request: the # and PROGRESS header labels weren't
+    // aligning with their column content below — same root cause as
+    // the In-Progress page's header: this header's outer horizontal
+    // padding was 8px (row's is 16px), and the `#`/PROGRESS columns
+    // each padded themselves an extra 16px on top of their own width
+    // that the row's matching columns don't have. Header now mirrors
+    // the row's own padding/column widths exactly.
     return Container(
       padding:
           isWide
-              ? const EdgeInsets.symmetric(horizontal: 8, vertical: 16)
-              : const EdgeInsets.symmetric(horizontal: 8),
+              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 16)
+              : const EdgeInsets.symmetric(horizontal: 16),
       height: isWide ? null : 40,
       alignment: isWide ? null : Alignment.center,
       decoration: const BoxDecoration(
@@ -314,26 +321,15 @@ class _TableHeaderRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // # column — ps-4 (24px) on the left desktop only.
-          SizedBox(
-            width: isWide ? 32.0 + 16 : 24.0,
-            child: Padding(
-              padding: EdgeInsets.only(left: isWide ? 16 : 0),
-              child: Text('#', style: style),
-            ),
-          ),
+          // # column — matches `_CourseRow`'s index column width exactly.
+          SizedBox(width: isWide ? 32.0 : 24.0, child: Text('#', style: style)),
           const SizedBox(width: 16),
           Expanded(child: Text('COURSE / CATEGORY / DUE DATE', style: style)),
           if (isWide) ...[
             const SizedBox(width: 16),
-            // PROGRESS — pe-4 (24px) on the right, hidden on mobile.
-            SizedBox(
-              width: 140.0 + 16,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Text('PROGRESS', style: style),
-              ),
-            ),
+            // PROGRESS — matches `_CourseRow`'s progress column width;
+            // hidden on mobile same as the row's.
+            SizedBox(width: 140.0, child: Text('PROGRESS', style: style)),
           ],
         ],
       ),

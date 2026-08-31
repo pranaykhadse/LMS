@@ -4853,3 +4853,30 @@ into `competencyValueStyle`/`coursesValueStyle`; `valueStyle` (`
 
 `flutter analyze`: file clean (0 issues), full-project count holds at
 59, no regressions.
+
+## Course In Progress / All Course Progress pages — Resume button & header/column alignment fixed
+
+Two issues from a real screenshot of "Course in Progress" (also
+present on "All Course Progress" for the analogous header/column
+pattern):
+
+- **"Resume" / "In Progress" text wrapping**: `_ResumeButton`'s
+  "Resume" label and `_StatusPill`'s "In Progress" label could each
+  wrap onto two lines when their fixed-width column was tight at that
+  font size. Both `Text` widgets given `maxLines: 1, softWrap: false,
+  overflow: TextOverflow.visible` so they always render on one line.
+- **STATUS/ACTION/# header labels not aligned with their columns**
+  (both pages): the header row's outer horizontal padding (8px) didn't
+  match the data row's (16px), and the header's `#`/ACTION (or
+  `#`/PROGRESS on All Course Progress) columns each padded themselves
+  an extra 16px on top of their declared width that the matching data-
+  row column doesn't have. Both differences cascade through the shared
+  `Expanded` middle column and shift every column after it out of
+  alignment. Fixed on both pages by making the header's outer padding
+  and per-column widths mirror the data row's exactly, removing the
+  header-only extra padding.
+- **Standing instruction going forward**: commit and push after any
+  change is made, per explicit request.
+
+`flutter analyze`: both files clean (0 issues), full-project count
+holds at 59, no regressions.

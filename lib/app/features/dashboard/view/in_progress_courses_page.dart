@@ -328,11 +328,23 @@ class _TableHeaderRow extends StatelessWidget {
     final statusW = isWide ? 90.0 : 80.0;
     final actionW = isWide ? 80.0 : 76.0;
 
+    // Per explicit request: STATUS/ACTION/# header labels weren't
+    // aligning with their column content below. Root cause was two
+    // mismatches against `_CourseRow`'s own layout: this header's outer
+    // horizontal padding was 8px (row's is 16px), and the `#`/ACTION
+    // columns each padded themselves an extra 16px on top of their own
+    // width (`32.0 + 16`/`actionW + 16` plus an inner `Padding`) that
+    // the row's matching columns don't have — both differences
+    // cascade through the shared `Expanded` BRIDGEWORK column and shift
+    // every column after it out of alignment. Header now mirrors the
+    // row's own padding/column widths exactly, with no per-column
+    // extras — the outer `Container` padding alone provides the outer
+    // page-edge inset.
     return Container(
       padding:
           isWide
-              ? const EdgeInsets.symmetric(horizontal: 8, vertical: 16)
-              : const EdgeInsets.symmetric(horizontal: 8),
+              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 16)
+              : const EdgeInsets.symmetric(horizontal: 16),
       height: isWide ? null : 40,
       alignment: isWide ? null : Alignment.center,
       decoration: const BoxDecoration(
@@ -343,14 +355,8 @@ class _TableHeaderRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // # column: ps-4 (24px) on the left, reduced width on mobile
-          SizedBox(
-            width: isWide ? 32.0 + 16 : 24.0,
-            child: Padding(
-              padding: EdgeInsets.only(left: isWide ? 16 : 0),
-              child: Text('#', style: style),
-            ),
-          ),
+          // # column — matches `_CourseRow`'s index column width exactly.
+          SizedBox(width: isWide ? 32.0 : 24.0, child: Text('#', style: style)),
           const SizedBox(width: 24), // gap-6
           // BRIDGEWORK: flex-1
           Expanded(child: Text('BRIDGEWORK', style: style)),
@@ -361,13 +367,10 @@ class _TableHeaderRow extends StatelessWidget {
             child: Text('STATUS', style: style, textAlign: TextAlign.center),
           ),
           const SizedBox(width: 24), // gap-6
-          // ACTION — pe-4 (24px) on the right
+          // ACTION — matches `_CourseRow`'s Resume-button column width.
           SizedBox(
-            width: isWide ? actionW + 16 : actionW,
-            child: Padding(
-              padding: EdgeInsets.only(right: isWide ? 16 : 0),
-              child: Text('ACTION', style: style, textAlign: TextAlign.center),
-            ),
+            width: actionW,
+            child: Text('ACTION', style: style, textAlign: TextAlign.center),
           ),
         ],
       ),
@@ -596,6 +599,12 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         status.isNotEmpty ? status : 'In Progress',
         textAlign: TextAlign.center,
+        // Must never wrap — the fixed-width column (90/80px) is tight
+        // enough at this font size that "In Progress" would otherwise
+        // break across two lines.
+        maxLines: 1,
+        softWrap: false,
+        overflow: TextOverflow.visible,
         style: GoogleFonts.inter(
           color: _purple,
           fontSize: isWide ? 12 : 10,
@@ -675,6 +684,12 @@ class _ResumeButtonState extends State<_ResumeButton> {
             child: Text(
               'Resume',
               textAlign: TextAlign.center,
+              // Must never wrap — the fixed-width column (80/76px) is
+              // tight enough at this font size that "Resume" would
+              // otherwise break into "Resum"/"e".
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.visible,
               style: GoogleFonts.inter(
                 color: Colors.white,
                 fontSize: 13, // 0.8rem
