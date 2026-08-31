@@ -4005,3 +4005,851 @@ Courses" overflow that prompted the buffer in the first place.
 
 `flutter analyze`: file clean (0 issues), full-project count holds at
 59, no regressions.
+
+## Round 43: Learning Paths search input — corrected from a wrong prior conclusion
+
+A 7-image devtools cascade dump on `input#courselearningpathsearch-
+learning_path.searchInput.form-control.pl-5` directly contradicted an
+earlier round's conclusion (in-code comment) that this input had "no
+matching CSS rule anywhere in the stylesheet at all" and was a plain,
+unstyled Bootstrap `.form-control` (`#CED4DA` border, ~4px radius).
+That was wrong — the winning rule is the SAME site-wide `:where(input
+[type=text],...)` override used elsewhere in the app (e.g. the
+Development Plan modal's input):
+`background:var(--bg-white)!important` (#FFFFFF), `border:1px solid
+var(--border-light)!important` (#E2E8F0), `border-radius:8px
+!important`, `font-family:var(--primary-font)!important` (Inter),
+`font-size:14px!important`, `color:var(--text-main)!important`
+(#2D3748) — all beating `.form-control`'s own struck-out
+border/radius/background. `.form-control{height:42px}` still wins for
+height, unopposed. The absolutely-positioned `.search i{left:10px;
+top:12px;color:#693D94;font-size:20px}` search icon and `.pl-5
+{padding-left:3rem!important}` (its reserved space) are both already
+handled correctly by Flutter's own `prefixIcon` (purple, size 20) —
+no change needed there.
+
+Fixed `_SearchBar` in `learning_paths_page.dart`: `border`/
+`enabledBorder`/`focusedBorder` radius corrected 4->8, color corrected
+`#CED4DA`->`#E2E8F0` (new local `_inputBorder` const, since neither
+matches an existing `FigmaTokens` entry); added an explicit input
+`style` (`GoogleFonts.inter`, `#2D3748`/14/w400 — new local
+`_inputText` const) where none existed before (was relying on the
+Material theme default); locked the field to the real 42px height via
+a wrapping `SizedBox` (was previously unconstrained, sized only by
+`contentPadding: vertical:8`).
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: search field visually matched to Course Catalog's, per explicit request
+
+User asked for this field to visually match Course Catalog's own
+search field style (`_fieldDecoration`/`_SearchField` in
+`courses_page.dart`) instead of Round 43's real-CSS values — an
+app-level design-consistency choice, not a web-match fix, and
+explicitly NOT extended to width (kept `Expanded`, unlike Course
+Catalog's several narrower same-row fields).
+
+Rebuilt to mirror that pattern exactly: `Focus`-driven `_focused`
+state, a soft `0x1A5457C1` box-shadow glow on focus (Course Catalog's
+own approximation of `.search-blcok .searchInput:focus{box-shadow:0 0
+0 4px rgba(84,87,193,.1)}`), fill `#F8FAFC` unfocused / white focused,
+radius 12 (was 8), border `#E2E8F0` unfocused / purple 1.5px focused
+(was a flat `#E2E8F0`/purple 1px with no width bump), icon swapped to
+the muted `#94A3B8`/18px `Icons.search` (was purple/20px
+`Icons.search_rounded`), hint/text style gained `letterSpacing:1` and
+the Theme-scoped `hoverColor:transparent` (removes Flutter's default
+grey hover tint, matching Course Catalog's own field). `_inputText`/
+`_inputBorder` (added in Round 43) already matched the values this
+needed, so no new constants required.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: fill color always white, not conditional on focus
+
+Course Catalog's own field swaps `#F8FAFC` (unfocused) -> white
+(focused); this field should stay white regardless of focus state,
+per explicit request. `fillColor` no longer branches on `_focused` —
+always `Colors.white` now.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: reset/undo button rebuilt against the real .btn cascade
+
+A 3-image devtools cascade dump on the real `<a class="btn btn-primary
+undo-btn"><i class="fa fa-undo"></i></a>` confirmed this button
+carries the same site-wide `.btn,button,input[type=submit]{border-
+radius:8px!important;padding:4px 4px!important;border:none!important}`
+override already established for every other `.btn.btn-primary` in
+the app (Round 36) — `.undo-btn`'s own `padding:7px 15px!important`
+loses to it (same specificity, later load order). `.btn-primary,
+.btn-purple,.btn-default{background:var(--primary-color)!important;
+color:white!important}` confirms fill/icon color. The icon itself
+measures 14x14 (not this screen's previous 20px), and the real
+`.btn{line-height:21px}` (unopposed) plus the 4px padding gives the
+whole button a real ~22x29 footprint — not the flat 44x44/radius-10
+box this had, which had no real-CSS basis at all.
+
+Rebuilt to match: radius 8 (was 10), icon size 14 (was 20), `Padding
+.all(4)` wrapping a `SizedBox(width:14,height:21)`-boxed icon instead
+of a flat 44x44 box, and added the same `HoverBuilder`+`AnimatedContain
+er` hover-lift/shadow + `FigmaTokens.purpleHover` pattern already
+established for every other real `.btn-primary` in the app (Calendar's
+`_BootstrapPrimaryButton`, Dev Plan's "Add Custom Plan Item" button) —
+the real `.btn-primary:hover` rule in `bluetheme-layout.css` (found in
+earlier rounds) applies identically here since it's the same class.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: table's white card and heading matched to real CSS
+
+Two fixes from further devtools dumps on the real `.structure-block`
+wrapping this table:
+
+- **Container**: `background:var(--white);padding:20px;border:1px
+  solid #E7E4FF;border-radius:16px` — no box-shadow at all. Was an
+  invented `0 6px 16px rgba(0,0,0,.04)` shadow with radius 14 and no
+  border. Same real class every other My Courses screen's white card
+  already uses (Round 40/Required Courses). Container padding is now a
+  uniform `EdgeInsets.all(20)` (previously only the title row had its
+  own `fromLTRB(20,18,20,12)`, leaving the table itself flush against
+  the card's left/right/bottom edges instead of properly inset).
+- **Heading**: `.structure-block h1{font-style:normal;font-weight:400;
+  font-size:24px;line-height:28px;color:var(--primary-second)}` (site-
+  wide `h1{font-family:var(--primary-font)!important}` gives it Inter)
+  — was wrongly 20px/w800/`#B0006D` with no font-family set at all.
+  `_sectionTitle` corrected to the real `#A20067`.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: header gradient was real after all — an earlier round's conclusion overturned
+
+A 10-image devtools dump on the Krajee GridView's internal DOM
+(colgroup, column-resize handles, `<thead>`) surfaced one directly
+actionable, high-confidence finding among mostly grid-infrastructure
+noise with no Flutter equivalent (resizable-column handles, colgroup):
+`.kv-table-header{background:linear-gradient(to bottom,#fff 0%,#eee
+100%)}` genuinely WINS the cascade (beats `.kv-table-header,.kv-table-
+footer{background:#fff}`, which loses). A previous round had called
+this same gradient "a purely invented 'modernized' treatment with no
+CSS backing at all" and removed it — that conclusion doesn't survive
+this live cascade evidence, so it's restored.
+
+Also confirmed: `.kv-table-header > tr > th/td{border-bottom:none;
+border-top:none}` — the header itself has no border of its own. The
+divider line below it in both the real page and this app is a
+separate element (`_PathsTable`'s own `Divider` right after the
+header row) — the header `Container`'s own bottom border was
+redundant with that `Divider` and has been removed.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: table cell padding corrected from 15px to 12px (0.75rem)
+
+A live devtools cascade dump directly on the real tbody `<td
+class="skip-export kv-align-center kv-align-middle kv-expand-icon-
+cell">` (the row's own expand/collapse toggle cell) settled two open
+questions from the previous round:
+
+- `.table th, .table td{padding:0.75rem}` (12px) is shown WINNING
+  outright, with `.table td, .table th{padding:15px}` struck out
+  (losing). The `15px` value used until now — in both
+  `_TableHeaderRow` and `_PathRow` — was wrong; corrected to `12`
+  (`EdgeInsets.all(12)`) in both. The expanded-competency-preview
+  block's derived indent padding (`fromLTRB`) was recomputed to match
+  (`45→42` left, `15→12` right/bottom — was row-padding(15) + 20px
+  icon + 10px gap, now row-padding(12) + 20px icon + 10px gap).
+- `.kv-expand-header-cell, .kv-expand-icon-cell{padding-top:0;
+  padding-bottom:0}` is shown LOSING in this same dump — it never
+  applies, even to the expand cell itself. `.table th, .table td` is a
+  compound class+element selector (specificity 0,1,1) which beats the
+  single-class `.kv-expand-icon-cell` selector (0,1,0), so the expand
+  cell gets the same uniform 12px on all sides as every other cell —
+  no special-casing needed.
+
+Also re-confirmed from this same dump (no change needed, already
+matching): `.table td{vertical-align:middle!important}`,
+`.kv-align-center{text-align:center}` for the expand cell, and the
+expand icon's `color:var(--primary-first)` (the bare `fa-plus-square`/
+`fa-minus-square` glyph, no filled chip).
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: nested competency sub-table (expanded row) — header padding and border-bottom corrected
+
+A devtools cascade dump on the expanded-row competency sub-table (the
+plain `<table class="table">` shown when a Learning Path row's `+` is
+clicked — "Competency / Courses / Competency Type") surfaced two
+corrections for `_CompetencyPreview`'s own column-header row, distinct
+from the outer Learning Paths grid fixed in the previous round:
+
+- Header row vertical padding `8px → 12px`, same `.table th, .table
+  td{padding:0.75rem}` rule confirmed winning again here.
+- The divider below the header labels was a plain `Divider(height:1,
+  color:#DBE5E9)` (matching the row-separator color used elsewhere on
+  this page). The live cascade instead shows this table's own
+  `.table thead th{border-bottom:2px solid #dee2e6}` winning outright
+  — plain Bootstrap defaults, not the site's `#DBE5E9` override (a
+  competing `.table thead th{border-bottom:1px solid #DBE5E9}` rule
+  loses here). Corrected to `Divider(height:2, thickness:2,
+  color:#DEE2E6)`. Body-row dividers were left unchanged — no evidence
+  in this dump covered them.
+- Confirmed, no change needed: the "#" serial-number header cell in
+  the real markup has an inline `style="color:transparent"` (hiding
+  it) — that's why `.table th`'s own `color:var(--primary-first)`
+  shows as losing in the dump for that one cell; it doesn't apply to
+  the "Competency"/"Courses"/"Competency Type" labels, which keep
+  their purple color as already coded.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: competency sub-table body rows and "View" button corrected
+
+Further devtools evidence on the same expanded-row competency
+sub-table (body rows this time, plus the "View" action button):
+
+- Body row vertical padding `10px → 12px` — the same confirmed
+  `.table td{padding:0.75rem}` rule applies to the data rows
+  (Development/Leadership), not just the header, in both `_Compet
+  encyPreviewRow`'s tablet layout and phone-stacked layout... only the
+  tablet `Row` layout was changed (the phone-stacked `Column` layout
+  uses its own vertical rhythm with no direct `.table td` counterpart,
+  left as-is).
+- "View" button (`_viewButton`): the site-wide `.btn, button,
+  input[type=submit], ...{border-radius:8px!important;font-weight:
+  600!important;font-size:14px!important;padding:4px 4px!important;
+  border:none!important}` override (the same Round-36 rule already
+  applied to the reset/undo button elsewhere on this page) wins here
+  too, confirmed live. Was a `StadiumBorder` pill with 700-weight
+  11.5pt text and 12px horizontal-only padding — none of which match.
+  Corrected to `RoundedRectangleBorder(borderRadius: circular(8))`,
+  weight 600, size 14, `EdgeInsets.all(4)`, for both the filled
+  (hover) and outlined (default) button states. Icon size/color
+  (14px, purple) were already correct per this same dump's `.table td
+  i{font-size:14px}` + inline `color:var(--primary-first)` evidence.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: "+" row column layout (serial number + font) corrected against a real-vs-app screenshot pair
+
+A side-by-side screenshot of the real site and the Flutter app showed
+the top-level path row ("1. Learning Path for Group 1" / "2.
+HS_Test_LEARNING_PATH") visibly off on both spacing and font — the
+real row's "1." sits far to the left with a big gap before "Learning
+Path for Group 1" (which lines up with the "Learning Path" header
+label above it), while the app ran the index digit right up against
+the name with only an 8px gap, all inside one shared flex:6 column.
+
+Root cause: the real `<colgroup>` has a 4th, blank-labelled column
+between the expand icon and "Learning Path" — `<th data-col-seq="1"
+style="width:11.97%"></th>` (no text; it's the row's own serial-number
+cell) — with `data-col-seq="2"` ("Learning Path") at 61.42% and
+`data-col-seq="3"` ("Group") at 23.2%. `_TableHeaderRow` and `_PathRow`
+were both restructured to give the index its own `Expanded(flex:12)`
+column ahead of a separate `Expanded(flex:61)` name column and
+`Expanded(flex:23)` group column (flex 12:61:23 ≈ the measured
+11.97:61.42:23.2 widths) — previously the header only had two columns
+(flex 6/3) and the row nested the index inside the name's column.
+
+Also switched every label/value `Text` in `_TableHeaderRow` and the
+tablet branch of `_PathRow` (index, name, group) from a bare
+`TextStyle` (no `fontFamily`, so it fell back to the app's default
+theme font) to `GoogleFonts.inter(...)`, matching the real site's
+site-wide `body{font-family:var(--primary-font)!important}` (Inter)
+and the Inter usage already applied elsewhere on this page (search
+field, "Learning Paths" heading) — this was the second half of the
+reported "font" mismatch, not just weight/size.
+
+The phone-stacked layout's `_pathNameLine` (index run adjacent to the
+name, no real-table column structure to match on phone) was left
+structurally as-is, only switched to `GoogleFonts.inter` for the same
+font-family consistency fix.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: expand/collapse "+"/"-" icon was the wrong Material variant, and 20px not 16px
+
+A devtools dump on the header's expand-all `<th class="kv-expand-
+header-cell">` resolved a visual mismatch on the "+"/"-" icon that had
+been standing since it was first added: the icon looked like a hollow
+outline square rather than the real site's solid purple square with a
+white plus/minus. Root cause was using the `_outlined` Material icon
+variants (`Icons.add_box_outlined` / `Icons.indeterminate_check_box_
+outlined`, which render as a bordered/hollow box) instead of the
+FILLED variants (`Icons.add_box` / `Icons.indeterminate_check_box`).
+The real markup is a single monochrome `<span class="fa fa-plus-
+square">` glyph colored `var(--primary-first)` — the "white plus on a
+purple square" look isn't a second color or a background chip, it's
+the icon glyph's own vector path (the plus/minus is a cut-out hole in
+the shape), which is exactly what the FILLED Material icon draws.
+
+Also corrected size `20px → 16px`: the header `<th>` measured
+49.85×44.8 (already matching the current 12px padding), wrapping a
+25.85×20 icon div whose actual `.fa` glyph box is 14×16 — that's the
+inherited `.table th{font-size:16px}`, not the losing `.kv-expand-
+header-cell{font-size:1.35em}` override a much earlier round had
+assumed. Applied to both the header (`_TableHeaderRow`) and per-row
+(`_PathRow`) toggle icons for visual consistency, since both use the
+same real glyph/class pattern (`kv-expand-header-cell` /
+`kv-expand-icon-cell`).
+
+Explicitly NOT changed: no hover-specific CSS (background/color
+change) was present in this dump for either the header or row toggle
+— only `cursor:pointer` via `.kv-expand-header-cell.kv-batch-toggle` /
+`.kv-expand-icon-cell`. The existing bare `InkWell` (default Material
+ripple, no custom hover styling) was left as-is rather than inventing
+a hover treatment with no CSS backing.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: table body text color unified to `#212529`
+
+The browser's computed-style inspector popover on the real `<td
+class="w0">` cell ("Learning Path for Group 1") gave a direct reading:
+`color:#212529`, `font:14px Inter`, `padding:12px`. The page's local
+`_ink` constant was `FigmaTokens.cardTitles` (`#1E2939`) — a
+different, close-but-not-identical dark shade that read as
+inconsistently grey/black next to itself. Since every body-text usage
+on this page (path index/name/group, competency index/name/courses/
+type, the empty-state message) already shares this one `_ink`
+constant, redefining it as `Color(0xFF212529)` fixes the whole
+table's text color uniformly in one place.
+
+Not changed in this round (out of the explicit request's scope, but
+worth flagging): that same inspector reading shows `font:14px`, while
+the path-row name/index/group text is currently coded at 15px — a
+discrepancy from an earlier round's "confirmed 15px" note. Left as-is
+pending explicit confirmation, since this round's request was scoped
+to color only.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: upper (Learning Path) table row index digit set to purple, per explicit request
+
+The "1."/"2." index digit in the outer Learning Paths table (both the
+tablet `Expanded(flex:12)` column and the phone-stacked
+`_pathNameLine`) was plain body-text color (`_ink`), per an earlier
+round's CSS reading ("Row number ... same plain color"). User
+explicitly asked for it in purple this round — changed both to
+`_purple`. This is a deliberate app-side deviation from that earlier
+CSS reading, not a new cascade finding; documenting it as such so a
+future audit pass doesn't "correct" it back. The name/group text next
+to it is unchanged (still plain body color).
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: "View" button had a visible border it should never have had
+
+A reference screenshot of the real "View" buttons (plain purple eye
+icon + text, no box/border at all in either instance shown) directly
+contradicted the previous round's implementation — an `OutlinedButton`
+with a visible purple border by default, switching to a filled purple
+`ElevatedButton` chip on hover.
+
+Re-reading the same cascade dump that round had used: `.btn-outline-
+primary{border-color:var(--primary-first)!important}` does win, but
+it's a longhand — the site-wide `.btn,button,...{border:none
+!important}` shorthand (the same rule already confirmed for radius/
+weight/size/padding) sets border-*style* to `none` regardless of which
+rule wins on border-*color*, and a border with no style never renders
+no matter its color. The previous round read "`border-color` wins" as
+"there's a visible border," which doesn't follow — that was the actual
+bug, not a missing fix.
+
+Collapsed both button states into one plain, borderless, fill-less
+`TextButton.icon` (purple icon+text, radius/weight/size/padding
+unchanged from the already-confirmed `.btn` override) — matching the
+reference screenshot exactly. The `HoverBuilder`-driven two-state
+ElevatedButton/OutlinedButton split is gone; nothing in the evidence
+supports a hover-specific fill or border for this button either.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: "View" button hover state restored — the fill-on-hover was real after all
+
+The immediately preceding round collapsed the "View" button into a
+single borderless `TextButton` for both default and hover states,
+reasoning that no evidence supported a hover-specific fill. A follow-
+up screenshot of the real button's actual `:hover` state disproved
+that: it genuinely does fill solid purple with white icon/text on
+hover — the box model, not just a browser title-attribute tooltip.
+
+Restored the two-state `HoverBuilder` split: default state stays the
+plain borderless purple `TextButton` (that half of the previous fix
+was correct — the visible border was the real bug), hover state is
+back to a filled `ElevatedButton` (solid purple background, white
+icon/text, same radius/weight/size/padding). Net effect versus two
+rounds ago: only the default state's border was ever wrong; the
+hover-fill behavior was right all along and shouldn't have been
+removed.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Follow-up: "View" button eye icon switched to filled, per explicit request
+
+The eye icon in `_viewButton` (both default and hover states) was
+`Icons.remove_red_eye_outlined`; per explicit request, switched to the
+filled `Icons.remove_red_eye` — matches the real markup's `<i
+class="fa fa-eye">` glyph, which is the solid variant.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+## View Competency page (`view_competency_page.dart`)
+
+### Round 1: heading restructured off the real `<h3 class="text-center">`, table padding corrected
+
+A devtools inspection of the real "View Competency" page (reached via
+the "View" button on a Learning Paths competency row) directly
+targeted the competency-name heading — `<h3 class="text-center"
+style="box-shadow:.5px .5px 6px #6262624d;border-radius:12px;margin-
+top:10px;margin-bottom:20px;padding:12px;">Leadership</h3>` — and
+surfaced a structural mismatch, not just a value tweak:
+
+- The box-shadow/radius/margin/padding belong to the **heading itself**,
+  not a separate enclosing "card" wrapping heading+table together. The
+  previous implementation wrapped the whole body in an invented white
+  `Container` (radius 14, `Color(0x0A000000)` shadow) with no CSS
+  backing found for it — removed. The heading now carries its own
+  `Container` with the confirmed box-shadow (`0.5px 0.5px 6px` blur 6,
+  color `#626262` at ~0.3 alpha), 12px radius, `margin: top 10/bottom
+  20`, `padding: 12`. The table sits directly on the page background
+  below it (matching the screenshot — no visible card border around
+  the table itself).
+- Heading text: `h3,.h3{font-size:1.75rem}` (28px) +
+  `h1..h6{font-weight:500;line-height:1.2}` + the site-wide
+  `h1..h6,.nav-link,.btn{font-family:var(--primary-font)!important}`
+  (Inter) — was 20px/w800 with no font-family set. Color kept at the
+  inherited body `color:var(--text-main)!important` (`#2D3748)`, since
+  no h3-specific color override was found.
+- **Not resolved**: the real screenshot shows this heading sitting on a
+  solid pastel-blue fill, but the captured inline `style` attribute has
+  no `background` property in it at all — that color isn't confirmed
+  from this evidence (likely set by a rule not captured in the shown
+  panel, possibly per-competency). Deliberately left unset rather than
+  guessed; flagged to the user for a follow-up screenshot/Computed-tab
+  read if they want it matched exactly.
+- Table padding corrected `15px → 12px`, applying the same site-wide
+  `.table th, .table td{padding:0.75rem}` finding already confirmed on
+  the Learning Paths tables (same underlying CSS rule, not fresh
+  evidence specific to this page).
+- Not changed: the `_ViewButton` (course row "View") — the screenshot
+  shows a bordered purple pill/stadium button, matching the current
+  implementation already, so left as-is (no evidence this page's
+  button shares the Learning Paths page's borderless-link treatment).
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Round 2: box-shadow removed (Flutter/CSS blur mismatch), row striping added
+
+Two clean screenshots (devtools closed, real page vs the Flutter app)
+identified two concrete gaps against what Round 1 applied:
+
+- The "solid pastel-blue fill" flagged as unconfirmed in Round 1 was
+  Chrome's own element-highlight overlay (the box the Elements panel
+  draws around the selected/hovered element), not real CSS — a clean
+  screenshot confirms the heading has no background at all. Leaving it
+  unset was correct; no change needed there.
+- The heading's box-shadow, however, rendered far too strong: the real
+  CSS values (0.5px offset, 6px blur, ~0.3 alpha) paint as essentially
+  invisible in a browser, but the same numbers in a Flutter `BoxShadow`
+  produced a clearly visible solid grey rounded pill spanning the full
+  width. Flutter's `blurRadius` isn't a 1:1 stand-in for CSS's blur-
+  radius (CSS's blur spec is roughly 2× Flutter's sigma-based
+  `blurRadius` for an equivalent visual spread), and combined with the
+  box being full-width the mismatch was large enough to be a real
+  visual bug, not a rounding nit. Removed the shadow rather than chase
+  an exact conversion for an effect that should be imperceptible.
+- Table row striping was missing entirely — the real page alternates
+  row background (odd rows get a light-grey stripe, classic Bootstrap
+  `.table-striped`), while the Flutter table had no row background at
+  all, uniform for every row. Added `TableRow.decoration` with
+  `Color(0x0D000000)` (~5% black) on even-indexed rows.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Round 3: heading box-shadow restored, sigma-corrected
+
+Removing the box-shadow entirely last round overcorrected — it's
+genuinely present on the real page, just faint. Restored it with the
+blur/alpha scaled down instead of dropped: CSS's blur-radius spec is
+roughly 2× a Gaussian's standard deviation, while Flutter's `BoxShadow
+.blurRadius` IS that standard deviation directly, so the original
+`blurRadius: 6` (a literal copy of the CSS px value) was already about
+double the equivalent spread. Halved to `blurRadius: 3` and eased the
+alpha further (0.3 → 0.15), since even the sigma-corrected value still
+read stronger than the real page's barely-there edge on a full-width
+box. Offset (0.5, 0.5) and border-radius (12) unchanged — already
+correct.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Round 4: heading box-shadow removed for good — Flutter can't reproduce the near-invisibility
+
+Two more rounds of tuning (blurRadius 6→3, alpha 0.3→0.15) still
+rendered a clearly visible grey rounded box, while every clean
+screenshot of the real page (devtools closed) shows literally nothing
+there. Rather than keep shrinking a value that keeps showing up,
+settled on removing the box-shadow entirely: the observed real-world
+result across every screenshot has consistently been "no visible
+shadow," so that's what's coded, even though the literal source CSS
+(`0.5px 0.5px 6px #6262624d`, confirmed straight off the real page's
+Computed styles) technically specifies a tiny one. Everything else on
+the heading (radius, margins, padding, font, color, text-align)
+unchanged and already confirmed correct.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Round 5: heading strip designed directly, per explicit request — not a CSS match
+
+After several rounds trying to reproduce the real page's near-
+invisible `0.5px 0.5px 6px #6262624d` shadow (Flutter kept rendering
+it as a visibly solid grey box regardless of how far it was scaled
+down), the user asked for this strip to be designed directly instead
+of continuing to chase the real value. Built as a soft, subtly-
+elevated light-grey card:
+
+- fill `Color(0xFFF3F4F6)` (pale grey, distinct from the page
+  background but not a strong contrast)
+- `borderRadius: 10`
+- thin hairline border `Color(0xFFE5E7EB)`
+- gentle ambient shadow: `Colors.black.withValues(alpha:0.06)`,
+  `blurRadius:6`, `offset:(0,2)` (heavier below than above — the usual
+  visual cue for a raised surface)
+
+This is a deliberate app-side design choice, not a CSS-cascade finding
+— documenting it as such so a future audit pass doesn't try to
+"correct" it back toward the real page's (Flutter-unreproducible)
+literal shadow value.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Round 6: table header gradient background added
+
+A live cascade dump directly on this page's own `<thead class="kv-
+table-header">` confirmed the same `.kv-table-header{background:
+linear-gradient(to bottom,#fff 0%,#eee 100%)}` already fixed on the
+Learning Paths table applies here too — but this table's header
+`TableRow` had no `decoration` at all (no background whatsoever), a
+gap that hadn't been carried over when the Learning Paths fix was
+made. Added the identical gradient.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Round 7: header's own top border removed
+
+Same live-cascade confirmation as the Learning Paths table:
+`.kv-table-header > tr, .kv-table-header > tr > th, .kv-table-header
+> tr > td{border-bottom:none;border-top:none}` — the header row has no
+border of its own. `TableBorder.top` on the Flutter `Table` draws
+along the whole table's outermost top edge (directly above the
+header), so it's removed; the line separating header from the first
+data row still comes through via the existing `horizontalInside`
+border, unaffected by this change. `bottom` (the table's own outer
+bottom edge) left as-is — not covered by this specific dump.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Round 8: table top border restored, border color corrected — a JS artifact was wrongly generalized
+
+The previous round's removal of the table's outer top border was
+wrong. Comparing all three real header cells side-by-side: the "#"
+and action/View columns (no inline style) clearly show `.table-
+bordered th, .table-bordered td{border:1px solid #dee2e6}` WINNING for
+top/left/right, with only the bottom edge overridden to none by the
+more specific `.kv-table-header > tr > th{border-bottom:none}`. Only
+the "Course Name" cell looked borderless on top — because it carries
+an INLINE `border-top-style:none`, a Krajee resizable-column JS
+artifact on that one cell specifically, not a real design rule (inline
+always wins regardless of the stylesheet). The previous round
+generalized from that one artifacted cell and dropped the top border
+for the whole table — restored it.
+
+Also corrected the border color itself: `#DBE5E9` (the site override
+used elsewhere on this page, and on the Learning Paths table) is shown
+LOSING/struck in all three of these header-cell dumps — the winning
+color here is Bootstrap's plain default `#dee2e6`, via `.table-
+bordered th, .table-bordered td`. Updated all four `TableBorder` sides
+(top/bottom/horizontalInside/verticalInside) from `#DBE5E9` to
+`#DEE2E6`.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Round 9: body text color/font unified, "View" button corrected (no hover-fill, radius, weight, icon)
+
+- `_vcInk` redefined from `FigmaTokens.cardTitles` (`#1E2939`) to
+  `Color(0xFF212529)`, confirmed via the computed-style inspector
+  popover on the real course-name `<td>` — same fix pattern already
+  applied to the Learning Paths page's `_ink`. Index and course-name
+  cells both switched to `GoogleFonts.inter` at a uniform 14px (was
+  13px/13.5px with an extra 1.4 line-height on the course-name cell
+  only), per explicit request that both cells settle at the same
+  height.
+- `_ViewButton` corrected: a screenshot of the real button mid-hover
+  (cursor visibly on it) still shows class `btn-outline-primary`
+  unchanged — bordered, purple text/icon, no fill — so unlike the
+  Learning Paths page's competency "View" button, this one does NOT
+  switch to a filled state on hover. Collapsed the previous two-state
+  `HoverBuilder` (`OutlinedButton` default / `ElevatedButton` filled on
+  hover) into one consistent `OutlinedButton` for both states. Also
+  corrected against the same measured `a.btn.btn-outline-primary`
+  (67.43×29, color `#693D94`, font 14px Inter, padding 4px): radius 8
+  (was `StadiumBorder` pill), weight 600/14px text (was 700/12.5pt),
+  padding `all(4)` (was 14px horizontal-only). Icon switched to the
+  filled `remove_red_eye` (real `<i class="fa fa-eye">` is solid, same
+  correction already made on the Learning Paths page's equivalent
+  button). Removed the now-unused `HoverBuilder` import.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Round 10: "View" button matched to Learning Paths page's, per explicit request
+
+Overrides the previous round's CSS-matched conclusion (that this
+button doesn't fill on hover) — the user explicitly asked for this
+button to look identical to the Learning Paths page's competency
+"View" button. Restored the two-state `HoverBuilder`: borderless
+purple `TextButton` by default, filled purple `ElevatedButton` (white
+icon/text) on hover — same radius/weight/size/padding and filled
+`remove_red_eye` icon as that button. This is a deliberate app-side
+consistency choice overriding the real page's own (non-filling) hover
+behavior for this specific button — documenting it as such so a future
+audit pass doesn't try to "correct" it back to the real CSS reading.
+`HoverBuilder` import restored (back in use).
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+### Round 11: phone-specific layout added — this page had no responsive handling at all
+
+A real mobile screenshot showed a completely different layout for
+this page that the existing code never accounted for — no
+`Responsive`/`MediaQuery` branching existed anywhere in this file, so
+the same desktop `Table` (fixed 56px index column, flex 6/3 name/
+group) was rendering on every screen width.
+
+Built from the screenshot directly (a design/layout task, not a CSS
+cascade lookup — no devtools evidence was provided, just the visual):
+
+- **Heading**: on phone, replaced the large 28px card-styled heading
+  with a compact uppercase label — bold, 12px, 0.6 letter-spacing,
+  centered, no card/shadow — matching the much smaller "DEVELOPMENT"
+  treatment shown in the screenshot (clearly not just a scaled-down
+  version of the desktop heading).
+- **Course list**: on phone, replaced the `Table` with a new
+  `_CoursePhoneList` — one row per course (index "01"/"02" in grey
+  bold, course name in dark bold wrapping to 2 lines, "View" on the
+  right), alternating light-grey row background, no cell borders, no
+  header row — reusing the same `_ViewButton` widget already fixed to
+  match the Learning Paths page's style.
+- Branching added via `Responsive.isTablet(context)` (already the
+  shared breakpoint utility used elsewhere in the app), imported
+  fresh into this file.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+## Learning Paths page — mobile-specific competency card layout
+
+A real mobile screenshot of the expanded competency preview showed a
+completely different treatment than the plain stacked/unstyled text
+the phone branch of `_CompetencyPreviewRow` used — each competency on
+phone is its own pale-blue rounded card with bold black "Label:" text
+followed by a blue value ("Competency: Development", "Courses: ...",
+"Type: AND"), not bare text. Built from the screenshot directly (a
+design/layout task — no devtools evidence given):
+
+- `_CompetencyPreviewRow`'s phone branch rebuilt as a `Container`
+  (fill `#DCEEF5`, radius 8, margin between cards) with `RichText`
+  rows for each bold-label/blue-value pair. "Courses:"/"Type:" labels
+  are shown even when the value is empty, matching the real
+  screenshot's first card (bare "Courses:" with nothing after it).
+- The per-row `Divider` in `_CompetencyPreview` (between competency
+  rows) is now tablet-only — the phone cards already have their own
+  spacing via margin, and a divider line sitting in that gap looked
+  wrong once the cards had their own background.
+- Not replicated: a small grey circle overlapping the first card's
+  top-left corner in the screenshot — almost certainly a transient
+  loading-spinner artifact from the capture, not a persistent design
+  element.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+## View Competency page — mobile row background/padding corrected
+
+Devtools computed-style inspection on the real striped `<tr>` gave
+direct values: background `rgba(0,0,0,0.05)` (a semi-transparent
+black overlay, not a solid hex), padding `16px 20px`. `_CoursePhoneList`
+was using a solid `#F3F4F6` grey fill at 14px vertical/12px horizontal
+padding — corrected to `Colors.black.withValues(alpha:0.05)` (odd rows)
+/ `Colors.transparent` (even rows) and `EdgeInsets.symmetric(
+horizontal:20, vertical:16)`.
+
+(Separately: a devtools screenshot of this same page showed the
+heading and one course-name text in an orange/brown color not shared
+by the sibling row — flagged to the user as a likely browser
+`:visited`-link artifact rather than a real design color; user opted
+to skip it and fix only the background/padding, which is this entry.)
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+## Learning Paths page — mobile competency card: value color corrected, View button centered
+
+- Value text color (previously an invented sky-blue `#2B6CB0`)
+  corrected to `#808B96`, confirmed via the computed-style inspector
+  on the real "Type: AND" cell (`color:#808B96; font:13.6px Inter`).
+  Applied to the shared `valueStyle` used for all three "Label: value"
+  lines in the mobile competency card (Competency/Courses/Type).
+- The "View" button, per explicit request, is now centered — was
+  left-aligned (inherited from the card's own `crossAxisAlignment
+  .start`), wrapped in `Center`.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+## Learning Paths page — mobile positioning corrected (search/reset stacking, heading/subtitle stacking)
+
+A real mobile screenshot of the collapsed default state showed two
+structural positioning differences from desktop that weren't branched
+for phone at all:
+
+- **Search field + reset button**: on the real mobile page the reset
+  button sits BELOW the search field (own line, left-aligned) and is a
+  full circle, not the desktop's rounded-square beside the field.
+  `_SearchBarState.build()` restructured to branch on
+  `Responsive.isTablet(context)`: tablet+ keeps the existing side-by-
+  side `Row` (rounded-square button); phone stacks them in a `Column`
+  with the reset button using `CircleBorder` for both the `Material`
+  shape and the `InkWell`'s `customBorder`.
+- **"Learning Paths" heading + "Showing X of Y" subtitle**: real mobile
+  shows these stacked (title above, subtitle below, both left-aligned)
+  — the existing code used one `spaceBetween` `Row` unconditionally.
+  Extracted both into local `title`/`subtitle` widgets and branch the
+  same way: tablet+ keeps the `Row`, phone uses a left-aligned `Column`.
+
+Not addressed this round (out of scope — explicitly about position):
+the real screenshot also shows the mobile path-row index/name in a
+teal/blue-green color, differing from the currently-coded purple
+index / plain-ink name (itself a deliberate choice from an earlier
+round). Flagged for a future round if the user wants color matched too.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+## Learning Paths page — mobile competency card: background color and Courses/Type alignment corrected
+
+Devtools computed-style inspection on the real `<tr>` gave direct
+values: `background:#EBF9FA` (was an invented `#DCEEF5`),
+`padding:15px 7px 7px 40px`. Per explicit request, also fixed a real
+layout bug: "Courses:" and "Type:" were separate `Column` children
+sitting at the card's own left edge — i.e. starting underneath the
+index digit ("1"/"2"), not underneath "Competency:" where they belong.
+Restructured so the index sits in its own leading column (a `SizedBox`
+column, not container padding, so it doesn't also get indented) and
+"Competency:"/"Courses:"/"Type:"/"View" all live inside one shared
+`Expanded` `Column`, giving every line the same left edge regardless of
+how many digits the index has. The real `40px` left inset is
+reproduced as 12px container padding + a 28px index column (12+28=40),
+rather than literally padding the whole container 40px on the left,
+which would indent the index too and defeat the gutter effect the real
+markup achieves some other way (likely absolute positioning/pseudo-
+element, not reproducible 1:1 in Flutter). Margin also corrected from
+`vertical:4` to `bottom:15` (approximating the real page's collapsed
+15px block margin as a single 15px gap between cards, since Flutter
+doesn't collapse adjacent margins the way CSS does).
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+## Learning Paths page — mobile: header row removed, toggle icon moved trailing, value weight fixed, title/subtitle gap added
+
+Four fixes from a side-by-side comparison against a real mobile
+screenshot:
+
+- **No table header on phone**: the real page has no "Learning Path"/
+  "Group" header row at all on mobile — goes straight from "Showing X
+  of Y items." to the first data row. `_TableHeaderRow` (and its
+  trailing `Divider`) is now only rendered when `Responsive.isTablet
+  (context)`; the widget's own dead phone-only `else` branch (a
+  "Learning Paths" label standing in for the missing column headers)
+  was removed since it's now never reached.
+- **Toggle icon position**: on phone the real +/-/icon sits at the
+  TRAILING edge of the row, not leading — the opposite of the
+  tablet/desktop layout already confirmed earlier. `_PathRow`
+  restructured to place the icon after the row's content on phone,
+  before it on tablet+; the expanded competency preview's left indent
+  below it adjusted to match (`fromLTRB(42,...)` only on tablet, where
+  the leading icon+gap need offsetting; phone just uses the row's own
+  12px padding since there's no leading icon to clear).
+- **"Development"/"AND" value weight**: was inheriting the parent
+  label span's `w700` (`RichText` merges an unset child style with its
+  parent's) since `valueStyle` never set its own `fontWeight` — added
+  `FontWeight.w400` explicitly, matching the real page's visibly
+  lighter weight on these values versus their bold labels.
+- **Title/subtitle gap**: added `SizedBox(height:6)` between "Learning
+  Paths" and "Showing X of Y items." on phone, per explicit request —
+  was a bare stack with no gap.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+## Learning Paths page — mobile font sizes reduced (title, subtitle, "View" button)
+
+Per explicit request, sized down further on phone versus the same
+values previously shared with tablet+:
+
+- "Learning Paths" title: 24 → 18
+- "Showing X of Y items." subtitle: 12.5 → 11
+- Competency-card "View" button text: 14 → 12, icon 14 → 12
+
+All three now branch on `Responsive.isTablet(context)` (a local
+`isTablet` var, added where missing) — tablet+ keeps the original
+sizes, phone gets the smaller ones.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+## Learning Paths page — mobile competency card: label weight and value size eased
+
+Per explicit request: "Competency:"/"Courses:"/"Type:" label weight
+eased `700 → 600`, and value text ("Development"/"AND"/etc.) size
+eased `13.6 → 12.5`.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
+
+## Learning Paths page — mobile competency card: per-field value colors split
+
+Devtools computed-style inspection gave distinct colors per field,
+confirming the single shared `valueStyle` grey was wrong for two of
+the three fields: "Competency:" value is `#5B62A5`, "Courses:" value
+is `#2C3E50` — different colors, not the one `#808B96` grey. Split
+into `competencyValueStyle`/`coursesValueStyle`; `valueStyle` (`
+#808B96`) kept only for "Type:", which neither screenshot covered.
+
+`flutter analyze`: file clean (0 issues), full-project count holds at
+59, no regressions.
