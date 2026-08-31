@@ -22,10 +22,10 @@ class AllCourseProgressItem {
       courseId: json['course_id']?.toString() ?? '',
       courseName: json['course_name']?.toString() ?? '',
       progress: _asInt(json['progress']),
-      // Show "Category Here" placeholder when category is absent/null
-      category: (json['category']?.toString().isNotEmpty == true)
-          ? json['category'].toString()
-          : 'Category Here',
+      // Category absent/null -> blank (no placeholder). The view already
+      // hides the dot separator and the whole category segment whenever
+      // this is empty, leaving just the due date on its own.
+      category: json['category']?.toString() ?? '',
       // due_date may be pre-formatted "August 12, 2026" or ISO "2026-08-12"
       dueDate: _formatDate(json['due_date']?.toString()),
     );
@@ -48,18 +48,24 @@ class AllCourseProgressResult {
   final List<AllCourseProgressItem> courses;
 
   factory AllCourseProgressResult.fromJson(Map<String, dynamic> json) {
-    final payload = json['payload'] is Map
-        ? Map<String, dynamic>.from(json['payload'] as Map)
-        : <String, dynamic>{};
+    final payload =
+        json['payload'] is Map
+            ? Map<String, dynamic>.from(json['payload'] as Map)
+            : <String, dynamic>{};
     return AllCourseProgressResult(
       totalCourses: _asInt(json['total_courses']),
       page: _asInt(json['page']),
       pages: _asInt(json['pages']),
       perPage: _asInt(json['per_page']),
-      courses: (payload['courses'] as List? ?? [])
-          .whereType<Map>()
-          .map((m) => AllCourseProgressItem.fromJson(Map<String, dynamic>.from(m)))
-          .toList(),
+      courses:
+          (payload['courses'] as List? ?? [])
+              .whereType<Map>()
+              .map(
+                (m) => AllCourseProgressItem.fromJson(
+                  Map<String, dynamic>.from(m),
+                ),
+              )
+              .toList(),
     );
   }
 }
@@ -76,8 +82,19 @@ String _formatDate(String? raw) {
     final month = int.parse(parts[1]);
     final day = int.parse(parts[2]);
     const months = [
-      '', 'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      '',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[month]} $day, $year';
   } catch (_) {
@@ -95,7 +112,9 @@ class AllCourseProgressRepository with RepoNetworkHelper {
   AllCourseProgressRepository(this.config);
 
   static final provider = Provider<AllCourseProgressRepository>((ref) {
-    return AllCourseProgressRepository(ref.watch(ServerProvider.repoConfigProvider));
+    return AllCourseProgressRepository(
+      ref.watch(ServerProvider.repoConfigProvider),
+    );
   });
 
   @override
@@ -113,7 +132,9 @@ class AllCourseProgressRepository with RepoNetworkHelper {
     );
     final data = Map<String, dynamic>.from(response as Map);
     if (data['status']?.toString() != '1') {
-      throw Exception(data['message']?.toString() ?? 'Unable to load course progress.');
+      throw Exception(
+        data['message']?.toString() ?? 'Unable to load course progress.',
+      );
     }
     return AllCourseProgressResult.fromJson(data);
   }

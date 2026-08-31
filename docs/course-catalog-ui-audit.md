@@ -4938,3 +4938,34 @@ image is shown changed.
 
 `flutter analyze`: file clean (0 issues), full-project count holds at
 59, no regressions.
+
+## Follow-up: All Course Progress — category placeholder removed, dot separator now conditional on category presence
+
+**Screenshot report**: user asked that when the API's `category` field is
+absent, the row should just show the due date alone (no dot, no filler
+text) — a `"Category Here"` placeholder was previously being substituted
+in when `category` was missing/empty.
+
+**Root cause**: `AllCourseProgressItem.fromJson` in
+`lib/app/features/dashboard/repository/all_course_progress_repository.dart`
+was hardcoding `category: 'Category Here'` whenever the API's `category`
+key was null/empty, instead of leaving it blank.
+
+The row-rendering side (`_CourseRow` in
+`lib/app/features/dashboard/view/all_course_progress_page.dart`) already
+had the correct conditional structure and needed no change:
+- the category `Text` + trailing `·` dot are only built inside
+  `if (widget.item.category.isNotEmpty)`, and the dot itself is only
+  appended inside a further `if (widget.item.dueDate.isNotEmpty)` nested
+  check — so an empty category already produced no dot and no filler
+  text, it was only ever reachable with real category text.
+- the due-date icon+text row renders unconditionally on its own whenever
+  `dueDate.isNotEmpty`, regardless of category.
+
+**Fix**: changed the repository to `category: json['category']?.toString()
+?? ''` — blank when absent, letting the existing view logic naturally
+collapse to "due date only, no dot" for those rows.
+
+**Verification**: `dart format` + `flutter analyze` on the repository file
+— 0 issues. Full-project `flutter analyze` — 59 issues (stable baseline,
+unchanged).
