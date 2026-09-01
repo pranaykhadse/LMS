@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
@@ -23,11 +24,14 @@ class InternetConnectionProvider {
           "${serverUrl}auth", //'https://staging.trainingpipeline.com/api/web/auth'
         ),
       ),
-      // Fallback: Cloudflare DNS — always up, ultra-reliable.
-      // If the app server is down but the device has internet this still
-      // returns true, which is correct (a real API error will surface on the
-      // login screen rather than the misleading "No Internet" message).
-      InternetCheckOption(uri: Uri.parse('https://1.1.1.1')),
+      // Fallback: icanhazip.com answers HEAD with 200 and
+      // `access-control-allow-origin: *`, so it's readable from a browser
+      // too (the auth endpoint 200s on mobile but ships no CORS header,
+      // which browser builds can't read). If the app server is down but
+      // the device has internet this still returns true, which is correct
+      // (a real API error will surface on the login screen rather than the
+      // misleading "No Internet" message).
+      InternetCheckOption(uri: Uri.parse('https://icanhazip.com')),
     ],
     useDefaultOptions: false,
     // ANY check passing = connected.  With strictCheck=true BOTH would have
@@ -53,10 +57,31 @@ class InternetConnectionProvider {
   }
 
   Future<void> _doInitialize() async {
-    final value = await connection.hasInternetAccess;
-    _onConnectionChange(value);
+    // On the web build the unauthenticated cross-origin HEAD probe is
+    // CORS-blocked - the auth endpoint responds 200 but without
+    // `access-control-allow-origin`, so the browser hides the response and
+    // the probe fails, making the app report "No Internet" on every page
+    // load despite a live connection. There's no reliable browser-side
+    // probe, and real network failures already surface through the actual
+    // request errors, so web builds stay online and only the manual
+    // "Offline Mode" toggle can force the offline path.
+    if (kIsWeb) {
+      _onConnectionChange(true);
+      return;
+    }
+    try {
+      final value = await connection.hasInternetAccess;
+      _onConnectionChange(value);
+    } catch (_) {
+      _onConnectionChange(false);
+    }
     connection.onStatusChange.listen((event) async {
-      _onConnectionChange(await connection.hasInternetAccess);
+      try {
+        final value = await connection.hasInternetAccess;
+        _onConnectionChange(value);
+      } catch (_) {
+        _onConnectionChange(false);
+      }
     });
   }
 
@@ -88,7 +113,13 @@ class InternetConnectionProvider {
     _listeners.remove(listener);
   }
 
-  bool _isConnected = false;
+  // Optimistic default (true = online) rather than false. The first probe
+  // runs asynchronously at boot; while it's unresolved every request would
+  // otherwise be gated into the offline path - and on the web build that
+  // probe is CORS-blocked and frequently reports false even with live
+  // internet, making the app look "offline by default" on every page load.
+  // Fail-open: assume online until a probe actually proves otherwise.
+  bool _isConnected = true;
 
   bool get isConnected => _isConnected;
 

@@ -192,7 +192,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
     // 3rem !important}` (48), `:where(input[type=text],...)` wins with
     // `background:var(--bg-white) #FFFFFF`, `border:1px solid
     // var(--border-light) #E2E8F0`, `border-radius:8px !important`,
-    // `padding:10px 12px`, `font:14px Inter`, `color:#2D3748`,
+    // `padding:10px 12px`, `font:14px Roboto`, `color:#2D3748`,
     // `height:42` from `.form-control`; `.search i` absolute `left:10
     // top:12 color:#693D94 font-size:20`. Box model at 375px:
     // container 5 → search-blcok 365.2×87 → row 365.2×87 →
@@ -227,7 +227,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => widget.onSearch(),
               textAlignVertical: TextAlignVertical.center,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.roboto(
                 color: _inputText,
                 fontSize: 14,
                 letterSpacing: 1.0,
@@ -240,7 +240,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
                 // placeholder text is literally "Search
                 // Learning Path" (singular, title case).
                 hintText: offline ? "You're offline" : 'Search Learning Path',
-                hintStyle: GoogleFonts.inter(
+                hintStyle: GoogleFonts.roboto(
                   color: const Color(0xFF6C757D),
                   fontSize: 15,
                   letterSpacing: 1.0,
@@ -307,7 +307,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
     // This link itself box is `21×29` with `335.2×29` column content
     // (padding 4 on all sides → `13×21` content). Winning rules:
     // `.btn,button,...{border-radius:8px!important;padding:4px 4px!important;
-    // border:none!important;font:600 14px Inter;line-height:21px}` +
+    // border:none!important;font:600 14px Roboto;line-height:21px}` +
     // `.btn-primary{background:var(--primary-color)#693D94;color:white!important}`
     // beat `.undo-btn{padding:7px 15px}`; at `≤991.98` `padding:4px 6px`,
     // at `≤768` `width:100%;padding:4px`, at `≤767` `width:auto;padding:6px 12px`,
@@ -466,7 +466,7 @@ class _Body extends StatelessWidget {
         // `margin:0 0 10px` and `.structure-block>div{flex-direction:column}`
         // + `.table-responsive{overflow-x:visible}` and
         // `.float-right{order:-1;margin-bottom:15px;font-size:0.85rem;
-        // color:#6c757d}`; at `≤640` `padding:15px`; `h1{24px/28 Inter
+        // color:#6c757d}`; at `≤640` `padding:15px`; `h1{24px/28 Roboto
         // #A20067}` at `≤767` `{order:-2;font-size:1.5rem(24);margin:10px 0 5px}`;
         // `.clearfix{display:none}`; parent row `365.2×304.4` → col
         // `365.2×304.4` (15 pad → 335.2) → structure-block `335.2×294.4`
@@ -524,7 +524,7 @@ class _Body extends StatelessWidget {
                             ),
                             child: Text(
                               'Learning Paths',
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.roboto(
                                 color: _sectionTitle,
                                 fontSize: 24,
                                 fontWeight: FontWeight.w400,
@@ -765,7 +765,7 @@ class _TableHeaderRow extends StatelessWidget {
             flex: 61,
             child: Text(
               'Learning Path',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.roboto(
                 color: _purple,
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -777,7 +777,7 @@ class _TableHeaderRow extends StatelessWidget {
             flex: 23,
             child: Text(
               'Group',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.roboto(
                 color: _purple,
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -865,10 +865,13 @@ class _PathRow extends StatelessWidget {
                         flex: 12,
                         child: Text(
                           '$index.',
-                          style: GoogleFonts.inter(
+                          // CSS ref `.number`: font:400 16px/19,
+                          // color var(--primary-first) (was 15px).
+                          style: GoogleFonts.roboto(
                             color: _purple,
-                            fontSize: 15,
+                            fontSize: 16,
                             fontWeight: FontWeight.w400,
+                            height: 19 / 16,
                           ),
                         ),
                       ),
@@ -878,11 +881,14 @@ class _PathRow extends StatelessWidget {
                           path.name,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
+                          // CSS ref: the plain `attribute =>
+                          // 'learningPath.name'` cell has no size override —
+                          // inherits body 14px (was 15px).
+                          style: GoogleFonts.roboto(
                             color: _ink,
                             fontWeight: FontWeight.w400,
-                            fontSize: 15,
-                            height: 1.3,
+                            fontSize: 14,
+                            height: 1.5,
                           ),
                         ),
                       ),
@@ -895,10 +901,13 @@ class _PathRow extends StatelessWidget {
                                   padding: const EdgeInsets.only(top: 3),
                                   child: Text(
                                     path.groupName,
-                                    style: GoogleFonts.inter(
+                                    // Same 14px body inheritance as the name
+                                    // cell (was 15px).
+                                    style: GoogleFonts.roboto(
                                       color: _ink,
-                                      fontSize: 15,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w400,
+                                      height: 1.5,
                                     ),
                                   ),
                                 ),
@@ -950,7 +959,7 @@ class _PathRow extends StatelessWidget {
                         path.name,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
+                        style: GoogleFonts.roboto(
                           color: const Color(0xFF2C3E50),
                           fontWeight: FontWeight.w400,
                           fontSize: 14,
@@ -961,7 +970,7 @@ class _PathRow extends StatelessWidget {
                         const SizedBox(height: 5),
                         Text(
                           path.groupName,
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.roboto(
                             color: const Color(0xFF808B96),
                             fontSize: 13.6,
                             fontWeight: FontWeight.w400,
@@ -979,7 +988,7 @@ class _PathRow extends StatelessWidget {
                 top: 15,
                 child: Text(
                   '$index.',
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     color: const Color(0xFF5B62A5),
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
@@ -1005,47 +1014,12 @@ class _PathRow extends StatelessWidget {
         ),
         if (expanded)
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            // The phone cards carry their own 15px margins (web
+            // `.kv-detail-content .table tbody tr{margin:15px}`), so this
+            // wrapper just leaves the top breathing room.
+            padding: const EdgeInsets.only(top: 12),
             child: _CompetencyPreview(path: path),
           ),
-      ],
-    );
-  }
-
-  // CSS ref: the "Learning Path" data column is plain `attribute =>
-  // 'learningPath.name'` — no value/format override — so it inherits
-  // default `.table td` body-text styling, not the purple/bold treatment
-  // reserved for `.table th` headers. Row number is `++$index . '.'`
-  // rendered inline with it — per explicit request this index digit is
-  // purple, while the name text stays plain body color. Used only for
-  // the phone-stacked layout — the tablet layout renders the index in
-  // its own real-column-matching `Expanded` instead (see `build` above).
-  Widget _pathNameLine(int index) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '$index.',
-          style: GoogleFonts.inter(
-            color: _purple,
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            path.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
-              color: _ink,
-              fontWeight: FontWeight.w400,
-              fontSize: 15,
-              height: 1.3,
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -1234,9 +1208,20 @@ class _CompetencyPreviewRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final courses = competency.courseNames;
-    // CSS ref: `yii\grid\SerialColumn`'s content has no color override
-    // either — plain body text (was purple/600).
-    final competencyName = Row(
+// CSS ref: `yii\grid\SerialColumn`'s content has no color override
+      // either — plain body text (was purple/600). Phone index styling —
+      // `.kv-detail-content .table tbody td:first-child` at `≤767`:
+      // `position:absolute; left:20px; top:26px; font-size:14px;
+      // font-weight:bold; color:#2c3e50` — bold dark digit, NOT the
+      // light label style (was the same 12.5/w600 label style as the
+      // "Competency:" label above it).
+      final indexStyle = TextStyle(
+        color: const Color(0xFF2C3E50),
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        height: 1.3,
+      );
+      final competencyName = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('$index', style: const TextStyle(color: _ink, fontSize: 12.5)),
@@ -1261,12 +1246,14 @@ class _CompetencyPreviewRow extends StatelessWidget {
       // Per explicit request: label weight eased 700→600, value size
       // eased 13.6→12.5.
       const labelStyle = TextStyle(
-        color: _ink,
+        // CSS ref `@767 ::before`: labels are `color:#2c3e50; font-weight:600`
+        // (was `_ink` #212529 for the label prefixes).
+        color: Color(0xFF2C3E50),
         fontSize: 12.5,
         fontWeight: FontWeight.w600,
       );
       // CSS ref, confirmed via the computed-style inspector on the
-      // real "Type: AND" cell: `color:#808B96; font:13.6px Inter` —
+      // real "Type: AND" cell: `color:#808B96; font:13.6px Roboto` —
       // was an invented sky-blue `#2B6CB0` with no CSS backing.
       // `fontWeight` explicitly set to normal — without it, the value
       // span was inheriting the label span's bold weight (`RichText`
@@ -1308,7 +1295,9 @@ class _CompetencyPreviewRow extends StatelessWidget {
       // container 40px on the left (which would also indent the index
       // itself, undoing the gutter effect).
       return Container(
-        margin: const EdgeInsets.only(bottom: 15),
+        // Web: `.kv-detail-content .table tbody tr{margin:15px}` — the
+        // card is inset 15px from every edge (was flush left/right).
+        margin: const EdgeInsets.fromLTRB(15, 0, 15, 15),
         padding: const EdgeInsets.fromLTRB(12, 15, 7, 7),
         decoration: BoxDecoration(
           color: const Color(0xFFEBF9FA),
@@ -1317,7 +1306,7 @@ class _CompetencyPreviewRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(width: 28, child: Text('$index', style: labelStyle)),
+            SizedBox(width: 28, child: Text('$index', style: indexStyle)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1334,7 +1323,7 @@ class _CompetencyPreviewRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   RichText(
                     text: TextSpan(
                       style: labelStyle,
@@ -1347,7 +1336,7 @@ class _CompetencyPreviewRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   RichText(
                     text: TextSpan(
                       style: labelStyle,
@@ -1362,7 +1351,14 @@ class _CompetencyPreviewRow extends StatelessWidget {
                   ),
                   if (competency.name.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    Center(child: _viewButton(context)),
+                    // Web: every detail cell is `text-align:left`, so the
+                    // View button sits at the card's left edge like the
+                    // labels above it (was `Center`, making it the only
+                    // right-placed element in the card).
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _viewButton(context),
+                    ),
                   ],
                 ],
               ),

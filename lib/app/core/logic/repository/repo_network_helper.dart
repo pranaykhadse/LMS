@@ -258,7 +258,9 @@ mixin RepoNetworkHelper {
     CachableRequest request,
     RequestCacheType type,
   ) async {
-    if (type == RequestCacheType.none) throw Exception("No Internet");
+    if (type == RequestCacheType.none) {
+      throw Exception("No Internet");
+    }
     if (config.requestCacheProvider != null) {
       switch (type) {
         case RequestCacheType.fetch:

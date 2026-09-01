@@ -18,7 +18,7 @@ import 'package:lms/app/features/dashboard/viewmodel/view_competency_view_model.
 const _vcPurple = FigmaTokens.primaryPurple;
 // CSS ref, confirmed via the browser's own computed-style inspector
 // popover on the real `<td class="text-center w0">` (course-name
-// cell): `color:#212529; font:14px Inter`. Was `FigmaTokens.cardTitles`
+// cell): `color:#212529; font:14px Roboto`. Was `FigmaTokens.cardTitles`
 // (`#1E2939`) at 13/13.5px with no font-family — same fix already
 // applied to the Learning Paths table's body text.
 const _vcInk = Color(0xFF212529);
@@ -99,9 +99,8 @@ class _Body extends StatelessWidget {
                 // removed — the real table sits directly on the page
                 // background below it, no card border of its own).
                 // Text: `h1..h6{font-weight:500;line-height:1.2}` +
-                // `h3,.h3{font-size:1.75rem}` (28px) + Inter via the
-                // site-wide `h1..h6,.nav-link,.btn{font-family:var(
-                // --primary-font)!important}` — was 20px/w800 with no
+                // `h3,.h3{font-size:1.75rem}` (28px) + Roboto via the
+                // site-wide `body{font-family:"Roboto",sans-serif!important}` — was 20px/w800 with no
                 // font-family. Color kept at the inherited body
                 // `color:var(--text-main)!important` (#2D3748) since no
                 // h3-specific override was found.
@@ -140,7 +139,7 @@ class _Body extends StatelessWidget {
                           ? result.competency
                           : 'Competency',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.roboto(
                         color: const Color(0xFF2D3748),
                         fontSize: 28,
                         fontWeight: FontWeight.w500,
@@ -157,7 +156,7 @@ class _Body extends StatelessWidget {
                               : 'Competency')
                           .toUpperCase(),
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.roboto(
                         color: const Color(0xFF1E2939),
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -279,7 +278,7 @@ class _CourseTable extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     '${i + 1}',
-                    style: GoogleFonts.inter(color: _vcInk, fontSize: 14),
+                    style: GoogleFonts.roboto(color: _vcInk, fontSize: 14),
                   ),
                 ),
               ),
@@ -297,7 +296,7 @@ class _CourseTable extends StatelessWidget {
                   child: Text(
                     courses[i].name,
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(color: _vcInk, fontSize: 14),
+                    style: GoogleFonts.roboto(color: _vcInk, fontSize: 14),
                   ),
                 ),
               ),
@@ -344,20 +343,27 @@ class _CoursePhoneList extends StatelessWidget {
                   width: 28,
                   child: Text(
                     (i + 1).toString().padLeft(2, '0'),
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF9AA1AC),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                    // CSS ref, `@media (max-width:768px)` in
+                    // _view_competency.php: the zero-padded serial is
+                    // `font-size:14px; color:#c0c4d6; font-weight:600`
+                    // (was an invented `#9AA1AC`/15/w700).
+                    style: GoogleFonts.roboto(
+                      color: const Color(0xFFC0C4D6),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
                 Expanded(
                   child: Text(
                     courses[i].name,
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF1E2939),
+                    // CSS ref, same `@media` block: course-name cell is
+                    // `color:#333333; font-size:15px; font-weight:600`
+                    // (was invented `#1E2939`/15/w700).
+                    style: GoogleFonts.roboto(
+                      color: const Color(0xFF333333),
                       fontSize: 15,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       height: 1.3,
                     ),
                   ),
@@ -393,23 +399,36 @@ class _ViewButton extends StatelessWidget {
         const shape = RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(8)),
         );
-        const textStyle = TextStyle(fontWeight: FontWeight.w600, fontSize: 14);
-        const padding = EdgeInsets.all(4);
+        // Phone override, `@media (max-width:768px)` in
+        // _view_competency.php: `.grid-view ... td:nth-child(3) a.btn`
+        // becomes `padding:8px 22px; font-size:13px; font-weight:500;
+        // box-shadow:none` and `a.btn i` is hidden (`display:none`) —
+        // so on phone it's a text-only "View" chip, 13px/500.
+        final isTablet = Responsive.isTablet(context);
+        final textStyle =
+            isTablet
+                ? const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)
+                : const TextStyle(fontWeight: FontWeight.w500, fontSize: 13);
+        final btnPadding =
+            isTablet ? const EdgeInsets.all(4) : const EdgeInsets.symmetric(horizontal: 22, vertical: 8);
+        final minSize = isTablet ? const Size(0, 30) : Size.zero;
         return hovering
             ? ElevatedButton.icon(
               onPressed: onPressed,
-              icon: const Icon(
-                Icons.remove_red_eye,
-                size: 14,
-                color: Colors.white,
-              ),
+              icon: isTablet
+                  ? const Icon(
+                    Icons.remove_red_eye,
+                    size: 14,
+                    color: Colors.white,
+                  )
+                  : const SizedBox.shrink(),
               label: const Text('View'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _vcPurple,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                minimumSize: const Size(0, 30),
-                padding: padding,
+                minimumSize: minSize,
+                padding: btnPadding,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 shape: shape,
                 textStyle: textStyle,
@@ -417,12 +436,14 @@ class _ViewButton extends StatelessWidget {
             )
             : TextButton.icon(
               onPressed: onPressed,
-              icon: const Icon(Icons.remove_red_eye, size: 14),
+              icon: isTablet
+                  ? const Icon(Icons.remove_red_eye, size: 14)
+                  : const SizedBox.shrink(),
               label: const Text('View'),
               style: TextButton.styleFrom(
                 foregroundColor: _vcPurple,
-                minimumSize: const Size(0, 30),
-                padding: padding,
+                minimumSize: minSize,
+                padding: btnPadding,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 shape: shape,
                 textStyle: textStyle,

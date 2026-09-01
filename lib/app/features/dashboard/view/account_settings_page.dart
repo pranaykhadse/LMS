@@ -20,7 +20,6 @@ const _asPurple = FigmaTokens.primaryPurple;
 const _asInk = FigmaTokens.cardTitles;
 const _asMuted = FigmaTokens.noteBodyText;
 const _asBg = FigmaTokens.pageBackground;
-const _asFieldBg = Color(0xFFF4F6FA);
 
 class AccountSettingsPage extends ConsumerStatefulWidget {
   const AccountSettingsPage({super.key});
@@ -91,12 +90,12 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: _asMuted, size: 48),
+            const Icon(Icons.error_outline, color: _asMuted, size: 44),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: _asMuted),
+              style: const TextStyle(color: _asMuted, height: 1.5),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
@@ -286,31 +285,176 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
         (profile.notificationType?.toString() ?? '').toLowerCase();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      padding: EdgeInsets.fromLTRB(
+        Responsive.isTablet(context) ? 16 : 10,
+        16,
+        Responsive.isTablet(context) ? 16 : 10,
+        32,
+      ),
       children: [
         Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
+            constraints: const BoxConstraints(maxWidth: 1000),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              // CSS ref: .profile-block padding 24px desktop, 12px ≤768px.
+              padding: EdgeInsets.all(Responsive.isTablet(context) ? 24 : 12),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFF1F5F9)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x05000000),
+                    blurRadius: 3,
+                    offset: Offset(0, 1),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Account Settings',
-                    style: TextStyle(
-                      color: _asInk,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
+                  // ── Title bar — matches .profile-title ──────────
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 20,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(14),
+                        topRight: Radius.circular(14),
+                      ),
+                      border: Border(
+                        bottom: BorderSide(color: Color(0xFFF3F4F6)),
+                      ),
+                    ),
+                    child: Builder(
+                      builder: (context) {
+                        // ≤540px: the edit/save buttons drop below the title
+                        // (web: .profile-edit-btns { margin: 45px 0 10px auto; }).
+                        final actions = Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_isEditing) ...[
+                              TextButton(
+                                onPressed: _isSaving ? null : _cancelEditing,
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF6B7280),
+                                ),
+                                child: const Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 15),
+                              HoverBuilder(
+                                builder:
+                                    (context, hovering) => ElevatedButton(
+                                      onPressed: _isSaving ? null : _save,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            hovering
+                                                ? FigmaTokens.purpleHover
+                                                : _asPurple,
+                                        foregroundColor: Colors.white,
+                                        elevation: hovering ? 4 : 0,
+                                        shadowColor: FigmaTokens.primaryPurple.withValues(alpha: 0.2),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: Responsive.isTablet(context) ? 16 : 10,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        textStyle: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      child:
+                                          _isSaving
+                                              ? const SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: Colors.white,
+                                                ),
+                                              )
+                                              : const Text('Save'),
+                                    ),
+                              ),
+                            ] else
+                              HoverBuilder(
+                                builder:
+                                    (context, hovering) => ElevatedButton.icon(
+                                      onPressed: _startEditing,
+                                      icon: const Icon(
+                                        Icons.edit_outlined,
+                                        size: 9,
+                                      ),
+                                      label: const Text('Edit'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            hovering
+                                                ? FigmaTokens.purpleHover
+                                                : _asPurple,
+                                        foregroundColor: Colors.white,
+                                        elevation: hovering ? 4 : 0,
+                                        shadowColor: FigmaTokens.primaryPurple.withValues(alpha: 0.2),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: Responsive.isTablet(context) ? 16 : 10,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        textStyle: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                              ),
+                          ],
+                        );
+                        final title = Row(
+                          children: [
+                            const Icon(
+                              Icons.person_outline_rounded,
+                              color: _asPurple,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Profile',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF111827),
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
+                        );
+                        // Web keeps Profile title + Edit/Save/Cancel on a single
+                        // flex row (space-between) at every width — same here.
+                        return Row(
+                          children: [
+                            title,
+                            const Spacer(),
+                            actions,
+                          ],
+                        );
+                      },
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  _ProfileHeaderCard(
+                      // ── Profile header ──────────────────────────────
+                      _ProfileHeaderCard(
                     name: name.isEmpty ? 'User' : name,
                     email: user.email ?? '',
                     profile: profile,
@@ -324,8 +468,10 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                     onCancel: _cancelEditing,
                     onSave: _save,
                   ),
-                  const SizedBox(height: 16),
-                  // ── Each section is its own bordered, rounded-corner box ───────
+                  // ── Each section is its own bordered, rounded-corner box
+                  // (CSS: .personal-details — white, padding 15, radius 16,
+                  // border #f3f4f6; blocks are flush, only the Primary Group
+                  // carries an explicit 24px bottom margin) ──────────────
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -333,11 +479,12 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                       _SectionBlock(
                         icon: Icons.person_outline_rounded,
                         title: 'Personal Details',
+                        spacing: 22.5,
                         children: [
                           // Not yet returned by the profile API - shown as
                           // "Not provided" like Supervisor Name/Email below, ready
                           // to wire up once the backend exposes it.
-                          const _FieldRow(label: 'State', value: null),
+                          _FieldRow(label: 'State', value: null, isEditing: _isEditing),
                           _FieldRow(
                             label: 'Location',
                             value: profile.location,
@@ -367,21 +514,20 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                     })
                                     : null,
                           ),
-                          _ToggleRow(
+                          _CheckboxRow(
                             label: 'Receive Text Message Reminders',
                             value: widget.detail.enableTextMessages,
                             onChanged:
-                                _isSavingReminders
-                                    ? null
-                                    : _toggleTextReminders,
+                                _isSavingReminders ? null : _toggleTextReminders,
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
                       // ── Work Information ──────────────────────────────────
                       _SectionBlock(
-                        icon: Icons.work_outline_rounded,
+                        icon: Icons.work_rounded,
                         title: 'Work Information',
+                        spacing: 22.5,
                         children: [
                           _FieldRow(
                             label: 'Division',
@@ -397,14 +543,16 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                           // Division/Department/Cost Code/Supervisor Name/
                           // Supervisor Email only — "Employee ID" doesn't
                           // exist anywhere in `account.php`, removed.
-                          _FieldRow(label: 'Cost Code', value: user.costCode),
-                          const _FieldRow(
+                          _FieldRow(label: 'Cost Code', value: user.costCode, isEditing: _isEditing),
+                          _FieldRow(
                             label: 'Supervisor Name',
                             value: null,
+                            isEditing: _isEditing,
                           ),
-                          const _FieldRow(
+                          _FieldRow(
                             label: 'Supervisor Email',
                             value: null,
+                            isEditing: _isEditing,
                           ),
                         ],
                       ),
@@ -426,25 +574,37 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                             sublabel: 'Add an extra layer of security',
                             value: user.enableTwoFactorAuth == 1,
                             boxed: true,
+                            isEditing: _isEditing,
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
                       // ── Primary Group ─────────────────────────────────────
-                      _SectionBlock(
-                        icon: Icons.groups_outlined,
-                        title: 'Primary Group',
-                        children: [
-                          _SelectedChip(
-                            label: user.primaryGroupLabel ?? 'Not assigned',
-                          ),
-                        ],
+                      // Web: .personal-details style="margin-bottom: 24px;"
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 24),
+                        child: _SectionBlock(
+                          icon: Icons.groups_rounded,
+                          title: 'Primary Group',
+                          children: [
+                            // Web renders the user's groups as a full radio
+                            // list (same .custom-radio look as Notification
+                            // Type); our API only returns the primary one, so
+                            // show it as the checked radio row.
+                            _RadioRow(
+                              label:
+                                  user.primaryGroupLabel ?? 'Not assigned',
+                              selected: user.primaryGroupLabel != null,
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 16),
                       // ── Notification Type ─────────────────────────────────
                       _SectionBlock(
-                        icon: Icons.notifications_outlined,
+                        icon: Icons.notifications_rounded,
                         title: 'Notification Type',
+                        // CSS: each .custom-radio has margin-bottom 12px
+                        spacing: 12,
                         children: [
                           ..._notificationOptions.map(
                             (label) => _RadioRow(
@@ -460,12 +620,14 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                               notificationTypeSelection.contains('sms'))
                             _PlainValueBox(
                               value: profile.textPhoneNumber?.toString(),
+                              isEditing: _isEditing,
                             )
                           else if (notificationTypeSelection.contains(
                             'whatsapp',
                           ))
                             _PlainValueBox(
                               value: profile.whatsappPhoneNumber?.toString(),
+                              isEditing: _isEditing,
                             ),
                         ],
                       ),
@@ -475,33 +637,61 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                         icon: Icons.security_rounded,
                         title: 'Security',
                         children: [
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed:
-                                  () => showDialog(
-                                    context: context,
-                                    builder:
-                                        (_) => const _ResetPasswordDialog(),
+                          // CSS ref: .reset-block h2 a — border #d1d5db, radius 12,
+                          // padding 12, w500 #374151 14px, centered, white bg,
+                          // box-shadow 0 1px 2px rgba(0,0,0,0.05);
+                          // hover → bg #f9fafb, border #9ca3af.
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0D000000),
+                                  blurRadius: 2,
+                                  offset: Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: HoverBuilder(
+                              builder: (context, hovering) => SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed:
+                                      () => showDialog(
+                                        context: context,
+                                        builder:
+                                            (_) => const _ResetPasswordDialog(),
+                                      ),
+                                  icon: Icon(
+                                    Icons.lock_outline_rounded,
+                                    size: 12,
+                                    color: Color(0xFF6B7280),
                                   ),
-                              icon: const Icon(
-                                Icons.lock_outline_rounded,
-                                size: 16,
-                              ),
-                              label: const Text('Reset Password'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: _asInk,
-                                side: const BorderSide(
-                                  color: Color(0xFFD1D5DB),
-                                  width: 1,
-                                ),
-                                minimumSize: const Size.fromHeight(44),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                textStyle: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
+                                  label: const Text('Reset Password'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF374151),
+                                    backgroundColor: hovering
+                                        ? const Color(0xFFF9FAFB)
+                                        : Colors.white,
+                                    overlayColor: Colors.transparent,
+                                    side: BorderSide(
+                                      color: hovering
+                                          ? const Color(0xFF9CA3AF)
+                                          : const Color(0xFFD1D5DB),
+                                      width: 1,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 20,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -515,7 +705,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         const AppFooter(),
       ],
     );
@@ -526,7 +716,7 @@ const _notificationOptions = [
   'Email',
   'Slack',
   'Teams',
-  'Text Message (SMS)',
+  'Text Message(SMS)',
   'WhatsApp',
 ];
 
@@ -560,220 +750,188 @@ class _ProfileHeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(18, 16, 14, 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEEEEEE), width: 0.5),
-      ),
-      child: Column(
-        children: [
-          // ── Top row: Profile label + Edit/Save/Cancel ─────────────
-          Row(
-            children: [
-              const Icon(
-                Icons.person_outline_rounded,
-                color: _asPurple,
-                size: 18,
+    // CSS ref: .profile-header-container — flex, gap 30px,
+    // padding 10px 0 30px 0, border-bottom 1px #f1f5f9, margin-bottom 30px.
+    // ≤768px: flex-direction column, text-align center, gap 20px.
+    final wide = Responsive.isTablet(context);
+    final avatar = Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _Avatar(url: profile.avatarUrl),
+        if (isUploadingAvatar)
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.black45,
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 6),
-              const Text(
-                'Profile',
-                style: TextStyle(
-                  color: _asInk,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 15,
-                ),
-              ),
-              const Spacer(),
-              if (isEditing) ...[
-                TextButton(
-                  onPressed: isSaving ? null : onCancel,
-                  style: TextButton.styleFrom(foregroundColor: _asMuted),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+              child: const Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(width: 4),
-                HoverBuilder(
-                  builder:
-                      (context, hovering) => ElevatedButton(
-                        onPressed: isSaving ? null : onSave,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              hovering ? FigmaTokens.purpleHover : _asPurple,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 10,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                        child:
-                            isSaving
-                                ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                                : const Text('Save'),
-                      ),
-                ),
-              ] else
-                HoverBuilder(
-                  builder:
-                      (context, hovering) => ElevatedButton.icon(
-                        onPressed: onEdit,
-                        icon: const Icon(Icons.edit_outlined, size: 15),
-                        label: const Text('Edit'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              hovering ? FigmaTokens.purpleHover : _asPurple,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                ),
-            ],
+              ),
+            ),
           ),
-          const SizedBox(height: 20),
-          // ── Avatar left / name+email right ────────────────────────
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Avatar with camera overlay
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  _Avatar(url: profile.avatarUrl),
-                  if (isUploadingAvatar)
-                    const Positioned.fill(
-                      child: CircleAvatar(
-                        radius: 44,
-                        backgroundColor: Colors.black45,
-                        child: SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  Positioned(
-                    right: -2,
-                    bottom: -2,
-                    child: Material(
-                      color: _asPurple,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        onTap: isUploadingAvatar ? null : onPickAvatar,
-                        customBorder: const CircleBorder(),
-                        child: const Padding(
-                          padding: EdgeInsets.all(7),
-                          child: Icon(
-                            Icons.camera_alt_rounded,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
+        if (isEditing)
+          Positioned(
+            right: 5,
+            bottom: 5,
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 8,
+                    offset: Offset(0, 2),
                   ),
                 ],
               ),
-              const SizedBox(width: 20),
-              // Name + email (or edit fields)
-              Expanded(
-                child:
-                    isEditing
-                        ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const _FieldLabel('First Name'),
-                            _EditableName(
-                              controller: firstnameController,
-                              hint: 'First name',
-                            ),
-                            const SizedBox(height: 10),
-                            const _FieldLabel('Last Name'),
-                            _EditableName(
-                              controller: lastnameController,
-                              hint: 'Last name',
-                            ),
-                          ],
-                        )
-                        : Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              name,
-                              style: const TextStyle(
-                                color: _asInk,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 18,
+child: HoverBuilder(
+                    builder:
+                        (context, hovering) => Material(
+                          color: hovering
+                              ? FigmaTokens.purpleHover
+                              : _asPurple,
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            onTap: isUploadingAvatar ? null : onPickAvatar,
+                            customBorder: const CircleBorder(),
+                            child: Transform.scale(
+                              scale: hovering ? 1.1 : 1,
+                              child: const Icon(
+                                Icons.camera_alt_rounded,
+                                size: 14,
+                                color: Colors.white,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              email,
-                              style: const TextStyle(
-                                color: _asMuted,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
+                  ),
+            ),
+          ),
+      ],
+    );
+
+    // Name + email — CSS ref: .profile-info-section flex:1, gap 12px.
+    // Desktop: align-items flex-end. Mobile: centered (≤768px).
+    // Edit mode mirrors the web's .name-inputs-combined (two boxed name
+    // inputs, no labels) + .profile-email-row (boxed muted email, no label).
+    final info = isEditing
+        ? Column(
+          crossAxisAlignment: wide
+              ? CrossAxisAlignment.start
+              : CrossAxisAlignment.center,
+          children: [
+            LayoutBuilder(
+              builder: (context, constraints) {
+                // Stack the name boxes full-width when there isn't room for
+                // the two side-by-side (web: .name-inputs-combined goes
+                // column on ≤768px).
+                if (constraints.maxWidth < 480) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _EditableName(
+                        controller: firstnameController,
+                        hint: 'First name',
+                      ),
+                      const SizedBox(height: 10),
+                      _EditableName(
+                        controller: lastnameController,
+                        hint: 'Last name',
+                      ),
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _EditableName(
+                        controller: firstnameController,
+                        hint: 'First name',
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: _EditableName(
+                        controller: lastnameController,
+                        hint: 'Last name',
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _EditableEmail(value: email),
+          ],
+        )
+        : Column(
+          crossAxisAlignment: wide
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.center,
+          children: [
+            Text(
+              name,
+              textAlign: wide ? TextAlign.end : TextAlign.center,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1E293B),
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              email,
+              textAlign: wide ? TextAlign.end : TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Color(0xFF64748B),
+                height: 1.5,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        );
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.only(top: 10, bottom: wide ? 30 : 20),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+      ),
+      margin: const EdgeInsets.only(bottom: 30),
+      // Desktop: avatar left, info right. Mobile: column, centered.
+      child: wide
+          ? Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              avatar,
+              const SizedBox(width: 30),
+              Expanded(child: info),
+            ],
+          )
+          : Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              avatar,
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: info,
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  const _FieldLabel(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: _asMuted,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
     );
   }
 }
@@ -785,46 +943,194 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final valid = url.startsWith('http');
-    return CircleAvatar(
-      radius: 44,
-      backgroundColor: const Color(0xFF10121B),
-      backgroundImage: valid ? NetworkImage(url) : null,
-      onBackgroundImageError: valid ? (_, __) {} : null,
-      child:
-          valid
-              ? null
-              : const Icon(Icons.person, color: Colors.white, size: 40),
+    // CSS ref: .avatar-div — 110x110, bg #f9fafb, 2px dashed #d1d5db,
+    // border-radius 50%. Flutter has no dashed border, so the ring is drawn
+    // on top with a CustomPainter.
+    return SizedBox(
+      width: 110,
+      height: 110,
+      child: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFFF9FAFB),
+              shape: BoxShape.circle,
+            ),
+            child: ClipOval(
+              child:
+                  valid
+                      ? Image.network(
+                        url,
+                        fit: BoxFit.cover,
+                        width: 110,
+                        height: 110,
+                        errorBuilder: (_, __, ___) => const Center(
+                          child: Icon(
+                            Icons.person,
+                            color: Color(0xFF6B7280),
+                            size: 52,
+                          ),
+                        ),
+                      )
+                      : const Center(
+                        child: Icon(
+                          Icons.person,
+                          color: Color(0xFF6B7280),
+                          size: 52,
+                        ),
+                      ),
+            ),
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _DashedCirclePainter(
+                  color: const Color(0xFFD1D5DB),
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _EditableName extends StatelessWidget {
+/// Draws a dashed circular ring - used for the avatar's dashed border, which
+/// Flutter cannot express with a plain [Border] (BorderStyle only knows
+/// solid/none).
+class _DashedCirclePainter extends CustomPainter {
+  const _DashedCirclePainter({required this.color, required this.strokeWidth});
+  final Color color;
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.shortestSide - strokeWidth) / 2;
+    final path = Path()..addOval(Rect.fromCircle(center: center, radius: radius));
+    const dash = 6.0;
+    const gap = 5.0;
+    for (final metric in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < metric.length) {
+        canvas.drawPath(metric.extractPath(distance, distance + dash), paint);
+        distance += dash + gap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedCirclePainter oldDelegate) =>
+      oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+}
+
+class _EditableName extends StatefulWidget {
   const _EditableName({required this.controller, required this.hint});
   final TextEditingController controller;
   final String hint;
 
   @override
+  State<_EditableName> createState() => _EditableNameState();
+}
+
+class _EditableNameState extends State<_EditableName> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      textAlign: TextAlign.center,
-      style: const TextStyle(
-        color: _asInk,
-        fontWeight: FontWeight.w800,
-        fontSize: 18,
+    // CSS ref: .profile-heading-input — text-align center on mobile (≤768px).
+    final centered = !Responsive.isTablet(context);
+    return Focus(
+      onFocusChange: (focused) => setState(() => _focused = focused),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          // CSS ref: Course Catalog search input :focus — soft purple glow
+          // ring outside the border (InputDecoration's border can't draw it).
+          boxShadow: _focused
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF5457C1).withValues(alpha: 0.1),
+                    spreadRadius: 4,
+                  ),
+                ]
+              : null,
+        ),
+        child: TextField(
+          controller: widget.controller,
+          textAlign: centered ? TextAlign.center : TextAlign.left,
+          style: const TextStyle(
+            color: Color(0xFF1E293B),
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            height: 1.5,
+          ),
+          decoration: InputDecoration(
+            hintText: widget.hint,
+            hintStyle: const TextStyle(
+              color: _asMuted,
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+              height: 1.5,
+            ),
+            filled: true,
+            fillColor: Colors.white,
+            hoverColor: Colors.transparent,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: _asPurple, width: 1.5),
+            ),
+          ),
+        ),
       ),
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: _asFieldBg,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
+    );
+  }
+}
+
+class _EditableEmail extends StatelessWidget {
+  const _EditableEmail({required this.value});
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    // CSS ref: .profile-email-input — smaller, muted, no label; bordered
+    // white box in edit mode (the web keeps email readonly even when editing).
+    final hasValue = value.trim().isNotEmpty;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Text(
+        hasValue ? value : 'Email/username',
+        style: TextStyle(
+          color: hasValue ? const Color(0xFF64748B) : _asMuted,
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          height: 1.5,
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none,
-        ),
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -914,6 +1220,7 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
                     color: _asInk,
                     fontWeight: FontWeight.w800,
                     fontSize: 18,
+                    height: 1.2,
                   ),
                 ),
                 Positioned(
@@ -924,7 +1231,7 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
                         _isSubmitting
                             ? null
                             : () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, size: 20, color: _asMuted),
+                    icon: const Icon(Icons.close, size: 16, color: _asMuted),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -944,7 +1251,7 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
               const SizedBox(height: 10),
               Text(
                 _errorText!,
-                style: const TextStyle(color: Colors.red, fontSize: 12.5),
+                style: const TextStyle(color: Colors.red, fontSize: 12.5, height: 1.5),
               ),
             ],
             const SizedBox(height: 20),
@@ -1019,6 +1326,7 @@ class _PasswordField extends StatefulWidget {
 
 class _PasswordFieldState extends State<_PasswordField> {
   bool _obscure = true;
+  bool _focused = false;
 
   @override
   Widget build(BuildContext context) {
@@ -1028,9 +1336,10 @@ class _PasswordFieldState extends State<_PasswordField> {
         RichText(
           text: TextSpan(
             style: const TextStyle(
-              color: _asInk,
+              color: Color(0xFF4B5563),
               fontSize: 13,
               fontWeight: FontWeight.w600,
+              height: 1.5,
             ),
             children: [
               TextSpan(text: widget.label),
@@ -1039,29 +1348,50 @@ class _PasswordFieldState extends State<_PasswordField> {
           ),
         ),
         const SizedBox(height: 6),
-        TextField(
-          controller: widget.controller,
-          obscureText: _obscure,
-          style: const TextStyle(color: _asInk, fontSize: 14),
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: _asFieldBg,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
+        Focus(
+          onFocusChange: (focused) => setState(() => _focused = focused),
+          child: Container(
+            decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
+              boxShadow: _focused
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF5457C1).withValues(alpha: 0.1),
+                        spreadRadius: 4,
+                      ),
+                    ]
+                  : null,
             ),
-            suffixIcon: IconButton(
-              onPressed: () => setState(() => _obscure = !_obscure),
-              icon: Icon(
-                _obscure
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                size: 18,
-                color: _asMuted,
+            child: TextField(
+              controller: widget.controller,
+              obscureText: _obscure,
+              style: const TextStyle(color: _asInk, fontSize: 14, height: 1.5),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                hoverColor: Colors.transparent,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: _asPurple, width: 1.5),
+                ),
+                suffixIcon: IconButton(
+                  onPressed: () => setState(() => _obscure = !_obscure),
+                  icon: Icon(
+                    _obscure
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 14,
+                    color: _asMuted,
+                  ),
+                ),
               ),
             ),
           ),
@@ -1078,32 +1408,39 @@ class _SectionBlock extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.children,
+    this.spacing = 15,
   });
   final IconData icon;
   final String title;
   final List<Widget> children;
+  // CSS: each .row / .custom-radio inside carries its own margin — 15px for
+  // the detail rows (inline style), 12px for the notification radios.
+  final double spacing;
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: .personal-details — white, radius 16, border #f3f4f6.
+    // Desktop padding 15px; ≤768px padding 16px 20px.
+    final sectionPadding = Responsive.isTablet(context)
+        ? const EdgeInsets.all(15)
+        : const EdgeInsets.symmetric(horizontal: 20, vertical: 16);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      padding: sectionPadding,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section title row — CSS ref, confirmed against
-          // `origin/staging`'s sign-in/account.php: inline-styled h2 —
-          // 13px/weight700/color #374151/letter-spacing 0.5px, icon color
-          // #6B7280 (a neutral gray, not the app's purple) — was 11px/900/
-          // 0.6/ink with a purple icon.
           Row(
             children: [
-              Icon(icon, size: 15, color: const Color(0xFF6B7280)),
+              Transform.translate(
+                offset: const Offset(0, -0.5),
+                child: Icon(icon, size: 16, color: const Color(0xFF6B7280)),
+              ),
               const SizedBox(width: 8),
               Text(
                 title.toUpperCase(),
@@ -1112,14 +1449,14 @@ class _SectionBlock extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                   letterSpacing: 0.5,
+                  height: 1.2,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Fields
+          const SizedBox(height: 15),
           ...List.generate(children.length * 2 - 1, (i) {
-            if (i.isOdd) return const SizedBox(height: 14);
+            if (i.isOdd) return SizedBox(height: spacing);
             return children[i ~/ 2];
           }),
         ],
@@ -1128,98 +1465,144 @@ class _SectionBlock extends StatelessWidget {
   }
 }
 
-class _FieldRow extends StatelessWidget {
+class _FieldRow extends StatefulWidget {
   const _FieldRow({
     required this.label,
     this.value,
     this.controller,
-    this.keyboardType,
+    this.isEditing = false,
   });
   final String label;
   final String? value;
   final TextEditingController? controller;
-  final TextInputType? keyboardType;
+  // True while the page is in edit mode, so even rows we can't edit (State,
+  // Cost Code, ...) render as white boxes next to the editable inputs
+  // instead of grey read-only-looking ones. Grey is only for true
+  // read-only (page not editing).
+  final bool isEditing;
+
+  @override
+  State<_FieldRow> createState() => _FieldRowState();
+}
+
+class _FieldRowState extends State<_FieldRow> {
+  bool _focused = false;
 
   @override
   Widget build(BuildContext context) {
+    final widget = this.widget;
     final labelText = Text(
-      '$label:',
+      '${widget.label}:',
       style: const TextStyle(
-        color: _asInk,
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
+        color: Color(0xFF4B5563),
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        height: 1.5,
       ),
     );
     final field =
-        controller != null
-            ? TextField(
-              controller: controller,
-              keyboardType: keyboardType,
-              style: const TextStyle(
-                color: _asInk,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+        widget.controller != null
+            ? Focus(
+              onFocusChange: (focused) =>
+                  setState(() => _focused = focused),
+              child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: _focused
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF5457C1).withValues(alpha: 0.1),
+                          spreadRadius: 4,
+                        ),
+                      ]
+                    : null,
               ),
-              decoration: InputDecoration(
-                hintText: 'Not provided',
-                hintStyle: const TextStyle(color: _asMuted, fontSize: 13),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
+              child: TextField(
+                controller: widget.controller,
+                style: const TextStyle(
+                  color: _asInk,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFD1D5DB),
-                    width: 1,
+                decoration: InputDecoration(
+                  hintText: 'Not provided',
+                  hintStyle: const TextStyle(color: _asMuted, fontSize: 15, height: 1.5),
+                  filled: true,
+                  fillColor: Colors.white,
+                  hoverColor: Colors.transparent,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
                   ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFD1D5DB),
-                    width: 1,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFD1D5DB),
+                      width: 1,
+                    ),
                   ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(6),
-                  borderSide: const BorderSide(color: _asPurple, width: 1.5),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFD1D5DB),
+                      width: 1,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: _asPurple, width: 1.5),
+                  ),
+                  suffixIcon: null,
                 ),
               ),
+            ),
             )
             : Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
+                color: widget.isEditing ? Colors.white : const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
               ),
               child: Text(
-                (value ?? '').trim().isNotEmpty ? value! : 'Not provided',
+                (widget.value ?? '').trim().isNotEmpty ? widget.value! : 'Not provided',
                 style: TextStyle(
-                  color: (value ?? '').trim().isNotEmpty ? _asInk : _asMuted,
-                  fontSize: 13,
+                  color: (widget.value ?? '').trim().isNotEmpty ? const Color(0xFF4B5563) : const Color(0xFF9CA3AF),
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
+                  height: 1.5,
                 ),
               ),
             );
 
-    // Phone (<700px): label above field, full-width - a 160px fixed label
+    // Phone (<700px): label above field, full-width - a fixed 160px label
     // leaves too little room for the input on a narrow screen.
     if (!Responsive.isTablet(context)) {
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [labelText, const SizedBox(height: 6), field],
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(padding: const EdgeInsets.only(left: 14), child: labelText),
+          const SizedBox(height: 6),
+          field,
+        ],
       );
     }
 
+    // Desktop: matches the web's Bootstrap col-md-6 / col-md-6 split - the
+    // label occupies the left half (strong, vertically centred), the field
+    // the right half. CSS ref: .personal-details strong { height:100% }.
+    // The label column is nudged right by 8px (col's own left gutter).
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SizedBox(width: 160, child: labelText),
-        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: labelText,
+          ),
+        ),
+        const SizedBox(width: 16),
         Expanded(child: field),
       ],
     );
@@ -1230,9 +1613,9 @@ class _FieldRow extends StatelessWidget {
 /// country picker (flag + dial code) sits in front of the number field so
 /// `country_code` and the number are captured separately, matching the
 /// API's own `country_code` / `text_phone_number` split. Read-only mode
-/// collapses that back down to a single "+<code> <number>" line instead of
+/// collapses that back down to a single "+1 555" line instead of
 /// showing the picker.
-class _PhoneFieldRow extends StatelessWidget {
+class _PhoneFieldRow extends StatefulWidget {
   const _PhoneFieldRow({
     required this.label,
     this.value,
@@ -1250,85 +1633,118 @@ class _PhoneFieldRow extends StatelessWidget {
   final ValueChanged<Country>? onCountryChanged;
 
   @override
+  State<_PhoneFieldRow> createState() => _PhoneFieldRowState();
+}
+
+class _PhoneFieldRowState extends State<_PhoneFieldRow> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
-    final isEditing = controller != null;
+    final widget = this.widget;
+    final isEditing = widget.controller != null;
     // countryIso is unambiguous; countryCode (dial code) alone is not -
     // many countries share one (every NANP country is "+1"), so it's only
     // a fallback for when no iso2 is known yet.
     final country =
-        countryForIso2(countryIso) ?? countryForDialCode(countryCode);
+        countryForIso2(widget.countryIso) ?? countryForDialCode(widget.countryCode);
 
     final labelText = Text(
-      '$label:',
+      '${widget.label}:',
       style: const TextStyle(
-        color: _asInk,
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
+        color: Color(0xFF4B5563),
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        height: 1.5,
       ),
     );
     final field =
         isEditing
-            ? Row(
-              children: [
-                _CountryCodePicker(
-                  country: country,
-                  onSelected: (c) => onCountryChanged?.call(c),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: controller,
-                    keyboardType: TextInputType.phone,
-                    style: const TextStyle(
-                      color: _asInk,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Not provided',
-                      hintStyle: const TextStyle(color: _asMuted, fontSize: 13),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFD1D5DB),
-                          width: 1,
+            ? Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  _CountryCodePicker(
+                    country: country,
+                    onSelected: (c) => widget.onCountryChanged?.call(c),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Focus(
+                      onFocusChange: (focused) =>
+                          setState(() => _focused = focused),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: _focused
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFF5457C1).withValues(alpha: 0.1),
+                                    spreadRadius: 4,
+                                  ),
+                                ]
+                              : null,
                         ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(
-                          color: Color(0xFFD1D5DB),
-                          width: 1,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(
-                          color: _asPurple,
-                          width: 1.5,
+                        child: TextField(
+                          controller: widget.controller,
+                          keyboardType: TextInputType.phone,
+                          style: const TextStyle(
+                            color: _asInk,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            height: 1.5,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Not provided',
+                            hintStyle: const TextStyle(color: _asMuted, fontSize: 15, height: 1.5),
+                            filled: true,
+                            fillColor: Colors.white,
+                            hoverColor: Colors.transparent,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFD1D5DB),
+                                width: 1,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFD1D5DB),
+                                width: 1,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: _asPurple,
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             )
             : Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6),
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
               ),
               child: Row(
                 children: [
-                  if (country != null && (value ?? '').trim().isNotEmpty) ...[
+                  if (country != null && (widget.value ?? '').trim().isNotEmpty) ...[
                     ClipRRect(
                       borderRadius: BorderRadius.circular(2),
                       child: CountryFlag.fromCountryCode(
@@ -1340,17 +1756,18 @@ class _PhoneFieldRow extends StatelessWidget {
                     const SizedBox(width: 8),
                   ],
                   Text(
-                    (value ?? '').trim().isNotEmpty
+                    (widget.value ?? '').trim().isNotEmpty
                         ? [
                           if (country != null) '+${country.dialCode}',
-                          value!.trim(),
+                          widget.value!.trim(),
                         ].join(' ')
                         : 'Not provided',
                     style: TextStyle(
                       color:
-                          (value ?? '').trim().isNotEmpty ? _asInk : _asMuted,
-                      fontSize: 13,
+                          (widget.value ?? '').trim().isNotEmpty ? const Color(0xFF4B5563) : const Color(0xFF9CA3AF),
+                      fontSize: 15,
                       fontWeight: FontWeight.w500,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -1359,16 +1776,25 @@ class _PhoneFieldRow extends StatelessWidget {
 
     if (!Responsive.isTablet(context)) {
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [labelText, const SizedBox(height: 6), field],
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(padding: const EdgeInsets.only(left: 14), child: labelText),
+          const SizedBox(height: 6),
+          field,
+        ],
       );
     }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SizedBox(width: 160, child: labelText),
-        const SizedBox(width: 12),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: labelText,
+          ),
+        ),
+        const SizedBox(width: 16),
         Expanded(child: field),
       ],
     );
@@ -1393,46 +1819,52 @@ class _CountryCodePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => _open(context),
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            country != null
-                ? ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: CountryFlag.fromCountryCode(
-                    country!.iso2,
-                    height: 14,
-                    width: 20,
-                  ),
-                )
-                : const Icon(Icons.public_rounded, size: 16, color: _asMuted),
-            const SizedBox(width: 6),
-            Text(
-              country != null ? '+${country!.dialCode}' : 'Code',
-              style: const TextStyle(
-                color: _asInk,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+    return HoverBuilder(
+      builder: (context, hovering) => InkWell(
+        onTap: () => _open(context),
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: hovering ? _asPurple : const Color(0xFFD1D5DB),
+              width: hovering ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              country != null
+                  ? ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: CountryFlag.fromCountryCode(
+                      country!.iso2,
+                      height: 14,
+                      width: 20,
+                    ),
+                  )
+                  : const Icon(Icons.public_rounded, size: 12, color: _asMuted),
+              const SizedBox(width: 6),
+              Text(
+                country != null ? '+${country!.dialCode}' : 'Code',
+                style: const TextStyle(
+                  color: _asInk,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 16,
-              color: _asMuted,
-            ),
-          ],
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 12,
+                color: _asMuted,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1450,6 +1882,7 @@ class _CountryPickerDialog extends StatefulWidget {
 
 class _CountryPickerDialogState extends State<_CountryPickerDialog> {
   String _query = '';
+  bool _searchFocused = true;
 
   @override
   Widget build(BuildContext context) {
@@ -1480,24 +1913,49 @@ class _CountryPickerDialogState extends State<_CountryPickerDialog> {
                   color: _asInk,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
+                  height: 1.2,
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(
-                autofocus: true,
-                onChanged: (v) => setState(() => _query = v),
-                style: const TextStyle(fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'Search country or code',
-                  prefixIcon: const Icon(Icons.search, size: 18),
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  border: OutlineInputBorder(
+              Focus(
+                onFocusChange: (focused) =>
+                    setState(() => _searchFocused = focused),
+                child: Container(
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(6),
-                    borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                    boxShadow: _searchFocused
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFF5457C1).withValues(alpha: 0.1),
+                              spreadRadius: 4,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: TextField(
+                    autofocus: true,
+                    onChanged: (v) => setState(() => _query = v),
+                    style: const TextStyle(fontSize: 13, height: 1.5),
+                    decoration: InputDecoration(
+                      hintText: 'Search country or code',
+                      prefixIcon: const Icon(Icons.search, size: 14),
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                      hoverColor: Colors.transparent,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: _asPurple, width: 1.5),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1508,7 +1966,7 @@ class _CountryPickerDialogState extends State<_CountryPickerDialog> {
                         ? const Center(
                           child: Text(
                             'No matches',
-                            style: TextStyle(color: _asMuted, fontSize: 13),
+                            style: TextStyle(color: _asMuted, fontSize: 13, height: 1.5),
                           ),
                         )
                         : ListView.builder(
@@ -1527,18 +1985,20 @@ class _CountryPickerDialogState extends State<_CountryPickerDialog> {
                               ),
                               title: Text(
                                 c.name,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: _asInk,
-                                ),
+style: const TextStyle(
+                  fontSize: 13,
+                  color: _asInk,
+                  height: 1.5,
+                ),
                               ),
                               trailing: Text(
                                 '+${c.dialCode}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: _asMuted,
-                                  fontWeight: FontWeight.w600,
-                                ),
+style: const TextStyle(
+                  fontSize: 13,
+                  color: _asMuted,
+                  fontWeight: FontWeight.w600,
+                  height: 1.5,
+                ),
                               ),
                               onTap: () => Navigator.of(context).pop(c),
                             );
@@ -1553,36 +2013,92 @@ class _CountryPickerDialogState extends State<_CountryPickerDialog> {
   }
 }
 
+/// Plain checkbox row for "Receive Text Message Reminders" - the web renders
+/// it as a raw `<input type="checkbox" class="my-checkbox">` (Bootstrap
+/// checkbox), distinct from the custom switch used for Two-Factor Auth.
+class _CheckboxRow extends StatelessWidget {
+  const _CheckboxRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+  final String label;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final labelText = Text(
+      '$label:',
+      style: const TextStyle(
+        color: Color(0xFF4B5563),
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        height: 1.5,
+      ),
+    );
+    final control = Row(
+      children: [
+        Checkbox(
+          value: value,
+          onChanged: onChanged == null ? null : (v) => onChanged!(v ?? false),
+          activeColor: _asPurple,
+          checkColor: Colors.white,
+          side: const BorderSide(color: Color(0xFFD1D5DB), width: 2),
+        ),
+      ],
+    );
+    if (!Responsive.isTablet(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(padding: const EdgeInsets.only(left: 14), child: labelText),
+          const SizedBox(height: 6),
+          control,
+        ],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: labelText,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(child: control),
+      ],
+    );
+  }
+}
+
 class _ToggleRow extends StatelessWidget {
   const _ToggleRow({
     required this.label,
     this.sublabel,
     required this.value,
-    this.onChanged,
     this.boxed = false,
+    this.isEditing = false,
   });
   final String label;
   final String? sublabel;
   final bool value;
-  // Null keeps the old placeholder behavior (a "Coming soon" toast) for
-  // toggles not wired to a real save yet, e.g. Two-Factor Auth.
-  final ValueChanged<bool>? onChanged;
-  // CSS ref: only the Two-Factor Auth row (sign-in/auth.php) gets the
-  // distinct bg #F9FAFB/radius12/border #E5E7EB box + 15px/600/#111827
-  // label + 13px/#6B7280 sublabel — other toggles on this page render
-  // as plain field rows with no special box.
   final bool boxed;
+  // White while the page is being edited; grey only in read-only mode.
+  final bool isEditing;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: boxed ? 16 : 14, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: boxed ? 16 : 0, vertical: boxed ? 12 : 4),
       decoration: BoxDecoration(
-        color: boxed ? const Color(0xFFF9FAFB) : Colors.white,
-        borderRadius: BorderRadius.circular(boxed ? 12 : 6),
-        border: Border.all(
-          color: boxed ? const Color(0xFFE5E7EB) : const Color(0xFFD1D5DB),
-        ),
+        color: boxed
+            ? (isEditing ? Colors.white : const Color(0xFFF9FAFB))
+            : Colors.white,
+        borderRadius: BorderRadius.circular(boxed ? 12 : 10),
+        border: boxed ? Border.all(color: const Color(0xFFE5E7EB)) : null,
       ),
       child: Row(
         children: [
@@ -1595,7 +2111,8 @@ class _ToggleRow extends StatelessWidget {
                   style: TextStyle(
                     color: boxed ? const Color(0xFF111827) : _asInk,
                     fontWeight: FontWeight.w600,
-                    fontSize: boxed ? 15 : 13,
+                    fontSize: boxed ? 15 : 15,
+                    height: 1.5,
                   ),
                 ),
                 if (sublabel != null) ...[
@@ -1604,7 +2121,8 @@ class _ToggleRow extends StatelessWidget {
                     sublabel!,
                     style: TextStyle(
                       color: boxed ? const Color(0xFF6B7280) : _asMuted,
-                      fontSize: boxed ? 13 : 12,
+                      fontSize: boxed ? 13 : 13,
+                      height: 1.5,
                     ),
                   ),
                 ],
@@ -1613,8 +2131,11 @@ class _ToggleRow extends StatelessWidget {
           ),
           Switch(
             value: value,
-            onChanged: onChanged ?? (_) => Toast.info(context, 'Coming soon.'),
-            activeThumbColor: _asPurple,
+            onChanged: (_) => Toast.info(context, 'Coming soon.'),
+            activeThumbColor: Colors.white,
+            activeTrackColor: _asPurple,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: const Color(0xFFE2E8F0),
           ),
         ],
       ),
@@ -1625,8 +2146,11 @@ class _ToggleRow extends StatelessWidget {
 /// Plain full-width value box with no label - used for the phone number
 /// tied to the currently-selected notification channel (Text/WhatsApp).
 class _PlainValueBox extends StatelessWidget {
-  const _PlainValueBox({this.value});
+  const _PlainValueBox({this.value, this.isEditing = false});
   final String? value;
+  // White while the page is being edited (matches the editable inputs);
+  // grey only in true read-only mode.
+  final bool isEditing;
 
   @override
   Widget build(BuildContext context) {
@@ -1635,49 +2159,18 @@ class _PlainValueBox extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        color: isEditing ? Colors.white : const Color(0xFFF9FAFB),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
       ),
       child: Text(
         hasValue ? value! : 'Not provided',
         style: TextStyle(
           color: hasValue ? _asInk : _asMuted,
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: FontWeight.w500,
+          height: 1.5,
         ),
-      ),
-    );
-  }
-}
-
-class _SelectedChip extends StatelessWidget {
-  const _SelectedChip({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: _asPurple.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: _asPurple, width: 1.2),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.radio_button_checked, color: _asPurple, size: 17),
-          const SizedBox(width: 10),
-          Text(
-            label,
-            style: const TextStyle(
-              color: _asPurple,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1690,16 +2183,26 @@ class _RadioRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: .custom-radio — bg #fff, border 1px #e2e8f0, radius 12px,
+    // padding 14px 20px; :checked → bg #f5f3ff, border #5c52d4.
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
-        color: selected ? _asPurple.withValues(alpha: 0.06) : Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        color: selected ? const Color(0xFFF5F3FF) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: selected ? _asPurple : const Color(0xFFD1D5DB),
-          width: selected ? 1.2 : 1,
+          color: selected ? _asPurple : const Color(0xFFE2E8F0),
         ),
+        boxShadow: selected
+            ? [
+                BoxShadow(
+                  color: _asPurple,
+                  blurRadius: 0,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
       ),
       child: Row(
         children: [
@@ -1708,15 +2211,16 @@ class _RadioRow extends StatelessWidget {
                 ? Icons.radio_button_checked
                 : Icons.radio_button_unchecked,
             color: selected ? _asPurple : _asMuted,
-            size: 17,
+            size: 16,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Text(
             label,
             style: TextStyle(
-              color: selected ? _asPurple : _asInk,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
+              color: selected ? _asPurple : const Color(0xFF334155),
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              fontSize: 15,
+              height: 1.5,
             ),
           ),
         ],

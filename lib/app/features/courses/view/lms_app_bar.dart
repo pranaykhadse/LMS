@@ -28,7 +28,6 @@ import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.da
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 
 const _appPurple = FigmaTokens.primaryPurple;
-const _appMuted = FigmaTokens.noteBodyText;
 // CSS ref, confirmed straight from `origin/staging`'s bluetheme-layout
 // .css (`#navbarMenu .sub-nav-item a:hover{color:var(--primary-color)
 // !important}`, `--primary-color:#693D94`): matches `FigmaTokens
@@ -1486,7 +1485,9 @@ void showLmsNotifications(BuildContext context) {
 
   showDialog<void>(
     context: context,
-    barrierColor: Colors.black26,
+    // The web bell dropdown is an undimmed popover (no modal overlay) that
+    // closes on an outside click - `barrierDismissible` still handles that.
+    barrierColor: Colors.transparent,
     builder:
         (ctx) =>
             _NotificationsDialog(topInset: topInset, rightInset: rightInset),
@@ -1505,17 +1506,39 @@ class _NotificationsDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifState = ref.watch(NotificationsViewModel.provider);
 
+    // CSS ref (staging bluetheme-layout.css): `.notification-dropdown` —
+    // width 360, radius 16, border 1px rgba(0,0,0,.05), shadow
+    // 0 15px 50px rgba(0,0,0,.18) (this was width 430, radius 18, and the
+    // default dialog shadow). `.dropdown-header` padding 16px 20px with a
+    // #F1F5F9 bottom border; `#notificationList` max-height 380.
     return Dialog(
       alignment: Alignment.topRight,
       insetPadding: EdgeInsets.fromLTRB(16, topInset, rightInset, 20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 430, maxHeight: 520),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        width: 360,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.18),
+              blurRadius: 50,
+              offset: const Offset(0, 15),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+              ),
               child: Row(
                 children: [
                   Text(
@@ -1527,133 +1550,121 @@ class _NotificationsDialog extends ConsumerWidget {
                     ),
                   ),
                   const Spacer(),
-                  if (notifState.unreadCount > 0)
-                    TextButton(
-                      onPressed:
-                          () =>
-                              ref
-                                  .read(
-                                    NotificationsViewModel.provider.notifier,
-                                  )
-                                  .markAllAsRead(),
-                      style: TextButton.styleFrom(
-                        foregroundColor: _appPurple,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'Mark all as read',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                  // CSS ref: `.dropdown-header a` — a plain 12px/600
+                  // primary-color text link that the staging template
+                  // renders unconditionally (this was a TextButton only
+                  // shown when unreadCount > 0, styled 700).
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => ref
+                          .read(NotificationsViewModel.provider.notifier)
+                          .markAllAsRead(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Text(
+                          'Mark all as read',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            color: _appPurple,
+                          ),
                         ),
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
-            const Divider(height: 1),
             if (notifState.isLoading)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 40),
                 child: CircularProgressIndicator(color: _appPurple),
               )
             else if (notifState.notifications.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    CircleAvatar(
-                      backgroundColor: Color(0xFF24C56B),
-                      child: Icon(Icons.check, color: Colors.white, size: 27),
-                    ),
-                    SizedBox(height: 14),
-                    Text(
-                      "You're all caught up",
-                      style: TextStyle(
-                        color: FigmaTokens.noteBodyText,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              )
+              const _NotifEmpty()
             else
+              // CSS ref: `#notificationList` — max-height 380px (the web
+              // scrolls; the old modal force-capped display at 5 rows and
+              // drew extra Divider separators — each item already carries
+              // its own #F1F5F9 bottom border).
               Flexible(
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  padding: EdgeInsets.zero,
-                  itemCount:
-                      notifState.notifications.length > 5
-                          ? 5
-                          : notifState.notifications.length,
-                  separatorBuilder:
-                      (_, __) =>
-                          const Divider(height: 1, indent: 56, endIndent: 16),
-                  itemBuilder: (ctx, i) {
-                    final item = notifState.notifications[i];
-                    return _NotifRow(
-                      item: item,
-                      onTap: () {
-                        ref
-                            .read(NotificationsViewModel.provider.notifier)
-                            .markOneAsRead(item.id);
-                        final url = item.redirectUrl;
-                        if (url != null && url.isNotEmpty) {
-                          if (!readIsOnline(ref)) {
-                            Toast.info(
-                              context,
-                              'Internet required to open this link.',
-                            );
-                            return;
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 380),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount:
+                        notifState.notifications.length > 5
+                            ? 5
+                            : notifState.notifications.length,
+                    itemBuilder: (ctx, i) {
+                      final item = notifState.notifications[i];
+                      return _NotifRow(
+                        item: item,
+                        onTap: () {
+                          ref
+                              .read(NotificationsViewModel.provider.notifier)
+                              .markOneAsRead(item.id);
+                          final url = item.redirectUrl;
+                          if (url != null && url.isNotEmpty) {
+                            if (!readIsOnline(ref)) {
+                              Toast.info(
+                                context,
+                                'Internet required to open this link.',
+                              );
+                              return;
+                            }
+                            final uri = Uri.tryParse(url);
+                            if (uri != null) {
+                              InAppWebViewPage.showWithAuth(
+                                context,
+                                ref,
+                                url: url,
+                                title:
+                                    item.title.isNotEmpty
+                                        ? item.title
+                                        : 'Notification',
+                              );
+                            }
                           }
-                          final uri = Uri.tryParse(url);
-                          if (uri != null) {
-                            InAppWebViewPage.showWithAuth(
-                              context,
-                              ref,
-                              url: url,
-                              title:
-                                  item.title.isNotEmpty
-                                      ? item.title
-                                      : 'Notification',
-                            );
-                          }
-                        }
-                      },
-                    );
-                  },
-                ),
-              ),
-            const Divider(height: 1),
-            InkWell(
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
-                );
-              },
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(18),
-              ),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFAFBFD),
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(18),
+                        },
+                      );
+                    },
                   ),
                 ),
-                child: Center(
-                  child: Text(
-                    'View All Notifications',
-                    style: GoogleFonts.inter(
-                      color: _appPurple,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+              ),
+            // CSS ref: `.notification-dropdown .dropdown-footer` — padding
+            // 14px 20px, bg #FAFBFC, top border #F1F5F9; the link is
+            // 13px/600 in the primary color (was a 700-weight link padded
+            // 16 all sides on #FAFBFD with rounded bottom corners).
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: const BoxDecoration(
+                color: Color(0xFFFAFBFC),
+                border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
+              ),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () {
+                    // Replace the dialog route directly — pop + push on the
+                    // same context risks using the dialog's disposed context
+                    // (the source of the `this.widget.build` NoSuchMethodError).
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationsPage(),
+                      ),
+                    );
+                  },
+                  child: Center(
+                    child: Text(
+                      'View All Notifications',
+                      style: GoogleFonts.inter(
+                        color: _appPurple,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ),
@@ -1666,106 +1677,152 @@ class _NotificationsDialog extends ConsumerWidget {
   }
 }
 
-class _NotifRow extends StatelessWidget {
+class _NotifEmpty extends StatelessWidget {
+  const _NotifEmpty();
+
+  @override
+  Widget build(BuildContext context) {
+    // CSS ref: `.notif-empty-state` — padding 32px 20px, centered; the
+    // icon is a 32px #22C55E check (the modal previously used a wrong
+    // 27px #24C56B checkmark inside a filled circle), margin-bottom 10px;
+    // text 14px/500/#94A3B8 "You're all caught up".
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(20, 32, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle_rounded, color: Color(0xFF22C55E), size: 32),
+          SizedBox(height: 10),
+          Text(
+            "You're all caught up",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NotifRow extends StatefulWidget {
   const _NotifRow({required this.item, required this.onTap});
   final NotificationItem item;
   final VoidCallback onTap;
 
-  String _timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[dt.month - 1]} ${dt.day}';
-  }
+  @override
+  State<_NotifRow> createState() => _NotifRowState();
+}
+
+class _NotifRowState extends State<_NotifRow> {
+  bool _hover = false;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: const Color(0x1A5C52D4),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.notifications_rounded,
-                color: _appPurple,
-                size: 18,
-              ),
+    final item = widget.item;
+    final isUnread = !item.isRead;
+    // CSS ref (staging bluetheme-layout.css, §5 Notification System):
+    // `.notification-item` padding 16px 20px, gap 14px, border-bottom
+    // #F1F5F9, bg #fff; `.unread` bg #F8F9FF; hover bg #FAFBFC (unread
+    // items keep #F8F9FF — `.notification-item.unread` beats `:hover`).
+    // Icon 36x36 radius 10: read bg #F1F4F9 + icon #94A3B8; unread
+    // (`.icon-unread`) bg rgba(92,82,212,.1) + icon = primary; hover bg
+    // #E8ECF1 (read) / rgba(92,82,212,.15) (unread). The unread dot is a
+    // 7px primary circle inline in the title row. `.notif-item-title`
+    // 13px/600/#1E293B nowrap, hover -> primary; `.notif-item-body`
+    // 12px/#64748B/lh1.5, margin-top 4px, clamped to 2 lines. The modal
+    // shows no timestamp or action menu (those belong to the full page's
+    // cards, not the bell dropdown), so both were removed.
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: isUnread
+                ? const Color(0xFFF8F9FF)
+                : _hover
+                ? const Color(0xFFFAFBFC)
+                : Colors.white,
+            border: const Border(
+              bottom: BorderSide(color: Color(0xFFF1F5F9)),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: GoogleFonts.inter(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: item.isRead ? _appMuted : const Color(0xFF1E293B),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: isUnread
+                      ? _appPurple.withValues(alpha: _hover ? 0.15 : 0.10)
+                      : _hover
+                      ? const Color(0xFFE8ECF1)
+                      : const Color(0xFFF1F4F9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.notifications_none_rounded,
+                  size: 14,
+                  color: isUnread ? _appPurple : const Color(0xFF94A3B8),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.title,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                              color: _hover
+                                  ? _appPurple
+                                  : const Color(0xFF1E293B),
+                            ),
+                          ),
+                        ),
+                        if (isUnread) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: _appPurple,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    item.message,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: const Color(0xFF64748B),
-                      height: 1.35,
-                    ),
-                  ),
-                  if (item.createdAt != null) ...[
                     const SizedBox(height: 4),
                     Text(
-                      _timeAgo(item.createdAt!),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFFABB6C8),
+                      item.message,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: const Color(0xFF64748B),
+                        height: 1.5,
                       ),
                     ),
                   ],
-                ],
-              ),
-            ),
-            if (!item.isRead)
-              Padding(
-                padding: const EdgeInsets.only(left: 8, top: 4),
-                child: Container(
-                  width: 7,
-                  height: 7,
-                  decoration: const BoxDecoration(
-                    color: _appPurple,
-                    shape: BoxShape.circle,
-                  ),
                 ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );
