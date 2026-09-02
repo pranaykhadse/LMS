@@ -1207,66 +1207,99 @@ class _StructureCard extends StatelessWidget {
               style: GoogleFonts.inter(color: _detailMuted),
             )
           else
-            LayoutBuilder(
-              builder: (context, constraints) {
-                // Full available width - only falls back to a fixed 900px
-                // (with horizontal scroll) when the card is narrower than
-                // that, e.g. on small screens.
-                final tableWidth = constraints.maxWidth;
-                final needsScroll = tableWidth < 900;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            _buildRows(context),
+        ],
+      ),
+    );
+  }
+
+  /// Small screens mirror the web's `@media (max-width: 767px)` UI: the
+  /// table thead is hidden (#course-class-report table thead display:none),
+  /// each `tr` becomes a stacked card (white, border #F3F4F6, radius 16,
+  /// padding 16, bottom margin 20, shadow 0 4px 12px rgba(0,0,0,.03)),
+  /// the # number cell is dropped (td:first-child display:none), and each
+  /// remaining cell renders as a full-width label:value row. There is no
+  /// horizontal scrolling on small screens — that is a desktop-only
+  /// overflow affordance.
+  Widget _buildRows(BuildContext context) {
+    final phone = MediaQuery.sizeOf(context).width < 768;
+    if (phone) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < items.length; i++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: _StructureItemCard(
+                index: i + 1,
+                courseId: courseId,
+                item: items[i],
+                isEnrolled: isEnrolled,
+                courseTitle: courseTitle,
+                phone: true,
+              ),
+            ),
+        ],
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Full available width - only falls back to a fixed 900px
+        // (with horizontal scroll) when the card is narrower than
+        // that, e.g. on small screens.
+        final tableWidth = constraints.maxWidth;
+        final needsScroll = tableWidth < 900;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (needsScroll)
+              Padding(
+                padding: EdgeInsets.only(bottom: 6),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (needsScroll)
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 6),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.swipe_rounded,
-                              size: 14,
-                              color: _detailMuted,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Swipe to see Next Session, Status & Actions',
-                              style: GoogleFonts.inter(
-                                color: _detailMuted,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    _StructureTableScroller(
-                      width: tableWidth < 900 ? 900 : tableWidth,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const _StructureHeaderRow(),
-                          const SizedBox(height: 8),
-                          for (var i = 0; i < items.length; i++)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _StructureItemCard(
-                                index: i + 1,
-                                courseId: courseId,
-                                item: items[i],
-                                isEnrolled: isEnrolled,
-                                courseTitle: courseTitle,
-                              ),
-                            ),
-                        ],
+                    Icon(
+                      Icons.swipe_rounded,
+                      size: 14,
+                      color: _detailMuted,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Swipe to see Next Session, Status & Actions',
+                      style: GoogleFonts.inter(
+                        color: _detailMuted,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
-                );
-              },
+                ),
+              ),
+            _StructureTableScroller(
+              width: tableWidth < 900 ? 900 : tableWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const _StructureHeaderRow(),
+                  const SizedBox(height: 8),
+                  for (var i = 0; i < items.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _StructureItemCard(
+                        index: i + 1,
+                        courseId: courseId,
+                        item: items[i],
+                        isEnrolled: isEnrolled,
+                        courseTitle: courseTitle,
+                        phone: false,
+                      ),
+                    ),
+                ],
+              ),
             ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 }
@@ -1371,12 +1404,14 @@ class _StructureItemCard extends ConsumerStatefulWidget {
     required this.item,
     required this.isEnrolled,
     required this.courseTitle,
+    this.phone = false,
   });
   final int index;
   final int courseId;
   final CourseStructureItem item;
   final bool isEnrolled;
   final String courseTitle;
+  final bool phone;
 
   @override
   ConsumerState<_StructureItemCard> createState() => _StructureItemCardState();
@@ -1763,6 +1798,185 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
         ),
     ];
 
+    // Title cell — CSS ref: #course-class-report td h6.number — 15px/
+    // weight600/color var(--text-dark) #111827 (was 14.5/800/ink-token
+    // #1E2939). #course-class-report td i — 12px/weight500/color
+    // var(--text-muted) #9CA3AF (was 12.5/unspecified-weight/a bespoke
+    // #9AA4B5). On the mobile stacked card the title uses the web's
+    // mobile weight 700.
+    final titleCell = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          item.title,
+          style: GoogleFonts.inter(
+            color: Color(0xFF111827),
+            fontSize: 15,
+            fontWeight: widget.phone ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
+        if (item.subtitle.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            item.subtitle,
+            style: GoogleFonts.inter(
+              color: Color(0xFF9CA3AF),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ],
+    );
+
+    // Next Session cell — only show a session date once the learner is
+    // actually registered for THIS class.
+    final nextSessionCell = Padding(
+      padding:
+          widget.phone ? EdgeInsets.zero : const EdgeInsets.only(right: 24),
+      child:
+          (liveNextSession != null && item.isEnrolledInClass)
+              ? (upcomingEvent != null
+                  ? _CompactLaunchCountdown(target: upcomingEvent.startDateTime!)
+                  : Text(
+                    liveNextSession,
+                    // CSS ref: `#course-class-report td span[id^=timer_
+                    // started_]` — 13px/weight600/var(--primary-first)
+                    // #693D94.
+                    style: GoogleFonts.inter(
+                      color: _detailPurple,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ))
+              : const SizedBox.shrink(),
+    );
+
+    // Status cell
+    // Fixed width on desktop (not Expanded(flex: 1)) - that squeezed down
+    // to ~68px within the row's 900px minimum width (shared across 4 flex
+    // sections), wrapping "Registered"/"Completed" onto two lines. 120px
+    // comfortably fits either on one. On the mobile card it's full-width.
+    final statusCell = SizedBox(
+      width: widget.phone ? null : 120,
+      child:
+          item.status.isEmpty
+              ? const SizedBox.shrink()
+              : Align(
+                alignment: Alignment.centerLeft,
+                child:
+                    item.classId != null
+                        ? ClassStatusChip(
+                          courseClass: CourseClass(
+                            courseId: widget.courseId.toString(),
+                            classId: item.classId!.toString(),
+                          ),
+                          fallbackStatus: item.status,
+                        )
+                        : _StatusChip(status: item.status),
+              ),
+    );
+
+    final actionsCell =
+        actions.isEmpty
+            ? const SizedBox.shrink()
+            // center, not the default start - Details (an OutlinedButton)
+            // and the chip-styled action buttons don't render at quite the
+            // same height, so top-aligning them in the Wrap made Details
+            // look shifted upward relative to its neighbors.
+            : (widget.phone
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: actions,
+                  )
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: actions,
+                  ));
+
+    // Small screens (≤767px) render each row as its own stacked white card
+    // per the web's mobile UI: no # column, title on its own line, then
+    // Next Session:/Status: label:value rows separated by dividers, and a
+    // full-width stacked action column. Everything else on desktop stays a
+    // single table row.
+    if (widget.phone) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          // CSS ref: `@media (max-width:767px) #course-class-report table
+          // tbody tr` — white card, border #F3F4F6, radius 16, shadow
+          // 0 4px 12px rgba(0,0,0,.03).
+          color: Colors.white,
+          border: Border.all(color: const Color(0xFFF3F4F6)),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x08000000),
+              blurRadius: 12,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            titleCell,
+            // td:nth-of-type(2) — block with a bottom border divider.
+            if (liveNextSession != null && item.isEnrolledInClass) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: Color(0xFFF3F4F6)),
+              const SizedBox(height: 10),
+              // ::before "Next Session:" label + value.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Next Session:',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: nextSessionCell),
+                ],
+              ),
+            ],
+            if (item.status.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: Color(0xFFF3F4F6)),
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Status:',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: statusCell),
+                ],
+              ),
+            ],
+            if (actions.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: Color(0xFFF3F4F6)),
+              const SizedBox(height: 10),
+              actionsCell,
+            ],
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
@@ -1793,115 +2007,16 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             flex: 3,
             child: Padding(
               padding: const EdgeInsets.only(right: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // CSS ref: #course-class-report td h6.number — 15px/
-                  // weight600/color var(--text-dark) #111827 (was 14.5/
-                  // 800/ink-token #1E2939). #course-class-report td i —
-                  // 12px/weight500/color var(--text-muted) #9CA3AF (was
-                  // 12.5/unspecified-weight/a bespoke #9AA4B5).
-                  Text(
-                    item.title,
-                    style: GoogleFonts.inter(
-                      color: Color(0xFF111827),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (item.subtitle.isNotEmpty) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      item.subtitle,
-                      style: GoogleFonts.inter(
-                        color: Color(0xFF9CA3AF),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+              child: titleCell,
             ),
           ),
           Expanded(
             flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 24),
-              // Only show a session date once the learner is actually
-              // registered for THIS class - showing one for a class they
-              // haven't registered for implies a commitment that hasn't
-              // been made yet. (isEnrolled is course-level enrollment, not
-              // per-class registration - a learner can be enrolled in the
-              // course but still unregistered for a given Virtual Class
-              // session.)
-              child:
-                  (liveNextSession != null && item.isEnrolledInClass)
-                      // upcomingEvent can be null here even though
-                      // liveNextSession isn't - the raw item.nextSession
-                      // fallback (classes with no learning_events array) has a
-                      // date string but no structured DateTime to count down
-                      // to.
-                      ? (upcomingEvent != null
-                          ? _CompactLaunchCountdown(
-                            target: upcomingEvent.startDateTime!,
-                          )
-                          : Text(
-                            liveNextSession,
-                            // CSS ref: `#course-class-report td span[id^=timer_
-                            // started_]` — 13px/weight600/var(--primary-first)
-                            // #693D94.
-                            style: GoogleFonts.inter(
-                              color: _detailPurple,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ))
-                      : const SizedBox.shrink(),
-            ),
+            child: nextSessionCell,
           ),
-          // Fixed width, not Expanded(flex: 1) - that squeezed down to
-          // ~68px within the row's 900px minimum width (shared across 4
-          // flex sections), wrapping "Registered"/"Completed" onto two
-          // lines. 120px comfortably fits either on one.
-          SizedBox(
-            width: 120,
-            child:
-                item.status.isEmpty
-                    ? const SizedBox.shrink()
-                    : Align(
-                      alignment: Alignment.centerLeft,
-                      child:
-                          item.classId != null
-                              ? ClassStatusChip(
-                                courseClass: CourseClass(
-                                  courseId: widget.courseId.toString(),
-                                  classId: item.classId!.toString(),
-                                ),
-                                fallbackStatus: item.status,
-                              )
-                              : _StatusChip(status: item.status),
-                    ),
-          ),
+          statusCell,
           const SizedBox(width: 16),
-          Expanded(
-            flex: 6,
-            child:
-                actions.isEmpty
-                    ? const SizedBox.shrink()
-                    // center, not the default start - Details (an
-                    // OutlinedButton) and the chip-styled action buttons don't
-                    // render at quite the same height, so top-aligning them in
-                    // the Wrap made Details look shifted upward relative to
-                    // its neighbors.
-                    : Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: actions,
-                    ),
-          ),
+          Expanded(flex: 6, child: actionsCell),
         ],
       ),
     );
