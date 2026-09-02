@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/view/widgets/link_button.dart'
     show appActionChip;
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -28,6 +30,8 @@ class DownloadButton extends ConsumerWidget {
     required this.courseClass,
     this.fullWidth = false,
     this.rawContent,
+    this.guidePill = false,
+    this.guideLabel,
   });
 
   final String? url;
@@ -44,6 +48,16 @@ class DownloadButton extends ConsumerWidget {
   /// hand from an API response (e.g. a certificate's raw HTML) rather than
   /// a real downloadable file URL.
   final List<int> Function()? rawContent;
+
+  /// Number-pill variant used by the participant-guide / WRAP Methodology
+  /// links in `#participang-area .content-heading-title`: tinted pill (bg
+  /// #F5F3FF, border rgba(92,82,212,.08), radius 10, 14px/600) with a
+  /// filled-hover state, instead of the outlined appActionChip.
+  final bool guidePill;
+
+  /// Exact pill label for [guidePill] mode (e.g. "Download Participant
+  /// Guide"); defaults to "Download <label>".
+  final String? guideLabel;
 
   Future<void> _open(
     BuildContext context,
@@ -129,6 +143,7 @@ class DownloadButton extends ConsumerWidget {
           Toast.info(context, 'Offline copy of $label removed');
         },
         fullWidth: fullWidth,
+        guidePill: guidePill,
       );
     }
 
@@ -144,12 +159,23 @@ class DownloadButton extends ConsumerWidget {
     // Doesn't apply to rawContent - that's already in memory from the API
     // response that got us here, so saving it to disk needs no network.
     if (!isOnline && rawContent == null) {
+      // The participant-guide/WRAP pills stay as pills offline (disabled),
+      // matching the other guide links' behaviour rather than silently
+      // collapsing.
+      if (guidePill) {
+        return _GuidePill(
+          disabled: true,
+          label: guideLabel ?? 'Download $label',
+        );
+      }
       return const _NotAvailableOfflinePill();
     }
 
     // ── ① ONLINE + NOT DOWNLOADED ────────────────────────────────────────
     return _DownloadTriggerButton(
       label: label,
+      guideLabel: guideLabel,
+      guidePill: guidePill,
       onTap:
           () =>
               rawContent != null
@@ -168,15 +194,22 @@ class _DownloadTriggerButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.fullWidth = false,
+    this.guidePill = false,
+    this.guideLabel,
   });
 
   final String label;
   final VoidCallback onTap;
   final bool fullWidth;
+  final bool guidePill;
+  final String? guideLabel;
 
   @override
   Widget build(BuildContext context) {
     final primary = FigmaTokens.primaryPurple;
+    if (guidePill) {
+      return _GuidePill(onTap: onTap, label: guideLabel ?? 'Download $label');
+    }
     if (fullWidth) {
       // CSS ref, confirmed against `origin/staging`'s joinCourse.php:
       // this button only ever renders inside the Course Structure
@@ -283,12 +316,14 @@ class _DownloadedRow extends StatelessWidget {
     required this.onOpen,
     required this.onDelete,
     this.fullWidth = false,
+    this.guidePill = false,
   });
 
   final String label;
   final VoidCallback onOpen;
   final VoidCallback onDelete;
   final bool fullWidth;
+  final bool guidePill;
 
   bool get _isVideo =>
       label.toLowerCase().contains('video') ||
@@ -300,6 +335,36 @@ class _DownloadedRow extends StatelessWidget {
     final playLabel = _isVideo ? "Play $label" : "Open $label";
     final playIcon =
         _isVideo ? Icons.play_arrow_rounded : Icons.open_in_new_rounded;
+
+    if (guidePill) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          _GuidePill(onTap: onOpen, label: playLabel),
+          Tooltip(
+            message: "Remove offline copy",
+            child: InkWell(
+              onTap: onDelete,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.red.shade300),
+                ),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 16,
+                  color: Colors.red.shade400,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     if (fullWidth) {
       // CSS ref: same `.static-list-action-btn` spec as the download
@@ -391,7 +456,94 @@ class _DownloadedRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ④ Not available offline pill
+// ⑤ Participant / WRAP number pill
+// ─────────────────────────────────────────────────────────────────────────────
+class _GuidePill extends StatelessWidget {
+  const _GuidePill({this.onTap, required this.label, this.disabled = false});
+  final VoidCallback? onTap;
+  final String label;
+  final bool disabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = FigmaTokens.primaryPurple;
+    final isInteractive = !disabled && onTap != null;
+    final pill = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.picture_as_pdf_outlined,
+            size: 15,
+            color: Colors.grey.shade500,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              color: Colors.grey.shade500,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (!isInteractive) return pill;
+    return HoverBuilder(
+      builder: (context, hovering) {
+        final fill = hovering;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: fill ? primary : const Color(0xFFF5F3FF),
+            border: Border.all(
+              color: const Color(0xFF5C52D4).withValues(alpha: 0.08),
+            ),
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: fill
+                ? const [
+                    BoxShadow(
+                      color: Color(0x335C52D4),
+                      blurRadius: 12,
+                      offset: Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.picture_as_pdf_outlined,
+                size: 15,
+                color: fill ? Colors.white : primary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  color: fill ? Colors.white : primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ⑥ Not available offline pill
 // ─────────────────────────────────────────────────────────────────────────────
 class _NotAvailableOfflinePill extends StatelessWidget {
   const _NotAvailableOfflinePill();

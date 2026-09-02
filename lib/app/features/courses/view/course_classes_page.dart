@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
@@ -42,11 +43,17 @@ bool _watchIsOnline(WidgetRef ref) {
   return !isManualOffline && connectionVM.isConnected;
 }
 
+// CSS ref, joinCourse.php embedded V2 design-system tokens over the global
+// app.css: `body { font-family:'Outfit','Inter',... !important }` — only
+// Inter is actually loaded (blue_base.php), so THIS page renders in Inter,
+// not the app-wide Roboto. Also `--text-dark:#111827` (headings/labels,
+// was FigmaTokens.cardTitles #1E2939) and `--body-bg:#f4f6fb` (page bg,
+// was FigmaTokens.pageBackground #F4F5F7).
 const _detailPurple = FigmaTokens.primaryPurple;
 const _detailPurple2 = FigmaTokens.gradientEnd;
-const _detailInk = FigmaTokens.cardTitles;
+const _detailInk = Color(0xFF111827);
 const _detailMuted = FigmaTokens.noteBodyText;
-const _detailBackground = FigmaTokens.pageBackground;
+const _detailBackground = Color(0xFFF4F6FB);
 
 class CourseClassesPage extends ConsumerStatefulWidget {
   const CourseClassesPage({super.key, this.courseId});
@@ -166,28 +173,30 @@ class _DetailBody extends ConsumerWidget {
                               ),
                         ),
                         Transform.translate(
-                          offset: const Offset(0, -18),
+                          // Web `#launches-haad` pulls the launch card up
+                          // over the hero with `margin-top: -20px`
+                          // (desktop) / `-16px` (mobile).
+                          offset: Offset(
+                            0,
+                            MediaQuery.sizeOf(context).width < 768 ? -16 : -20,
+                          ),
                           child: _LaunchPanel(detail: detail),
                         ),
-                        // Only rendered for enrolled learners, and downloaded
-                        // through DownloadButton (encrypted, in-app-only,
-                        // never a raw external link) rather than opened via
-                        // the system browser/default PDF app.
-                        if (detail.participantGuide != null &&
-                            detail.isEnrolled)
-                          _InfoCard(
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: DownloadButton(
-                                url: detail.participantGuide,
-                                label: 'Participant Guide',
-                                icon: Icons.picture_as_pdf_rounded,
-                                courseClass: null,
-                                builder:
-                                    (ctx, file) => PdfContentViewer(file: file),
-                              ),
-                            ),
-                          ),
+                        // CSS/markup ref, confirmed against `origin/staging`'s
+                        // joinCourse.php: `#participang-area .content-heading-
+                        // title` is a white card (padding 16px 24px) holding
+                        // ("Download Participant Guide") and/or ("WRAP
+                        // Methodology") pill links (bg `--purple-tint-bg`
+                        // #F5F3FF, border rgba(92,82,212,.08), radius 10,
+                        // 14px/600, hover filled #693D94/white) with a 1×24px
+                        // #E5E7EB divider between them when both exist. Shown
+                        // whenever a URL is present (not gated on enrollment,
+                        // mirroring the web), and downloaded through
+                        // DownloadButton (encrypted, in-app-only, never a raw
+                        // external link).
+                        if (detail.participantGuide != null ||
+                            detail.wrapMethodology != null)
+                          _ParticipantGuideCard(detail: detail),
                         if (constraints.maxWidth >= 760)
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,27 +266,42 @@ class _CourseHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: `#page-heading` — desktop (max-width 768) padding
+    // `48px 0 44px`; mobile (`@media max-width:767px`) `32px 0 24px`.
+    // The 44/24 bottom padding is what forms the purple gap above the
+    // launch panel once that card is pulled up by its negative translate
+    // (44 − 20 = 24px on desktop, 24 − 16 = 8px on mobile, matching the
+    // web exactly). `#page-heading::after`'s notch rule has `content`
+    // commented out (and app.css has no such fallback), so no notch strip
+    // is drawn on the web and none is added here.
+    final phone = MediaQuery.sizeOf(context).width < 768;
     return Container(
       margin: const EdgeInsets.fromLTRB(6, 10, 6, 0),
-      padding: const EdgeInsets.fromLTRB(14, 34, 14, 54),
+      padding: EdgeInsets.fromLTRB(
+        14,
+        34,
+        14,
+        phone ? 24 : 44,
+      ),
       decoration: const BoxDecoration(color: _detailPurple),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // CSS ref, confirmed against `origin/staging`'s joinCourse.php:
           // #page-heading h2 — 32px/weight700 (was 24px/800), letter-
-          // spacing -0.5px.
+          // spacing -0.5px (was none); mobile shrinks to 24px.
           Text(
             detail.title,
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: Colors.white,
-              fontSize: 32,
+              fontSize: phone ? 24 : 32,
               fontWeight: FontWeight.w700,
               height: 1.18,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 10),
+          // #page-heading h2 has `margin: 0 0 12px 0`.
+          const SizedBox(height: 12),
           // CSS/markup ref, confirmed against `origin/staging`'s
           // _rating_summary.php: `.average-rating-section` — inline-flex
           // row, gap 12px, containing (in order): star rating, numeric
@@ -290,9 +314,12 @@ class _CourseHero extends StatelessWidget {
           // payload, which already dumps the whole Course model
           // (including these columns) — was previously left unparsed and
           // flagged as a backend gap that, on closer look, isn't one.
+          // .average-rating-section is inline-flex gap 10px; the two
+          // review/Add-Rating pills each carry `margin: 0 0 0 6px`, so the
+          // pill gaps become 16px (10 + 6) — hence Wrap spacing 16.
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 12,
+            spacing: 16,
             runSpacing: 8,
             children: [
               if (detail.displayRating) ...[
@@ -300,11 +327,12 @@ class _CourseHero extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _HeroStars(rating: detail.averageRating),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 10),
                     Text(
                       '${detail.averageRating.toStringAsFixed(1)}/5',
-                      style: const TextStyle(
-                        color: Color(0xE6FFFFFF),
+                      style: GoogleFonts.inter(
+                        // rgba(255,255,255,.95)
+                        color: Color(0xF2FFFFFF),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -379,7 +407,7 @@ class _HeroPill extends StatelessWidget {
             borderRadius: BorderRadius.circular(30),
           ),
           child: DefaultTextStyle(
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: Colors.white,
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -510,11 +538,14 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       children: [
         Text(
           isPast ? 'STARTED' : 'LAUNCHES IN',
-          style: const TextStyle(
-            color: _detailMuted,
+          // CSS ref: `#launches-haad .flex-item-1 h6` — 13px/weight700/
+          // uppercase/color var(--text-secondary) #6B7280/letter-spacing
+          // 0.5px.
+          style: GoogleFonts.inter(
+            color: Color(0xFF6B7280),
             fontSize: 13,
-            fontWeight: FontWeight.w800,
-            letterSpacing: .4,
+            fontWeight: FontWeight.w700,
+            letterSpacing: .5,
           ),
         ),
         const SizedBox(height: 14),
@@ -523,11 +554,11 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (isPast)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(right: 2),
                 child: Text(
                   '-',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     color: _detailInk,
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
@@ -543,109 +574,170 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       ],
     );
 
+    // CSS ref: `#launches-haad`. Desktop keeps the base app.css band
+    // (background #EEEFF9, padding 10px) and pulls the card up with
+    // margin-top -20px; mobile (`@media max-width:767px`) drops the band
+    // (transparent/0) and uses margin-top -16px. The _CourseHero's bottom
+    // padding above accounts for the resulting purple gap (desktop
+    // 44−20=24, mobile 24−16=8).
+    final phone = MediaQuery.sizeOf(context).width < 768;
     return Container(
-      margin: const EdgeInsets.fromLTRB(22, 0, 22, 28),
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1EEF7),
-        borderRadius: BorderRadius.circular(18),
-      ),
+      // Web: `#launches-haad { margin-bottom: 20px }`; the negative top
+      // pull-up lives on _DetailBody's Transform.translate.
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: phone ? EdgeInsets.zero : const EdgeInsets.all(10),
+      decoration: phone
+          ? null
+          : const BoxDecoration(color: Color(0xFFEEEFF9)),
       child: _InfoCard(
-        margin: EdgeInsets.zero,
-        child: Column(
-          children: [
-            // Only show the countdown once the learner is actually enrolled -
-            // showing a countdown toward a session they haven't registered
-            // for is misleading. On wide screens it sits inline with the
-            // primary action button, matching the reference's single header
-            // bar instead of stacking them.
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final statusBadge = _statusBadge(detail);
-                if (constraints.maxWidth < 620) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (hasCountdown) ...[
-                        countdown,
-                        const SizedBox(height: 20),
+          margin: EdgeInsets.zero,
+          // .launches-box: desktop `padding: 20px 24px`; mobile 16px.
+          padding: phone
+              ? const EdgeInsets.all(16)
+              : const EdgeInsets.fromLTRB(24, 20, 24, 20),
+          boxShadow: phone
+              // mobile `.launches-box` shadow is the stronger indigo one.
+              ? const [
+                BoxShadow(
+                  color: Color(0x265C52D4),
+                  blurRadius: 30,
+                  offset: Offset(0, 8),
+                ),
+              ]
+              : null,
+          child: Column(
+            children: [
+              // Only show the countdown once the learner is actually enrolled -
+              // showing a countdown toward a session they haven't registered
+              // for is misleading. On wide screens it sits inline with the
+              // primary action button, matching the reference's single header
+              // bar instead of stacking them.
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final statusBadge = _statusBadge(detail);
+                  if (constraints.maxWidth < 768) {
+                    // `@media max-width:767px` stacks the flex items into a
+                    // column (`.flex-item-1` full-width/centered so the
+                    // countdown centers, `.flex-item-4` full-width so the
+                    // button stretches) with 16px box gap.
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (hasCountdown) ...[
+                          Center(child: countdown),
+                          const SizedBox(height: 16),
+                        ],
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: statusBadge,
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: _actionButton(),
+                        ),
                       ],
-                      statusBadge,
-                      const SizedBox(height: 20),
-                      SizedBox(width: double.infinity, child: _actionButton()),
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (hasCountdown) countdown,
+                      Expanded(child: Center(child: statusBadge)),
+                      _actionButton(),
                     ],
                   );
-                }
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (hasCountdown) countdown,
-                    Expanded(child: Center(child: statusBadge)),
-                    _actionButton(),
-                  ],
-                );
-              },
-            ),
-            if (detail.learningPath != null) ...[
-              const SizedBox(height: 26),
-              // CSS ref, confirmed against `origin/staging`'s
-              // joinCourse.php: `#launches-haad .learning-path` is
-              // `flex-item-3` — a sibling of the countdown/status/enroll-
-              // button in the SAME flex row on desktop with no box of its
-              // own, but this app is mobile-only, and the `@media
-              // (max-width:768px)` override IS boxed: bg
-              // `--purple-tint-bg` (#F5F3FF, was #F4F1FF), padding 12px
-              // uniform (was 16/20), radius 10 (was 8), centered. `.learning-
-              // path h3` is plain 14px/weight600/text-dark (was 800-weight,
-              // implying a bolder "label"), and the pill (`.learning-path
-              // span`) is a light BLUE badge (bg #E0F2FE, color #0369A1,
-              // padding 4px 12px, radius 20, 12px/600) — not a purple pill
-              // at all (was bg #F6F3FF/purple text/padding 14/12/radius22).
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F3FF),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    const Text(
-                      'Learning Path: ',
-                      style: TextStyle(
-                        color: _detailInk,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
+                },
+              ),
+              if (detail.learningPath != null) ...[
+                SizedBox(height: phone ? 16 : 24),
+                // CSS ref: `.learning-path`. Desktop is an UNBOXED sibling
+                // in the launches flex row — `h3` 14px/600/text-dark plus a
+                // light-blue pill (`span`, bg #E0F2FE / color #0369A1, pad
+                // 4px 12px, radius 20, 12px/600, margin-left 6px). The
+                // `@media max-width:767px` override boxes it instead: bg
+                // --purple-tint-bg (#F5F3FF), padding 12px uniform, radius
+                // 10, width 100%, centered, h3 shrinks to 13px, pill margin
+                // becomes 4px top/0 left.
+                if (phone)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F3FF),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    Container(
-                      margin: const EdgeInsets.only(left: 6),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0F2FE),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        detail.learningPath!,
-                        style: const TextStyle(
-                          color: Color(0xFF0369A1),
-                          fontSize: 12,
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          'Learning Path: ',
+                          style: GoogleFonts.inter(
+                            color: _detailInk,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0F2FE),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            detail.learningPath!,
+                            style: GoogleFonts.inter(
+                              color: Color(0xFF0369A1),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'Learning Path: ',
+                        style: GoogleFonts.inter(
+                          color: _detailInk,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
+                      Container(
+                        margin: const EdgeInsets.only(left: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0F2FE),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          detail.learningPath!,
+                          style: GoogleFonts.inter(
+                            color: Color(0xFF0369A1),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
             ],
-          ],
+          ),
         ),
-      ),
     );
   }
 
@@ -676,7 +768,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
         children: [
           Text(
             detail.launchStatus.toUpperCase(),
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: _detailPurple,
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -698,10 +790,11 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                 ),
                 Text(
                   '${(progress * 100).round()}%',
-                  style: const TextStyle(
+                  // CSS ref: `.pie_progress__content` — 10px/weight700.
+                  style: GoogleFonts.inter(
                     color: _detailPurple,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -718,9 +811,11 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     // horizontal only), radius 12 (was 10), 14px/weight600 (was 800),
     // shadow 0 4px 14px var(--purple-shadow) i.e. rgba(92,82,212,.2) —
     // was no shadow at all (elevation 0); hover shadow 0 6px 20px
-    // rgba(92,82,212,.35). Wrapped in a Container to get the exact CSS
+    // rgba(92,82,212,.35). Mobile (`@media max-width:767px`): width 100%,
+    // padding 10px 20px. Wrapped in a Container to get the exact CSS
     // shadow shape/color, since Material's elevation model can't
     // reproduce it via ElevatedButton's own shadowColor/elevation.
+    final phone = MediaQuery.sizeOf(context).width < 768;
     return HoverBuilder(
       builder:
           (context, hovering) => Container(
@@ -770,15 +865,15 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
               ),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(0, 47),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 12,
+                padding: EdgeInsets.symmetric(
+                  horizontal: phone ? 20 : 28,
+                  vertical: phone ? 10 : 12,
                 ),
                 backgroundColor:
                     hovering ? FigmaTokens.purpleHover : _detailPurple,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                textStyle: const TextStyle(
+                textStyle: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -798,6 +893,81 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: hPad),
       child: _TimeBox(value: value, label: label),
+    );
+  }
+}
+
+class _ParticipantGuideCard extends StatelessWidget {
+  const _ParticipantGuideCard({required this.detail});
+  final CourseJoinDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasParticipant = detail.participantGuide != null;
+    final hasWrap = detail.wrapMethodology != null;
+    // CSS ref: `.content-heading-title` — a `--card-bg` card of its own
+    // (padding 16px 24px, radius 16, border #F3F4F6, shadow) holding the
+    // pill links with a 16px flex gap and a 1×24px #E5E7EB divider between
+    // them when BOTH exist. #participang-area has margin-bottom 20px.
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF3F4F6)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 3,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Wrap(
+        spacing: 16,
+        runSpacing: 12,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          if (hasParticipant)
+            DownloadButton(
+              url: detail.participantGuide,
+              label: 'Participant Guide',
+              guideLabel: 'Download Participant Guide',
+              icon: Icons.picture_as_pdf_rounded,
+              guidePill: true,
+              courseClass: null,
+              builder: (ctx, file) => PdfContentViewer(file: file),
+            ),
+          if (hasParticipant && hasWrap) const _PillDivider(),
+          if (hasWrap)
+            DownloadButton(
+              url: detail.wrapMethodology,
+              label: 'WRAP Methodology',
+              guideLabel: 'WRAP Methodology',
+              icon: Icons.picture_as_pdf_rounded,
+              guidePill: true,
+              courseClass: null,
+              builder: (ctx, file) => PdfContentViewer(file: file),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 1×24px divider between the participant-guide/WRAP pills, matching
+/// `#participang-area .content-heading-title span` (width 1px, height 24px,
+/// background var(--border-medium) #E5E7EB).
+class _PillDivider extends StatelessWidget {
+  const _PillDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: 1,
+      height: 24,
+      child: ColoredBox(color: Color(0xFFE5E7EB)),
     );
   }
 }
@@ -822,7 +992,7 @@ class _DescriptionCard extends StatelessWidget {
               detail.description,
               maxLines: 5,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: GoogleFonts.inter(
                 color: Color(0xFF6B7280),
                 height: 1.7,
                 fontSize: 15,
@@ -830,16 +1000,17 @@ class _DescriptionCard extends StatelessWidget {
             ),
           ],
           // CSS ref: .content-text h1:not(:first-child) — margin-top 24,
-          // padding-top 20, border-top 1px solid var(--border-light).
+          // padding-top 20, border-top 1px solid var(--border-light)
+          // (#F3F4F6).
           const SizedBox(height: 24),
-          const Divider(color: FigmaTokens.cardBorders),
+          const Divider(color: Color(0xFFF3F4F6)),
           const SizedBox(height: 20),
           const _SectionTitle('Learning Objectives'),
           if (detail.objective.isNotEmpty) ...[
             const SizedBox(height: 14),
             Text(
               detail.objective,
-              style: const TextStyle(
+              style: GoogleFonts.inter(
                 color: Color(0xFF6B7280),
                 height: 1.7,
                 fontSize: 15,
@@ -930,7 +1101,7 @@ class _SkillsCard extends StatelessWidget {
                           ),
                           child: Text(
                             skill,
-                            style: const TextStyle(
+                            style: GoogleFonts.inter(
                               color: _detailPurple,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -975,9 +1146,9 @@ class _StructureCard extends StatelessWidget {
           const _SectionTitle('Course Structure', large: true),
           const SizedBox(height: 24),
           if (items.isEmpty)
-            const Text(
+            Text(
               'No course structure is available.',
-              style: TextStyle(color: _detailMuted),
+              style: GoogleFonts.inter(color: _detailMuted),
             )
           else
             LayoutBuilder(
@@ -991,7 +1162,7 @@ class _StructureCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (needsScroll)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(bottom: 6),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1004,7 +1175,7 @@ class _StructureCard extends StatelessWidget {
                             SizedBox(width: 4),
                             Text(
                               'Swipe to see Next Session, Status & Actions',
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 color: _detailMuted,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -1092,7 +1263,7 @@ class _StructureHeaderRow extends StatelessWidget {
     // invented purple tint #EDEAF6), color #475569 (was the muted
     // token), 12px/weight600/letter-spacing 0.5px (was 11px/800/0.3),
     // padding 16px 20px (was 16/12/16/12).
-    const style = TextStyle(
+    final style = GoogleFonts.inter(
       color: Color(0xFF475569),
       fontSize: 12,
       fontWeight: FontWeight.w600,
@@ -1104,7 +1275,7 @@ class _StructureHeaderRow extends StatelessWidget {
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(width: 28, child: Text('#', style: style)),
@@ -1395,7 +1566,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                     ),
                     minimumSize: const Size(0, 38),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    textStyle: const TextStyle(
+                    textStyle: GoogleFonts.inter(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
@@ -1539,7 +1710,9 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        border: Border.all(color: FigmaTokens.cardBorders),
+        // CSS ref: `#course-class-report tbody tr` — border 1px solid
+        // var(--border-light) #F3F4F6 (was the cardBorders #E5E7EB token).
+        border: Border.all(color: const Color(0xFFF3F4F6)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -1549,8 +1722,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             width: 28,
             child: Text(
               '${widget.index}',
-              style: const TextStyle(
-                color: _detailMuted,
+              // CSS ref: `#course-class-report td:first-child` — color
+              // var(--text-muted) #9CA3AF (was the darker #6A7282 muted
+              // token).
+              style: GoogleFonts.inter(
+                color: Color(0xFF9CA3AF),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -1572,7 +1748,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                   // 12.5/unspecified-weight/a bespoke #9AA4B5).
                   Text(
                     item.title,
-                    style: const TextStyle(
+                    style: GoogleFonts.inter(
                       color: Color(0xFF111827),
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -1582,7 +1758,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                     const SizedBox(height: 2),
                     Text(
                       item.subtitle,
-                      style: const TextStyle(
+                      style: GoogleFonts.inter(
                         color: Color(0xFF9CA3AF),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -1617,10 +1793,13 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                           )
                           : Text(
                             liveNextSession,
-                            style: const TextStyle(
-                              color: _detailMuted,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
+                            // CSS ref: `#course-class-report td span[id^=timer_
+                            // started_]` — 13px/weight600/var(--primary-first)
+                            // #693D94.
+                            style: GoogleFonts.inter(
+                              color: _detailPurple,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
                             ),
                           ))
                       : const SizedBox.shrink(),
@@ -1737,7 +1916,7 @@ class _OnlineActionButton extends ConsumerWidget {
                         ),
                         minimumSize: const Size(0, 38),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        textStyle: const TextStyle(
+                        textStyle: GoogleFonts.inter(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -1770,7 +1949,7 @@ class _OnlineActionButton extends ConsumerWidget {
                         minimumSize: const Size(0, 38),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         elevation: 0,
-                        textStyle: const TextStyle(
+                        textStyle: GoogleFonts.inter(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -1834,7 +2013,7 @@ class _EnrollActionButton extends ConsumerWidget {
                   minimumSize: const Size(0, 38),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   elevation: 0,
-                  textStyle: const TextStyle(
+                  textStyle: GoogleFonts.inter(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -1859,13 +2038,22 @@ class _InfoCard extends StatelessWidget {
     required this.child,
     this.margin = const EdgeInsets.fromLTRB(12, 0, 12, 24),
     // CSS ref: .content-text/.skills/#course-structure's card all use
-    // padding: 24px (was 22).
-    this.padding = const EdgeInsets.all(24),
+    // padding: 24px (was 22) on desktop; mobile (`@media max-width:767px`)
+    // turns the default-padded content cards into 20px + radius 12.
+    this.padding,
+    this.boxShadow,
   });
 
   final Widget child;
   final EdgeInsetsGeometry margin;
-  final EdgeInsetsGeometry padding;
+
+  /// When null, defaults to the responsive value (24px wide / 20px phone).
+  /// Callers that must keep a fixed padding (e.g. the 16px image card, the
+  /// launch box's own 20×24/16 values) pass it explicitly.
+  final EdgeInsetsGeometry? padding;
+
+  /// When null, the shared card shadow (0 1px 3px rgba(0,0,0,.02)) is used.
+  final List<BoxShadow>? boxShadow;
 
   @override
   Widget build(BuildContext context) {
@@ -1874,21 +2062,27 @@ class _InfoCard extends StatelessWidget {
     // structure) shares the same `--card-bg`/`--card-radius`/`--card-
     // border`/`--card-shadow` tokens — white, radius 16px (was 12), border
     // 1px solid #F3F4F6 (was missing), shadow 0 1px 3px rgba(0,0,0,.02)
-    // (was a much heavier ad-hoc 0 10px 20px @.03).
+    // (was a much heavier ad-hoc 0 10px 20px @.03). Mobile overrides the
+    // content cards to padding 20/radius 12.
+    final phone = MediaQuery.sizeOf(context).width < 768;
+    final effectivePadding =
+        padding ?? (phone ? const EdgeInsets.all(20) : const EdgeInsets.all(24));
     return Container(
       margin: margin,
-      padding: padding,
+      padding: effectivePadding,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(phone ? 12 : 16),
         border: Border.all(color: const Color(0xFFF3F4F6)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x05000000),
-            blurRadius: 3,
-            offset: Offset(0, 1),
-          ),
-        ],
+        boxShadow:
+            boxShadow ??
+            const [
+              BoxShadow(
+                color: Color(0x05000000),
+                blurRadius: 3,
+                offset: Offset(0, 1),
+              ),
+            ],
       ),
       child: child,
     );
@@ -1922,7 +2116,7 @@ class _SectionTitle extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: _detailInk,
               fontSize: large ? 22 : 20,
               fontWeight: FontWeight.w700,
@@ -1958,10 +2152,13 @@ class _CompactLaunchCountdown extends StatelessWidget {
         '${remaining.inMinutes % 60}M - ${remaining.inSeconds % 60}S';
     return Text(
       text,
-      style: const TextStyle(
+      // CSS ref: `#course-class-report td span[id^="timer_started_"]` —
+      // 13px/weight600/var(--primary-first) #693D94 — the same spec as the
+      // plain-text "Next Session" fallback.
+      style: GoogleFonts.inter(
         color: _detailPurple,
-        fontSize: 12.5,
-        fontWeight: FontWeight.w700,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
       ),
     );
   }
@@ -1981,9 +2178,15 @@ class _TimeBox extends StatelessWidget {
     // .count span (the number) — 18px/weight700/lh1.1 (was 26px/800 —
     // significantly oversized). .count p (the label) — 10px/weight600/
     // uppercase/color text-secondary #6B7280 (was 9px/800/muted token).
+    // Mobile (`@media max-width:767px`): min-width 50, padding 6px 8px,
+    // span 15px, label 8px.
+    final phone = MediaQuery.sizeOf(context).width < 768;
     return Container(
-      width: 62,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      width: phone ? 50 : 62,
+      padding: EdgeInsets.symmetric(
+        horizontal: phone ? 8 : 12,
+        vertical: phone ? 6 : 8,
+      ),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: const Color(0xFFF5F3FF),
@@ -2004,9 +2207,9 @@ class _TimeBox extends StatelessWidget {
         children: [
           Text(
             value.toString().padLeft(2, '0'),
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: _detailPurple,
-              fontSize: 18,
+              fontSize: phone ? 15 : 18,
               fontWeight: FontWeight.w700,
               height: 1.1,
             ),
@@ -2014,9 +2217,9 @@ class _TimeBox extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: Color(0xFF6B7280),
-              fontSize: 10,
+              fontSize: phone ? 8 : 10,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -2276,7 +2479,7 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                   Text(
                     widget.courseTitle,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: GoogleFonts.inter(
                       color: Colors.white,
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
@@ -2347,9 +2550,9 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Register',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -2366,15 +2569,15 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Please confirm the dates and times for your selections.',
-          style: TextStyle(color: _detailInk),
+          style: GoogleFonts.inter(color: _detailInk),
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'You will receive an email with a calendar invitation for each '
           'learning event after confirmation.',
-          style: TextStyle(color: _detailMuted, fontSize: 12.5),
+          style: GoogleFonts.inter(color: _detailMuted, fontSize: 12.5),
         ),
         const SizedBox(height: 16),
         _sessionCard(),
@@ -2404,9 +2607,13 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                   vertical: 8,
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Previous',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                // CSS ref: .btn-modal-secondary — 14px/weight500 (was 600).
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -2456,9 +2663,9 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                                   color: Colors.white,
                                 ),
                               )
-                              : const Text(
+                              : Text(
                                 'Confirm',
-                                style: TextStyle(
+                                style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -2588,7 +2795,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                   Text(
                     widget.courseTitle,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: GoogleFonts.inter(
                       color: Colors.white,
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
@@ -2627,7 +2834,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
       children: [
         Text(
           item.title,
-          style: const TextStyle(
+          style: GoogleFonts.inter(
             color: _detailInk,
             fontSize: 15,
             fontWeight: FontWeight.w800,
@@ -2638,7 +2845,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
           events.isEmpty
               ? 'Select a session'
               : 'Select a session, or tap it again to skip this class',
-          style: const TextStyle(color: _detailMuted, fontSize: 12.5),
+          style: GoogleFonts.inter(color: _detailMuted, fontSize: 12.5),
         ),
         const SizedBox(height: 12),
         if (events.isEmpty)
@@ -2659,10 +2866,10 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                 ),
               ],
             ),
-            child: const Text(
+            child: Text(
               'Currently no classes available!',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF6B7280), fontSize: 13),
+              style: GoogleFonts.inter(color: Color(0xFF6B7280), fontSize: 13),
             ),
           )
         else
@@ -2722,7 +2929,7 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                     ),
                     child: Text(
                       isLastClass ? 'Register' : 'Next',
-                      style: const TextStyle(
+                      style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -2739,21 +2946,21 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Please confirm the dates and times for your selections.',
-          style: TextStyle(color: _detailInk),
+          style: GoogleFonts.inter(color: _detailInk),
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'You will receive an email with a calendar invitation for each '
           'learning event after confirmation.',
-          style: TextStyle(color: _detailMuted, fontSize: 12.5),
+          style: GoogleFonts.inter(color: _detailMuted, fontSize: 12.5),
         ),
         const SizedBox(height: 16),
         for (var i = 0; i < widget.classes.length; i++) ...[
           Text(
             widget.classes[i].title,
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: _detailInk,
               fontSize: 13,
               fontWeight: FontWeight.w800,
@@ -2767,9 +2974,9 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                   border: Border.all(color: FigmaTokens.cardBorders),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text(
+                child: Text(
                   'Skipped - this class will not be registered.',
-                  style: TextStyle(color: _detailMuted),
+                  style: GoogleFonts.inter(color: _detailMuted),
                 ),
               )
               : _EventCard(event: _selectedEventFor(i)!, showLocation: true),
@@ -2799,9 +3006,13 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                   vertical: 8,
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Previous',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                // CSS ref: .btn-modal-secondary — 14px/weight500 (was 600).
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -2850,9 +3061,9 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                                   color: Colors.white,
                                 ),
                               )
-                              : const Text(
+                              : Text(
                                 'Confirm',
-                                style: TextStyle(
+                                style: GoogleFonts.inter(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -3034,7 +3245,7 @@ class _EventCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           date,
-          style: const TextStyle(
+          style: GoogleFonts.inter(
             color: Color(0xFF374151),
             fontSize: 14,
             height: 1.4,
@@ -3043,7 +3254,7 @@ class _EventCard extends StatelessWidget {
         if (time.isNotEmpty)
           Text(
             time,
-            style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
+            style: GoogleFonts.inter(color: Color(0xFF9CA3AF), fontSize: 12),
           ),
       ],
     );
@@ -3058,7 +3269,7 @@ class _EventCard extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(
+          style: GoogleFonts.inter(
             color: Color(0xFF374151),
             fontSize: 14,
             height: 1.4,
@@ -3090,7 +3301,7 @@ class _EventCard extends StatelessWidget {
           ),
           child: Text(
             waitlist ? 'Waitlist' : 'Available',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               color: fg,
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -3105,7 +3316,7 @@ class _EventCard extends StatelessWidget {
   // (was .5px on the unrelated `.le-detail-card-label`).
   Widget _label(String text) => Text(
     text.toUpperCase(),
-    style: const TextStyle(
+    style: GoogleFonts.inter(
       color: Color(0xFF9CA3AF),
       fontSize: 11,
       fontWeight: FontWeight.w600,
@@ -3160,17 +3371,17 @@ void _showNotEnrolledDialog(BuildContext context) {
             borderRadius: BorderRadius.circular(10),
           ),
           contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-          content: const Text(
+          content: Text(
             'You are not enrolled for this course. Click the Enroll Now button at the top of this page to continue.',
-            style: TextStyle(color: _detailMuted, height: 1.5),
+            style: GoogleFonts.inter(color: _detailMuted, height: 1.5),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               style: TextButton.styleFrom(foregroundColor: _detailPurple),
-              child: const Text(
+              child: Text(
                 'OK',
-                style: TextStyle(fontWeight: FontWeight.w700),
+                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -3218,9 +3429,9 @@ void _showCancelConfirmationDialog(
                 ),
                 child: Stack(
                   children: [
-                    const Text(
+                    Text(
                       'Confirm Cancellation',
-                      style: TextStyle(
+                      style: GoogleFonts.inter(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -3242,10 +3453,10 @@ void _showCancelConfirmationDialog(
               ),
               Padding(
                 padding: const EdgeInsets.all(24),
-                child: const Text(
+                child: Text(
                   'Would you like to cancel your registration for this course?',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Color(0xFF333333), fontSize: 16),
+                  style: GoogleFonts.inter(color: Color(0xFF333333), fontSize: 16),
                 ),
               ),
               Padding(
@@ -3267,9 +3478,9 @@ void _showCancelConfirmationDialog(
                           vertical: 8,
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'No, Keep It',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -3293,9 +3504,9 @@ void _showCancelConfirmationDialog(
                           vertical: 10,
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Yes, Cancel',
-                        style: TextStyle(
+                        style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -3383,7 +3594,7 @@ class _ClassDetailsDialog extends StatelessWidget {
                       Expanded(
                         child: Text(
                           courseTitle,
-                          style: const TextStyle(
+                          style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -3403,7 +3614,7 @@ class _ClassDetailsDialog extends StatelessWidget {
                           ),
                           child: Text(
                             typeName,
-                            style: const TextStyle(
+                            style: GoogleFonts.inter(
                               color: Colors.white,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -3468,11 +3679,11 @@ class _ClassDetailsDialog extends StatelessWidget {
                       // #9CA3AF/uppercase/letter-spacing .8px, margin 12px 0
                       // 8px (was reusing the same 11px/weight800 style as
                       // the card labels above, which is a different class).
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(top: 12, bottom: 8),
                         child: Text(
                           'SCHEDULE',
-                          style: TextStyle(
+                          style: GoogleFonts.inter(
                             color: Color(0xFF9CA3AF),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -3529,7 +3740,7 @@ class _LeDetailCard extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: Color(0xFF9CA3AF),
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -3539,7 +3750,7 @@ class _LeDetailCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: Color(0xFF374151),
               fontSize: 14,
               height: 1.5,
@@ -3727,7 +3938,7 @@ class _LinkDetailCard extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               color: Color(0xFF9CA3AF),
               fontSize: 11,
               fontWeight: FontWeight.w600,
@@ -3743,7 +3954,7 @@ class _LinkDetailCard extends StatelessWidget {
                 ),
             child: Text(
               linkText,
-              style: const TextStyle(
+              style: GoogleFonts.inter(
                 color: _detailPurple,
                 fontSize: 14,
                 height: 1.5,
@@ -3819,11 +4030,11 @@ class _LearningEventCard extends StatelessWidget {
                             dateTime: event.startDateTime,
                           ),
                         ),
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(top: 14),
                           child: Text(
                             '→',
-                            style: TextStyle(
+                            style: GoogleFonts.inter(
                               color: Color(0xFFD1D5DB),
                               fontSize: 18,
                             ),
@@ -3920,7 +4131,7 @@ class _EcField extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: const TextStyle(
+          style: GoogleFonts.inter(
             color: Color(0xFF9CA3AF),
             fontSize: 11,
             fontWeight: FontWeight.w600,
@@ -3930,7 +4141,7 @@ class _EcField extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           value.isEmpty ? '—' : value,
-          style: const TextStyle(
+          style: GoogleFonts.inter(
             color: Color(0xFF374151),
             fontSize: 14,
             height: 1.4,
@@ -3941,7 +4152,7 @@ class _EcField extends StatelessWidget {
             padding: const EdgeInsets.only(top: 1),
             child: Text(
               sub!,
-              style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
+              style: GoogleFonts.inter(color: Color(0xFF9CA3AF), fontSize: 12),
             ),
           ),
       ],
@@ -3988,7 +4199,7 @@ class _StatusChip extends StatelessWidget {
         status,
         softWrap: false,
         overflow: TextOverflow.visible,
-        style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
+        style: GoogleFonts.inter(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }

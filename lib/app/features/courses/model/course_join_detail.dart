@@ -8,6 +8,7 @@ class CourseJoinDetail {
     required this.objective,
     required this.logo,
     required this.participantGuide,
+    required this.wrapMethodology,
     required this.learningPath,
     required this.launchStatus,
     required this.launchDate,
@@ -29,6 +30,10 @@ class CourseJoinDetail {
   final String objective;
   final String? logo;
   final String? participantGuide;
+  // The WRAP Methodology download/link pill (backed by the same
+  // `wrap_methodology_file` / `wrap_methodology_link` columns as the web's
+  // `#participang-area .content-heading-title` links).
+  final String? wrapMethodology;
   final String? learningPath;
   final String launchStatus;
   final DateTime? launchDate;
@@ -189,6 +194,14 @@ class CourseJoinDetail {
           'participantGuideFile',
           'participant_guide_link',
           'participantGuideLink',
+        ]),
+      ),
+      wrapMethodology: _url(
+        _firstValue(root, course, const [
+          'wrap_methodology_file',
+          'wrapMethodologyFile',
+          'wrap_methodology_link',
+          'wrapMethodologyLink',
         ]),
       ),
       learningPath: _learningPath(root, course),
