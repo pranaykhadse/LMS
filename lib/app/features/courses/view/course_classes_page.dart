@@ -152,9 +152,12 @@ class _DetailBody extends ConsumerWidget {
                       .fetch(),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // 95% of the viewport width, with the remaining 5% split
-              // evenly as left/right spacing (via the Center below).
-              final maxWidth = constraints.maxWidth * 0.95;
+              // ~98% of the viewport width, with the remaining 2% split
+              // evenly as left/right spacing (via the Center below) — wider
+              // than the previous 95% so the content cards (countdown,
+              // description, objectives, skills, course structure) span a
+              // larger portion of the screen.
+              final maxWidth = constraints.maxWidth * 0.98;
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 // The hero (#page-heading) and the launch band
@@ -776,7 +779,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
 
     if (!widget.fullBleed) return band;
     // Full-bleed: the band spans the whole viewport width; only the card
-    // inside is centered at 95% of it.
+    // inside is centered at ~98% of it.
     final screenWidth = MediaQuery.sizeOf(context).width;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -787,7 +790,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       width: double.infinity,
       child: Center(
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: screenWidth * 0.95),
+          constraints: BoxConstraints(maxWidth: screenWidth * 0.98),
           child: card,
         ),
       ),
