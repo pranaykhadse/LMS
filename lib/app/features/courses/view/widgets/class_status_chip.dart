@@ -30,33 +30,39 @@ class ClassStatusChip extends ConsumerWidget {
     if (roaster == null) {
       final fallback = fallbackStatus;
       if (fallback == null || fallback.isEmpty) return const SizedBox.shrink();
-      final isCompleted = fallback.toLowerCase() == 'completed';
+      final isCompleted =
+          fallback.toLowerCase() == 'completed' ||
+          fallback.toLowerCase() == 'complete';
       label = fallback;
-      bg = isCompleted ? const Color(0xFFD4EDDA) : const Color(0xFFEDE9F8);
-      fg = isCompleted ? const Color(0xFF276036) : const Color(0xFF6B4FBB);
+      // CSS ref, joinCourse.php status badges: `.btn-registered` bg #E0E7FF/
+      // #4338CA; `.btn-complete` bg #D1FAE5 / #059669.
+      bg = isCompleted ? const Color(0xFFD1FAE5) : const Color(0xFFE0E7FF);
+      fg = isCompleted ? const Color(0xFF059669) : const Color(0xFF4338CA);
     } else {
       switch (roaster.status) {
         case '1':
           label = 'Registered';
-          bg    = const Color(0xFFEDE9F8);
-          fg    = const Color(0xFF6B4FBB);
+          bg    = const Color(0xFFE0E7FF);
+          fg    = const Color(0xFF4338CA);
         case '2':
           label = 'Started';
-          bg    = const Color(0xFFFFF3CD);
-          fg    = const Color(0xFF856404);
+          bg    = const Color(0xFFFEF3C7);
+          fg    = const Color(0xFFB45309);
         case '3':
           label = 'Completed';
-          bg    = const Color(0xFFD4EDDA);
-          fg    = const Color(0xFF276036);
+          bg    = const Color(0xFFD1FAE5);
+          fg    = const Color(0xFF059669);
         default:
           label = 'Registered';
-          bg    = const Color(0xFFEDE9F8);
-          fg    = const Color(0xFF6B4FBB);
+          bg    = const Color(0xFFE0E7FF);
+          fg    = const Color(0xFF4338CA);
       }
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      // CSS ref: `.btn-registered` etc — padding 6px 16px, radius 20px,
+      // 12px/weight600, text-transform capitalize, no border/shadow.
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),

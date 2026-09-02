@@ -13,6 +13,7 @@ import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/provider/server_provider.dart';
 import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
+import 'package:lms/app/core/views/elements/course_image_fallback.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
@@ -156,76 +157,88 @@ class _DetailBody extends ConsumerWidget {
               final maxWidth = constraints.maxWidth * 0.95;
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxWidth),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 16),
-                        _CourseHero(
-                          detail: detail,
-                          onTapReviews:
-                              () => showReviewsModal(
-                                context,
-                                ref,
-                                courseId: detail.id,
-                              ),
-                        ),
-                        Transform.translate(
-                          // Web `#launches-haad` pulls the launch card up
-                          // over the hero with `margin-top: -20px`
-                          // (desktop) / `-16px` (mobile).
-                          offset: Offset(
-                            0,
-                            MediaQuery.sizeOf(context).width < 768 ? -16 : -20,
+                // The hero (#page-heading) and the launch band
+                // (#launches-haad) are full-width strips on the web —
+                // their purple/#EEEFF9 backgrounds span the whole viewport
+                // while only their inner content is centered. The cards
+                // below stay centered at 95% width.
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _CourseHero(
+                      detail: detail,
+                      onTapReviews:
+                          () => showReviewsModal(
+                            context,
+                            ref,
+                            courseId: detail.id,
                           ),
-                          child: _LaunchPanel(detail: detail),
-                        ),
-                        // CSS/markup ref, confirmed against `origin/staging`'s
-                        // joinCourse.php: `#participang-area .content-heading-
-                        // title` is a white card (padding 16px 24px) holding
-                        // ("Download Participant Guide") and/or ("WRAP
-                        // Methodology") pill links (bg `--purple-tint-bg`
-                        // #F5F3FF, border rgba(92,82,212,.08), radius 10,
-                        // 14px/600, hover filled #693D94/white) with a 1×24px
-                        // #E5E7EB divider between them when both exist. Shown
-                        // whenever a URL is present (not gated on enrollment,
-                        // mirroring the web), and downloaded through
-                        // DownloadButton (encrypted, in-app-only, never a raw
-                        // external link).
-                        if (detail.participantGuide != null ||
-                            detail.wrapMethodology != null)
-                          _ParticipantGuideCard(detail: detail),
-                        if (constraints.maxWidth >= 760)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: _DescriptionCard(detail: detail),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: _CourseImageCard(url: detail.logo),
-                              ),
-                            ],
-                          )
-                        else ...[
-                          _DescriptionCard(detail: detail),
-                          _CourseImageCard(url: detail.logo),
-                        ],
-                        _SkillsCard(skills: detail.skills),
-                        _StructureCard(
-                          courseId: detail.id,
-                          items: detail.structures,
-                          isEnrolled: detail.isEnrolled,
-                          courseTitle: detail.title,
-                        ),
-                        const AppFooter(),
-                      ],
                     ),
-                  ),
+                    Transform.translate(
+                      // Web `#launches-haad` pulls the launch card up
+                      // over the hero with `margin-top: -20px`
+                      // (desktop) / `-16px` (mobile).
+                      offset: Offset(
+                        0,
+                        MediaQuery.sizeOf(context).width < 768 ? -16 : -20,
+                      ),
+                      child: _LaunchPanel(
+                        detail: detail,
+                        fullBleed: true,
+                      ),
+                    ),
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxWidth),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // CSS/markup ref, confirmed against `origin/staging`'s
+                            // joinCourse.php: `#participang-area .content-heading-
+                            // title` is a white card (padding 16px 24px) holding
+                            // ("Download Participant Guide") and/or ("WRAP
+                            // Methodology") pill links (bg `--purple-tint-bg`
+                            // #F5F3FF, border rgba(92,82,212,.08), radius 10,
+                            // 14px/600, hover filled #693D94/white) with a 1×24px
+                            // #E5E7EB divider between them when both exist. Shown
+                            // whenever a URL is present (not gated on enrollment,
+                            // mirroring the web), and downloaded through
+                            // DownloadButton (encrypted, in-app-only, never a raw
+                            // external link).
+                            if (detail.participantGuide != null ||
+                                detail.wrapMethodology != null)
+                              _ParticipantGuideCard(detail: detail),
+                            if (constraints.maxWidth >= 760)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: _DescriptionCard(detail: detail),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: _CourseImageCard(url: detail.logo),
+                                  ),
+                                ],
+                              )
+                            else ...[
+                              _DescriptionCard(detail: detail),
+                              _CourseImageCard(url: detail.logo),
+                            ],
+                            _SkillsCard(skills: detail.skills),
+                            _StructureCard(
+                              courseId: detail.id,
+                              items: detail.structures,
+                              isEnrolled: detail.isEnrolled,
+                              courseTitle: detail.title,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const AppFooter(),
+                  ],
                 ),
               );
             },
@@ -272,92 +285,102 @@ class _CourseHero extends StatelessWidget {
     // launch panel once that card is pulled up by its negative translate
     // (44 − 20 = 24px on desktop, 24 − 16 = 8px on mobile, matching the
     // web exactly). `#page-heading::after`'s notch rule has `content`
-    // commented out (and app.css has no such fallback), so no notch strip
+    // commented out (and app.css has no such rule), so no notch strip
     // is drawn on the web and none is added here.
+    //
+    // The whole strip is full-bleed purple (#page-heading spans the full
+    // viewport on the web); only its inner content is centered at 95%.
     final phone = MediaQuery.sizeOf(context).width < 768;
     return Container(
-      margin: const EdgeInsets.fromLTRB(6, 10, 6, 0),
-      padding: EdgeInsets.fromLTRB(
-        14,
-        34,
-        14,
-        phone ? 24 : 44,
-      ),
-      decoration: const BoxDecoration(color: _detailPurple),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // CSS ref, confirmed against `origin/staging`'s joinCourse.php:
-          // #page-heading h2 — 32px/weight700 (was 24px/800), letter-
-          // spacing -0.5px (was none); mobile shrinks to 24px.
-          Text(
-            detail.title,
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: phone ? 24 : 32,
-              fontWeight: FontWeight.w700,
-              height: 1.18,
-              letterSpacing: -0.5,
-            ),
+      color: _detailPurple,
+      padding: EdgeInsets.fromLTRB(0, 10, 0, phone ? 24 : 44),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.sizeOf(context).width * 0.95,
           ),
-          // #page-heading h2 has `margin: 0 0 12px 0`.
-          const SizedBox(height: 12),
-          // CSS/markup ref, confirmed against `origin/staging`'s
-          // _rating_summary.php: `.average-rating-section` — inline-flex
-          // row, gap 12px, containing (in order): star rating, numeric
-          // average, and (if `display_rating`) a review-count pill, then
-          // (if `allow_rating`) the "Add Rating" pill — both pills share
-          // `#page-heading .course-rating-summary a`'s styling (bg
-          // white@.15, border white@.25, radius 30, padding 4px 12px).
-          // `CourseJoinDetail.displayRating`/`averageRating`/
-          // `ratingCount` now parsed from `actionJoinCourseDetail`'s
-          // payload, which already dumps the whole Course model
-          // (including these columns) — was previously left unparsed and
-          // flagged as a backend gap that, on closer look, isn't one.
-          // .average-rating-section is inline-flex gap 10px; the two
-          // review/Add-Rating pills each carry `margin: 0 0 0 6px`, so the
-          // pill gaps become 16px (10 + 6) — hence Wrap spacing 16.
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              if (detail.displayRating) ...[
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _HeroStars(rating: detail.averageRating),
-                    const SizedBox(width: 10),
-                    Text(
-                      '${detail.averageRating.toStringAsFixed(1)}/5',
-                      style: GoogleFonts.inter(
-                        // rgba(255,255,255,.95)
-                        color: Color(0xF2FFFFFF),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-                _HeroPill(
-                  onTap: onTapReviews,
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(text: '${detail.ratingCount} '),
-                        TextSpan(
-                          text: detail.ratingCount == 1 ? 'review' : 'reviews',
-                        ),
-                      ],
-                    ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 34, 14, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // CSS ref, confirmed against `origin/staging`'s joinCourse.php:
+                // #page-heading h2 — 32px/weight700 (was 24px/800), letter-
+                // spacing -0.5px (was none); mobile shrinks to 24px.
+                Text(
+                  detail.title,
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontSize: phone ? 24 : 32,
+                    fontWeight: FontWeight.w700,
+                    height: 1.18,
+                    letterSpacing: -0.5,
                   ),
                 ),
+                // #page-heading h2 has `margin: 0 0 12px 0`.
+                const SizedBox(height: 12),
+                // CSS/markup ref, confirmed against `origin/staging`'s
+                // _rating_summary.php: `.average-rating-section` — inline-flex
+                // row, gap 12px, containing (in order): star rating, numeric
+                // average, and (if `display_rating`) a review-count pill, then
+                // (if `allow_rating`) the "Add Rating" pill — both pills share
+                // `#page-heading .course-rating-summary a`'s styling (bg
+                // white@.15, border white@.25, radius 30, padding 4px 12px).
+                // `CourseJoinDetail.displayRating`/`averageRating`/
+                // `ratingCount` now parsed from `actionJoinCourseDetail`'s
+                // payload, which already dumps the whole Course model
+                // (including these columns) — was previously left unparsed and
+                // flagged as a backend gap that, on closer look, isn't one.
+                // .average-rating-section is inline-flex gap 10px; the two
+                // review/Add-Rating pills each carry `margin: 0 0 0 6px`, so the
+                // pill gaps become 16px (10 + 6) — hence Wrap spacing 16.
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 16,
+                  runSpacing: 8,
+                  children: [
+                    if (detail.displayRating) ...[
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _HeroStars(rating: detail.averageRating),
+                          const SizedBox(width: 10),
+                          Text(
+                            '${detail.averageRating.toStringAsFixed(1)}/5',
+                            style: GoogleFonts.inter(
+                              // rgba(255,255,255,.95)
+                              color: Color(0xF2FFFFFF),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      _HeroPill(
+                        onTap: onTapReviews,
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(text: '${detail.ratingCount} '),
+                              TextSpan(
+                                text:
+                                    detail.ratingCount == 1
+                                    ? 'review'
+                                    : 'reviews',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (detail.allowRating)
+                      const _HeroPill(child: Text('Add Rating')),
+                  ],
+                ),
               ],
-              if (detail.allowRating)
-                const _HeroPill(child: Text('Add Rating')),
-            ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -421,8 +444,14 @@ class _HeroPill extends StatelessWidget {
 }
 
 class _LaunchPanel extends ConsumerStatefulWidget {
-  const _LaunchPanel({required this.detail});
+  const _LaunchPanel({required this.detail, this.fullBleed = false});
   final CourseJoinDetail detail;
+
+  /// When true, the surrounding #EEEFF9 band (desktop) is a full-bleed
+  /// strip spanning the whole viewport with the card centered inside —
+  /// matching `#launches-haad` on the web — instead of hugging the page's
+  /// centered content column.
+  final bool fullBleed;
 
   @override
   ConsumerState<_LaunchPanel> createState() => _LaunchPanelState();
@@ -580,8 +609,161 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     // (transparent/0) and uses margin-top -16px. The _CourseHero's bottom
     // padding above accounts for the resulting purple gap (desktop
     // 44−20=24, mobile 24−16=8).
+    //
+    // With fullBleed the band itself is a full-viewport-width strip
+    // (#launches-haad on the web) and the card is centered inside it.
     final phone = MediaQuery.sizeOf(context).width < 768;
-    return Container(
+    final card = _InfoCard(
+      margin: EdgeInsets.zero,
+      // .launches-box: desktop `padding: 20px 24px`; mobile 16px.
+      padding: phone
+          ? const EdgeInsets.all(16)
+          : const EdgeInsets.fromLTRB(24, 20, 24, 20),
+      boxShadow: phone
+          // mobile `.launches-box` shadow is the stronger indigo one.
+          ? const [
+            BoxShadow(
+              color: Color(0x265C52D4),
+              blurRadius: 30,
+              offset: Offset(0, 8),
+            ),
+          ]
+          : null,
+      child: Column(
+        children: [
+          // Only show the countdown once the learner is actually enrolled -
+          // showing a countdown toward a session they haven't registered
+          // for is misleading. On wide screens it sits inline with the
+          // primary action button, matching the reference's single header
+          // bar instead of stacking them.
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final statusBadge = _statusBadge(detail);
+              if (constraints.maxWidth < 768) {
+                // `@media max-width:767px` stacks the flex items into a
+                // column (`.flex-item-1` full-width/centered so the
+                // countdown centers, `.flex-item-4` full-width so the
+                // button stretches) with 16px box gap.
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (hasCountdown) ...[
+                      Center(child: countdown),
+                      const SizedBox(height: 16),
+                    ],
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: statusBadge,
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _actionButton(),
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (hasCountdown) countdown,
+                  Expanded(child: Center(child: statusBadge)),
+                  _actionButton(),
+                ],
+              );
+            },
+          ),
+          if (detail.learningPath != null) ...[
+            SizedBox(height: phone ? 16 : 24),
+            // CSS ref: `.learning-path`. Desktop is an UNBOXED sibling
+            // in the launches flex row — `h3` 14px/600/text-dark plus a
+            // light-blue pill (`span`, bg #E0F2FE / color #0369A1, pad
+            // 4px 12px, radius 20, 12px/600, margin-left 6px). The
+            // `@media max-width:767px` override boxes it instead: bg
+            // --purple-tint-bg (#F5F3FF), padding 12px uniform, radius
+            // 10, width 100%, centered, h3 shrinks to 13px, pill margin
+            // becomes 4px top/0 left.
+            if (phone)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F3FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      'Learning Path: ',
+                      style: GoogleFonts.inter(
+                        color: _detailInk,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE0F2FE),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        detail.learningPath!,
+                        style: GoogleFonts.inter(
+                          color: Color(0xFF0369A1),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    'Learning Path: ',
+                    style: GoogleFonts.inter(
+                      color: _detailInk,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(left: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE0F2FE),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      detail.learningPath!,
+                      style: GoogleFonts.inter(
+                        color: Color(0xFF0369A1),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ],
+      ),
+    );
+
+    final band = Container(
       // Web: `#launches-haad { margin-bottom: 20px }`; the negative top
       // pull-up lives on _DetailBody's Transform.translate.
       margin: const EdgeInsets.only(bottom: 20),
@@ -589,155 +771,26 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       decoration: phone
           ? null
           : const BoxDecoration(color: Color(0xFFEEEFF9)),
-      child: _InfoCard(
-          margin: EdgeInsets.zero,
-          // .launches-box: desktop `padding: 20px 24px`; mobile 16px.
-          padding: phone
-              ? const EdgeInsets.all(16)
-              : const EdgeInsets.fromLTRB(24, 20, 24, 20),
-          boxShadow: phone
-              // mobile `.launches-box` shadow is the stronger indigo one.
-              ? const [
-                BoxShadow(
-                  color: Color(0x265C52D4),
-                  blurRadius: 30,
-                  offset: Offset(0, 8),
-                ),
-              ]
-              : null,
-          child: Column(
-            children: [
-              // Only show the countdown once the learner is actually enrolled -
-              // showing a countdown toward a session they haven't registered
-              // for is misleading. On wide screens it sits inline with the
-              // primary action button, matching the reference's single header
-              // bar instead of stacking them.
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final statusBadge = _statusBadge(detail);
-                  if (constraints.maxWidth < 768) {
-                    // `@media max-width:767px` stacks the flex items into a
-                    // column (`.flex-item-1` full-width/centered so the
-                    // countdown centers, `.flex-item-4` full-width so the
-                    // button stretches) with 16px box gap.
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (hasCountdown) ...[
-                          Center(child: countdown),
-                          const SizedBox(height: 16),
-                        ],
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: statusBadge,
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: _actionButton(),
-                        ),
-                      ],
-                    );
-                  }
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (hasCountdown) countdown,
-                      Expanded(child: Center(child: statusBadge)),
-                      _actionButton(),
-                    ],
-                  );
-                },
-              ),
-              if (detail.learningPath != null) ...[
-                SizedBox(height: phone ? 16 : 24),
-                // CSS ref: `.learning-path`. Desktop is an UNBOXED sibling
-                // in the launches flex row — `h3` 14px/600/text-dark plus a
-                // light-blue pill (`span`, bg #E0F2FE / color #0369A1, pad
-                // 4px 12px, radius 20, 12px/600, margin-left 6px). The
-                // `@media max-width:767px` override boxes it instead: bg
-                // --purple-tint-bg (#F5F3FF), padding 12px uniform, radius
-                // 10, width 100%, centered, h3 shrinks to 13px, pill margin
-                // becomes 4px top/0 left.
-                if (phone)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F3FF),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Wrap(
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          'Learning Path: ',
-                          style: GoogleFonts.inter(
-                            color: _detailInk,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE0F2FE),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            detail.learningPath!,
-                            style: GoogleFonts.inter(
-                              color: Color(0xFF0369A1),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        'Learning Path: ',
-                        style: GoogleFonts.inter(
-                          color: _detailInk,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(left: 6),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE0F2FE),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          detail.learningPath!,
-                          style: GoogleFonts.inter(
-                            color: Color(0xFF0369A1),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ],
-          ),
+      child: card,
+    );
+
+    if (!widget.fullBleed) return band;
+    // Full-bleed: the band spans the whole viewport width; only the card
+    // inside is centered at 95% of it.
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: phone
+          ? null
+          : const BoxDecoration(color: Color(0xFFEEEFF9)),
+      padding: phone ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: 10),
+      width: double.infinity,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: screenWidth * 0.95),
+          child: card,
         ),
+      ),
     );
   }
 
@@ -1043,13 +1096,13 @@ class _CourseImageCard extends StatelessWidget {
           height: 380,
           child:
               url == null
-                  ? const _ImageFallback()
+                  ? const CourseImageFallback()
                   : Image.network(
                     url!,
                     width: double.infinity,
                     height: 380,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const _ImageFallback(),
+                    errorBuilder: (_, __, ___) => const CourseImageFallback(),
                   ),
         ),
       ),
@@ -2225,19 +2278,6 @@ class _TimeBox extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ImageFallback extends StatelessWidget {
-  const _ImageFallback();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF0ECFF),
-      alignment: Alignment.center,
-      child: const Icon(Icons.school_outlined, color: _detailPurple, size: 78),
     );
   }
 }
