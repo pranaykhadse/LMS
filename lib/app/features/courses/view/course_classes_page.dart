@@ -654,10 +654,9 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                       Center(child: countdown),
                       const SizedBox(height: 16),
                     ],
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: statusBadge,
-                    ),
+                    // #launches-haad .flex-item-4 — mobile centers the
+                    // status pill horizontally.
+                    Center(child: statusBadge),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
