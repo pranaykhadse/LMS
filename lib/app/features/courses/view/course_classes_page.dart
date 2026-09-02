@@ -803,10 +803,10 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final cardMaxWidth = phone
         // Single column of launches content is far narrower than the screen
-        // (countdown + pill + a full-width action button), so cap the card
-        // at a fixed centered width rather than letting it span the whole
-        // viewport.
-        ? 520.0
+        // (countdown + pill + a full-width action button), so on mobile the
+        // card is reduced to 90% of the screen width and centered rather
+        // than stretching edge-to-edge.
+        ? screenWidth * 0.9
         : screenWidth * 0.98;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
