@@ -562,49 +562,64 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     }
     final isPast = (remaining?.isNegative ?? false);
     final remainingAbs = remaining?.abs();
+    final phone = MediaQuery.sizeOf(context).width < 768;
 
     final hasCountdown = launchDate != null && detail.isEnrolled;
-    final countdown = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    // CSS ref: `#launches-haad .flex-item-1 h6` — 13px/weight700/
+    // uppercase/color var(--text-secondary) #6B7280/letter-spacing 0.5px.
+    final countLabel = Text(
+      isPast ? 'STARTED' : 'LAUNCHES IN',
+      style: GoogleFonts.inter(
+        color: Color(0xFF6B7280),
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        letterSpacing: .5,
+      ),
+    );
+    final timeBoxes = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          isPast ? 'STARTED' : 'LAUNCHES IN',
-          // CSS ref: `#launches-haad .flex-item-1 h6` — 13px/weight700/
-          // uppercase/color var(--text-secondary) #6B7280/letter-spacing
-          // 0.5px.
-          style: GoogleFonts.inter(
-            color: Color(0xFF6B7280),
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            letterSpacing: .5,
-          ),
-        ),
-        const SizedBox(height: 14),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isPast)
-              Padding(
-                padding: EdgeInsets.only(right: 2),
-                child: Text(
-                  '-',
-                  style: GoogleFonts.inter(
-                    color: _detailInk,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+        if (isPast)
+          Padding(
+            padding: EdgeInsets.only(right: 2),
+            child: Text(
+              '-',
+              style: GoogleFonts.inter(
+                color: _detailInk,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
               ),
-            _timeEntry(remainingAbs?.inDays ?? 0, 'DAYS'),
-            _timeEntry((remainingAbs?.inHours ?? 0) % 24, 'HRS'),
-            _timeEntry((remainingAbs?.inMinutes ?? 0) % 60, 'MIN'),
-            _timeEntry((remainingAbs?.inSeconds ?? 0) % 60, 'SEC'),
-          ],
-        ),
+            ),
+          ),
+        _timeEntry(remainingAbs?.inDays ?? 0, 'DAYS'),
+        _timeEntry((remainingAbs?.inHours ?? 0) % 24, 'HRS'),
+        _timeEntry((remainingAbs?.inMinutes ?? 0) % 60, 'MIN'),
+        _timeEntry((remainingAbs?.inSeconds ?? 0) % 60, 'SEC'),
       ],
     );
+    // Desktop (`flex-item-1`): the h6 label and the .timer sit on the SAME
+    // line (`display:flex; align-items:center; gap:16px`), vertically
+    // centered. Phone (`@media max-width:767px`) stacks them instead with
+    // the label centered above the boxes.
+    final countdown = phone
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(child: countLabel),
+              const SizedBox(height: 14),
+              timeBoxes,
+            ],
+          )
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              countLabel,
+              const SizedBox(width: 16),
+              timeBoxes,
+            ],
+          );
 
     // CSS ref: `#launches-haad`. Desktop keeps the base app.css band
     // (background #EEEFF9, padding 10px) and pulls the card up with
@@ -615,7 +630,6 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     //
     // With fullBleed the band itself is a full-viewport-width strip
     // (#launches-haad on the web) and the card is centered inside it.
-    final phone = MediaQuery.sizeOf(context).width < 768;
     final card = _InfoCard(
       margin: EdgeInsets.zero,
       // .launches-box: desktop `padding: 20px 24px`; mobile 16px.
@@ -665,11 +679,20 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                   ],
                 );
               }
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              // Desktop: the launches box content is centered as a group —
+              // countdown (label + time boxes on one line), the Open/Close
+              // status pill, then the action button — with a 24px gap
+              // (matching `.launches-box` `gap: 24px`). Nothing here uses
+              // Expanded, so the card shrink-wraps to this content instead
+              // of stretching across the whole band.
+              return Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 24,
+                runSpacing: 16,
                 children: [
                   if (hasCountdown) countdown,
-                  Expanded(child: Center(child: statusBadge)),
+                  statusBadge,
                   _actionButton(),
                 ],
               );
@@ -777,22 +800,24 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     );
 
     if (!widget.fullBleed) return band;
-    // Full-bleed: the band spans the whole viewport width; only the card
-    // inside is centered at ~98% of it.
-    final screenWidth = MediaQuery.sizeOf(context).width;
+    if (phone) {
+      // Mobile (`@767` `.launches-box`): the card stretches full width.
+      return Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        width: double.infinity,
+        child: card,
+      );
+    }
+    // Full-bleed desktop: the grey band (#EEEFF9) spans the whole viewport
+    // width, but the white card inside is centered and shrink-wraps to its
+    // content (no forced max width) - the user wanted this container
+    // narrower than it stretching across the whole band.
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      decoration: phone
-          ? null
-          : const BoxDecoration(color: Color(0xFFEEEFF9)),
-      padding: phone ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: 10),
+      decoration: const BoxDecoration(color: Color(0xFFEEEFF9)),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       width: double.infinity,
-      child: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: screenWidth * 0.98),
-          child: card,
-        ),
-      ),
+      child: Center(child: card),
     );
   }
 
