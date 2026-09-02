@@ -1888,7 +1888,14 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             : (widget.phone
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: actions,
+                    // Mobile stacked cards stack the action buttons
+                    // full-width, so give each one breathing room.
+                    children: [
+                      for (var i = 0; i < actions.length; i++) ...[
+                        if (i > 0) const SizedBox(height: 8),
+                        actions[i],
+                      ],
+                    ],
                   )
                 : Wrap(
                     spacing: 8,
