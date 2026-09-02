@@ -679,20 +679,16 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                   ],
                 );
               }
-              // Desktop: the launches box content is centered as a group —
-              // countdown (label + time boxes on one line), the Open/Close
-              // status pill, then the action button — with a 24px gap
-              // (matching `.launches-box` `gap: 24px`). Nothing here uses
-              // Expanded, so the card shrink-wraps to this content instead
-              // of stretching across the whole band.
-              return Wrap(
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 24,
-                runSpacing: 16,
+              // Desktop: launches-box is `display:flex; justify-content:
+              // space-between` — countdown (label + time boxes on one line)
+              // left, the Open/Close status pill centered, action button
+              // right. The Expanded keeps the card stretched to the full
+              // card width.
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   if (hasCountdown) countdown,
-                  statusBadge,
+                  Expanded(child: Center(child: statusBadge)),
                   _actionButton(),
                 ],
               );
@@ -800,24 +796,33 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     );
 
     if (!widget.fullBleed) return band;
-    if (phone) {
-      // Mobile (`@767` `.launches-box`): the card stretches full width.
-      return Container(
-        margin: const EdgeInsets.only(bottom: 20),
-        width: double.infinity,
-        child: card,
-      );
-    }
-    // Full-bleed desktop: the grey band (#EEEFF9) spans the whole viewport
-    // width, but the white card inside is centered and shrink-wraps to its
-    // content (no forced max width) - the user wanted this container
-    // narrower than it stretching across the whole band.
+    // Full-bleed: the grey band (#EEEFF9) spans the whole viewport width;
+    // only the card inside is centered. Desktop keeps the original width
+    // (~98% of the viewport); mobile reduces it to a narrower centered
+    // card instead of stretching full-width.
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final cardMaxWidth = phone
+        // Single column of launches content is far narrower than the screen
+        // (countdown + pill + a full-width action button), so cap the card
+        // at a fixed centered width rather than letting it span the whole
+        // viewport.
+        ? 520.0
+        : screenWidth * 0.98;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      decoration: const BoxDecoration(color: Color(0xFFEEEFF9)),
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: phone
+          ? null
+          : const BoxDecoration(color: Color(0xFFEEEFF9)),
+      padding: phone
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(vertical: 10),
       width: double.infinity,
-      child: Center(child: card),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: cardMaxWidth),
+          child: card,
+        ),
+      ),
     );
   }
 
