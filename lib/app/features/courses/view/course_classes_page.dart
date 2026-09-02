@@ -1085,22 +1085,22 @@ class _CourseImageCard extends StatelessWidget {
     // CSS ref: .emotional-leadership — the card's own 16px padding
     // applies here too (unlike before, which zeroed it out to run the
     // image edge-to-edge); the image itself gets its own 12px radius
-    // (distinct from the card's 16px) and a 380px max-height (was a flat
-    // 220px).
+    // (distinct from the card's 16px) and a 220px height (was a flat
+    // 380px — reduced per request for the default/catalog image).
     return _InfoCard(
       padding: const EdgeInsets.all(16),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: SizedBox(
           width: double.infinity,
-          height: 380,
+          height: 220,
           child:
               url == null
                   ? const CourseImageFallback()
                   : Image.network(
                     url!,
                     width: double.infinity,
-                    height: 380,
+                    height: 220,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => const CourseImageFallback(),
                   ),
