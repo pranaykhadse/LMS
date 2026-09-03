@@ -1796,7 +1796,12 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           ),
         ],
         _OnlineActionButton(
+          // Web ref: the Cancel action renders `cancel.svg` — a 25px
+          // dusty-red (#C67474) circle-X image, not a 14px inheriting
+          // font icon like every other action button.
           icon: Icons.cancel_outlined,
+          iconSize: 25,
+          iconColor: const Color(0xFFC67474),
           label: _cancelling ? 'Cancelling…' : 'Cancel Registration',
           onPressed:
               () => _showCancelConfirmationDialog(
@@ -2123,8 +2128,12 @@ class _OnlineActionButton extends ConsumerWidget {
     required this.label,
     required this.onPressed,
     this.danger = false,
+    this.iconSize = 14,
+    this.iconColor,
   });
   final IconData icon;
+  final double iconSize;
+  final Color? iconColor;
   final String label;
   final VoidCallback onPressed;
   // CSS ref: #course-structure .static-list-action-btn .btn-ul
@@ -2203,7 +2212,8 @@ class _OnlineActionButton extends ConsumerWidget {
                       onPressed: isOnline ? onPressed : null,
                       icon: Icon(
                         isOnline ? icon : Icons.cloud_off_rounded,
-                        size: 14,
+                        size: isOnline ? iconSize : 14,
+                        color: isOnline ? iconColor : null,
                       ),
                       label: Text(isOnline ? label : 'Internet required'),
                       style: ElevatedButton.styleFrom(
