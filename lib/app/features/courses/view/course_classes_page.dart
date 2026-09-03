@@ -1738,7 +1738,6 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
         _OnlineActionButton(
           icon: Icons.cancel_outlined,
           label: _cancelling ? 'Cancelling…' : 'Cancel Registration',
-          danger: true,
           onPressed:
               () => _showCancelConfirmationDialog(
                 context,
