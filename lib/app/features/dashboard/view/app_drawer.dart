@@ -8,6 +8,7 @@ import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/contact_links.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
+import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 
@@ -101,6 +102,12 @@ class AppDrawer extends ConsumerWidget {
     final width = MediaQuery.sizeOf(context).width;
     final sel = selectedLabel;
     final subSel = selectedSubLabel;
+    // CSS/markup ref, confirmed against `origin/staging`'s
+    // bluetheme_layout.php: `'Redeem your Points <span>{points}</span>'` —
+    // the point balance is baked straight into the dropdown item's own
+    // label, not a separate widget. Same source as the desktop nav bar's
+    // own `_PointsBadge`.
+    final points = ref.watch(AuthStateNotifier.provider)?.userProfile?.points;
 
     const myCoursesChildren = [
       'My Enrolled Courses',
@@ -169,10 +176,7 @@ class AppDrawer extends ConsumerWidget {
                       selected: myCoursesActive,
                       children: [
                         _SubNavItem(
-                          icon: const _NavIcon(
-                            'courses-icon.svg',
-                            main: false,
-                          ),
+                          icon: const _NavIcon('courses-icon.svg', main: false),
                           label: 'My Enrolled Courses',
                           selected: subSel == 'My Enrolled Courses',
                           onTap: () {
@@ -186,10 +190,7 @@ class AppDrawer extends ConsumerWidget {
                           },
                         ),
                         _SubNavItem(
-                          icon: const _NavIcon(
-                            'courses-icon.svg',
-                            main: false,
-                          ),
+                          icon: const _NavIcon('courses-icon.svg', main: false),
                           label: 'My Completed Courses',
                           selected: subSel == 'My Completed Courses',
                           onTap: () {
@@ -264,12 +265,10 @@ class AppDrawer extends ConsumerWidget {
                       selected: pointsBadgesActive,
                       children: [
                         _SubNavItem(
-                          icon: const _NavIcon(
-                            'redeem-icon.svg',
-                            main: false,
-                          ),
+                          icon: const _NavIcon('redeem-icon.svg', main: false),
                           label: 'Redeem your Points',
                           selected: subSel == 'Redeem your Points',
+                          points: points,
                           onTap: () {
                             _close(context);
                             _goTo(
@@ -652,12 +651,18 @@ class _SubNavItem {
     this.onTap,
     this.disabled = false,
     this.selected = false,
+    this.points,
   });
   final Widget icon;
   final String label;
   final VoidCallback? onTap;
   final bool disabled;
   final bool selected;
+
+  // Non-null only for "Redeem your Points" — the real markup bakes it
+  // straight into that item's own label (`'Redeem your Points
+  // <span>{points}</span>'`), rendered here as a trailing pill instead.
+  final int? points;
 }
 
 class _SubItemTile extends StatelessWidget {
@@ -694,11 +699,7 @@ class _SubItemTile extends StatelessWidget {
           child: Row(
             children: [
               item.disabled
-                  ? Icon(
-                    LucideIcons.cloudOff,
-                    size: 18,
-                    color: color,
-                  )
+                  ? Icon(LucideIcons.cloudOff, size: 18, color: color)
                   : item.icon,
               // Web `#homeSubMenu` icon gap: 8px.
               const SizedBox(width: 8),
@@ -714,8 +715,46 @@ class _SubItemTile extends StatelessWidget {
                   ),
                 ),
               ),
+              if (item.points != null) ...[
+                const SizedBox(width: 8),
+                _PointsBadge(points: item.points!),
+              ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The gold points-count circle next to "Redeem your Points" — same spec
+/// as `_DesktopNavBar`'s own `_PointsBadge` (`lms_app_bar.dart`); CSS ref:
+/// `.nav-link span` (`background:#FDCD60; color:#000; border-radius:50%`),
+/// sized to actually fit a 3-digit balance legibly rather than the rule's
+/// own literal 21px/7px (tuned for a different, absolutely-positioned
+/// placement this drawer doesn't reproduce).
+class _PointsBadge extends StatelessWidget {
+  const _PointsBadge({required this.points});
+  final int points;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: const BoxDecoration(
+        color: Color(0xFFFDCD60),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '$points',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1,
         ),
       ),
     );

@@ -231,10 +231,11 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         _ProfileMenuButton(
           profile: profile,
           onSelected: (value) => _onProfileMenuSelected(context, ref, value),
-          itemBuilder: (context) => _profileMenuItems(
-            profile,
-            ref.watch(AuthStateNotifier.provider)?.role?.itemName,
-          ),
+          itemBuilder:
+              (context) => _profileMenuItems(
+                profile,
+                ref.watch(AuthStateNotifier.provider)?.role?.itemName,
+              ),
         ),
       ],
     );
@@ -495,10 +496,11 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ),
                   onSelected:
                       (value) => _onProfileMenuSelected(context, ref, value),
-                  itemBuilder: (context) => _profileMenuItems(
-                    profile,
-                    ref.watch(AuthStateNotifier.provider)?.role?.itemName,
-                  ),
+                  itemBuilder:
+                      (context) => _profileMenuItems(
+                        profile,
+                        ref.watch(AuthStateNotifier.provider)?.role?.itemName,
+                      ),
                   padding: EdgeInsets.zero,
                   // Phone-only: avatar sits inside a small rounded box with a
                   // dropdown chevron, instead of desktop's bare avatar + name.
@@ -630,8 +632,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     }
   }
 
-  List<PopupMenuEntry<String>> _profileMenuItems(dynamic profile,
-      String? role) => [
+  List<PopupMenuEntry<String>> _profileMenuItems(
+    dynamic profile,
+    String? role,
+  ) => [
     PopupMenuItem<String>(
       enabled: false,
       padding: EdgeInsets.zero,
@@ -699,6 +703,11 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isOnline = watchIsOnline(ref);
+    // CSS/markup ref, confirmed against `origin/staging`'s
+    // bluetheme_layout.php: `'Redeem your Points <span>{points}</span>'` —
+    // the point balance is baked straight into the dropdown item's own
+    // label, not a separate widget.
+    final points = ref.watch(AuthStateNotifier.provider)?.userProfile?.points;
     const myCoursesChildren = [
       'My Enrolled Courses',
       'My Completed Courses',
@@ -830,6 +839,7 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
                           label: 'Redeem your Points',
                           iconAsset: '${_navIconBase}redeem-icon.svg',
                           selected: selectedSubLabel == 'Redeem your Points',
+                          points: points,
                           onTap:
                               () => _goTo(
                                 context,
@@ -941,6 +951,7 @@ class _NavSubItem {
     required this.iconAsset,
     this.selected = false,
     this.disabled = false,
+    this.points,
     required this.onTap,
   });
   final String label;
@@ -951,7 +962,50 @@ class _NavSubItem {
   final String iconAsset;
   final bool selected;
   final bool disabled;
+
+  // Non-null only for "Redeem your Points" — the real markup bakes it
+  // straight into that item's own label (`'Redeem your Points
+  // <span>{points}</span>'`), rendered here as a trailing pill instead.
+  final int? points;
   final VoidCallback onTap;
+}
+
+/// The gold points-count circle next to "Redeem your Points".
+///
+/// CSS ref: `.nav-link span` — `background:#FDCD60; color:#000;
+/// border-radius:50%`. The rule's own literal `width/height:21px;
+/// font-size:7px` is sized for the real markup's `position:absolute`
+/// placement overlapping the icon corner, which this widget doesn't
+/// reproduce (a live screenshot shows it sitting inline after the label
+/// instead, not overlapping anything) — at that tiny size a 3-digit
+/// balance would be unreadable, so this is sized to actually fit one
+/// legibly instead of matching those exact numbers.
+class _PointsBadge extends StatelessWidget {
+  const _PointsBadge({required this.points});
+  final int points;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: const BoxDecoration(
+        color: Color(0xFFFDCD60),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '$points',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.inter(
+          color: Colors.black,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          height: 1,
+        ),
+      ),
+    );
+  }
 }
 
 // Several of these real icon assets (e.g. development-plan-icon.svg,
@@ -1387,6 +1441,10 @@ class _NavDropdownState extends State<_NavDropdown> {
                                   fontSize: 14,
                                 ),
                               ),
+                              if (items[i].points != null) ...[
+                                const SizedBox(width: 8),
+                                _PointsBadge(points: items[i].points!),
+                              ],
                             ],
                           ),
                         );
@@ -2001,9 +2059,8 @@ class _ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final name =
         '${profile?.firstname ?? ''} ${profile?.lastname ?? ''}'.trim();
-    final roleLabel = (role?.trim().isNotEmpty ?? false)
-        ? role!.trim()
-        : 'User';
+    final roleLabel =
+        (role?.trim().isNotEmpty ?? false) ? role!.trim() : 'User';
     // Reference site's `.profile-header-box`: solid var(--primary-first)
     // background, 40px avatar, name as h6 (#fff/700/15px/letter-spacing
     // -0.3px) with the role as an uppercase, letter-spaced 11px caption.
@@ -2112,26 +2169,26 @@ class _ProfileMenuRowState extends State<_ProfileMenuRow>
         animation: _t,
         builder: (context, _) {
           final t = _t.value;
-          final tint = widget.isLogout
-              ? const Color(0x1AEF4444)
-              : FigmaTokens.badgeBackground;
+          final tint =
+              widget.isLogout
+                  ? const Color(0x1AEF4444)
+                  : FigmaTokens.badgeBackground;
           final bg = Color.lerp(tint.withValues(alpha: 0), tint, t)!;
           const defaultColor = Color(0xFF4A5568);
-          final hoverColor = widget.isLogout
-              ? const Color(0xFFE53E3E)
-              : _appPurple;
+          final hoverColor =
+              widget.isLogout ? const Color(0xFFE53E3E) : _appPurple;
           final textColor = Color.lerp(defaultColor, hoverColor, t)!;
-          final iconColor = Color.lerp(
-            defaultColor.withValues(alpha: 0.8),
-            hoverColor.withValues(alpha: 0.8),
-            t,
-          )!;
+          final iconColor =
+              Color.lerp(
+                defaultColor.withValues(alpha: 0.8),
+                hoverColor.withValues(alpha: 0.8),
+                t,
+              )!;
           final dx = 6 * t;
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: bg,
                 borderRadius: BorderRadius.circular(20),

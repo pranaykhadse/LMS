@@ -5318,3 +5318,38 @@ route through this same `_GuidePill` class, so one fix covers both.
 **Verification**: `dart format` + `flutter analyze` on
 `download_button.dart` — 0 issues. Full-project `flutter analyze` —
 43 issues (current baseline, unchanged).
+
+## Follow-up: "Redeem your Points" — added the missing points-count badge (desktop + mobile)
+
+**Report**: screenshot of the real site's "Points & Badges" dropdown
+showing a gold circle badge with the user's point balance ("288") next
+to "Redeem your Points" — missing entirely from this app's own
+dropdown/drawer. Requested for both desktop and mobile nav.
+
+**Source, confirmed against `origin/staging`'s
+`backend/views/layouts/bluetheme_layout.php`**: the real markup bakes
+the balance straight into that item's own label —
+`'Redeem your Points <span>{points}</span>'` — styled by `.nav-link
+span` (`background:#FDCD60; color:#000; border-radius:50%`). That
+rule's own literal size (`width/height:21px; font-size:7px`) is tuned
+for a `position:absolute` placement overlapping a different icon's
+corner — reproducing those exact numbers here would make a 3-digit
+balance illegible, so the badge is sized instead to actually fit one
+(min 24×24, 11px bold text), inline after the label, matching what the
+screenshot shows (sitting beside the text, not overlapping anything).
+
+**Fix**:
+- `lib/app/features/courses/view/lms_app_bar.dart` (desktop) —
+  `_NavSubItem` gained a `points` field; the popup item row renders a
+  new `_PointsBadge` after the label when set. `_DesktopNavBar.build`
+  now reads `ref.watch(AuthStateNotifier.provider)?.userProfile?.points`
+  and passes it only to the "Redeem your Points" item.
+- `lib/app/features/dashboard/view/app_drawer.dart` (mobile drawer) —
+  same pattern: `_SubNavItem` gained `points`, `_SubItemTile` renders
+  the same-spec `_PointsBadge` after its label's `Expanded(Text(...))`,
+  and `AppDrawer.build` reads the same `AuthStateNotifier` points value.
+
+**Verification**: `dart format` + `flutter analyze` on both files — 1
+issue, pre-existing (`app_drawer.dart`'s unrelated `withOpacity`
+deprecation), no new ones. Full-project `flutter analyze` — 43 issues
+(current baseline, unchanged).
