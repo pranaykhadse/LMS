@@ -78,26 +78,24 @@ class SignInPage extends ConsumerWidget {
       backgroundColor: _loginBg,
       body: Stack(
         children: [
-          // Bottom failsafe: deep-purple wash pinned to the lowest 200px,
-          // strictly behind the scene. When the scene sits correctly its
-          // opaque waves cover this zone entirely (zero visual change);
-          // if any inset exposes pixels below the waves, the wash — solid
-          // purple at the very edge — shows instead of pale scaffold, so
-          // purple always touches the bottom of small screens.
-          // IgnorePointer keeps footer links tappable where the form
-          // overlaps this zone.
+          // Bottom aura: a soft deep-purple wash rising 280px behind the
+          // scene (solid at the very edge, transparent at the top). It
+          // grounds the waves and guarantees purple — never pale scaffold
+          // — touches the bottom of small screens, while staying subtle
+          // enough to keep the footer text readable. IgnorePointer keeps
+          // footer links tappable where the form overlaps this zone.
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            height: 200,
+            height: 280,
             child: IgnorePointer(
               child: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    stops: [0.4, 1.0],
+                    stops: [0.1, 1.0],
                     colors: [Colors.transparent, Color(0xFF5940B4)],
                   ),
                 ),
