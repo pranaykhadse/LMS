@@ -86,6 +86,17 @@ class _CourseClassesPageState extends ConsumerState<CourseClassesPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         Toast.danger(context, 'Course has been deleted by the Admin.');
+        // Don't leave the learner stranded on a dead Course Details screen.
+        // If the course was deleted, back out to wherever they came from so
+        // the deleted course is never shown (this covers every entry point —
+        // catalog, dashboard, my/enrolled/completed/required courses,
+        // calendar, development plan, etc. — without touching each one).
+        final navigator = Navigator.of(context);
+        if (navigator.canPop()) {
+          navigator.pop();
+        } else {
+          Modular.to.navigate(CoursesModule.construct(CoursesModule.root));
+        }
       });
     }
 
