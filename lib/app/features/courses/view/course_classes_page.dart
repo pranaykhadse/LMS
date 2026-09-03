@@ -485,6 +485,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     if (classes.isNotEmpty) {
       await showDialog(
         context: context,
+        barrierColor: Colors.black.withValues(alpha: 0.5),
         builder:
             (_) => _MultiClassRegisterDialog(
               courseTitle: widget.detail.title,
@@ -1523,6 +1524,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     }
     await showDialog(
       context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       builder:
           (_) => _SessionRegisterDialog(
             courseTitle: widget.courseTitle,
@@ -2663,40 +2665,60 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      backgroundColor: Colors.white,
+      elevation: 0,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
+        constraints: const BoxConstraints(maxWidth: 600),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 44),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [_detailPurple, _detailPurple2],
                 ),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Stack(
-                alignment: Alignment.center,
                 children: [
-                  Text(
-                    widget.courseTitle,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 32),
+                    child: Text(
+                      widget.courseTitle,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
                     ),
                   ),
                   Positioned(
-                    right: -16,
-                    child: IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: Colors.white,
+                    right: -6,
+                    top: -2,
+                    child: SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: Material(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: const CircleBorder(),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () => Navigator.pop(context),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -2979,40 +3001,60 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      backgroundColor: Colors.white,
+      elevation: 0,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
+        constraints: const BoxConstraints(maxWidth: 600),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 44),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                   colors: [_detailPurple, _detailPurple2],
                 ),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Stack(
-                alignment: Alignment.center,
                 children: [
-                  Text(
-                    widget.courseTitle,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 32),
+                    child: Text(
+                      widget.courseTitle,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
                     ),
                   ),
                   Positioned(
-                    right: -16,
-                    child: IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        color: Colors.white,
+                    right: -6,
+                    top: -2,
+                    child: SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: Material(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: const CircleBorder(),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () => Navigator.pop(context),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -3570,26 +3612,68 @@ class _EventRadioCircle extends StatelessWidget {
 void _showNotEnrolledDialog(BuildContext context) {
   showDialog(
     context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.5),
     builder:
-        (context) => AlertDialog(
+        (context) => Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(16),
           ),
-          contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-          content: Text(
-            'You are not enrolled for this course. Click the Enroll Now button at the top of this page to continue.',
-            style: GoogleFonts.inter(color: _detailMuted, height: 1.5),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(foregroundColor: _detailPurple),
-              child: Text(
-                'OK',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700),
-              ),
+          clipBehavior: Clip.antiAlias,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  child: Text(
+                    'You are not enrolled for this course. Click the Enroll Now button at the top of this page to continue.',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF111827),
+                      fontSize: 14,
+                      height: 1.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: Color(0xFFF3F4F6)),
+                    ),
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _detailPurple,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        textStyle: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      child: const Text('OK'),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
   );
 }
@@ -3610,52 +3694,74 @@ void _showCancelConfirmationDialog(
   // "confirm" rather than "destroy."
   showDialog(
     context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.5),
     builder:
         (context) => Dialog(
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           clipBehavior: Clip.antiAlias,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF693D94), Color(0xFFAA399F)],
+          backgroundColor: Colors.white,
+          elevation: 0,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
                   ),
-                ),
-                child: Stack(
-                  children: [
-                    Text(
-                      'Confirm Cancellation',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [_detailPurple, _detailPurple2],
                     ),
-                    Positioned(
+                  ),
+                  child: Stack(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 32),
+                        child: Text(
+                          'Confirm Cancellation',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
+                          ),
+                        ),
+                      ),
+                      Positioned(
                       right: -6,
                       top: -2,
-                      child: IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          color: Colors.white,
+                      child: SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: Material(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: const CircleBorder(),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => Navigator.pop(context),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
@@ -3723,6 +3829,7 @@ void _showCancelConfirmationDialog(
             ],
           ),
         ),
+      ),
   );
 }
 
@@ -3733,13 +3840,20 @@ void _showClassDetails(
 ) {
   showDialog(
     context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.5),
     builder:
         (context) => Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
-          insetPadding: const EdgeInsets.all(20),
-          child: _ClassDetailsDialog(courseTitle: courseTitle, item: item),
+          clipBehavior: Clip.antiAlias,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: _ClassDetailsDialog(courseTitle: courseTitle, item: item),
+          ),
         ),
   );
 }
@@ -3783,11 +3897,11 @@ class _ClassDetailsDialog extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF693D94), Color(0xFFAA399F)],
+                colors: [_detailPurple, _detailPurple2],
               ),
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
               ),
             ),
             child: Stack(
@@ -4213,7 +4327,7 @@ class _LearningEventCard extends StatelessWidget {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFF693D94), Color(0xFFAA399F)],
+                  colors: [_detailPurple, _detailPurple2],
                 ),
               ),
             ),
@@ -4448,3 +4562,4 @@ String _formatFriendlyMoment(DateTime dateTime) {
       .padLeft(2, '0');
   return '$day $month ${dateTime.year} $hour12:$minute $amPm';
 }
+
