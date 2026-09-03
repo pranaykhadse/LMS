@@ -461,6 +461,8 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   hoverColor: Colors.transparent,
                   splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,
+                  focusColor: Colors.transparent,
+                  splashFactory: NoSplash.splashFactory,
                 ),
                 child: PopupMenuButton<String>(
                   offset: const Offset(0, 34),
@@ -1085,6 +1087,8 @@ class _ProfileMenuButtonState extends State<_ProfileMenuButton> {
         hoverColor: Colors.transparent,
         splashColor: Colors.transparent,
         highlightColor: Colors.transparent,
+        focusColor: Colors.transparent,
+        splashFactory: NoSplash.splashFactory,
       ),
       child: PopupMenuButton<String>(
         offset: const Offset(0, 38),
@@ -2052,18 +2056,21 @@ class _ProfileMenuRow extends StatelessWidget {
   // hover Theme above, so PopupMenuItem's default light-blue ink no
   // longer shows behind this pill.
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-    child: HoverBuilder(
-      cursor: SystemMouseCursors.click,
-      builder: (context, hovering) {
-        final tint = isLogout
-            ? const Color(0x1AEF4444)
-            : FigmaTokens.badgeBackground;
-        final textColor = hovering
-            ? (isLogout ? const Color(0xFFE53E3E) : _appPurple)
-            : const Color(0xFF4A5568);
-        return AnimatedContainer(
+  Widget build(BuildContext context) => HoverBuilder(
+    cursor: SystemMouseCursors.click,
+    builder: (context, hovering) {
+      final tint = isLogout
+          ? const Color(0x1AEF4444)
+          : FigmaTokens.badgeBackground;
+      final textColor = hovering
+          ? (isLogout ? const Color(0xFFE53E3E) : _appPurple)
+          : const Color(0xFF4A5568);
+      // Hover on the main container (the padded pill row) directly drives
+      // the pill background — not an inner wrapper — so the highlight
+      // tracks the item's full hit area instead of just the text line.
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
@@ -2091,9 +2098,9 @@ class _ProfileMenuRow extends StatelessWidget {
               ],
             ),
           ),
-        );
-      },
-    ),
+        ),
+      );
+    },
   );
 }
 
