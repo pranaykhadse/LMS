@@ -666,7 +666,29 @@ class _CoursesPageState extends ConsumerState<CoursesPage> {
                     // column-count tier. Live-measured at the 4-column
                     // breakpoint: 352px card - 180px image = 172px; at the
                     // 1-column breakpoint: 380 - 180 = 200px.
-                    final contentBudget = boxWide ? 172.0 : 200.0;
+                    //
+                    // That 172/200 budget was measured against a card
+                    // showing EITHER the "NEXT AVAILABLE" session block OR
+                    // the star-rating bar, not both stacked together — a
+                    // card with both (e.g. a short 1-line title, so the
+                    // title's own shorter height didn't offset it) actually
+                    // needs the session block's own ~38px on top of that,
+                    // and overflowed by a few px (RenderFlex "BOTTOM
+                    // OVERFLOWED" debug banner) since the whole row's fixed
+                    // `mainAxisExtent` was too short for it. Widened by the
+                    // session block's height whenever any card in this
+                    // group actually carries both, so groups that never mix
+                    // the two keep their original (tighter) row height.
+                    final hasSessionAndRating = group.courses.any(
+                      (c) =>
+                          c.nextSession != null &&
+                          c.displayRating &&
+                          c.averageRating > 0,
+                    );
+                    const sessionBlockHeight = 40.0;
+                    final contentBudget =
+                        (boxWide ? 172.0 : 200.0) +
+                        (hasSessionAndRating ? sessionBlockHeight : 0);
                     final extent = imageHeight + contentBudget;
                     final rows = (group.courses.length / columns).ceil();
                     final gridH = rows * extent + (rows - 1) * gap;

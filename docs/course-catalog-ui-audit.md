@@ -5012,3 +5012,38 @@ never matched this app's 600px `isWide` threshold — there was always a
 **Verification**: `dart format` + `flutter analyze` on
 `all_course_progress_page.dart` — 0 issues. Full-project `flutter
 analyze` — 59 issues (stable baseline, unchanged).
+
+## Follow-up: Course Catalog — fixed "BOTTOM OVERFLOWED BY 3.9 PIXELS" on catalog course cards
+
+**Report**: screenshot of the Course Catalog page's "Hottest Courses"
+section showing Flutter's debug overflow banner on one card — the one
+combining a "NEXT AVAILABLE" session block with a star-rating bar and a
+short (1-line) title.
+
+**Root cause**: `_groupBlock`/`_CatalogCourseCard` in
+`lib/app/features/courses/view/courses_page.dart` sizes every card in a
+`GridView`'s row to one fixed `contentBudget` (172px at the 4-column
+breakpoint, 200px at 1-column), live-measured against a card showing
+*either* the session block *or* the rating bar. A card with a short
+title happens to show *both* at once — the session block (~38px: label
++ gap + date row) wasn't in that original budget, so total content
+height exceeded the fixed `mainAxisExtent` given to the whole row by a
+few px, producing the classic `RenderFlex` bottom-overflow debug banner.
+
+**Fix**: compute a per-group flag — `group.courses.any((c) =>
+c.nextSession != null && c.displayRating && c.averageRating > 0)` — and
+add a `sessionBlockHeight` (40px) to `contentBudget` only for groups
+that actually contain such a card, so groups that never mix the two
+keep their original (tighter) row height and only the ones that need
+the headroom get it. Applied to the main catalog grid's `_groupBlock`;
+the separate offline-courses grid (`_CourseCardData.fromOffline`)
+always sets `nextSession: null`, so it can never hit this combination
+and didn't need the same change.
+
+**Verification**: `dart format` + `flutter analyze` on
+`courses_page.dart` — 2 issues, both pre-existing (`_catalogUndoBlue`
+unused, unused `response` local), no new ones. Full-project `flutter
+analyze` — 43 issues (down from the previously-tracked 59-issue
+baseline; unrelated commits landed in the repo between sessions and
+lowered it — confirmed via `git log` that this file's own diff didn't
+touch any of the resolved warnings).
