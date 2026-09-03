@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
@@ -25,6 +26,48 @@ bool _watchIsOnline(WidgetRef ref) {
   final connectionVM = ref.watch(InternetConnectionProvider.provider);
   ref.watch(SyncViewModel.provider);
   return !isManualOffline && connectionVM.isConnected;
+}
+
+// ── Web sidebar icon ───────────────────────────────────────────────────────
+// The live site's `#navbarMenu` icons, bundled verbatim under
+// assets/images/nav (vectors as .svg, embedded rasters extracted as .png
+// with their original fill-opacity). Main items render in the web's 36px
+// box with 8px padding, sub items in its 24px box with 3px padding.
+class _NavIcon extends StatelessWidget {
+  const _NavIcon(this.file, {this.main = true, this.opacity = 1});
+
+  final String file;
+  final bool main;
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    final box = main ? 36.0 : 24.0;
+    final pad = main ? 8.0 : 3.0;
+    final glyph = box - pad * 2;
+    final Widget img =
+        file.endsWith('.png')
+            ? Image.asset(
+              'assets/images/nav/$file',
+              width: glyph,
+              height: glyph,
+              fit: BoxFit.fill,
+            )
+            : SvgPicture.asset(
+              'assets/images/nav/$file',
+              width: glyph,
+              height: glyph,
+              fit: BoxFit.contain,
+            );
+    return SizedBox(
+      width: box,
+      height: box,
+      child: Padding(
+        padding: EdgeInsets.all(pad),
+        child: opacity == 1 ? img : Opacity(opacity: opacity, child: img),
+      ),
+    );
+  }
 }
 
 // ── Public widget ──────────────────────────────────────────────────────────
@@ -105,7 +148,7 @@ class AppDrawer extends ConsumerWidget {
                   children: [
                     // Course Catalog
                     _NavCard(
-                      icon: LucideIcons.library,
+                      icon: const _NavIcon('catalog-icon.svg'),
                       label: 'Course Catalog',
                       selected: sel == 'Course Catalog',
                       onTap: () {
@@ -122,12 +165,15 @@ class AppDrawer extends ConsumerWidget {
 
                     // My Courses (expandable)
                     _ExpandableNavCard(
-                      icon: LucideIcons.bookOpen,
+                      icon: const _NavIcon('my-courses.png', opacity: 0.65),
                       label: 'My Courses',
                       selected: myCoursesActive,
                       children: [
                         _SubNavItem(
-                          icon: LucideIcons.award,
+                          icon: const _NavIcon(
+                            'courses-icon.svg',
+                            main: false,
+                          ),
                           label: 'My Enrolled Courses',
                           selected: subSel == 'My Enrolled Courses',
                           onTap: () {
@@ -141,7 +187,10 @@ class AppDrawer extends ConsumerWidget {
                           },
                         ),
                         _SubNavItem(
-                          icon: LucideIcons.checkCircle,
+                          icon: const _NavIcon(
+                            'courses-icon.svg',
+                            main: false,
+                          ),
                           label: 'My Completed Courses',
                           selected: subSel == 'My Completed Courses',
                           onTap: () {
@@ -155,7 +204,11 @@ class AppDrawer extends ConsumerWidget {
                           },
                         ),
                         _SubNavItem(
-                          icon: LucideIcons.globe,
+                          icon: const _NavIcon(
+                            'development-plan.png',
+                            main: false,
+                            opacity: 0.65,
+                          ),
                           label: 'My Development Plan',
                           selected: subSel == 'My Development Plan',
                           onTap: () {
@@ -169,7 +222,11 @@ class AppDrawer extends ConsumerWidget {
                           },
                         ),
                         _SubNavItem(
-                          icon: LucideIcons.clipboardList,
+                          icon: const _NavIcon(
+                            'required-courses.png',
+                            main: false,
+                            opacity: 0.65,
+                          ),
                           label: 'My Required Courses',
                           selected: subSel == 'My Required Courses',
                           onTap: () {
@@ -186,7 +243,11 @@ class AppDrawer extends ConsumerWidget {
                         // Recomended Courses" (typo, confirmed against
                         // `origin/staging`'s bluetheme_layout.php).
                         _SubNavItem(
-                          icon: LucideIcons.clipboardList,
+                          icon: const _NavIcon(
+                            'required-courses.png',
+                            main: false,
+                            opacity: 0.65,
+                          ),
                           label: 'My Recomended Courses',
                           selected: subSel == 'My Recomended Courses',
                           onTap: () {
@@ -205,7 +266,7 @@ class AppDrawer extends ConsumerWidget {
 
                     // Learning Paths
                     _NavCard(
-                      icon: LucideIcons.map,
+                      icon: const _NavIcon('learning-path-icon.svg'),
                       label: 'Learning Paths',
                       selected: sel == 'Learning Paths',
                       onTap: () {
@@ -220,12 +281,15 @@ class AppDrawer extends ConsumerWidget {
 
                     // Points & Badges (expandable)
                     _ExpandableNavCard(
-                      icon: LucideIcons.award,
+                      icon: const _NavIcon('points-and-badges-icon.svg'),
                       label: 'Points & Badges',
                       selected: pointsBadgesActive,
                       children: [
                         _SubNavItem(
-                          icon: LucideIcons.gift,
+                          icon: const _NavIcon(
+                            'redeem-icon.svg',
+                            main: false,
+                          ),
                           label: 'Redeem your Points',
                           selected: subSel == 'Redeem your Points',
                           onTap: () {
@@ -239,7 +303,11 @@ class AppDrawer extends ConsumerWidget {
                           },
                         ),
                         _SubNavItem(
-                          icon: LucideIcons.medal,
+                          icon: const _NavIcon(
+                            'badges.png',
+                            main: false,
+                            opacity: 0.55,
+                          ),
                           label: 'Badges',
                           selected: subSel == 'Badges',
                           onTap: () {
@@ -256,12 +324,16 @@ class AppDrawer extends ConsumerWidget {
 
                     // Contact a Coach (expandable)
                     _ExpandableNavCard(
-                      icon: LucideIcons.messageCircle,
+                      icon: const _NavIcon('coach.png', opacity: 0.6),
                       label: 'Contact a Coach',
                       selected: false,
                       children: [
                         _SubNavItem(
-                          icon: LucideIcons.user,
+                          icon: const _NavIcon(
+                            'coach.png',
+                            main: false,
+                            opacity: 0.6,
+                          ),
                           label: 'Contact a Development Pro',
                           disabled: !isOnline,
                           // Deliberately NOT calling _close(context) first
@@ -275,7 +347,11 @@ class AppDrawer extends ConsumerWidget {
                           onTap: () => launchContactCoachUrl(ref, context),
                         ),
                         _SubNavItem(
-                          icon: LucideIcons.bot,
+                          icon: const _NavIcon(
+                            'badges.png',
+                            main: false,
+                            opacity: 0.55,
+                          ),
                           label: 'Virtual Development Pro',
                           disabled: !isOnline,
                           // Bug: this awaits a network call
@@ -349,7 +425,7 @@ class _NavCard extends StatelessWidget {
     this.onTap,
   });
 
-  final IconData icon;
+  final Widget icon;
   final String label;
   final bool selected;
   final VoidCallback? onTap;
@@ -365,8 +441,9 @@ class _NavCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
-              Icon(icon, size: 22, color: selected ? _purple : _itemText),
-              const SizedBox(width: 14),
+              icon,
+              // Web `#navbarMenu` main icon gap: 12px.
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   label,
@@ -395,7 +472,7 @@ class _ExpandableNavCard extends StatefulWidget {
     this.selected = false,
   });
 
-  final IconData icon;
+  final Widget icon;
   final String label;
   final bool selected;
   final List<_SubNavItem> children;
@@ -469,12 +546,9 @@ class _ExpandableNavCardState extends State<_ExpandableNavCard>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
                 children: [
-                  Icon(
-                    widget.icon,
-                    size: 22,
-                    color: isActive ? _purple : _itemText,
-                  ),
-                  const SizedBox(width: 14),
+                  widget.icon,
+                  // Web `#navbarMenu` main icon gap: 12px.
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       widget.label,
@@ -601,7 +675,7 @@ class _SubNavItem {
     this.disabled = false,
     this.selected = false,
   });
-  final IconData icon;
+  final Widget icon;
   final String label;
   final VoidCallback? onTap;
   final bool disabled;
@@ -641,12 +715,15 @@ class _SubItemTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: [
-              Icon(
-                item.disabled ? LucideIcons.cloudOff : item.icon,
-                size: 18,
-                color: color,
-              ),
-              const SizedBox(width: 10),
+              item.disabled
+                  ? Icon(
+                    LucideIcons.cloudOff,
+                    size: 18,
+                    color: color,
+                  )
+                  : item.icon,
+              // Web `#homeSubMenu` icon gap: 8px.
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   item.label,
