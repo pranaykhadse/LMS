@@ -412,6 +412,20 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Same rule as desktop: manual refresh shows wherever the
+              // page supplies onRefresh (also re-fetches notifications).
+              if (onRefresh != null) ...[
+                LmsAppBarButton(
+                  icon: Icons.refresh_rounded,
+                  iconSize: 14,
+                  boxSize: 30,
+                  onTap: () {
+                    onRefresh!();
+                    ref.read(NotificationsViewModel.provider.notifier).fetch();
+                  },
+                ),
+                const SizedBox(width: 6),
+              ],
               LmsOfflineToggle(
                 isOffline: isOffline,
                 // w-[14px] h-[14px] from dashboard CSS
