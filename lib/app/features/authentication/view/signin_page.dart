@@ -68,10 +68,14 @@ class SignInPage extends ConsumerWidget {
     final cardWidth = width > 1500 ? 780.0 : 580.0;
 
     return Scaffold(
-      // DIAGNOSTIC ONLY (will revert): paints the whole page bg red so
-      // the next screenshot proves whether the pale strip is inside this
-      // page's layout (turns red) or comes from outside it (stays pale).
-      backgroundColor: Colors.red,
+      // The diagnostic red bg from the prior pass confirmed the large
+      // pale area above the image band is this page's own Scaffold
+      // background, not a bleed-through from anywhere else — i.e. it's
+      // the expected `body.login { background: #ECE9FF }` fill showing
+      // above the bottom-anchored scene, exactly matching the real
+      // site's own screenshot (mostly-lavender page, compact image band
+      // at the bottom). Reverted to the real color.
+      backgroundColor: _loginBg,
       body: Stack(
         children: [
           // Failsafe: deep-purple gradient pinned to the very bottom,
@@ -117,10 +121,7 @@ class SignInPage extends ConsumerWidget {
                     // <=640px: transparent wrapper, 20px sides.
                     ? SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                      child: _LoginForm(
-                        viewModel: viewModel,
-                        phone: true,
-                      ),
+                      child: _LoginForm(viewModel: viewModel, phone: true),
                     )
                     : tablet
                     // <=991px: card centered.
@@ -262,8 +263,7 @@ class _LoginForm extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           ValueListenableBuilder<bool>(
-            valueListenable:
-                viewModel.isPasswordHidden as ValueNotifier<bool>,
+            valueListenable: viewModel.isPasswordHidden as ValueNotifier<bool>,
             builder: (context, isHidden, _) {
               return TextFormField(
                 controller: viewModel.password,
@@ -330,9 +330,7 @@ class _LoginForm extends ConsumerWidget {
                 value: viewModel.rememberMe,
                 onChanged: viewModel.toggleRememberMe,
                 // Live site: square box; checked fill is green.
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                 side: const BorderSide(color: Color(0xFFADB5BD)),
                 fillColor: WidgetStateProperty.resolveWith(
                   (states) =>
@@ -346,9 +344,7 @@ class _LoginForm extends ConsumerWidget {
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap:
-                      () => viewModel.toggleRememberMe(
-                        !viewModel.rememberMe,
-                      ),
+                      () => viewModel.toggleRememberMe(!viewModel.rememberMe),
                   child: Text(
                     "keep_me_logged_in".translate(context),
                     style: GoogleFonts.roboto(
@@ -412,10 +408,7 @@ class _LoginForm extends ConsumerWidget {
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   text: 'Need help? Contact us at ',
-                  style: GoogleFonts.roboto(
-                    color: _helpGrey,
-                    fontSize: 13,
-                  ),
+                  style: GoogleFonts.roboto(color: _helpGrey, fontSize: 13),
                   children: [
                     TextSpan(
                       text: _supportEmail,
@@ -479,9 +472,7 @@ class _LoginButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = ElevatedButton.styleFrom(
       foregroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       textStyle: GoogleFonts.roboto(
         fontSize: 16,
         fontWeight: FontWeight.w400,
@@ -489,7 +480,8 @@ class _LoginButton extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       fixedSize: fullWidth ? null : const Size(107, 40),
-      minimumSize: fullWidth ? const Size(double.infinity, 40) : const Size(107, 40),
+      minimumSize:
+          fullWidth ? const Size(double.infinity, 40) : const Size(107, 40),
     ).copyWith(
       backgroundColor: WidgetStateProperty.resolveWith(
         (states) =>
@@ -523,11 +515,7 @@ class _LoginButton extends StatelessWidget {
       ),
     );
     if (fullWidth) {
-      button = SizedBox(
-        width: double.infinity,
-        height: 40,
-        child: button,
-      );
+      button = SizedBox(width: double.infinity, height: 40, child: button);
     }
     return button;
   }
@@ -553,15 +541,9 @@ class _SignUpButton extends StatelessWidget {
             // Instant (non-animated) swap: lerping transparent-black to
             // lavender would flash an intermediate grey, i.e. a second bg.
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color:
-                    hovering
-                        ? const Color(0xFFF5F3FF)
-                        : Colors.transparent,
+                color: hovering ? const Color(0xFFF5F3FF) : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

@@ -5116,3 +5116,30 @@ visual weight now that they're also the same color.
 **Verification**: `dart format` + `flutter analyze` on
 `lms_app_bar.dart` — 0 issues. Full-project `flutter analyze` — 43
 issues (current baseline, unchanged).
+
+## Follow-up: Login page — reverted the diagnostic red Scaffold background
+
+**Context**: a concurrent pass on this same screen (commits `e3a28ad`,
+`a3ca954`, `b96ff7d`) investigated a "pale strip" concern around the
+bottom-anchored background scene: added a purple gradient failsafe
+behind the scene (so any future inset/measurement gap would show
+purple, never the bare Scaffold color), then temporarily painted the
+whole page's `Scaffold.backgroundColor` bright red as a diagnostic, to
+prove from a screenshot whether the large pale area above the image
+band belongs to this page's own layout or bleeds through from
+somewhere else — left as `Colors.red` with a `(will revert)` note.
+
+**This follow-up**: that diagnostic screenshot confirms the large pale
+area IS this page's own Scaffold background — it turned solidly red,
+not a thin strip — which is the expected, correct result: it's exactly
+`body.login`'s own `background: #ECE9FF` fill showing above the
+compact bottom-anchored image band, matching the real site's own
+screenshot (mostly-lavender page, small image band at the bottom).
+Reverted `Scaffold.backgroundColor` from the diagnostic `Colors.red`
+back to `_loginBg` (`#ECE9FF`). The purple gradient failsafe behind the
+scene was left in place — harmless (fully covered by the scene's own
+opaque art in normal operation) and a reasonable defensive fallback.
+
+**Verification**: `dart format` + `flutter analyze` on
+`signin_page.dart` — 0 issues. Full-project `flutter analyze` — 43
+issues (current baseline, unchanged).
