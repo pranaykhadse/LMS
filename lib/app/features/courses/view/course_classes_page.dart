@@ -297,8 +297,10 @@ class _CourseHero extends StatelessWidget {
     // `@media (max-width:767px)` `32px 0 24px`. Bottom 44/24 forms the
     // purple gap above the launch panel after its negative translate
     // (44−20=24 desktop, 24−16=8 mobile). `::after` notch is commented
-    // out, so none drawn. Full-bleed purple; inner content SPANS 95%
-    // (minWidth = maxWidth) with title/rating `padding-left 6px`
+    // out, so none drawn. Full-bleed purple on desktop; on mobile the
+    // hero sits inside the 16px container gutters (white margins left /
+    // right / top) instead of bleeding edge-to-edge. Inner content SPANS
+    // 95% (minWidth = maxWidth) with title/rating `padding-left 6px`
     // desktop / `0` mobile. The minWidth is load-bearing: `#page-heading
     // h2` is a full-width block, so with maxWidth alone the column
     // shrink-wraps to a short title and `Center` parks that sliver mid-
@@ -307,6 +309,7 @@ class _CourseHero extends StatelessWidget {
     final contentWidth = MediaQuery.sizeOf(context).width * 0.95;
     return Container(
       color: _detailPurple,
+      margin: phone ? const EdgeInsets.fromLTRB(16, 16, 16, 0) : EdgeInsets.zero,
       padding: EdgeInsets.fromLTRB(0, phone ? 32 : 48, 0, phone ? 24 : 44),
       child: Center(
         child: ConstrainedBox(
@@ -819,11 +822,10 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     // card instead of stretching full-width.
     final screenWidth = MediaQuery.sizeOf(context).width;
     final cardMaxWidth = phone
-        // Single column of launches content is far narrower than the screen
-        // (countdown + pill + a full-width action button), so on mobile the
-        // card is reduced to 90% of the screen width and centered rather
-        // than stretching edge-to-edge.
-        ? screenWidth * 0.9
+        // Mobile web nests the launches box in the same 16px container
+        // gutters as the hero, so the card spans the width minus 32px
+        // rather than stretching full-width.
+        ? screenWidth - 32
         : screenWidth * 0.98;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
