@@ -5143,3 +5143,53 @@ opaque art in normal operation) and a reasonable defensive fallback.
 **Verification**: `dart format` + `flutter analyze` on
 `signin_page.dart` — 0 issues. Full-project `flutter analyze` — 43
 issues (current baseline, unchanged).
+
+## Follow-up: Account Settings — real, working State picker (was a static readonly field)
+
+**Report**: screenshot of the real site's Account/Profile page with its
+State field open — a searchable dropdown grouped under "United States",
+the current state highlighted — with the request: "State selection
+dropdown should be there and the selected/updated one should be shown."
+
+**Context / correction of an earlier assumption**: this screen's `State`
+row was a plain readonly `_FieldRow` showing `loginExtras?.stateName`
+verbatim, never editable — a deliberate choice made earlier this session
+because `origin/staging`'s `backend/views/sign-in/account.php` binds the
+Select2 with `'pluginOptions' => ['disabled' => true]`. Confirmed with
+the user that their screenshot is the real, live site — meaning
+something (JS, most likely) actually enables that field there despite
+the static PHP config marking it disabled, the same "live evidence beats
+static source" pattern already hit earlier this session for the
+pagination widget. Per that live evidence, this is now a real, working
+picker.
+
+**Why the picked value isn't sent on Save**: the real state list is
+DB-backed (`common\models\State::find()->all()`, grouped by `country`,
+keyed by the table's own numeric `id`) and only ever gets baked directly
+into the web page's own Select2 HTML — there's no endpoint anywhere in
+the mobile-facing API this app actually calls
+(`api/modules/v1/controllers/API/user/UserProfileController.php`) that
+exposes that list or its real ids. Hardcoding guessed ids risked
+silently saving the wrong state on a real profile. Raised this directly
+and, per explicit direction, built the picker as UI-only for now:
+selecting a state updates the on-screen field immediately, but nothing
+is sent to the server for it on Save.
+
+**Fix**: `lib/app/features/dashboard/view/account_settings_page.dart`
+- New `_StateFieldRow` (mirrors `_FieldRow`'s layout/read-only-vs-editing
+  look) whose field is tappable in edit mode, opening...
+- New `_StatePickerDialog` — a searchable dialog (same shape/pattern as
+  the existing `_CountryPickerDialog` used for the phone country code)
+  listing every US state under a bold "United States" header, with the
+  currently-selected one highlighted in `FigmaTokens.primaryPurple`
+  (matching Select2's own highlighted-option style) and a live search
+  filter.
+- New `kUsStates` — the 50 US state names (display text only, no ids).
+- New `_selectedStateName` state var on `_AccountSettingsBodyState`,
+  seeded from `AuthStateNotifier`'s `stateName` in `initState`/
+  `_resetControllers`, updated locally on selection, deliberately never
+  read by `_save()`.
+
+**Verification**: `dart format` + `flutter analyze` on
+`account_settings_page.dart` — 0 issues. Full-project `flutter
+analyze` — 43 issues (current baseline, unchanged).
