@@ -2741,30 +2741,31 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                 ),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
-              child: Stack(
+              // In-flow header row: title left, close button in-flow at
+              // the right and vertically centered — nothing absolutely
+              // positioned, so the dialog's rounded-corner clip cannot
+              // cut into the X.
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 32),
-                    child: Text(
-                      widget.courseTitle,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Text(
+                        widget.courseTitle,
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
                       ),
                     ),
                   ),
-                  Positioned(
-                    // Kept fully inside the header padding — negative
-                    // offsets pushed the circle into the dialog's rounded
-                    // corner clip so the X looked cut off.
-                    right: 0,
-                    top: 0,
-                    child: SizedBox(
-                      width: 32,
-                      height: 32,
-                      child: ClipOval(
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: ClipOval(
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                           child: Container(
@@ -2796,7 +2797,6 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -3109,30 +3109,31 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                 ),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
-              child: Stack(
+              // In-flow header row: title left, close button in-flow at
+              // the right and vertically centered — nothing absolutely
+              // positioned, so the dialog's rounded-corner clip cannot
+              // cut into the X.
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 32),
-                    child: Text(
-                      widget.courseTitle,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Text(
+                        widget.courseTitle,
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
                       ),
                     ),
                   ),
-                  Positioned(
-                    // Kept fully inside the header padding — negative
-                    // offsets pushed the circle into the dialog's rounded
-                    // corner clip so the X looked cut off.
-                    right: 0,
-                    top: 0,
-                    child: SizedBox(
-                      width: 32,
-                      height: 32,
-                      child: ClipOval(
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: ClipOval(
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
                           child: Container(
@@ -3164,7 +3165,6 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -4088,18 +4088,17 @@ class _ClassDetailsDialog extends StatelessWidget {
                 topRight: Radius.circular(16),
               ),
             ),
-            child: Stack(
-              alignment: Alignment.center,
+            // In-flow header row: a 32px balance box on the left keeps
+            // the title+badge group truly centered while the 32px close
+            // button rides in-flow at the right, vertically centered —
+            // nothing is absolutely positioned, so the dialog's
+            // rounded-corner clip cannot cut into the X.
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Live reference: title + type badge are centered as one
-                // group (equal 32px side reserves keep it truly centered),
-                // with the close button absolute at the inner top-right.
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                const SizedBox(width: 32),
+                Expanded(
                   child: Row(
-                    // Full-width row (a min row would shrink-wrap the
-                    // whole header into a narrow strip) with the
-                    // title+badge group centered.
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Flexible(
@@ -4137,40 +4136,33 @@ class _ClassDetailsDialog extends StatelessWidget {
                     ],
                   ),
                 ),
-                Positioned(
-                  // Fully inside the header padding (was right:-6/top:-2,
-                  // which pushed the circle into the dialog's rounded
-                  // corner clip so the X looked cut off).
-                  right: 0,
-                  top: 0,
-                  child: SizedBox(
-                    width: 32,
-                    height: 32,
-                    // CSS ref: `.modal-close-btn` — the shared blurred
-                    // gradient circle (was a flat white-.2 circle here,
-                    // unlike the register dialog which already had this).
-                    child: ClipOval(
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withValues(alpha: 0.2),
-                                const Color(
-                                  0xFF5C52D4,
-                                ).withValues(alpha: 0.4),
-                              ],
-                            ),
-                            shape: BoxShape.circle,
+                SizedBox(
+                  width: 32,
+                  height: 32,
+                  // CSS ref: `.modal-close-btn` — the shared blurred
+                  // gradient circle.
+                  child: ClipOval(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.2),
+                              const Color(
+                                0xFF5C52D4,
+                              ).withValues(alpha: 0.4),
+                            ],
                           ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              customBorder: const CircleBorder(),
-                              onTap: () => Navigator.pop(context),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => Navigator.pop(context),
                               child: const Icon(
                                 Icons.close_rounded,
                                 color: Colors.white,
@@ -4182,9 +4174,8 @@ class _ClassDetailsDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ),
           Flexible(
             child: SingleChildScrollView(
