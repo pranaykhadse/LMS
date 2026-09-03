@@ -293,64 +293,42 @@ class _CourseHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // CSS ref: `#page-heading` — desktop (max-width 768) padding
-    // `48px 0 44px`; mobile (`@media max-width:767px`) `32px 0 24px`.
-    // The 44/24 bottom padding is what forms the purple gap above the
-    // launch panel once that card is pulled up by its negative translate
-    // (44 − 20 = 24px on desktop, 24 − 16 = 8px on mobile, matching the
-    // web exactly). `#page-heading::after`'s notch rule has `content`
-    // commented out (and app.css has no such rule), so no notch strip
-    // is drawn on the web and none is added here.
-    //
-    // The whole strip is full-bleed purple (#page-heading spans the full
-    // viewport on the web); only its inner content is centered at 95%.
+    // CSS ref: `#page-heading` — desktop `48px 0 44px`; mobile
+    // `@media (max-width:767px)` `32px 0 24px`. Bottom 44/24 forms the
+    // purple gap above the launch panel after its negative translate
+    // (44−20=24 desktop, 24−16=8 mobile). `::after` notch is commented
+    // out, so none drawn. Full-bleed purple; inner content centered
+    // at 95% with title/rating `padding-left 6px` desktop / `0` mobile.
     final phone = MediaQuery.sizeOf(context).width < 768;
     return Container(
       color: _detailPurple,
-      padding: EdgeInsets.fromLTRB(0, 10, 0, phone ? 24 : 44),
+      padding: EdgeInsets.fromLTRB(0, phone ? 32 : 48, 0, phone ? 24 : 44),
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: MediaQuery.sizeOf(context).width * 0.95,
           ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 34, 14, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // CSS ref, confirmed against `origin/staging`'s joinCourse.php:
-                // #page-heading h2 — 32px/weight700 (was 24px/800), letter-
-                // spacing -0.5px (was none); mobile shrinks to 24px.
-                Text(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(left: phone ? 0 : 6),
+                child: Text(
                   detail.title,
                   style: GoogleFonts.inter(
                     color: Colors.white,
                     fontSize: phone ? 24 : 32,
                     fontWeight: FontWeight.w700,
-                    height: 1.18,
                     letterSpacing: -0.5,
                   ),
                 ),
-                // #page-heading h2 has `margin: 0 0 12px 0`.
-                const SizedBox(height: 12),
-                // CSS/markup ref, confirmed against `origin/staging`'s
-                // _rating_summary.php: `.average-rating-section` — inline-flex
-                // row, gap 12px, containing (in order): star rating, numeric
-                // average, and (if `display_rating`) a review-count pill, then
-                // (if `allow_rating`) the "Add Rating" pill — both pills share
-                // `#page-heading .course-rating-summary a`'s styling (bg
-                // white@.15, border white@.25, radius 30, padding 4px 12px).
-                // `CourseJoinDetail.displayRating`/`averageRating`/
-                // `ratingCount` now parsed from `actionJoinCourseDetail`'s
-                // payload, which already dumps the whole Course model
-                // (including these columns) — was previously left unparsed and
-                // flagged as a backend gap that, on closer look, isn't one.
-                // .average-rating-section is inline-flex gap 10px; the two
-                // review/Add-Rating pills each carry `margin: 0 0 0 6px`, so the
-                // pill gaps become 16px (10 + 6) — hence Wrap spacing 16.
-                Wrap(
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: EdgeInsets.only(left: phone ? 0 : 6),
+                child: Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 16,
+                  spacing: 12,
                   runSpacing: 8,
                   children: [
                     if (detail.displayRating) ...[
@@ -391,8 +369,8 @@ class _CourseHero extends StatelessWidget {
                       const _HeroPill(child: Text('Add Rating')),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
