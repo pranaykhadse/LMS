@@ -326,7 +326,10 @@ class _CourseHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: EdgeInsets.only(left: phone ? 0 : 6),
+                // Phone titles sit 8px in from the content column (the
+                // web zeroes this, but the live reference keeps the
+                // mobile title visibly inset from the purple edge).
+                padding: EdgeInsets.only(left: phone ? 8 : 6),
                 child: Text(
                   detail.title,
                   style: GoogleFonts.inter(
@@ -339,7 +342,7 @@ class _CourseHero extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Padding(
-                padding: EdgeInsets.only(left: phone ? 0 : 6),
+                padding: EdgeInsets.only(left: phone ? 8 : 6),
                 child: Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
                   spacing: 12,
@@ -827,9 +830,10 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     // container (the 8px page margin supplies the side gutters).
     final screenWidth = MediaQuery.sizeOf(context).width;
     final cardMaxWidth = phone
-        // On mobile the page's main-container margin supplies the side
-        // gutters, so the card simply fills the available width.
-        ? screenWidth
+        // The overlapping white card stays narrower than the hero —
+        // 8px page margin plus 8px centering each side — instead of
+        // spanning the full container width into the purple.
+        ? screenWidth - 32
         : screenWidth * 0.98;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
