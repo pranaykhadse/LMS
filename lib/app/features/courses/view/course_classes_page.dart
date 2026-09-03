@@ -3697,16 +3697,10 @@ void _showCancelConfirmationDialog(
   BuildContext context, {
   required VoidCallback onConfirm,
 }) {
-  // CSS/markup ref, confirmed against `origin/staging`'s joinCourse.php:
-  // `#cancel_confirm_modal` — content radius 12 (already correct), shadow
-  // 0 10px 25px rgba(0,0,0,.1) (was none); a gradient header (135deg
-  // #693D94→#AA399F, white 18px/700 title, padding 16/20) was entirely
-  // missing — the title rendered as plain dark text with no header bar at
-  // all. Body padding 24, message centered/16px/#333 (was left-aligned/
-  // muted-token/no explicit size). "Yes, Cancel" is `.btn-modal-primary`
-  // with an inline override to Bootstrap danger red (`#DC3545`, not this
-  // app's `#DC2626`) — was solid purple, i.e. visually identical to
-  // "confirm" rather than "destroy."
+  // Web ref: user-provided screenshot (white header, not gradient) —
+  // `Confirm Cancellation` centered dark 16/600, X in light lav circle
+  // (32, bg #F5F3FF / #EDE9FE, white X), dividers #F3F4F6, body 16/#333
+  // centered, footer `No` #F3F4F6 / `Yes` purple #693D94 (not red).
   showDialog(
     context: context,
     barrierColor: Colors.black.withValues(alpha: 0.5),
@@ -3715,7 +3709,7 @@ void _showCancelConfirmationDialog(
           insetPadding:
               const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
           clipBehavior: Clip.antiAlias,
           backgroundColor: Colors.white,
@@ -3725,67 +3719,44 @@ void _showCancelConfirmationDialog(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [_detailPurple, _detailPurple2],
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(right: 32),
-                        child: Text(
-                          'Confirm Cancellation',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            height: 1.2,
-                          ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      color: Colors.white,
+                      child: Text(
+                        'Confirm Cancellation',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF1E2939),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          height: 1.2,
                         ),
                       ),
+                    ),
                     Positioned(
-                      right: -6,
-                      top: -2,
+                      right: 12,
+                      top: 12,
                       child: SizedBox(
                         width: 32,
                         height: 32,
-                        child: ClipOval(
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.white.withValues(alpha: 0.2),
-                                    const Color(0xFF5C52D4)
-                                        .withValues(alpha: 0.4),
-                                  ],
-                                ),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  customBorder: const CircleBorder(),
-                                  onTap: () => Navigator.pop(context),
-                                  child: const Icon(
-                                    Icons.close_rounded,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
+                        child: Material(
+                          color: const Color(0xFFF5F3FF),
+                          shape: const CircleBorder(),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => Navigator.pop(context),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              color: Color(0xFF9CA3AF),
+                              size: 18,
                             ),
                           ),
                         ),
@@ -3793,17 +3764,22 @@ void _showCancelConfirmationDialog(
                     ),
                   ],
                 ),
-              ),
+                const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                 child: Text(
                   'Would you like to cancel your registration for this course?',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(color: Color(0xFF333333), fontSize: 16),
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF333333),
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
                 ),
               ),
+              const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -3836,7 +3812,7 @@ void _showCancelConfirmationDialog(
                         onConfirm();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFDC3545),
+                        backgroundColor: _detailPurple,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
