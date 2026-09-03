@@ -7,6 +7,7 @@ import 'package:form_validator/form_validator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:lms/app/core/core.dart';
+import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/gen/assets.gen.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
@@ -22,8 +23,8 @@ import '../viewmodel/signin_viewmodel.dart';
 // Roboto for that reason.
 //
 // body.login — bg #ECE9FF with login-bg.png pinned bottom/contain.
-// .form-wrap — desktop 700px pushed right (the live card renders wider
-// than the checked-in 610px); 520px at <=1500px; <=991px centered;
+// .form-wrap — desktop 780px pushed right (the live card renders much
+// wider than the checked-in 610px); 580px at <=1500px; <=991px centered;
 // <=640px full width with 20px sides and stacked full-width buttons.
 // .form-content — white card, padding 20/60 (10/30 <=1500px),
 //   border 1px --primary-first, shadow 0 4px 26px rgba(0,0,0,.15),
@@ -33,7 +34,8 @@ import '../viewmodel/signin_viewmodel.dart';
 // .form-control — border #BFC9D4, text #3B3F5C 15px, padding 8/10,
 //   radius 6, envelope/lock prefix icons.
 // Buttons — centered row of 107x40 Log in (radius 8, purple-darken
-// hover) + plain purple "Sign up" text link; stacked on phones.
+// hover) + plain purple "Sign up" text link with a lavender hover pill;
+// stacked on phones.
 // .forgot-password — centered, link 18px #979797 with NO underline.
 // Deliberate deviations: both fields stay visible (the site reveals the
 // password box only after a valid email via JS); the Privacy Policy link
@@ -61,9 +63,9 @@ class SignInPage extends ConsumerWidget {
     final width = MediaQuery.sizeOf(context).width;
     final phone = width < 768;
     final tablet = width >= 768 && width < 992;
-    // Card 700px on wide desktop, 520px at <=1500px (both right-aligned);
+    // Card 780px on wide desktop, 580px at <=1500px (both right-aligned);
     // centered on tablets; transparent full-width strip on phones.
-    final cardWidth = width > 1500 ? 700.0 : 520.0;
+    final cardWidth = width > 1500 ? 780.0 : 580.0;
 
     return Scaffold(
       backgroundColor: _loginBg,
@@ -367,33 +369,37 @@ class _LoginForm extends ConsumerWidget {
               ),
             ),
           ),
-          // "Need help? Contact us at ..." footer.
+          // "Need help? Contact us at ..." footer (mailto link shows a
+          // pointer cursor like every other tappable text here).
           Padding(
             padding: const EdgeInsets.only(top: 30),
-            child: RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                text: 'Need help? Contact us at ',
-                style: GoogleFonts.roboto(
-                  color: _helpGrey,
-                  fontSize: 13,
-                ),
-                children: [
-                  TextSpan(
-                    text: _supportEmail,
-                    style: GoogleFonts.roboto(
-                      color: _loginPurple,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    recognizer:
-                        TapGestureRecognizer()
-                          ..onTap =
-                              () => launchUrl(
-                                Uri.parse('mailto:$_supportEmail'),
-                              ),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  text: 'Need help? Contact us at ',
+                  style: GoogleFonts.roboto(
+                    color: _helpGrey,
+                    fontSize: 13,
                   ),
-                ],
+                  children: [
+                    TextSpan(
+                      text: _supportEmail,
+                      style: GoogleFonts.roboto(
+                        color: _loginPurple,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      recognizer:
+                          TapGestureRecognizer()
+                            ..onTap =
+                                () => launchUrl(
+                                  Uri.parse('mailto:$_supportEmail'),
+                                ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -494,31 +500,47 @@ class _LoginButton extends StatelessWidget {
   }
 }
 
-/// Sign up — plain purple text link on the live site (no box/border).
+/// Sign up — plain purple text link that gains a soft lavender pill
+/// behind it on hover.
 class _SignUpButton extends StatelessWidget {
   const _SignUpButton();
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
+    return HoverBuilder(
       cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap:
-            () => InAppWebViewPage.show(
-              context,
-              url: _signUpUrl,
-              title: 'Sign up',
+      builder:
+          (context, hovering) => GestureDetector(
+            onTap:
+                () => InAppWebViewPage.show(
+                  context,
+                  url: _signUpUrl,
+                  title: 'Sign up',
+                ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color:
+                    hovering
+                        ? const Color(0xFFF5F3FF)
+                        : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Sign up',
+                style: GoogleFonts.roboto(
+                  color: _loginPurple,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 1,
+                ),
+              ),
             ),
-        child: Text(
-          'Sign up',
-          style: GoogleFonts.roboto(
-            color: _loginPurple,
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            letterSpacing: 1,
           ),
-        ),
-      ),
     );
   }
 }
