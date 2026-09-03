@@ -1222,7 +1222,8 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
     // .modal-body — margin 0 20, padding 15/30.
     // .modal-footer — no top border, centered buttons, padding 1rem.
     // Okay = .btn-primary (#693D94, hover #4043af); Cancel = .btn-danger
-    // (#e50000, hover #bf0000); `button.btn` text 16px ls 1, radius 4.
+    // (#e50000, hover #bf0000); `button.btn` text 16px ls 1, padding 8/15;
+    // both radius 8 with a translateY(-3px) hover lift per the live modal.
     final width = MediaQuery.sizeOf(context).width;
     final topMargin = width > 1500 ? 200.0 : 80.0;
     return Dialog(
@@ -1334,73 +1335,94 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
                   children: [
                     HoverBuilder(
                       cursor: SystemMouseCursors.click,
+                      // Hover lift: translateY(-3px) over .3s ease-out (the
+                      // `button.btn` transition), plus the bg swap.
                       builder:
-                          (context, hovering) => ElevatedButton(
-                            onPressed: _isSubmitting ? null : _submit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  hovering
-                                      ? const Color(0xFF4043AF)
-                                      : _asPurple,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 15,
-                                vertical: 8,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              textStyle: GoogleFonts.roboto(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                letterSpacing: 1,
-                              ),
+                          (context, hovering) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                            transform: Matrix4.translationValues(
+                              0,
+                              hovering ? -3 : 0,
+                              0,
                             ),
-                            child:
-                                _isSubmitting
-                                    ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                    : const Text('Okay'),
+                            child: ElevatedButton(
+                              onPressed: _isSubmitting ? null : _submit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    hovering
+                                        ? const Color(0xFF4043AF)
+                                        : _asPurple,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 15,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                textStyle: GoogleFonts.roboto(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              child:
+                                  _isSubmitting
+                                      ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                      : const Text('Okay'),
+                            ),
                           ),
                     ),
                     // .modal-footer > * — margin .25rem each side.
                     const SizedBox(width: 8),
                     HoverBuilder(
                       cursor: SystemMouseCursors.click,
+                      // Same translateY(-3px) hover lift as Okay.
                       builder:
-                          (context, hovering) => ElevatedButton(
-                            onPressed:
-                                _isSubmitting
-                                    ? null
-                                    : () => Navigator.of(context).pop(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  hovering
-                                      ? const Color(0xFFBF0000)
-                                      : const Color(0xFFE50000),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 15,
-                                vertical: 8,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              textStyle: GoogleFonts.roboto(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                letterSpacing: 1,
-                              ),
+                          (context, hovering) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                            transform: Matrix4.translationValues(
+                              0,
+                              hovering ? -3 : 0,
+                              0,
                             ),
-                            child: const Text('Cancel'),
+                            child: ElevatedButton(
+                              onPressed:
+                                  _isSubmitting
+                                      ? null
+                                      : () => Navigator.of(context).pop(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    hovering
+                                        ? const Color(0xFFBF0000)
+                                        : const Color(0xFFE50000),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 15,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                textStyle: GoogleFonts.roboto(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              child: const Text('Cancel'),
+                            ),
                           ),
                     ),
                   ],
@@ -1430,7 +1452,8 @@ class _PasswordFieldState extends State<_PasswordField> {
   Widget build(BuildContext context) {
     // CSS ref: `#reset-password .resetPassword` — label 18px/lh20 with a
     // red " *" (div.required), 8px label gap (Bootstrap label margin),
-    // input bg #f1f1f1 (base .form-control border/radius/type), focus
+    // input white bg (the live modal renders white, not the checked-in
+    // #f1f1f1), base .form-control border/radius/type, focus
     // #b2b3e3 + 0.2rem rgba(84,87,193,.25) glow.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1479,7 +1502,7 @@ class _PasswordFieldState extends State<_PasswordField> {
               ),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: const Color(0xFFF1F1F1),
+                fillColor: Colors.white,
                 hoverColor: Colors.transparent,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 10,
