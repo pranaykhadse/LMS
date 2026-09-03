@@ -262,6 +262,7 @@ class CourseStructureItem {
     required this.showDetails,
     required this.showAction,
     required this.description,
+    required this.objective,
     required this.learningEvents,
     required this.typeCode,
     required this.isEnrolledInClass,
@@ -286,6 +287,11 @@ class CourseStructureItem {
   final bool showDetails;
   final bool showAction;
   final String description;
+
+  /// The class's own objective (`_partial-class-detail.php` renders it as
+  /// the first `.le-detail-card` for In-Person/Virtual Class). Best-effort:
+  /// when the API omits it the card is skipped.
+  final String objective;
   final List<LearningEvent> learningEvents;
   final String typeCode;
   final bool isEnrolledInClass;
@@ -598,6 +604,18 @@ class CourseStructureItem {
               'description',
               'class_description',
               'classDescription',
+            ]),
+          ) ??
+          '',
+      objective:
+          _clean(
+            _firstValue(json, classMap, const [
+              'objective',
+              'objectives',
+              'class_objective',
+              'classObjective',
+              'learning_objective',
+              'learningObjective',
             ]),
           ) ??
           '',

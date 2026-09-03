@@ -3472,8 +3472,10 @@ String _formatSessionMoment(DateTime? dt) {
   final hour12 = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
   final minute = dt.minute.toString().padLeft(2, '0');
   final ampm = dt.hour >= 12 ? 'PM' : 'AM';
+  // Web `date('h:i A')` zero-pads the hour ("08:00 AM", not "8:00 AM").
+  final hourPad = hour12.toString().padLeft(2, '0');
   return '${months[dt.month - 1]}-${dt.day.toString().padLeft(2, '0')}-${dt.year}\n'
-      '$hour12:$minute $ampm';
+      '$hourPad:$minute $ampm';
 }
 
 // ─── Event card (radio-select) ─────────────────────────────────────────────
@@ -3976,6 +3978,46 @@ void _showCancelConfirmationDialog(
   );
 }
 
+// CSS ref: `_classDetails.php`'s `$typeLabels` — the header badge's short
+// label per class type ('Virtual', 'In-Person', ...; fallback
+// 'Learning Event').
+String _classTypeBadgeLabel(String typeCode) {
+  switch (typeCode) {
+    case '2':
+      return 'In-Person';
+    case '3':
+      return 'Virtual';
+    case '1':
+      return 'eLearning';
+    case '4':
+      return 'Video';
+    case '5':
+      return 'Article';
+    case '7':
+      return 'Discussion';
+    case '8':
+      return 'Task w/ Observation';
+    case '9':
+      return 'Task';
+    case '10':
+      return 'Coaching';
+    case '6':
+      return 'Webpage';
+    case '14':
+      return 'Discussion Guru';
+    case '12':
+      return 'Certificate';
+    case '11':
+      return 'Insight Report';
+    case '18':
+      return 'Custom Prompt';
+    case '20':
+      return 'Test-Out';
+    default:
+      return 'Learning Event';
+  }
+}
+
 void _showClassDetails(
   BuildContext context,
   String courseTitle,
@@ -4001,13 +4043,12 @@ void _showClassDetails(
   );
 }
 
-// CSS ref: `_classDetails.php` never shows the *course's* objective here —
-// only the class's own `objective`/`description` (In-Person/Virtual Class
-// route through the Schedule partial instead; every other type uses
-// `Lmsclass::getAttribDetail()`'s type-specific attribute list, built
-// below by `_attributeCards`). The course-level objective this dialog
-// used to display here was the wrong data source entirely, not just
-// mis-styled - removed rather than kept as an approximation.
+// CSS ref: `_classDetails.php` + `_partial-class-detail.php` —
+// In-Person/Virtual Class show the class's own Objective (when the API
+// carries one) and Description cards, then the Schedule section; every
+// other type uses `Lmsclass::getAttribDetail()`'s type-specific attribute
+// list instead (built below by `_attributeCards`). Never the *course's*
+// objective — that was the wrong data source entirely.
 class _ClassDetailsDialog extends StatelessWidget {
   const _ClassDetailsDialog({required this.courseTitle, required this.item});
 
@@ -4016,10 +4057,10 @@ class _ClassDetailsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typeName =
-        item.subtitle.length > 2
-            ? item.subtitle.substring(1, item.subtitle.length - 1)
-            : '';
+    // CSS ref: `_classDetails.php`'s `$typeLabels` — the badge shows the
+    // short web label ('Virtual', not 'Virtual Class'), never the raw API
+    // type string.
+    final typeName = _classTypeBadgeLabel(item.typeCode);
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 540),
       child: Column(
@@ -4056,7 +4097,10 @@ class _ClassDetailsDialog extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    // Full-width row (a min row would shrink-wrap the
+                    // whole header into a narrow strip) with the
+                    // title+badge group centered.
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Flexible(
                         child: Text(
@@ -4159,14 +4203,26 @@ class _ClassDetailsDialog extends StatelessWidget {
                   // (bare text, no card chrome), which was correct for
                   // neither branch.
                   if (item.typeCode == '2' || item.typeCode == '3') ...[
+                    // Web `_partial-class-detail.php`: Objective card first
+                    // (whenever the class carries one), then Description —
+                    // 12px `.le-detail-cards` gaps between them.
+                    if (item.objective.isNotEmpty) ...[
+                      _LeDetailCard(
+                        label: 'Objective',
+                        value: item.objective,
+                      ),
+                    ],
                     if (item.description.isNotEmpty) ...[
+                      if (item.objective.isNotEmpty)
+                        const SizedBox(height: 12),
                       _LeDetailCard(
                         label: 'Description',
                         value: item.description,
                       ),
                     ],
                     if (item.learningEvents.isNotEmpty) ...[
-                      if (item.description.isNotEmpty)
+                      if (item.objective.isNotEmpty ||
+                          item.description.isNotEmpty)
                         const SizedBox(height: 12),
                       // CSS ref: `.lc-section-label` — 12px/weight600/
                       // #9CA3AF/uppercase/letter-spacing .8px, margin 12px 0
