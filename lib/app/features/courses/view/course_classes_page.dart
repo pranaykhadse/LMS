@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
-import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -894,6 +894,10 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     return HoverBuilder(
       builder:
           (context, hovering) => Container(
+            transform: hovering
+                ? Matrix4.translationValues(0, -2, 0)
+                : Matrix4.identity(),
+            transformAlignment: Alignment.center,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
@@ -930,7 +934,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                           color: Colors.white,
                         ),
                       )
-                      : const Icon(Icons.app_registration_rounded, size: 18),
+                      : const Icon(Icons.app_registration_rounded, size: 16),
               label: Text(
                 _enrolling
                     ? 'Enrolling…'
@@ -962,11 +966,11 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   }
 
   Widget _timeEntry(int value, String label) {
-    // Phone: 4 boxes at 5px padding each overflowed the countdown row by
-    // 6.1px on a narrow screen; tighten the gap there.
-    final hPad = Responsive.isTablet(context) ? 5.0 : 3.0;
+    // Web: .timer { gap: 8px } — each box contributes half via horizontal
+    // padding, so 4px each side = 8px gap exactly.
+    const hPad = 4.0;
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: hPad),
+      padding: const EdgeInsets.symmetric(horizontal: hPad),
       child: _TimeBox(value: value, label: label),
     );
   }
@@ -2380,7 +2384,7 @@ class _TimeBox extends StatelessWidget {
     // span 15px, label 8px.
     final phone = MediaQuery.sizeOf(context).width < 768;
     return Container(
-      width: phone ? 50 : 62,
+      width: phone ? 50 : 60,
       padding: EdgeInsets.symmetric(
         horizontal: phone ? 8 : 12,
         vertical: phone ? 6 : 8,
@@ -2412,7 +2416,7 @@ class _TimeBox extends StatelessWidget {
               height: 1.1,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             label,
             style: GoogleFonts.inter(
@@ -2684,17 +2688,34 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                     child: SizedBox(
                       width: 32,
                       height: 32,
-                      child: Material(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: const CircleBorder(),
-                        clipBehavior: Clip.antiAlias,
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () => Navigator.pop(context),
-                          child: const Icon(
-                            Icons.close_rounded,
-                            color: Colors.white,
-                            size: 18,
+                      child: ClipOval(
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.2),
+                                  const Color(0xFF5C52D4)
+                                      .withValues(alpha: 0.4),
+                                ],
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () => Navigator.pop(context),
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -3020,17 +3041,34 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                     child: SizedBox(
                       width: 32,
                       height: 32,
-                      child: Material(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: const CircleBorder(),
-                        clipBehavior: Clip.antiAlias,
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () => Navigator.pop(context),
-                          child: const Icon(
-                            Icons.close_rounded,
-                            color: Colors.white,
-                            size: 18,
+                      child: ClipOval(
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.2),
+                                  const Color(0xFF5C52D4)
+                                      .withValues(alpha: 0.4),
+                                ],
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () => Navigator.pop(context),
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -3715,31 +3753,48 @@ void _showCancelConfirmationDialog(
                           ),
                         ),
                       ),
-                      Positioned(
+                    Positioned(
                       right: -6,
                       top: -2,
                       child: SizedBox(
                         width: 32,
                         height: 32,
-                        child: Material(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          shape: const CircleBorder(),
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            customBorder: const CircleBorder(),
-                            onTap: () => Navigator.pop(context),
-                            child: const Icon(
-                              Icons.close_rounded,
-                              color: Colors.white,
-                              size: 18,
+                        child: ClipOval(
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withValues(alpha: 0.2),
+                                    const Color(0xFF5C52D4)
+                                        .withValues(alpha: 0.4),
+                                  ],
+                                ),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  customBorder: const CircleBorder(),
+                                  onTap: () => Navigator.pop(context),
+                                  child: const Icon(
+                                    Icons.close_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                    ],
-                  ),
+                  ],
                 ),
+              ),
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
