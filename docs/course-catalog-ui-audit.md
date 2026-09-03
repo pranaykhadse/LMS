@@ -5415,3 +5415,42 @@ files — 16 issues, all pre-existing baseline warnings in
 `dashboard_page.dart`/`development_plan_page.dart` (unused elements,
 deprecated `withOpacity`, ...), no new ones. Full-project `flutter
 analyze` — 43 issues (current baseline, unchanged).
+
+## Follow-up: "Redeem your Points" badge stuck at the login-time balance (359 vs 288)
+
+**Report**: screenshot of the Redeem Points screen showing "359
+Available Points" in its own hero card, while the "Points & Badges"
+dropdown right above it shows "288" on the "Redeem your Points" badge
+— same balance, two different numbers on the same screen.
+
+**Root cause**: `AuthState.userProfile.points` (the source the nav
+badge added earlier this session reads) is only ever set once, from
+the login API response — nothing in the app ever refreshes it
+afterward. `item_inventory_view_model.dart`'s own `fetch()` (the
+Redeem Points screen's viewmodel) hits a completely different, live
+endpoint (`item-inventory/...`) that returns a `user_points` value
+already correctly live-updating on screen (`359`) — but that fresher
+number was never written back to `AuthState`, so the nav badge stayed
+frozen at whatever it was at login (`288`).
+
+**Fix**:
+- `lib/app/features/authentication/app_state/auth_state_provider.dart`
+  — new `AuthStateNotifier.updatePoints(int points)`, mirroring the
+  existing `updateProfile` method: replaces just the cached `points`
+  field on `userProfile` (no-op if unchanged) and persists the updated
+  session.
+- `lib/app/features/dashboard/viewmodel/item_inventory_view_model.dart`
+  — after every successful `fetch()` (covers the initial load, search,
+  pagination, and the refetch after a successful redeem), calls
+  `AuthStateNotifier.updatePoints(result.userPoints)` with the just-
+  fetched live balance.
+
+This syncs the nav badge to the truth as soon as the Redeem Points
+screen is visited/refreshed in a session; it doesn't retroactively fix
+staleness before that screen has ever loaded once (no endpoint exists
+elsewhere in the app for a live balance check without visiting it).
+
+**Verification**: `dart format` + `flutter analyze` on both files — 1
+issue, pre-existing (`auth_state_provider.dart`'s unrelated empty catch
+block), no new ones. Full-project `flutter analyze` — 43 issues
+(current baseline, unchanged).

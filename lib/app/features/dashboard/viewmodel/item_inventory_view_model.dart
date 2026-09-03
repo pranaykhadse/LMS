@@ -24,7 +24,9 @@ class ItemInventoryState {
   final String query;
 
   int get totalPages =>
-      result == null || result!.total == 0 ? 1 : ((result!.total + _perPage - 1) ~/ _perPage);
+      result == null || result!.total == 0
+          ? 1
+          : ((result!.total + _perPage - 1) ~/ _perPage);
 
   ItemInventoryState copyWith({
     InventoryResult? result,
@@ -48,7 +50,7 @@ class ItemInventoryState {
 
 class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
   ItemInventoryViewModel(this._repo, this._ref)
-      : super(const ItemInventoryState()) {
+    : super(const ItemInventoryState()) {
     fetch();
   }
 
@@ -56,7 +58,9 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
   final Ref _ref;
 
   static final provider = StateNotifierProvider.autoDispose<
-      ItemInventoryViewModel, ItemInventoryState>((ref) {
+    ItemInventoryViewModel,
+    ItemInventoryState
+  >((ref) {
     return ItemInventoryViewModel(
       ref.watch(ItemInventoryRepository.provider),
       ref,
@@ -71,7 +75,11 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
     final query = search ?? state.query;
     final hasData = state.providerState == DataProviderState.data;
     if (!hasData) {
-      state = state.copyWith(providerState: DataProviderState.loading, page: page, query: query);
+      state = state.copyWith(
+        providerState: DataProviderState.loading,
+        page: page,
+        query: query,
+      );
     }
     try {
       final result = await _repo.fetch(
@@ -87,6 +95,14 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
         page: page,
         query: query,
       );
+      // This is the only place the app fetches a live points balance —
+      // AuthState.userProfile.points otherwise only reflects whatever it
+      // was at login time. Refreshing it here keeps the nav bar's
+      // "Redeem your Points" badge in sync with what this screen's own
+      // hero just showed, instead of the two silently disagreeing.
+      _ref
+          .read(AuthStateNotifier.provider.notifier)
+          .updatePoints(result.userPoints);
       return null;
     } catch (e) {
       final message = e.toString();
@@ -123,7 +139,11 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
       );
     }
     state = state.copyWith(redeemingId: itemId);
-    final result = await _repo.redeem(itemId: itemId, address: address, note: note);
+    final result = await _repo.redeem(
+      itemId: itemId,
+      address: address,
+      note: note,
+    );
     if (!mounted) return result;
     if (result.success) {
       await fetch(page: state.page, search: state.query);

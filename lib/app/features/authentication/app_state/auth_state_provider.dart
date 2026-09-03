@@ -98,6 +98,27 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     await storage.setString("session_data", updated.toRawJson());
   }
 
+  /// Refreshes just the cached points balance — e.g. after the Redeem
+  /// Points screen fetches a fresh, live total from `item-inventory`.
+  /// `AuthState.userProfile.points` otherwise only ever reflects whatever
+  /// it was at LOGIN time, and never updates for the rest of the session
+  /// even as points are earned/redeemed — the exact mismatch reported
+  /// between the "359 Available Points" hero (live) and the nav bar's
+  /// "Redeem your Points" badge (288, stale from login) on this same
+  /// screen.
+  void updatePoints(int points) {
+    final current = state;
+    final profile = current?.userProfile;
+    if (current == null || profile == null || profile.points == points) {
+      return;
+    }
+    final updated = current.copyWith(
+      userProfile: profile.copyWith(points: points),
+    );
+    state = updated;
+    storage.setString("session_data", updated.toRawJson());
+  }
+
   bool _sameProfile(UserProfile? a, UserProfile b) {
     if (a == null) return false;
     return a.avatarPath == b.avatarPath &&
