@@ -5116,3 +5116,38 @@ visual weight now that they're also the same color.
 **Verification**: `dart format` + `flutter analyze` on
 `lms_app_bar.dart` — 0 issues. Full-project `flutter analyze` — 43
 issues (current baseline, unchanged).
+
+## Follow-up: Login page mobile background — matched to the real site's contain/bottom treatment (reverses an earlier "full-screen cover" pass)
+
+**Report**: side-by-side screenshot of this app's phone login screen next
+to the real site's, showing the app's background scene stretched
+edge-to-edge (full-screen cover) while the real site keeps it as a
+compact band anchored to the bottom, with the plain lavender background
+still visible above it.
+
+**Root cause / correction of an earlier assumption**: an earlier session
+pass (see this file's prior "Login mobile bg" follow-ups) deliberately
+gave phones their own `BoxFit.cover` treatment for `Assets.images
+.loginBg`, reasoning the scene should bleed edge-to-edge on mobile.
+Re-checked `origin/staging`'s `backend/web/dist/app.css` directly this
+time: `body.login { background-size: contain; background-position:
+bottom; background-repeat: no-repeat; }` is one unconditional rule with
+no breakpoint override anywhere in the stylesheet (its `@media` blocks
+only ever touch the container's own `height`, never the background
+sizing) — so the real site never covers/stretches this image at any
+width, phones included. The side-by-side screenshot confirms it
+directly. The earlier "full-screen cover on phones" pass is superseded.
+
+**Fix**: removed the phone-only `BoxFit.cover` branch entirely — every
+breakpoint now uses the same bottom-anchored `Align` +
+`BoxFit.fitWidth` rendering already used for desktop/tablet.
+`fitWidth` reproduces the CSS's `contain` at every realistic viewport
+here specifically because the source art is very wide (1440x495,
+~2.9:1) — scaling it to the container's width already leaves it far
+shorter than the container's height, i.e. width is always the binding
+constraint for `contain` too, so one un-conditional treatment matches
+the real site's rule exactly at every breakpoint.
+
+**Verification**: `dart format` + `flutter analyze` on
+`signin_page.dart` — 0 issues. Full-project `flutter analyze` — 43
+issues (current baseline, unchanged).

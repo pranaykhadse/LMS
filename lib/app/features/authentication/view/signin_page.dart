@@ -71,35 +71,39 @@ class SignInPage extends ConsumerWidget {
       backgroundColor: _loginBg,
       body: Stack(
         children: [
-          // body.login background: on phones the scene stretches top to
-          // bottom (full-screen cover), so no pale gap can appear anywhere.
-          if (phone)
-            Positioned.fill(
+          // CSS ref: `body.login` — `background-size: contain;
+          // background-position: bottom; background-repeat: no-repeat`,
+          // the SAME rule at every breakpoint (only the container's own
+          // `height` changes per media query, never the image sizing) —
+          // confirmed against `origin/staging`'s `backend/web/dist/
+          // app.css`. A prior pass gave phones their own full-screen
+          // `BoxFit.cover` treatment instead, guessing the scene should
+          // bleed edge-to-edge on mobile — but a side-by-side screenshot
+          // of the real site shows the same compact, un-cropped band
+          // anchored to the bottom on phone as on desktop, with the
+          // plain `#ECE9FF` lavender still visible above it. `fitWidth`
+          // reproduces `contain` here at every realistic viewport size:
+          // the source art is very wide (1440x495, ~2.9:1), so scaling
+          // it to the container's width already leaves it far shorter
+          // than the container's height — the same branch the container
+          // would take either way, so one un-conditional treatment
+          // matches `contain` at every breakpoint, phones included.
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.bottomCenter,
               child: Assets.images.loginBg.image(
-                fit: BoxFit.cover,
-                alignment: Alignment.bottomCenter,
-              ),
-            )
-          else
-            Positioned.fill(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Assets.images.loginBg.image(
-                  width: width,
-                  fit: BoxFit.fitWidth,
-                ),
+                width: width,
+                fit: BoxFit.fitWidth,
               ),
             ),
+          ),
           SafeArea(
             child:
                 phone
                     // <=640px: transparent wrapper, 20px sides.
                     ? SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                      child: _LoginForm(
-                        viewModel: viewModel,
-                        phone: true,
-                      ),
+                      child: _LoginForm(viewModel: viewModel, phone: true),
                     )
                     : tablet
                     // <=991px: card centered.
@@ -241,8 +245,7 @@ class _LoginForm extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           ValueListenableBuilder<bool>(
-            valueListenable:
-                viewModel.isPasswordHidden as ValueNotifier<bool>,
+            valueListenable: viewModel.isPasswordHidden as ValueNotifier<bool>,
             builder: (context, isHidden, _) {
               return TextFormField(
                 controller: viewModel.password,
@@ -309,9 +312,7 @@ class _LoginForm extends ConsumerWidget {
                 value: viewModel.rememberMe,
                 onChanged: viewModel.toggleRememberMe,
                 // Live site: square box; checked fill is green.
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                 side: const BorderSide(color: Color(0xFFADB5BD)),
                 fillColor: WidgetStateProperty.resolveWith(
                   (states) =>
@@ -325,9 +326,7 @@ class _LoginForm extends ConsumerWidget {
                 cursor: SystemMouseCursors.click,
                 child: GestureDetector(
                   onTap:
-                      () => viewModel.toggleRememberMe(
-                        !viewModel.rememberMe,
-                      ),
+                      () => viewModel.toggleRememberMe(!viewModel.rememberMe),
                   child: Text(
                     "keep_me_logged_in".translate(context),
                     style: GoogleFonts.roboto(
@@ -391,10 +390,7 @@ class _LoginForm extends ConsumerWidget {
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   text: 'Need help? Contact us at ',
-                  style: GoogleFonts.roboto(
-                    color: _helpGrey,
-                    fontSize: 13,
-                  ),
+                  style: GoogleFonts.roboto(color: _helpGrey, fontSize: 13),
                   children: [
                     TextSpan(
                       text: _supportEmail,
@@ -458,9 +454,7 @@ class _LoginButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = ElevatedButton.styleFrom(
       foregroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       textStyle: GoogleFonts.roboto(
         fontSize: 16,
         fontWeight: FontWeight.w400,
@@ -468,7 +462,8 @@ class _LoginButton extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       fixedSize: fullWidth ? null : const Size(107, 40),
-      minimumSize: fullWidth ? const Size(double.infinity, 40) : const Size(107, 40),
+      minimumSize:
+          fullWidth ? const Size(double.infinity, 40) : const Size(107, 40),
     ).copyWith(
       backgroundColor: WidgetStateProperty.resolveWith(
         (states) =>
@@ -502,11 +497,7 @@ class _LoginButton extends StatelessWidget {
       ),
     );
     if (fullWidth) {
-      button = SizedBox(
-        width: double.infinity,
-        height: 40,
-        child: button,
-      );
+      button = SizedBox(width: double.infinity, height: 40, child: button);
     }
     return button;
   }
@@ -532,15 +523,9 @@ class _SignUpButton extends StatelessWidget {
             // Instant (non-animated) swap: lerping transparent-black to
             // lavender would flash an intermediate grey, i.e. a second bg.
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color:
-                    hovering
-                        ? const Color(0xFFF5F3FF)
-                        : Colors.transparent,
+                color: hovering ? const Color(0xFFF5F3FF) : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
