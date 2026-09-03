@@ -26,7 +26,7 @@ import '../viewmodel/signin_viewmodel.dart';
 // .form-wrap — desktop 780px pushed right (the live card renders much
 // wider than the checked-in 610px); 580px at <=1500px; <=991px centered;
 // <=640px full width with 20px sides and stacked full-width buttons.
-// .form-content — white card, padding 20/60 (10/30 <=1500px),
+// .form-content — white card, padding 44/60 (24/30 <=1500px),
 //   border 1px --primary-first, shadow 0 4px 26px rgba(0,0,0,.15),
 //   radius 16; transparent (no chrome) on phones.
 // h1 — 25px/400/#979797, margins 70/0/25, centered (phones: 34px/600,
@@ -134,10 +134,11 @@ class _LoginCard extends StatelessWidget {
     final wide = MediaQuery.sizeOf(context).width > 1500;
     return Container(
       width: width,
-      // Base 20/60, 10/30 at <=1500px.
+      // Taller card: 44px top/bottom padding on wide desktop, 24px at
+      // <=1500px (horizontal stays 60/30).
       padding: EdgeInsets.symmetric(
         horizontal: wide ? 60 : 30,
-        vertical: wide ? 20 : 10,
+        vertical: wide ? 44 : 24,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -186,6 +187,7 @@ class _LoginForm extends ConsumerWidget {
           TextFormField(
             controller: viewModel.email,
             validator: ValidationBuilder().email().build(),
+            textAlignVertical: TextAlignVertical.center,
             style: GoogleFonts.roboto(
               color: _ink,
               fontSize: 15,
@@ -237,6 +239,7 @@ class _LoginForm extends ConsumerWidget {
                 controller: viewModel.password,
                 validator: ValidationBuilder().minLength(5).build(),
                 obscureText: isHidden,
+                textAlignVertical: TextAlignVertical.center,
                 style: GoogleFonts.roboto(
                   color: _ink,
                   fontSize: 15,
