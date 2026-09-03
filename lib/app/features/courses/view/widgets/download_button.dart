@@ -500,6 +500,10 @@ class _GuidePill extends StatelessWidget {
       builder: (context, hovering) {
         final fill = hovering;
         return Container(
+          transform: fill
+              ? Matrix4.translationValues(0, -1, 0)
+              : Matrix4.identity(),
+          transformAlignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: fill ? primary : const Color(0xFFF5F3FF),

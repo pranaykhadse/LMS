@@ -1136,21 +1136,28 @@ class _CourseImageCard extends StatelessWidget {
     // 380px — reduced per request for the default/catalog image).
     return _InfoCard(
       padding: const EdgeInsets.all(16),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: SizedBox(
-          width: double.infinity,
-          height: 220,
-          child:
-              url == null
-                  ? const CourseImageFallback()
-                  : Image.network(
-                    url!,
-                    width: double.infinity,
-                    height: 220,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const CourseImageFallback(),
-                  ),
+      child: HoverBuilder(
+        builder: (context, hovering) => ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Transform.scale(
+            // CSS ref: `.emotional-leadership:hover img` — the image
+            // gently scales up to 1.02 on hover.
+            scale: hovering ? 1.02 : 1.0,
+            child: SizedBox(
+              width: double.infinity,
+              height: 220,
+              child:
+                  url == null
+                      ? const CourseImageFallback()
+                      : Image.network(
+                        url!,
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const CourseImageFallback(),
+                      ),
+            ),
+          ),
         ),
       ),
     );
@@ -1183,28 +1190,54 @@ class _SkillsCard extends StatelessWidget {
               children:
                   skills
                       .map(
-                        (skill) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF5F3FF),
-                            // rgba(92,82,212,.08) — the same distinct
-                            // indigo (#5C52D4), not this app's purple.
-                            border: Border.all(
-                              color: const Color(
-                                0xFF5C52D4,
-                              ).withValues(alpha: 0.08),
+                        (skill) => HoverBuilder(
+                          builder: (context, hovering) => Container(
+                            transform: hovering
+                                ? Matrix4.translationValues(0, -2, 0)
+                                : Matrix4.identity(),
+                            transformAlignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: hovering
+                                  ? const [
+                                      BoxShadow(
+                                        color: Color(0x1A5C52D4),
+                                        blurRadius: 10,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ]
+                                  : null,
                             ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            skill,
-                            style: GoogleFonts.inter(
-                              color: _detailPurple,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: hovering
+                                    ? _detailPurple
+                                    : const Color(0xFFF5F3FF),
+                                // rgba(92,82,212,.08) — the same distinct
+                                // indigo (#5C52D4), not this app's purple.
+                                border: Border.all(
+                                  color: hovering
+                                      ? _detailPurple
+                                      : const Color(
+                                          0xFF5C52D4,
+                                        ).withValues(alpha: 0.08),
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                skill,
+                                style: GoogleFonts.inter(
+                                  color: hovering
+                                      ? Colors.white
+                                      : _detailPurple,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ),
