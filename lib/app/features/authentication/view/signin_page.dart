@@ -71,18 +71,10 @@ class SignInPage extends ConsumerWidget {
       backgroundColor: _loginBg,
       body: Stack(
         children: [
-          // body.login background image: pinned bottom, contain. On phones
-          // the wide scene would render as a short floating strip, so it
-          // instead covers a bottom-anchored band (cropping transparent
-          // sky, never the waves) so the cover visibly touches the bottom.
-          // The band intentionally bleeds 60px past the edge, so no
-          // safe-area/system inset can expose a pale strip below it.
+          // body.login background: on phones the scene stretches top to
+          // bottom (full-screen cover), so no pale gap can appear anywhere.
           if (phone)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: -60,
-              height: MediaQuery.sizeOf(context).height * 0.35 + 60,
+            Positioned.fill(
               child: Assets.images.loginBg.image(
                 fit: BoxFit.cover,
                 alignment: Alignment.bottomCenter,
