@@ -155,6 +155,7 @@ flutter:
     - assets/images/nav/coach.png
     - assets/images/envelope.svg
     - assets/images/lock.svg
+    - assets/images/login-bg.png
     # Explicit translation entry: the directory globs above intermittently
     # drop files from the bundle on some toolchains (seen with nav/ and now
     # with translations/ after a clean rebuild), so en.json is also listed
