@@ -17,6 +17,9 @@ import '../viewmodel/signin_viewmodel.dart';
 // CSS ref: `backend/web/dist/app.css` (body.login / .form-wrap /
 // .form-content / .form-control / .forgot-password) + the inline <style>
 // block in `backend/views/sign-in/login.php` for the <=767px rules.
+// NOTE: this theme's body font is Roboto (`body{font-family:"Roboto"}`),
+// unlike the course pages' Outfit/Inter stack — every text style here is
+// Roboto for that reason.
 //
 // body.login — bg #ECE9FF with login-bg.png pinned bottom/contain.
 // .form-wrap — desktop 610px pushed right (margin 9% auto 16.7% 55%);
@@ -170,7 +173,7 @@ class _LoginForm extends ConsumerWidget {
           Text(
             "login".translate(context),
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: GoogleFonts.roboto(
               color: _muted,
               fontSize: phone ? 34 : 25,
               fontWeight: phone ? FontWeight.w600 : FontWeight.w400,
@@ -181,20 +184,24 @@ class _LoginForm extends ConsumerWidget {
           TextFormField(
             controller: viewModel.email,
             validator: ValidationBuilder().email().build(),
-            style: GoogleFonts.inter(color: _ink, fontSize: 15),
+            style: GoogleFonts.roboto(
+              color: _ink,
+              fontSize: 15,
+              letterSpacing: 1,
+            ),
             decoration: InputDecoration(
               hintText: "email".translate(context),
               prefixIcon: Padding(
                 padding: const EdgeInsets.only(left: 10),
                 child: SvgPicture.asset(
                   'assets/images/envelope.svg',
-                  width: 22,
+                  width: 32,
                   fit: BoxFit.contain,
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 10,
-                vertical: 8,
+                vertical: 12,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(6),
@@ -209,7 +216,7 @@ class _LoginForm extends ConsumerWidget {
                 borderSide: const BorderSide(color: _inputBorder),
               ),
               // .field-loginform-*.help-block — pink italic.
-              errorStyle: GoogleFonts.inter(
+              errorStyle: GoogleFonts.roboto(
                 color: _errorPink,
                 fontStyle: FontStyle.italic,
               ),
@@ -224,14 +231,18 @@ class _LoginForm extends ConsumerWidget {
                 controller: viewModel.password,
                 validator: ValidationBuilder().minLength(5).build(),
                 obscureText: isHidden,
-                style: GoogleFonts.inter(color: _ink, fontSize: 15),
+                style: GoogleFonts.roboto(
+                  color: _ink,
+                  fontSize: 15,
+                  letterSpacing: 1,
+                ),
                 decoration: InputDecoration(
                   hintText: "password".translate(context),
                   prefixIcon: Padding(
                     padding: const EdgeInsets.only(left: 10),
                     child: SvgPicture.asset(
                       'assets/images/lock.svg',
-                      width: 18,
+                      width: 26,
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -247,7 +258,7 @@ class _LoginForm extends ConsumerWidget {
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 10,
-                    vertical: 8,
+                    vertical: 12,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(6),
@@ -261,7 +272,7 @@ class _LoginForm extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(6),
                     borderSide: const BorderSide(color: _inputBorder),
                   ),
-                  errorStyle: GoogleFonts.inter(
+                  errorStyle: GoogleFonts.roboto(
                     color: _errorPink,
                     fontStyle: FontStyle.italic,
                   ),
@@ -275,6 +286,11 @@ class _LoginForm extends ConsumerWidget {
               Checkbox(
                 value: viewModel.rememberMe,
                 onChanged: viewModel.toggleRememberMe,
+                // Web custom-control: square box, #ADB5BD border.
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+                side: const BorderSide(color: Color(0xFFADB5BD)),
               ),
               Text(
                 "keep_me_logged_in".translate(context),
@@ -313,7 +329,7 @@ class _LoginForm extends ConsumerWidget {
                 child: Text(
                   'Forgot Password',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.roboto(
                     color: _muted,
                     fontSize: 18,
                     height: 25 / 18,
@@ -329,14 +345,14 @@ class _LoginForm extends ConsumerWidget {
               textAlign: TextAlign.center,
               text: TextSpan(
                 text: 'Need help? Contact us at ',
-                style: GoogleFonts.inter(
+                style: GoogleFonts.roboto(
                   color: _helpGrey,
                   fontSize: 13,
                 ),
                 children: [
                   TextSpan(
                     text: _supportEmail,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.roboto(
                       color: _loginPurple,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -397,7 +413,11 @@ class _LoginButton extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
       ),
-      textStyle: GoogleFonts.inter(fontSize: 16),
+      textStyle: GoogleFonts.roboto(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 1,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       fixedSize: fullWidth ? null : const Size(107, 40),
       minimumSize: fullWidth ? const Size(double.infinity, 40) : const Size(107, 40),
@@ -459,7 +479,11 @@ class _SignUpButton extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(4),
       ),
-      textStyle: GoogleFonts.inter(fontSize: 16),
+      textStyle: GoogleFonts.roboto(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 1,
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       fixedSize: fullWidth ? null : const Size(107, 40),
       minimumSize: fullWidth ? const Size(double.infinity, 40) : const Size(107, 40),
