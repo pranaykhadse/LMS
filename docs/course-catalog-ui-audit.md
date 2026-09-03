@@ -5553,3 +5553,31 @@ fallback, not a bug.
 **Verification**: `dart format` + `flutter analyze` on
 `lms_app_bar.dart` — 0 issues. Full-project `flutter analyze` — 43
 issues (current baseline, unchanged).
+
+## Follow-up: removed the last remaining fallback to the stale 288 snapshot
+
+**Report**: "First of all, just remove 288 default value."
+
+**Root cause**: a third, previously-unfixed spot -
+`dashboard_page.dart`'s `_RewardsPointsCard` (the "Rewards & Points"
+card on the Dashboard) computed `points` as `rewards?.totalPoints ??
+profile?.points ?? 0` — still falling back to the same stale
+`AuthState.userProfile.points` login snapshot the last two follow-ups
+already eliminated from the nav badge and the profile-menu row.
+
+**Fix**: dropped the `profile?.points` link in that fallback chain —
+`rewards?.totalPoints ?? ref.watch(UserPointsViewModel.provider) ?? 0`.
+`rewards` here is already always live whenever this card actually
+renders (it's only built once `DashboardBody` has real data), so this
+now only ever falls back to the shared live-points provider, then a
+last-resort `0` if genuinely nothing is known yet — never back to the
+288-style stale value.
+
+Re-grepped the whole repo for `profile?.points`/`userProfile?.points`/
+any `.points ?? ` fallback afterward — none remain anywhere outside a
+comment describing this exact fix.
+
+**Verification**: `dart format` + `flutter analyze` on
+`dashboard_page.dart` — 14 issues, all pre-existing baseline (unused
+elements, deprecated `withOpacity`, ...), no new ones. Full-project
+`flutter analyze` — 43 issues (current baseline, unchanged).

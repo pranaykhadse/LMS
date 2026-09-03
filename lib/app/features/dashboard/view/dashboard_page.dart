@@ -32,6 +32,7 @@ import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_mode
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/mentor_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/supervisor_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/user_points_view_model.dart';
 import 'package:lms/app/features/dashboard/model/mentor_modal.dart';
 import 'package:lms/app/features/dashboard/repository/mentor_repository.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
@@ -2268,7 +2269,15 @@ class _RewardsPointsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isTablet = Responsive.isTablet(context);
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
-    final points = rewards?.totalPoints ?? profile?.points ?? 0;
+    // Per explicit request: never fall back to `profile.points` (the
+    // login-time AuthState snapshot, already the source of the "shows a
+    // stale 288" bug fixed for the nav badge and profile-menu row) — this
+    // card's own `rewards` is itself always live whenever it actually
+    // renders (only built once `DashboardBody` has real data), so the
+    // only fallback left is the shared live-points provider, then a
+    // last-resort 0 if genuinely nothing is known yet.
+    final points =
+        rewards?.totalPoints ?? ref.watch(UserPointsViewModel.provider) ?? 0;
     final firstName = profile?.firstname?.trim();
     final activity = rewards?.activity ?? const <DashboardRewardActivity>[];
 
