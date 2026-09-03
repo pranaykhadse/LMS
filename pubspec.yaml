@@ -153,6 +153,8 @@ flutter:
     - assets/images/nav/required-courses.png
     - assets/images/nav/badges.png
     - assets/images/nav/coach.png
+    - assets/images/envelope.svg
+    - assets/images/lock.svg
 
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
