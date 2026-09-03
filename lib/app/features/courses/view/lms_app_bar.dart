@@ -2035,7 +2035,7 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-class _ProfileMenuRow extends StatelessWidget {
+class _ProfileMenuRow extends StatefulWidget {
   const _ProfileMenuRow({
     required this.icon,
     required this.label,
@@ -2044,6 +2044,15 @@ class _ProfileMenuRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isLogout;
+
+  @override
+  State<_ProfileMenuRow> createState() => _ProfileMenuRowState();
+}
+
+class _ProfileMenuRowState extends State<_ProfileMenuRow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _t;
 
   // Matches the reference site's a.dropdown-item (#4A5568, Inter
   // 14px/500, margin 2/10 + padding 10/15) but split into an outer
@@ -2059,31 +2068,50 @@ class _ProfileMenuRow extends StatelessWidget {
   static const _hoverCurve = Curves.easeOut;
 
   @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: _hoverDuration);
+    _t = CurvedAnimation(parent: _controller, curve: _hoverCurve);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => HoverBuilder(
     cursor: SystemMouseCursors.click,
     builder: (context, hovering) {
-      // Single t drives every visual property together so background,
-      // slide, icon and text never stagger — previously AnimatedContainer
-      // + Transform + separate text/icon tweens each owned their own
-      // controller and could start a frame apart, making the color look
-      // late.
-      return TweenAnimationBuilder<double>(
-        duration: _hoverDuration,
-        curve: _hoverCurve,
-        tween: Tween<double>(begin: 0, end: hovering ? 1 : 0),
-        builder: (context, t, _) {
-          final tint = isLogout
+      // Single controller drives every property together so background,
+      // slide, icon and text are frame-locked — previously separate
+      // AnimatedContainers/Tweens could stagger and make the color lag.
+      // Using the tint's own transparent (not Colors.transparent which
+      // is black-transparent) avoids the grey drag from lerping black.
+      if (hovering) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+      return AnimatedBuilder(
+        animation: _t,
+        builder: (context, _) {
+          final t = _t.value;
+          final tint = widget.isLogout
               ? const Color(0x1AEF4444)
               : FigmaTokens.badgeBackground;
-          final bg = Color.lerp(Colors.transparent, tint, t)!;
-          final defaultColor = const Color(0xFF4A5568);
-          final hoverColor = isLogout
+          final bg = Color.lerp(tint.withValues(alpha: 0), tint, t)!;
+          const defaultColor = Color(0xFF4A5568);
+          final hoverColor = widget.isLogout
               ? const Color(0xFFE53E3E)
               : _appPurple;
           final textColor = Color.lerp(defaultColor, hoverColor, t)!;
-          final iconColor =
-              Color.lerp(defaultColor.withValues(alpha: 0.8),
-                  hoverColor.withValues(alpha: 0.8), t)!;
+          final iconColor = Color.lerp(
+            defaultColor.withValues(alpha: 0.8),
+            hoverColor.withValues(alpha: 0.8),
+            t,
+          )!;
           final dx = 6 * t;
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -2098,10 +2126,10 @@ class _ProfileMenuRow extends StatelessWidget {
               transformAlignment: Alignment.centerLeft,
               child: Row(
                 children: [
-                  Icon(icon, size: 16, color: iconColor),
+                  Icon(widget.icon, size: 16, color: iconColor),
                   const SizedBox(width: 12),
                   Text(
-                    label,
+                    widget.label,
                     style: GoogleFonts.inter(
                       color: textColor,
                       fontSize: 14,
