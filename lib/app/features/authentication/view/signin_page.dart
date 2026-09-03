@@ -78,28 +78,17 @@ class SignInPage extends ConsumerWidget {
       backgroundColor: _loginBg,
       body: Stack(
         children: [
-          // Failsafe: deep-purple gradient pinned to the very bottom,
-          // strictly behind the scene. When the scene sits correctly its
-          // opaque waves cover this zone entirely (zero visual change);
-          // if any inset ever exposes pixels below the waves, purple —
-          // never pale scaffold — shows instead. IgnorePointer keeps
-          // footer links tappable wherever the form overlaps this zone.
+          // DIAGNOSTIC ONLY (will revert): solid blue backstop in the
+          // bottom 160px. Blue strip => the scene image floats above the
+          // Stack bottom (asset/image cause). Pale strip => the strip is
+          // BELOW this Stack entirely (ancestor/system cause).
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
             height: 160,
             child: IgnorePointer(
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: [0.5, 1.0],
-                    colors: [Colors.transparent, Color(0xFF5940B4)],
-                  ),
-                ),
-              ),
+              child: Container(color: Colors.blue),
             ),
           ),
           // body.login background — same treatment on all breakpoints
