@@ -68,7 +68,10 @@ class SignInPage extends ConsumerWidget {
     final cardWidth = width > 1500 ? 780.0 : 580.0;
 
     return Scaffold(
-      backgroundColor: _loginBg,
+      // DIAGNOSTIC ONLY (will revert): paints the whole page bg red so
+      // the next screenshot proves whether the pale strip is inside this
+      // page's layout (turns red) or comes from outside it (stays pale).
+      backgroundColor: Colors.red,
       body: Stack(
         children: [
           // Failsafe: deep-purple gradient pinned to the very bottom,
