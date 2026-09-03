@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:country_flags/country_flags.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lms/app/core/data/countries.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
@@ -656,12 +657,17 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                               builder: (context, hovering) => SizedBox(
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
-                                  onPressed:
-                                      () => showDialog(
-                                        context: context,
-                                        builder:
-                                            (_) => const _ResetPasswordDialog(),
-                                      ),
+                                   onPressed:
+                                       () => showDialog(
+                                         context: context,
+                                         // .modal-backdrop.show — opacity .5.
+                                         barrierColor: const Color(
+                                           0x80000000,
+                                         ),
+                                         builder:
+                                             (_) =>
+                                                 const _ResetPasswordDialog(),
+                                       ),
                                   icon: Icon(
                                     Icons.lock_outline_rounded,
                                     size: 12,
@@ -1197,118 +1203,211 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
       return;
     }
     Navigator.of(context).pop();
-    Toast.success(context, 'Password changed successfully.');
+    Toast.success(context, 'Password Updated.');
   }
 
   @override
   Widget build(BuildContext context) {
+    // CSS refs: `backend/views/sign-in/account.php` (#reset-password
+    // .modal-lg shell), `changepassword.php` (form), the "reset password
+    // modal" block in `course/paypal-payment.php`, and app.css
+    // (.modal-content/.modal-footer/.btn-danger).
+    //
+    // #reset-password .modal-dialog — top margin 200px on wide desktop,
+    // 80px at <=1500px; .modal-lg caps width at 800px.
+    // .modal-content — padding 15, radius 24, border 1px #979797,
+    // shadow 0 2px 30px rgba(0,0,0,.25).
+    // .modal-header — borderless, title centered: h6 22px/Roboto/#2A2A2A
+    // with margin-top 20; .close absolute (right 15, top 10), opacity 1.
+    // .modal-body — margin 0 20, padding 15/30.
+    // .modal-footer — no top border, centered buttons, padding 1rem.
+    // Okay = .btn-primary (#693D94, hover #4043af); Cancel = .btn-danger
+    // (#e50000, hover #bf0000); `button.btn` text 16px ls 1, radius 4.
+    final width = MediaQuery.sizeOf(context).width;
+    final topMargin = width > 1500 ? 200.0 : 80.0;
     return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                const Text(
-                  'Reset Password',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: _asInk,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                    height: 1.2,
-                  ),
-                ),
-                Positioned(
-                  right: 0,
-                  top: -4,
-                  child: IconButton(
-                    onPressed:
-                        _isSubmitting
-                            ? null
-                            : () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, size: 16, color: _asMuted),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _PasswordField(label: 'Old Password', controller: _oldPasswordCtrl),
-            const SizedBox(height: 14),
-            _PasswordField(label: 'New Password', controller: _newPasswordCtrl),
-            const SizedBox(height: 14),
-            _PasswordField(
-              label: 'Confirm Password',
-              controller: _confirmPasswordCtrl,
-            ),
-            if (_errorText != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                _errorText!,
-                style: const TextStyle(color: Colors.red, fontSize: 12.5, height: 1.5),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: EdgeInsets.fromLTRB(24, topMargin, 24, 24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 800),
+        child: Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFF979797)),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x40000000),
+                blurRadius: 30,
+                offset: Offset(0, 2),
               ),
             ],
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                HoverBuilder(
-                  builder:
-                      (context, hovering) => ElevatedButton(
-                        onPressed: _isSubmitting ? null : _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              hovering ? FigmaTokens.purpleHover : _asPurple,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          minimumSize: const Size(90, 42),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child:
-                            _isSubmitting
-                                ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                                : const Text(
-                                  'Okay',
-                                  style: TextStyle(fontWeight: FontWeight.w700),
-                                ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: Text(
+                      'Reset Password',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.roboto(
+                        color: const Color(0xFF2A2A2A),
+                        fontWeight: FontWeight.w500,
+                        fontSize: 22,
+                        height: 20 / 22,
                       ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed:
-                      _isSubmitting ? null : () => Navigator.of(context).pop(),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE53935),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    minimumSize: const Size(90, 42),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                  Positioned(
+                    right: 15,
+                    top: 10,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap:
+                            _isSubmitting
+                                ? null
+                                : () => Navigator.of(context).pop(),
+                        child: Text(
+                          '×',
+                          style: GoogleFonts.roboto(
+                            color: const Color(0xFF2A2A2A),
+                            fontSize: 18,
+                            height: 21 / 18,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
+                ],
+              ),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 15,
                 ),
-              ],
-            ),
-          ],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _PasswordField(
+                      label: 'Old Password',
+                      controller: _oldPasswordCtrl,
+                    ),
+                    // .form-group — margin-bottom 1rem.
+                    const SizedBox(height: 16),
+                    _PasswordField(
+                      label: 'New Password',
+                      controller: _newPasswordCtrl,
+                    ),
+                    const SizedBox(height: 16),
+                    _PasswordField(
+                      label: 'Confirm Password',
+                      controller: _confirmPasswordCtrl,
+                    ),
+                    if (_errorText != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        _errorText!,
+                        style: GoogleFonts.roboto(
+                          color: Colors.red,
+                          fontSize: 12.5,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    HoverBuilder(
+                      cursor: SystemMouseCursors.click,
+                      builder:
+                          (context, hovering) => ElevatedButton(
+                            onPressed: _isSubmitting ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  hovering
+                                      ? const Color(0xFF4043AF)
+                                      : _asPurple,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 15,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              textStyle: GoogleFonts.roboto(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            child:
+                                _isSubmitting
+                                    ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                    : const Text('Okay'),
+                          ),
+                    ),
+                    // .modal-footer > * — margin .25rem each side.
+                    const SizedBox(width: 8),
+                    HoverBuilder(
+                      cursor: SystemMouseCursors.click,
+                      builder:
+                          (context, hovering) => ElevatedButton(
+                            onPressed:
+                                _isSubmitting
+                                    ? null
+                                    : () => Navigator.of(context).pop(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  hovering
+                                      ? const Color(0xFFBF0000)
+                                      : const Color(0xFFE50000),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 15,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              textStyle: GoogleFonts.roboto(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w400,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1325,72 +1424,78 @@ class _PasswordField extends StatefulWidget {
 }
 
 class _PasswordFieldState extends State<_PasswordField> {
-  bool _obscure = true;
   bool _focused = false;
 
   @override
   Widget build(BuildContext context) {
+    // CSS ref: `#reset-password .resetPassword` — label 18px/lh20 with a
+    // red " *" (div.required), 8px label gap (Bootstrap label margin),
+    // input bg #f1f1f1 (base .form-control border/radius/type), focus
+    // #b2b3e3 + 0.2rem rgba(84,87,193,.25) glow.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         RichText(
           text: TextSpan(
-            style: const TextStyle(
-              color: Color(0xFF4B5563),
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              height: 1.5,
+            style: GoogleFonts.roboto(
+              color: const Color(0xFF2A2A2A),
+              fontSize: 18,
+              height: 20 / 18,
             ),
             children: [
               TextSpan(text: widget.label),
-              const TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
+              const TextSpan(
+                text: ' *',
+                style: TextStyle(color: Colors.red),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Focus(
           onFocusChange: (focused) => setState(() => _focused = focused),
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: _focused
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF5457C1).withValues(alpha: 0.1),
-                        spreadRadius: 4,
-                      ),
-                    ]
-                  : null,
+              borderRadius: BorderRadius.circular(6),
+              boxShadow:
+                  _focused
+                      ? const [
+                        BoxShadow(
+                          color: Color(0x405457C1),
+                          blurRadius: 0,
+                          spreadRadius: 3,
+                        ),
+                      ]
+                      : null,
             ),
             child: TextField(
               controller: widget.controller,
-              obscureText: _obscure,
-              style: const TextStyle(color: _asInk, fontSize: 14, height: 1.5),
+              obscureText: true,
+              textAlignVertical: TextAlignVertical.center,
+              style: GoogleFonts.roboto(
+                color: const Color(0xFF3B3F5C),
+                fontSize: 15,
+                letterSpacing: 1,
+              ),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: const Color(0xFFF1F1F1),
                 hoverColor: Colors.transparent,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
+                  horizontal: 10,
+                  vertical: 10,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: const BorderSide(color: Color(0xFFBFC9D4)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: const BorderSide(color: Color(0xFFBFC9D4)),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: _asPurple, width: 1.5),
-                ),
-                suffixIcon: IconButton(
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                  icon: Icon(
-                    _obscure
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    size: 14,
-                    color: _asMuted,
-                  ),
+                  borderRadius: BorderRadius.circular(6),
+                  borderSide: const BorderSide(color: Color(0xFFB2B3E3)),
                 ),
               ),
             ),
