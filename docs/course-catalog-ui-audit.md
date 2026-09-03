@@ -5047,3 +5047,36 @@ analyze` — 43 issues (down from the previously-tracked 59-issue
 baseline; unrelated commits landed in the repo between sessions and
 lowered it — confirmed via `git log` that this file's own diff didn't
 touch any of the resolved warnings).
+
+## Follow-up: "My Courses" nav dropdown icons — cached so they render instantly on repeat opens
+
+**Report**: screenshot of the desktop top-nav "My Courses" dropdown,
+with the icons visibly slow to appear each time the dropdown is
+reopened.
+
+**Root cause**: `_NavIcon` in
+`lib/app/features/courses/view/lms_app_bar.dart` is the widget behind
+every dropdown item's icon (My Courses' 4 sub-items, plus the other top-
+nav dropdowns reusing the same class). It's a `StatefulWidget` that
+fetches its icon fresh over the network (`Dio().get` on the real site's
+SVG/pattern-fill icon URL, then decodes it) from `initState` — and
+since a `PopupMenuButton`'s menu content is rebuilt from scratch each
+time it's opened, every single re-open was re-issuing that network
+fetch and re-decoding the SVG/PNG for every icon, with nothing cached
+between opens.
+
+**Fix**: added a `static final Map<String, Widget> _cache` on
+`_NavIconState`, keyed by icon URL and shared across every `_NavIcon`
+instance app-wide (not per-State). `initState` now checks the cache
+first and renders synchronously from it when present, only falling
+back to the network fetch on a genuine first-ever load of that icon;
+`_load()` populates the cache once a fetch resolves. First open of the
+app still fetches once per distinct icon, same as before; every
+subsequent open of any dropdown reusing that URL renders instantly. No
+other call site duplicates this network-fetch-per-open pattern
+(`tablet_nav_bar.dart`/`app_drawer.dart` use static `Icon`s, not
+network SVGs).
+
+**Verification**: `dart format` + `flutter analyze` on
+`lms_app_bar.dart` — 0 issues. Full-project `flutter analyze` — 43
+issues (current baseline, unchanged).

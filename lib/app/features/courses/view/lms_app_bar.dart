@@ -939,12 +939,26 @@ class _NavIcon extends StatefulWidget {
 class _NavIconState extends State<_NavIcon> {
   static final _embeddedPngPattern = RegExp(r'data:image/png;base64,([^"]+)');
 
+  // These dropdowns get rebuilt (and every `_NavIcon` re-created) each time
+  // a `PopupMenuButton` menu is opened, so without a cache this widget was
+  // re-fetching and re-decoding the same handful of SVG/PNG icon assets
+  // from the network on every single open — a visible flash-then-pop-in
+  // delay each time. Keyed by URL and shared across every `_NavIcon`
+  // instance (static, not per-State), so the first open per icon still
+  // fetches once, but every open after that renders instantly from memory.
+  static final Map<String, Widget> _cache = {};
+
   Widget? _resolved;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    final cached = _cache[widget.url];
+    if (cached != null) {
+      _resolved = cached;
+    } else {
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -985,6 +999,7 @@ class _NavIconState extends State<_NavIcon> {
                 width: _NavIcon._size,
                 height: _NavIcon._size,
               );
+      _cache[widget.url] = resolved;
       if (mounted) setState(() => _resolved = resolved);
     } catch (_) {
       // Leave `_resolved` null — renders as a correctly-sized blank
@@ -1557,9 +1572,13 @@ class _NotificationsDialog extends ConsumerWidget {
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
-                      onTap: () => ref
-                          .read(NotificationsViewModel.provider.notifier)
-                          .markAllAsRead(),
+                      onTap:
+                          () =>
+                              ref
+                                  .read(
+                                    NotificationsViewModel.provider.notifier,
+                                  )
+                                  .markAllAsRead(),
                       child: Padding(
                         padding: const EdgeInsets.all(4),
                         child: Text(
@@ -1744,14 +1763,13 @@ class _NotifRowState extends State<_NotifRow> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: isUnread
-                ? const Color(0xFFF8F9FF)
-                : _hover
-                ? const Color(0xFFFAFBFC)
-                : Colors.white,
-            border: const Border(
-              bottom: BorderSide(color: Color(0xFFF1F5F9)),
-            ),
+            color:
+                isUnread
+                    ? const Color(0xFFF8F9FF)
+                    : _hover
+                    ? const Color(0xFFFAFBFC)
+                    : Colors.white,
+            border: const Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1760,11 +1778,12 @@ class _NotifRowState extends State<_NotifRow> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: isUnread
-                      ? _appPurple.withValues(alpha: _hover ? 0.15 : 0.10)
-                      : _hover
-                      ? const Color(0xFFE8ECF1)
-                      : const Color(0xFFF1F4F9),
+                  color:
+                      isUnread
+                          ? _appPurple.withValues(alpha: _hover ? 0.15 : 0.10)
+                          : _hover
+                          ? const Color(0xFFE8ECF1)
+                          : const Color(0xFFF1F4F9),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -1788,9 +1807,8 @@ class _NotifRowState extends State<_NotifRow> {
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               height: 1.4,
-                              color: _hover
-                                  ? _appPurple
-                                  : const Color(0xFF1E293B),
+                              color:
+                                  _hover ? _appPurple : const Color(0xFF1E293B),
                             ),
                           ),
                         ),
