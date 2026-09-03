@@ -4076,16 +4076,18 @@ class _ClassDetailsDialog extends StatelessWidget {
           // button (32x32, gradient white→indigo tint, radius 50%,
           // absolute top:12/right:14) — was a bare Icon.
           Container(
+            // Live reference: the gradient header is a sharp-cornered
+            // rectangle floating inside the white dialog — margin insets
+            // it from the top/left/right (plus 8px below, which stacks
+            // with the body's 12px top padding for the full gap),
+            // square corners, no edge bleed.
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [_detailPurple, _detailPurple2],
-              ),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
               ),
             ),
             // In-flow header row: a 32px balance box on the left keeps
