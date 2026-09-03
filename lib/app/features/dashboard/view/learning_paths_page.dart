@@ -102,14 +102,28 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
     // (365.2 content inside 375.2 outer). Reproduce that here so the
     // search block and structure-block sit inside the same container
     // inset as the web page.
+    //
+    // Above 991.98px that override no longer applies, so it's Bootstrap's
+    // base `.container` rule instead — `padding` is commented out there
+    // (confirmed against `origin/staging`'s `app.css`), but that rule ALSO
+    // caps `max-width` (960px at >=992px, 1140px at >=1200px) and centers
+    // via `margin:auto`. A prior pass read only the padding half of that
+    // rule and rendered this page full-bleed on desktop — a live
+    // screenshot shows the real page has a clear side margin there, which
+    // is that max-width capping + centering, not padding. Reproduced with
+    // `Center`+`ConstrainedBox` instead of literal padding, since the
+    // margin here comes from the container not spanning the full width in
+    // the first place.
     final w = MediaQuery.sizeOf(context).width;
     final EdgeInsets containerPadding;
+    double? containerMaxWidth;
     if (w <= 640) {
       containerPadding = const EdgeInsets.all(5);
     } else if (w <= 991.98) {
       containerPadding = const EdgeInsets.symmetric(horizontal: 15);
     } else {
       containerPadding = EdgeInsets.zero;
+      containerMaxWidth = w >= 1200 ? 1140 : 960;
     }
 
     return AppScaffold(
@@ -125,15 +139,24 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
           ),
       body: Padding(
         padding: containerPadding,
-        child: Column(
-          children: [
-            _SearchBar(
-              controller: _searchController,
-              onSearch: _onSearch,
-              onReset: _onReset,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: containerMaxWidth ?? double.infinity,
             ),
-            Expanded(child: _Body(state: state, onRetry: () => notifier.fetch())),
-          ],
+            child: Column(
+              children: [
+                _SearchBar(
+                  controller: _searchController,
+                  onSearch: _onSearch,
+                  onReset: _onReset,
+                ),
+                Expanded(
+                  child: _Body(state: state, onRetry: () => notifier.fetch()),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -247,11 +270,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
                 ),
                 prefixIcon: const Padding(
                   padding: EdgeInsets.fromLTRB(10, 12, 0, 12),
-                  child: Icon(
-                    Icons.search,
-                    color: Color(0xFF693D94),
-                    size: 20,
-                  ),
+                  child: Icon(Icons.search, color: Color(0xFF693D94), size: 20),
                 ),
                 prefixIconConstraints: const BoxConstraints(
                   minWidth: 30,
@@ -415,10 +434,7 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: resetButton,
-            ),
+            child: Align(alignment: Alignment.centerLeft, child: resetButton),
           ),
         ],
       ),
@@ -485,10 +501,7 @@ class _Body extends StatelessWidget {
                 // `≤640:15px` else `20px` per `.structure-block` media;
                 // `margin:30px 0 10px` desktop vs `0 0 10px` at `≤767`.
                 padding: EdgeInsets.all(isCompact ? 15 : 20),
-                margin: EdgeInsets.only(
-                  top: isListPhone ? 0 : 30,
-                  bottom: 10,
-                ),
+                margin: EdgeInsets.only(top: isListPhone ? 0 : 30, bottom: 10),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -576,7 +589,8 @@ class _Body extends StatelessWidget {
                           // `10/5` + summary `15 bottom` inspected.
                           return isTablet
                               ? Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [title, subtitle],
                               )
                               : Column(
@@ -1208,20 +1222,20 @@ class _CompetencyPreviewRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final courses = competency.courseNames;
-// CSS ref: `yii\grid\SerialColumn`'s content has no color override
-      // either — plain body text (was purple/600). Phone index styling —
-      // `.kv-detail-content .table tbody td:first-child` at `≤767`:
-      // `position:absolute; left:20px; top:26px; font-size:14px;
-      // font-weight:bold; color:#2c3e50` — bold dark digit, NOT the
-      // light label style (was the same 12.5/w600 label style as the
-      // "Competency:" label above it).
-      final indexStyle = TextStyle(
-        color: const Color(0xFF2C3E50),
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        height: 1.3,
-      );
-      final competencyName = Row(
+    // CSS ref: `yii\grid\SerialColumn`'s content has no color override
+    // either — plain body text (was purple/600). Phone index styling —
+    // `.kv-detail-content .table tbody td:first-child` at `≤767`:
+    // `position:absolute; left:20px; top:26px; font-size:14px;
+    // font-weight:bold; color:#2c3e50` — bold dark digit, NOT the
+    // light label style (was the same 12.5/w600 label style as the
+    // "Competency:" label above it).
+    final indexStyle = TextStyle(
+      color: const Color(0xFF2C3E50),
+      fontSize: 14,
+      fontWeight: FontWeight.bold,
+      height: 1.3,
+    );
+    final competencyName = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('$index', style: const TextStyle(color: _ink, fontSize: 12.5)),

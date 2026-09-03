@@ -5193,3 +5193,32 @@ is sent to the server for it on Save.
 **Verification**: `dart format` + `flutter analyze` on
 `account_settings_page.dart` — 0 issues. Full-project `flutter
 analyze` — 43 issues (current baseline, unchanged).
+
+## Follow-up: Learning Paths — restored the desktop side margins (was edge-to-edge)
+
+**Report**: screenshot of the desktop Learning Paths page with the white
+table card spanning the full browser width, no left/right margin at all.
+"Please give some margin/padding to the left and right of the container."
+
+**Root cause / correction of an earlier assumption**: this page's
+container-inset logic (comment block right above it) correctly read
+`origin/staging`'s `app.css` — above the `max-width:991.98px` media
+query, `.container`'s own `padding-left`/`padding-right` really are
+commented out — but that's only half of Bootstrap's base `.container`
+rule. The other half was missed: `.container` also caps `max-width`
+(960px at >=992px, 1140px at >=1200px per `app.css`) and centers itself
+via `margin:auto`. On the real site THAT'S what produces the visible
+side margin at desktop widths — the container simply doesn't span the
+full viewport — not padding. Reading only the padding half made this
+page render edge-to-edge on desktop, confirmed wrong by the screenshot.
+
+**Fix**: `lib/app/features/dashboard/view/learning_paths_page.dart` —
+above 991.98px, the body is now wrapped in `Center` +
+`ConstrainedBox(maxWidth: w >= 1200 ? 1140 : 960)` instead of just
+`EdgeInsets.zero` padding, reproducing the real max-width-and-centering
+behavior. The <=991.98px branches (5px all-around / 15px horizontal)
+are unchanged — those already matched.
+
+**Verification**: `dart format` + `flutter analyze` on
+`learning_paths_page.dart` — 0 issues. Full-project `flutter analyze`
+— 43 issues (current baseline, unchanged).
