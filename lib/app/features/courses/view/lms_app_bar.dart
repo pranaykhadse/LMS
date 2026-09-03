@@ -231,7 +231,10 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
         _ProfileMenuButton(
           profile: profile,
           onSelected: (value) => _onProfileMenuSelected(context, ref, value),
-          itemBuilder: (context) => _profileMenuItems(profile),
+          itemBuilder: (context) => _profileMenuItems(
+            profile,
+            ref.watch(AuthStateNotifier.provider)?.role?.itemName,
+          ),
         ),
       ],
     );
@@ -455,13 +458,25 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               const SizedBox(width: 12),
               PopupMenuButton<String>(
                 offset: const Offset(0, 34),
-                constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
+                // Same web-matched panel as the desktop _ProfileMenuButton:
+                // `.dropdown-profile .dropdown-menu` = 250px, white,
+                // radius 16, `0 15px 50px rgba(0,0,0,.2)`.
+                constraints: const BoxConstraints(
+                  minWidth: 250,
+                  maxWidth: 250,
+                ),
+                color: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                elevation: 12,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 onSelected:
                     (value) => _onProfileMenuSelected(context, ref, value),
-                itemBuilder: (context) => _profileMenuItems(profile),
+                itemBuilder: (context) => _profileMenuItems(
+                  profile,
+                  ref.watch(AuthStateNotifier.provider)?.role?.itemName,
+                ),
                 padding: EdgeInsets.zero,
                 // Phone-only: avatar sits inside a small rounded box with a
                 // dropdown chevron, instead of desktop's bare avatar + name.
@@ -592,11 +607,12 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     }
   }
 
-  List<PopupMenuEntry<String>> _profileMenuItems(dynamic profile) => [
+  List<PopupMenuEntry<String>> _profileMenuItems(dynamic profile,
+      String? role) => [
     PopupMenuItem<String>(
       enabled: false,
       padding: EdgeInsets.zero,
-      child: _ProfileHeader(profile: profile),
+      child: _ProfileHeader(profile: profile, role: role),
     ),
     const PopupMenuItem<String>(
       value: 'settings',
@@ -615,7 +631,11 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     const PopupMenuItem<String>(
       value: 'logout',
       padding: EdgeInsets.zero,
-      child: _ProfileMenuRow(icon: Icons.logout, label: 'Logout Account'),
+      child: _ProfileMenuRow(
+        icon: Icons.logout,
+        label: 'Logout Account',
+        isLogout: true,
+      ),
     ),
   ];
 }
@@ -1055,8 +1075,16 @@ class _ProfileMenuButtonState extends State<_ProfileMenuButton> {
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
       offset: const Offset(0, 38),
-      constraints: const BoxConstraints(minWidth: 290, maxWidth: 390),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      // CSS ref (`origin/staging` bluetheme-layout.css:
+      // `.dropdown-profile .dropdown-menu{width:250px!important;
+      // min-width:250px!important;padding:0;overflow:hidden;border:none;
+      // box-shadow:0 15px 50px rgba(0,0,0,.2)!important}`) — pinned to a
+      // fixed 250px panel, white bg, radius 16, deep drop shadow.
+      constraints: const BoxConstraints(minWidth: 250, maxWidth: 250),
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 12,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onOpened: () => setState(() => _isOpen = true),
       onCanceled: () => setState(() => _isOpen = false),
       onSelected: (value) {
@@ -1933,41 +1961,52 @@ String _initial(dynamic profile) {
 // ── Profile popup widgets ─────────────────────────────────────────────────────
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.profile});
+  const _ProfileHeader({required this.profile, this.role});
   final dynamic profile;
+  final String? role;
 
   @override
   Widget build(BuildContext context) {
     final name =
         '${profile?.firstname ?? ''} ${profile?.lastname ?? ''}'.trim();
+    final roleLabel = (role?.trim().isNotEmpty ?? false)
+        ? role!.trim()
+        : 'User';
+    // Reference site's `.profile-header-box`: solid var(--primary-first)
+    // background, 40px avatar, name as h6 (#fff/700/15px/letter-spacing
+    // -0.3px) with the role as an uppercase, letter-spaced 11px caption.
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(15, 12, 15, 12),
       decoration: const BoxDecoration(
-        gradient: FigmaTokens.heroGradient,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        color: _appPurple,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       child: Row(
         children: [
-          LmsAvatar(profile: profile, radius: 22),
+          LmsAvatar(profile: profile, radius: 20),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 name.isEmpty ? 'User' : name,
-                style: const TextStyle(
+                style: GoogleFonts.inter(
                   color: Colors.white,
-                  fontSize: 17,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  letterSpacing: -0.3,
                 ),
               ),
-              const Text(
-                'USER',
-                style: TextStyle(
-                  color: Colors.white70,
+              const SizedBox(height: 2),
+              Text(
+                roleLabel.toUpperCase(),
+                style: GoogleFonts.inter(
+                  color: const Color(0xCCFFFFFF),
                   fontSize: 11,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.5,
                 ),
               ),
             ],
@@ -1979,28 +2018,61 @@ class _ProfileHeader extends StatelessWidget {
 }
 
 class _ProfileMenuRow extends StatelessWidget {
-  const _ProfileMenuRow({required this.icon, required this.label});
+  const _ProfileMenuRow({
+    required this.icon,
+    required this.label,
+    this.isLogout = false,
+  });
   final IconData icon;
   final String label;
+  final bool isLogout;
 
-  // Matches the reference site's a.dropdown-item exactly: #4A5568, Inter
-  // 14px, margin 2/10 + padding 10/15 (combined here into one inset,
-  // since PopupMenuItem has no separate margin concept).
+  // Matches the reference site's a.dropdown-item exactly (#4A5568, Inter
+  // 14px/500, margin 2/10 + padding 10/15 = combined h25/v12 inset here).
+  // Hover mirrors `.dropdown-profile .dropdown-item:hover`: background
+  // rgba(84,87,193,.1) + primary color + translateX(6px); the logout item
+  // (.logout-item:hover) uses a red tint + #e53e3e instead.
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
-    child: Row(
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFF4A5568)),
-        const SizedBox(width: 12),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            color: const Color(0xFF4A5568),
-            fontSize: 14,
+    child: HoverBuilder(
+      cursor: SystemMouseCursors.click,
+      builder: (context, hovering) {
+        final tint = isLogout
+            ? const Color(0x1AEF4444)
+            : const Color(0x1A5457C1);
+        final textColor = hovering
+            ? (isLogout ? const Color(0xFFE53E3E) : _appPurple)
+            : const Color(0xFF4A5568);
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: BoxDecoration(
+            color: hovering ? tint : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-      ],
+          child: Transform.translate(
+            offset: hovering ? const Offset(6, 0) : Offset.zero,
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: textColor.withValues(alpha: 0.8),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    color: textColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     ),
   );
 }
