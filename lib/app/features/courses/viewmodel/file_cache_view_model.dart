@@ -34,18 +34,20 @@ class FileCacheViewModel extends ChangeNotifier {
   Future<void> _checkRegularCache(String url) async {
     final file = await _regularFile(url);
     _checking.remove(url);
-    cachedState[url] = file.existsSync()
-        ? FileCacheState(url: url, file: file)
-        : FileCacheState(url: url);
+    cachedState[url] =
+        file.existsSync()
+            ? FileCacheState(url: url, file: file)
+            : FileCacheState(url: url);
     notifyListeners();
   }
 
   Future<void> _checkHlsCache(String url) async {
     final manifestFile = await _hlsManifestFile(url);
     _checking.remove(url);
-    cachedState[url] = manifestFile.existsSync()
-        ? FileCacheState(url: url, file: manifestFile)
-        : FileCacheState(url: url);
+    cachedState[url] =
+        manifestFile.existsSync()
+            ? FileCacheState(url: url, file: manifestFile)
+            : FileCacheState(url: url);
     notifyListeners();
   }
 
@@ -139,7 +141,8 @@ class FileCacheViewModel extends ChangeNotifier {
         if (!viewingDir.existsSync()) return;
         final prefix = '${url.hashCode.abs()}_';
         await for (final entity in viewingDir.list()) {
-          if (entity is File && entity.uri.pathSegments.last.startsWith(prefix)) {
+          if (entity is File &&
+              entity.uri.pathSegments.last.startsWith(prefix)) {
             await entity.delete();
           }
         }
@@ -191,7 +194,10 @@ class FileCacheViewModel extends ChangeNotifier {
 
   Future<void> _downloadRegular(String url) async {
     final progressController = StreamController<double>.broadcast();
-    cachedState[url] = FileCacheState(url: url, progress: progressController.stream);
+    cachedState[url] = FileCacheState(
+      url: url,
+      progress: progressController.stream,
+    );
     notifyListeners();
 
     try {
@@ -210,11 +216,36 @@ class FileCacheViewModel extends ChangeNotifier {
       await file.writeAsBytes(_OfflineCipher.apply(bytes));
       if (!progressController.isClosed) progressController.close();
       cachedState[url] = FileCacheState(url: url, file: file);
-    } catch (_) {
+    } catch (e) {
       if (!progressController.isClosed) progressController.close();
-      cachedState.remove(url);
+      cachedState[url] = FileCacheState(url: url, error: _describeError(e));
     }
     notifyListeners();
+  }
+
+  // A generic "Unable to download" toast gives no way to tell a bad/expired
+  // URL apart from a network drop or a server-side error - this pulls out
+  // whatever detail is actually available (HTTP status, or the underlying
+  // socket/timeout message) so a real failure has something concrete to
+  // act on instead of a guess.
+  static String _describeError(Object e) {
+    if (e is http.DioException) {
+      final status = e.response?.statusCode;
+      if (status != null) return 'server returned HTTP $status';
+      switch (e.type) {
+        case http.DioExceptionType.connectionTimeout:
+        case http.DioExceptionType.sendTimeout:
+        case http.DioExceptionType.receiveTimeout:
+          return 'connection timed out';
+        case http.DioExceptionType.connectionError:
+          return 'connection failed - check your network';
+        case http.DioExceptionType.cancel:
+          return 'download was cancelled';
+        default:
+          return e.message ?? e.type.name;
+      }
+    }
+    return e.toString();
   }
 
   static Future<File> _regularFile(String url) async {
@@ -232,7 +263,9 @@ class FileCacheViewModel extends ChangeNotifier {
   static Future<File> _viewingFile(String url, String extension) async {
     final dir = await getTemporaryDirectory();
     final ext = extension.startsWith('.') ? extension.substring(1) : extension;
-    return File('${dir.path}/lms_viewing/${url.hashCode.abs()}_${ext.isEmpty ? 'bin' : ext}');
+    return File(
+      '${dir.path}/lms_viewing/${url.hashCode.abs()}_${ext.isEmpty ? 'bin' : ext}',
+    );
   }
 
   static String _extensionOf(String url) {
@@ -247,17 +280,27 @@ class FileCacheViewModel extends ChangeNotifier {
   // whatever the source URL looks like.
   static String? _sniffExtension(List<int> bytes) {
     if (bytes.length > 8 &&
-        bytes[4] == 0x66 && bytes[5] == 0x74 && bytes[6] == 0x79 && bytes[7] == 0x70) {
+        bytes[4] == 0x66 &&
+        bytes[5] == 0x74 &&
+        bytes[6] == 0x79 &&
+        bytes[7] == 0x70) {
       return '.mp4'; // ISO base media container (mp4/mov/m4v) - 'ftyp' box at offset 4.
     }
     if (bytes.length > 4 &&
-        bytes[0] == 0x1A && bytes[1] == 0x45 && bytes[2] == 0xDF && bytes[3] == 0xA3) {
+        bytes[0] == 0x1A &&
+        bytes[1] == 0x45 &&
+        bytes[2] == 0xDF &&
+        bytes[3] == 0xA3) {
       return '.webm'; // EBML header (webm/mkv).
     }
     if (bytes.isNotEmpty && bytes[0] == 0x47) {
       return '.ts'; // MPEG-TS sync byte.
     }
-    if (bytes.length > 3 && bytes[0] == 0x25 && bytes[1] == 0x50 && bytes[2] == 0x44 && bytes[3] == 0x46) {
+    if (bytes.length > 3 &&
+        bytes[0] == 0x25 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x44 &&
+        bytes[3] == 0x46) {
       return '.pdf'; // '%PDF'
     }
     return null;
@@ -308,14 +351,15 @@ class FileCacheViewModel extends ChangeNotifier {
       final dir = await _hlsLocalDir(hlsUrl);
       if (!dir.existsSync()) dir.createSync(recursive: true);
 
-      final localPlaylist = StringBuffer()
-        ..writeln('#EXTM3U')
-        ..writeln('#EXT-X-VERSION:3')
-        ..writeln('#EXT-X-PLAYLIST-TYPE:VOD')
-        ..writeln(
-          '#EXT-X-TARGETDURATION:'
-          '${segments.map((s) => s.duration).reduce((a, b) => a > b ? a : b).ceil()}',
-        );
+      final localPlaylist =
+          StringBuffer()
+            ..writeln('#EXTM3U')
+            ..writeln('#EXT-X-VERSION:3')
+            ..writeln('#EXT-X-PLAYLIST-TYPE:VOD')
+            ..writeln(
+              '#EXT-X-TARGETDURATION:'
+              '${segments.map((s) => s.duration).reduce((a, b) => a > b ? a : b).ceil()}',
+            );
 
       for (int i = 0; i < segments.length; i++) {
         final segResp = await _dio.get<List<int>>(
@@ -324,8 +368,9 @@ class FileCacheViewModel extends ChangeNotifier {
         );
         final segmentName = 'segment_${i.toString().padLeft(5, '0')}.ts';
         if (segResp.data != null) {
-          await File('${dir.path}/$segmentName')
-              .writeAsBytes(_OfflineCipher.apply(segResp.data!));
+          await File(
+            '${dir.path}/$segmentName',
+          ).writeAsBytes(_OfflineCipher.apply(segResp.data!));
         }
         localPlaylist
           ..writeln('#EXTINF:${segments[i].duration},')
@@ -350,7 +395,10 @@ class FileCacheViewModel extends ChangeNotifier {
       if (!progressController.isClosed) progressController.close();
       final dir = await _hlsLocalDir(hlsUrl);
       if (dir.existsSync()) dir.deleteSync(recursive: true);
-      cachedState.remove(hlsUrl);
+      cachedState[hlsUrl] = FileCacheState(
+        url: hlsUrl,
+        error: _describeError(e),
+      );
       notifyListeners();
     }
   }
@@ -399,7 +447,9 @@ class FileCacheViewModel extends ChangeNotifier {
         continue;
       }
       if (line.startsWith('#')) continue;
-      segments.add(_HlsSegment(url: _resolve(line, base), duration: pendingDuration));
+      segments.add(
+        _HlsSegment(url: _resolve(line, base), duration: pendingDuration),
+      );
     }
     return segments;
   }
@@ -435,10 +485,38 @@ class _HlsSegment {
 /// on demand for its own viewers.
 class _OfflineCipher {
   static const List<int> _key = [
-    0x4c, 0x4d, 0x53, 0x2d, 0x4f, 0x66, 0x66, 0x6c,
-    0x69, 0x6e, 0x65, 0x2d, 0xa1, 0x3f, 0x7c, 0x92,
-    0x5e, 0x11, 0xc4, 0x08, 0x6b, 0x2a, 0xd7, 0x99,
-    0x33, 0xf0, 0x17, 0x84, 0x5d, 0x6c, 0xe2, 0x91,
+    0x4c,
+    0x4d,
+    0x53,
+    0x2d,
+    0x4f,
+    0x66,
+    0x66,
+    0x6c,
+    0x69,
+    0x6e,
+    0x65,
+    0x2d,
+    0xa1,
+    0x3f,
+    0x7c,
+    0x92,
+    0x5e,
+    0x11,
+    0xc4,
+    0x08,
+    0x6b,
+    0x2a,
+    0xd7,
+    0x99,
+    0x33,
+    0xf0,
+    0x17,
+    0x84,
+    0x5d,
+    0x6c,
+    0xe2,
+    0x91,
   ];
 
   static Uint8List apply(List<int> bytes) {
@@ -457,5 +535,11 @@ class FileCacheState {
   // directly by a viewer - see [FileCacheViewModel.prepareForViewing].
   File? file;
 
-  FileCacheState({required this.url, this.file, this.progress});
+  // Set (instead of just dropping the cache entry) when a download fails,
+  // so callers with a BuildContext can show the caller *what* went wrong
+  // rather than a download silently reverting to "not downloaded" with no
+  // explanation at all.
+  final String? error;
+
+  FileCacheState({required this.url, this.file, this.progress, this.error});
 }

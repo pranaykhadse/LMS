@@ -5254,3 +5254,35 @@ actual error message next time.
 **Verification**: `dart format` + `flutter analyze` on
 `download_button.dart` — 0 issues. Full-project `flutter analyze` — 43
 issues (current baseline, unchanged).
+
+## Follow-up: Download errors now carry an actual reason (was still a generic message)
+
+**Report**: "Still not able to download it" — after the prior follow-up
+added a generic "Unable to download" toast, the download itself is
+still failing, and that message alone isn't enough to diagnose why
+without live access to the session.
+
+**Fix**: `lib/app/features/courses/viewmodel/file_cache_view_model.dart`
+— `FileCacheState` gained an `error` field. `_downloadRegular` and
+`_downloadHls`'s catch blocks now leave behind a `FileCacheState(error:
+...)` instead of dropping the cache entry outright, populated by a new
+`_describeError` helper that pulls out whatever concrete detail is
+actually available: the HTTP status code when the server responded at
+all, or a specific message for a connection timeout / connection
+failure / cancelled request, falling back to the raw exception text
+otherwise. `download_button.dart`'s toast now reads that message
+(`'Unable to download $label: ${nextState.error}'`) instead of a fixed
+generic string — the retry button/state itself is unchanged, since a
+non-null, file-less, progress-less `FileCacheState` already falls
+through to the normal "Download" trigger button same as a dropped
+entry did.
+
+**Still open**: this makes the *actual* failure visible (HTTP 404 vs.
+timeout vs. connection error, etc.) rather than fixing a specific root
+cause — this session has no way to inspect the live request/response
+from the user's own session to know which one it is. Whatever the next
+toast says narrows it down concretely for a targeted follow-up.
+
+**Verification**: `dart format` + `flutter analyze` on both changed
+files — 0 issues. Full-project `flutter analyze` — 43 issues (current
+baseline, unchanged).

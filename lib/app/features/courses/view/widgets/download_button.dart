@@ -103,14 +103,14 @@ class DownloadButton extends ConsumerWidget {
     ref.watch(SyncViewModel.provider);
 
     // Show toast when a download transitions from in-progress → cached
-    // (success) or in-progress → gone (failure — `_downloadRegular`/
-    // `_downloadHls` catch every error and just drop the state entry, with
-    // no signal to the user at all: a failed fetch — bad URL, auth, no
-    // network mid-download — looked identical to never having tapped the
-    // button in the first place, just silently reverting to the "Download"
-    // state. Surfacing that here, rather than in the view model itself,
-    // since Toast needs a BuildContext the plain ChangeNotifier doesn't
-    // have.
+    // (success) or in-progress → failed. `_downloadRegular`/`_downloadHls`
+    // used to just catch every error and drop the state entry, with no
+    // signal to the user at all — a failed fetch (bad/expired URL, no
+    // network mid-download, a server error) looked identical to never
+    // having tapped the button, reverting silently to "Download". They now
+    // leave behind a `FileCacheState.error` with an actual description
+    // (HTTP status, timeout, etc.) instead, surfaced here since Toast
+    // needs a BuildContext the plain ChangeNotifier doesn't have.
     ref.listen<FileCacheViewModel>(FileCacheViewModel.provider, (prev, next) {
       if (url == null) return;
       final wasDownloading =
@@ -120,8 +120,8 @@ class DownloadButton extends ConsumerWidget {
       final nextState = next.getSync(url!);
       if (nextState?.file != null) {
         Toast.success(context, '$label saved for offline access');
-      } else if (nextState == null) {
-        Toast.error(context, 'Unable to download $label - please try again.');
+      } else if (nextState?.error != null) {
+        Toast.error(context, 'Unable to download $label: ${nextState!.error}');
       }
     });
 
