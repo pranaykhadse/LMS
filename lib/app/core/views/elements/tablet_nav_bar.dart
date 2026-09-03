@@ -204,22 +204,6 @@ class TabletNavBar extends ConsumerWidget {
                   );
                 },
               ),
-              // Nav ref, confirmed against `origin/staging`'s
-              // bluetheme_layout.php sub-nav item — label is literally "My
-              // Recomended Courses" (typo, missing an 'm') in the real markup.
-              _SheetItem(
-                icon: Icons.assignment_outlined,
-                label: 'My Recomended Courses',
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _goTo(
-                    context,
-                    ref,
-                    ShellDestination.myRecommendedCourses,
-                    CoursesModule.construct(CoursesModule.recommendedCourses),
-                  );
-                },
-              ),
             ],
           ),
     );

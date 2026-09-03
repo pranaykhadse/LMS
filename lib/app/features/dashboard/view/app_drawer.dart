@@ -107,7 +107,6 @@ class AppDrawer extends ConsumerWidget {
       'My Completed Courses',
       'My Development Plan',
       'My Required Courses',
-      'My Recomended Courses',
     ];
     const pointsBadgesChildren = ['Redeem your Points', 'Badges'];
 
@@ -235,27 +234,6 @@ class AppDrawer extends ConsumerWidget {
                               context,
                               CoursesModule.construct(
                                 CoursesModule.requiredCourses,
-                              ),
-                            );
-                          },
-                        ),
-                        // Nav ref: sub-nav label is literally "My
-                        // Recomended Courses" (typo, confirmed against
-                        // `origin/staging`'s bluetheme_layout.php).
-                        _SubNavItem(
-                          icon: const _NavIcon(
-                            'required-courses.png',
-                            main: false,
-                            opacity: 0.65,
-                          ),
-                          label: 'My Recomended Courses',
-                          selected: subSel == 'My Recomended Courses',
-                          onTap: () {
-                            _close(context);
-                            _goTo(
-                              context,
-                              CoursesModule.construct(
-                                CoursesModule.recommendedCourses,
                               ),
                             );
                           },
