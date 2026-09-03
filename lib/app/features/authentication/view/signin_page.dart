@@ -78,19 +78,6 @@ class SignInPage extends ConsumerWidget {
       backgroundColor: _loginBg,
       body: Stack(
         children: [
-          // DIAGNOSTIC ONLY (will revert): solid blue backstop in the
-          // bottom 160px. Blue strip => the scene image floats above the
-          // Stack bottom (asset/image cause). Pale strip => the strip is
-          // BELOW this Stack entirely (ancestor/system cause).
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: 160,
-            child: IgnorePointer(
-              child: Container(color: Colors.blue),
-            ),
-          ),
           // body.login background — same treatment on all breakpoints
           // (web parity): full-width scene anchored to the bottom. The
           // source art is very wide (1440x495), so it renders as a compact
