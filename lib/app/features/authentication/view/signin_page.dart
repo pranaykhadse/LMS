@@ -415,7 +415,7 @@ class _LoginForm extends ConsumerWidget {
               onTap:
                   () => InAppWebViewPage.show(
                     context,
-                    url: 'https://leadershipedgelive.com/privacy-policy',
+                    url: 'https://leadershipedge.live/privacy-policy',
                     title: 'Privacy Policy',
                   ),
               child: Text(
