@@ -22,6 +22,10 @@ class AuthState {
   // Account Settings screen shows username as the supervisor name and
   // email as the supervisor email.
   final Supervisor? supervisor;
+  // Top-level `state_id` / `state` ("Alaska") from the login API — shown
+  // as the selected State on Account Settings.
+  final int? stateId;
+  final String? stateName;
 
   AuthState({
     this.user,
@@ -32,6 +36,8 @@ class AuthState {
     this.jobRole,
     this.group,
     this.supervisor,
+    this.stateId,
+    this.stateName,
   });
 
   AuthState copyWith({
@@ -43,6 +49,8 @@ class AuthState {
     String? jobRole,
     List<Group>? group,
     Supervisor? supervisor,
+    int? stateId,
+    String? stateName,
   }) => AuthState(
     user: user ?? this.user,
     role: role ?? this.role,
@@ -52,6 +60,8 @@ class AuthState {
     jobRole: jobRole ?? this.jobRole,
     group: group ?? this.group,
     supervisor: supervisor ?? this.supervisor,
+    stateId: stateId ?? this.stateId,
+    stateName: stateName ?? this.stateName,
   );
 
   factory AuthState.fromRawJson(String str) =>
@@ -87,6 +97,8 @@ class AuthState {
                 Map<String, dynamic>.from(json["supervisor"]),
               )
               : null,
+      stateId: _asInt(json["state_id"]),
+      stateName: _asString(json["state"]),
     );
   }
 
@@ -100,6 +112,8 @@ class AuthState {
     "group":
         group == null ? [] : List<dynamic>.from(group!.map((x) => x.toJson())),
     "supervisor": supervisor?.toJson(),
+    "state_id": stateId,
+    "state": stateName,
   };
 }
 

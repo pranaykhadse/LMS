@@ -13,6 +13,7 @@ import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
+import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/dashboard/model/user_profile_detail.dart';
 import 'package:lms/app/features/dashboard/viewmodel/account_settings_view_model.dart';
@@ -278,6 +279,11 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   Widget build(BuildContext context) {
     final profile = widget.detail.profile;
     final user = widget.detail.user;
+    // Login-API extras shown on this screen: selected state name,
+    // supervisor username/email, and the full group list with the primary
+    // group checked (web: disabled Select2 / readonly inputs / disabled
+    // radios on the account page).
+    final loginExtras = ref.watch(AuthStateNotifier.provider);
     final name = [
       profile.firstname,
       profile.lastname,
@@ -482,10 +488,14 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                         title: 'Personal Details',
                         spacing: 22.5,
                         children: [
-                          // Not yet returned by the profile API - shown as
-                          // "Not provided" like Supervisor Name/Email below, ready
-                          // to wire up once the backend exposes it.
-                          _FieldRow(label: 'State', value: null, isEditing: _isEditing),
+                          // Web: disabled Select2 bound to timezone_id showing
+                          // the selected state name ("Alaska") — readonly
+                          // here, never editable.
+                          _FieldRow(
+                            label: 'State',
+                            value: loginExtras?.stateName,
+                            isEditing: _isEditing,
+                          ),
                           _FieldRow(
                             label: 'Location',
                             value: profile.location,
@@ -545,14 +555,17 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                           // Supervisor Email only — "Employee ID" doesn't
                           // exist anywhere in `account.php`, removed.
                           _FieldRow(label: 'Cost Code', value: user.costCode, isEditing: _isEditing),
+                          // Web: supervisor firstname/lastname inputs; the
+                          // login API carries the supervisor as username +
+                          // email, so username stands in for the name row.
                           _FieldRow(
                             label: 'Supervisor Name',
-                            value: null,
+                            value: loginExtras?.supervisor?.username,
                             isEditing: _isEditing,
                           ),
                           _FieldRow(
                             label: 'Supervisor Email',
-                            value: null,
+                            value: loginExtras?.supervisor?.email,
                             isEditing: _isEditing,
                           ),
                         ],
@@ -587,16 +600,42 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                         child: _SectionBlock(
                           icon: Icons.groups_rounded,
                           title: 'Primary Group',
+                          // CSS: each .custom-radio has margin-bottom 12px.
+                          spacing: 12,
                           children: [
-                            // Web renders the user's groups as a full radio
-                            // list (same .custom-radio look as Notification
-                            // Type); our API only returns the primary one, so
-                            // show it as the checked radio row.
-                            _RadioRow(
-                              label:
-                                  user.primaryGroupLabel ?? 'Not assigned',
-                              selected: user.primaryGroupLabel != null,
-                            ),
+                            // Web renders the user's full group list as
+                            // disabled radios (primary_group.php) with the
+                            // primary one checked — the login API's `group`
+                            // array plus `primary_group` id drive the same
+                            // here. Falls back to the primary label alone
+                            // when the list hasn't arrived.
+                            ...() {
+                              final groups = loginExtras?.group ?? [];
+                              if (groups.isEmpty) {
+                                return [
+                                  _RadioRow(
+                                    label:
+                                        user.primaryGroupLabel ??
+                                        'Not assigned',
+                                    selected:
+                                        user.primaryGroupLabel != null,
+                                  ),
+                                ];
+                              }
+                              final primaryId =
+                                  user.primaryGroup ??
+                                  loginExtras?.user?.primaryGroup;
+                              return groups
+                                  .map(
+                                    (g) => _RadioRow(
+                                      label: g.name ?? 'Unnamed group',
+                                      selected:
+                                          g.id != null &&
+                                          g.id == primaryId,
+                                    ),
+                                  )
+                                  .toList();
+                            }(),
                           ],
                         ),
                       ),
