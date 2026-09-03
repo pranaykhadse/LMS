@@ -507,49 +507,60 @@ class _GuidePill extends StatelessWidget {
       ),
     );
     if (!isInteractive) return pill;
+    // Bug fix: `HoverBuilder` only tracks mouse hover (via `MouseRegion`) —
+    // it has no tap handling of its own, and nothing here ever wired
+    // `onTap` to a `GestureDetector`/`InkWell`, so this pill's purple
+    // hover fill worked perfectly while the tap itself silently did
+    // nothing at all. Wrapped in `GestureDetector` (with the click cursor
+    // on `HoverBuilder` itself, matching every other tappable pill in this
+    // app) so tapping it actually triggers the download.
     return HoverBuilder(
+      cursor: SystemMouseCursors.click,
       builder: (context, hovering) {
         final fill = hovering;
-        return Container(
-          transform:
-              fill ? Matrix4.translationValues(0, -1, 0) : Matrix4.identity(),
-          transformAlignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: fill ? primary : const Color(0xFFF5F3FF),
-            border: Border.all(
-              color: const Color(0xFF5C52D4).withValues(alpha: 0.08),
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            transform:
+                fill ? Matrix4.translationValues(0, -1, 0) : Matrix4.identity(),
+            transformAlignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: fill ? primary : const Color(0xFFF5F3FF),
+              border: Border.all(
+                color: const Color(0xFF5C52D4).withValues(alpha: 0.08),
+              ),
+              borderRadius: BorderRadius.circular(10),
+              boxShadow:
+                  fill
+                      ? const [
+                        BoxShadow(
+                          color: Color(0x335C52D4),
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ]
+                      : null,
             ),
-            borderRadius: BorderRadius.circular(10),
-            boxShadow:
-                fill
-                    ? const [
-                      BoxShadow(
-                        color: Color(0x335C52D4),
-                        blurRadius: 12,
-                        offset: Offset(0, 4),
-                      ),
-                    ]
-                    : null,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.picture_as_pdf_outlined,
-                size: 15,
-                color: fill ? Colors.white : primary,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: GoogleFonts.inter(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.picture_as_pdf_outlined,
+                  size: 15,
                   color: fill ? Colors.white : primary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    color: fill ? Colors.white : primary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

@@ -5286,3 +5286,35 @@ toast says narrows it down concretely for a targeted follow-up.
 **Verification**: `dart format` + `flutter analyze` on both changed
 files — 0 issues. Full-project `flutter analyze` — 43 issues (current
 baseline, unchanged).
+
+## Follow-up: Participant Guide pill — actual root cause found, tap had no handler at all
+
+**Report**: "Probably not able to click on it something. Nothing
+happening on click of it" — narrowing down the prior two follow-ups
+(which addressed download-failure feedback, not this).
+
+**Root cause**: `_GuidePill` in
+`lib/app/features/courses/view/widgets/download_button.dart` — the
+"Download Participant Guide"/"WRAP Methodology" pill widget — wrapped
+its interactive state in a bare `HoverBuilder`, which only tracks mouse
+hover via a `MouseRegion` and has no tap handling of its own. The
+`onTap` callback was captured in the constructor and used to decide
+`isInteractive`, but nothing in the actual render tree — no
+`GestureDetector`, no `InkWell`, nothing — ever wired it up. The pill's
+purple hover-fill worked exactly as designed (hence looking fully
+functional and clickable), but a tap genuinely did nothing at all: no
+gesture recognizer existed anywhere in that subtree to catch it. This
+explains why the earlier two follow-ups (error toast, error detail)
+didn't help — the button was never reaching `onTap`/`downloadFile` in
+the first place, so there was never a failed download to report on.
+
+**Fix**: wrapped the interactive `Container` in a `GestureDetector
+(onTap: onTap, ...)`, and added `cursor: SystemMouseCursors.click` to
+the `HoverBuilder` (matching every other tappable pill/button in this
+app, which all show a pointer cursor). Both the "Download Participant
+Guide"/"WRAP Methodology" state and the post-download "Open ..." state
+route through this same `_GuidePill` class, so one fix covers both.
+
+**Verification**: `dart format` + `flutter analyze` on
+`download_button.dart` — 0 issues. Full-project `flutter analyze` —
+43 issues (current baseline, unchanged).
