@@ -5581,3 +5581,22 @@ comment describing this exact fix.
 `dashboard_page.dart` — 14 issues, all pre-existing baseline (unused
 elements, deprecated `withOpacity`, ...), no new ones. Full-project
 `flutter analyze` — 43 issues (current baseline, unchanged).
+
+## Follow-up: no static "0" placeholder either — Rewards & Points circle stays blank until fetched
+
+**Report**: "The default value should be blank string. No static value
+should be there" — the prior fix still had a last-resort `?? 0`
+fallback in `_RewardsPointsCard`'s points calc, which would show a
+static "0" (a different but still-wrong placeholder) before any real
+balance was known.
+
+**Fix**: `points` is now `int?` (`rewards?.totalPoints ??
+ref.watch(UserPointsViewModel.provider)`, no trailing `?? 0`). The
+points circle renders a blank `Text('')` in place of `_AnimatedCounter`
+while `points` is null, and the real animated counter once a number is
+actually known — never a static placeholder digit.
+
+**Verification**: `dart format` + `flutter analyze` on
+`dashboard_page.dart` — 14 issues, all pre-existing baseline, no new
+ones. Full-project `flutter analyze` — 43 issues (current baseline,
+unchanged).

@@ -2271,13 +2271,12 @@ class _RewardsPointsCard extends ConsumerWidget {
     final profile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     // Per explicit request: never fall back to `profile.points` (the
     // login-time AuthState snapshot, already the source of the "shows a
-    // stale 288" bug fixed for the nav badge and profile-menu row) — this
-    // card's own `rewards` is itself always live whenever it actually
-    // renders (only built once `DashboardBody` has real data), so the
-    // only fallback left is the shared live-points provider, then a
-    // last-resort 0 if genuinely nothing is known yet.
+    // stale 288" bug fixed for the nav badge and profile-menu row), and
+    // never show a static `0` placeholder either — stays `null` (blank)
+    // until a real number is known from either this card's own live
+    // `rewards` or the shared live-points provider.
     final points =
-        rewards?.totalPoints ?? ref.watch(UserPointsViewModel.provider) ?? 0;
+        rewards?.totalPoints ?? ref.watch(UserPointsViewModel.provider);
     final firstName = profile?.firstname?.trim();
     final activity = rewards?.activity ?? const <DashboardRewardActivity>[];
 
@@ -2363,15 +2362,27 @@ class _RewardsPointsCard extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _AnimatedCounter(
-                      value: points,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        height: 1,
-                      ),
-                    ),
+                    // Blank (not a `0` placeholder) until the real
+                    // balance is known — see `points`'s own comment.
+                    points == null
+                        ? Text(
+                          '',
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            height: 1,
+                          ),
+                        )
+                        : _AnimatedCounter(
+                          value: points,
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            height: 1,
+                          ),
+                        ),
                     Text(
                       'pts',
                       style: GoogleFonts.inter(
