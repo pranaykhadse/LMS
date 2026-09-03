@@ -75,26 +75,29 @@ class SignInPage extends ConsumerWidget {
           // the wide scene would render as a short floating strip, so it
           // instead covers a bottom-anchored band (cropping transparent
           // sky, never the waves) so the cover visibly touches the bottom.
-          Positioned.fill(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child:
-                  phone
-                      ? SizedBox(
-                        width: width,
-                        height:
-                            MediaQuery.sizeOf(context).height * 0.35,
-                        child: Assets.images.loginBg.image(
-                          fit: BoxFit.cover,
-                          alignment: Alignment.bottomCenter,
-                        ),
-                      )
-                      : Assets.images.loginBg.image(
-                        width: width,
-                        fit: BoxFit.fitWidth,
-                      ),
+          // The band intentionally bleeds 60px past the edge, so no
+          // safe-area/system inset can expose a pale strip below it.
+          if (phone)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: -60,
+              height: MediaQuery.sizeOf(context).height * 0.35 + 60,
+              child: Assets.images.loginBg.image(
+                fit: BoxFit.cover,
+                alignment: Alignment.bottomCenter,
+              ),
+            )
+          else
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Assets.images.loginBg.image(
+                  width: width,
+                  fit: BoxFit.fitWidth,
+                ),
+              ),
             ),
-          ),
           SafeArea(
             child:
                 phone
