@@ -4,6 +4,7 @@ import 'package:lms/app/features/authentication/app_state/auth_state_provider.da
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
 import 'package:lms/app/features/dashboard/repository/item_inventory_repository.dart'
     show ItemInventoryRepository, RedeemResult;
+import 'package:lms/app/features/dashboard/viewmodel/user_points_view_model.dart';
 
 const _perPage = 10;
 
@@ -95,11 +96,12 @@ class ItemInventoryViewModel extends StateNotifier<ItemInventoryState> {
         page: page,
         query: query,
       );
-      // This is the only place the app fetches a live points balance —
-      // AuthState.userProfile.points otherwise only reflects whatever it
-      // was at login time. Refreshing it here keeps the nav bar's
-      // "Redeem your Points" badge in sync with what this screen's own
-      // hero just showed, instead of the two silently disagreeing.
+      // Keeps the nav bar's "Redeem your Points" badge (UserPointsViewModel)
+      // in sync with what this screen's own hero just showed, instead of
+      // the two silently disagreeing. Also still updates the login-time
+      // AuthState snapshot other fallbacks (e.g. the Dashboard rewards
+      // card) read.
+      _ref.read(UserPointsViewModel.provider.notifier).set(result.userPoints);
       _ref
           .read(AuthStateNotifier.provider.notifier)
           .updatePoints(result.userPoints);

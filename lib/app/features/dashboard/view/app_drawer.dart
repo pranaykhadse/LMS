@@ -8,9 +8,9 @@ import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/contact_links.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
-import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/module/courses_module.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/user_points_view_model.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────
 const _purple = FigmaTokens.primaryPurple;
@@ -105,9 +105,13 @@ class AppDrawer extends ConsumerWidget {
     // CSS/markup ref, confirmed against `origin/staging`'s
     // bluetheme_layout.php: `'Redeem your Points <span>{points}</span>'` —
     // the point balance is baked straight into the dropdown item's own
-    // label, not a separate widget. Same source as the desktop nav bar's
-    // own `_PointsBadge`.
-    final points = ref.watch(AuthStateNotifier.provider)?.userProfile?.points;
+    // label, not a separate widget. Reads the dedicated live-points
+    // provider (null until a real fetch completes) rather than
+    // AuthState.userProfile.points, a login-time snapshot that goes stale
+    // the moment points actually change; `_SubNavItem` already hides the
+    // badge entirely whenever `points` is null. Same source as the
+    // desktop nav bar's own `_PointsBadge`.
+    final points = ref.watch(UserPointsViewModel.provider);
 
     const myCoursesChildren = [
       'My Enrolled Courses',

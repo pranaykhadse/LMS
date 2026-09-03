@@ -25,6 +25,7 @@ import 'package:lms/app/features/dashboard/model/notification_model.dart';
 import 'package:lms/app/features/dashboard/view/account_settings_page.dart';
 import 'package:lms/app/features/dashboard/view/notifications_page.dart';
 import 'package:lms/app/features/dashboard/viewmodel/notifications_view_model.dart';
+import 'package:lms/app/features/dashboard/viewmodel/user_points_view_model.dart';
 import 'package:lms/app/features/courses/view/content_viewer/in_app_webview_page.dart';
 
 const _appPurple = FigmaTokens.primaryPurple;
@@ -706,8 +707,13 @@ class _DesktopNavBar extends ConsumerWidget implements PreferredSizeWidget {
     // CSS/markup ref, confirmed against `origin/staging`'s
     // bluetheme_layout.php: `'Redeem your Points <span>{points}</span>'` —
     // the point balance is baked straight into the dropdown item's own
-    // label, not a separate widget.
-    final points = ref.watch(AuthStateNotifier.provider)?.userProfile?.points;
+    // label, not a separate widget. Reads the dedicated live-points
+    // provider (null until a real fetch completes — see
+    // UserPointsViewModel's own doc comment) rather than
+    // AuthState.userProfile.points, a login-time snapshot that goes
+    // stale the moment points actually change; `_NavSubItem` already
+    // hides the badge entirely whenever `points` is null.
+    final points = ref.watch(UserPointsViewModel.provider);
     const myCoursesChildren = [
       'My Enrolled Courses',
       'My Completed Courses',

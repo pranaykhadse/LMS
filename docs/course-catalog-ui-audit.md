@@ -5480,3 +5480,43 @@ redundant-but-harmless sync opportunity.
 **Verification**: `dart format` + `flutter analyze` on
 `learning_progress_view_model.dart` — 0 issues. Full-project `flutter
 analyze` — 43 issues (current baseline, unchanged).
+
+## Follow-up: points badge — blank (not 288) until fetched, and fetched proactively at app open/login
+
+**Report**: "Don't show 288 by default. It should be blank until the
+data is fetched. and fetched the data once the user opens the app or
+after he just logged in if the data is not available even if he did
+not open Redeem your Points screen."
+
+**Fix**: introduced a dedicated
+`lib/app/features/dashboard/viewmodel/user_points_view_model.dart` —
+`UserPointsViewModel`, a plain (non-`autoDispose`, so it survives
+navigation) `StateNotifier<int?>` starting at `null`. The nav badge
+widgets already only render when their `points` value is non-null
+(`_NavSubItem`/`_SubNavItem`'s existing `if (points != null)` guard),
+so switching their source to this provider gives "blank until fetched"
+for free — no separate loading-state plumbing needed.
+
+- `lms_app_bar.dart` and `app_drawer.dart` now read
+  `ref.watch(UserPointsViewModel.provider)` instead of
+  `AuthStateNotifier...userProfile?.points` (the login-time snapshot
+  this was built on two follow-ups ago).
+- `item_inventory_view_model.dart` and `learning_progress_view_model.dart`
+  (the two screens that already fetch a live balance as a side effect of
+  their own data) now call `UserPointsViewModel.set(...)` in addition to
+  the existing `AuthStateNotifier.updatePoints(...)` call (kept for the
+  Dashboard rewards card's own `profile?.points` fallback).
+- `lib/app/features/authentication/view/auth_gate.dart` — the widget
+  wrapping the whole authenticated app, gating on `AuthStateNotifier`
+  directly — now calls `UserPointsViewModel.fetchIfNeeded()` (a cheap,
+  1-item-per-page `item-inventory` fetch used only for its `user_points`
+  field) on every build while logged in, deferred a frame. `fetchIfNeeded`
+  no-ops once a balance is known or a fetch is already in flight, so this
+  fires effectively once per session — covering both an existing session
+  restoring at app open and a fresh login, since `AuthGate` rebuilds for
+  either.
+
+**Verification**: `dart format` + `flutter analyze` on all 6 touched
+files — 1 issue, pre-existing (`app_drawer.dart`'s unrelated
+`withOpacity` deprecation), no new ones. Full-project `flutter
+analyze` — 43 issues (current baseline, unchanged).

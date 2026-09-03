@@ -3,6 +3,7 @@ import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/dashboard/model/learning_progress_model.dart';
 import 'package:lms/app/features/dashboard/repository/learning_progress_repository.dart';
+import 'package:lms/app/features/dashboard/viewmodel/user_points_view_model.dart';
 
 class LearningProgressViewModel
     extends StateNotifier<DataState<LearningProgressData>> {
@@ -40,15 +41,13 @@ class LearningProgressViewModel
       final data = await repository.fetch(userId: userId!);
       if (!mounted) return;
       state = DataState.onData(data);
-      // The Dashboard/Learning Progress screen is the first thing most
-      // users see post-login, well before they'd ever open Redeem Points
-      // — syncing the live balance here (rather than only on that opt-in
-      // screen) means the nav bar's "Redeem your Points" badge reflects
-      // reality from the start of the session, not just after that one
-      // specific screen has been visited. `AuthState.userProfile.points`
-      // otherwise only ever reflects whatever it was at login time.
+      // Keeps the nav bar's "Redeem your Points" badge (UserPointsViewModel)
+      // in sync with this same dashboard endpoint's own live balance,
+      // without waiting on the opt-in Redeem Points screen. Also still
+      // updates the login-time AuthState snapshot other fallbacks read.
       final totalPoints = data.extras.rewards?.totalPoints;
       if (totalPoints != null) {
+        ref.read(UserPointsViewModel.provider.notifier).set(totalPoints);
         ref.read(AuthStateNotifier.provider.notifier).updatePoints(totalPoints);
       }
     } catch (e) {
