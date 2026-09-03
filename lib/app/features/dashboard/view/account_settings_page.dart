@@ -1221,7 +1221,9 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
     // with margin-top 20; .close absolute (right 15, top 10), opacity 1.
     // .modal-body — margin 0 20, padding 15/30.
     // .modal-footer — no top border, centered buttons, padding 1rem.
-    // Okay = .btn-primary (#693D94, hover #4043af); Cancel = .btn-danger
+    // Okay = .btn-primary (#693D94, hover purple-darken #5A3480 — the
+    // checked-in #4043af hover doesn't match the live modal, same as the
+    // login button); Cancel = .btn-danger
     // (#e50000, hover #bf0000); `button.btn` text 16px ls 1, padding 8/15;
     // both radius 8 with a translateY(-3px) hover lift per the live modal.
     final width = MediaQuery.sizeOf(context).width;
@@ -1351,7 +1353,7 @@ class _ResetPasswordDialogState extends ConsumerState<_ResetPasswordDialog> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
                                     hovering
-                                        ? const Color(0xFF4043AF)
+                                        ? const Color(0xFF5A3480)
                                         : _asPurple,
                                 foregroundColor: Colors.white,
                                 elevation: 0,
