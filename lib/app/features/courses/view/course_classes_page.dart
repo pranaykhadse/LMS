@@ -252,6 +252,7 @@ class _DetailBody extends ConsumerWidget {
                               items: detail.structures,
                               isEnrolled: detail.isEnrolled,
                               courseTitle: detail.title,
+                              courseObjective: detail.objective,
                             ),
                           ],
                         ),
@@ -1273,11 +1274,13 @@ class _StructureCard extends StatelessWidget {
     required this.items,
     required this.isEnrolled,
     required this.courseTitle,
+    required this.courseObjective,
   });
   final int courseId;
   final List<CourseStructureItem> items;
   final bool isEnrolled;
   final String courseTitle;
+  final String courseObjective;
 
   @override
   Widget build(BuildContext context) {
@@ -1329,6 +1332,7 @@ class _StructureCard extends StatelessWidget {
                 item: items[i],
                 isEnrolled: isEnrolled,
                 courseTitle: courseTitle,
+                courseObjective: courseObjective,
                 phone: true,
               ),
             ),
@@ -1384,6 +1388,7 @@ class _StructureCard extends StatelessWidget {
                         item: items[i],
                         isEnrolled: isEnrolled,
                         courseTitle: courseTitle,
+                        courseObjective: courseObjective,
                         phone: false,
                       ),
                     ),
@@ -1497,6 +1502,7 @@ class _StructureItemCard extends ConsumerStatefulWidget {
     required this.item,
     required this.isEnrolled,
     required this.courseTitle,
+    required this.courseObjective,
     this.phone = false,
   });
   final int index;
@@ -1504,6 +1510,7 @@ class _StructureItemCard extends ConsumerStatefulWidget {
   final CourseStructureItem item;
   final bool isEnrolled;
   final String courseTitle;
+  final String courseObjective;
   final bool phone;
 
   @override
@@ -1729,7 +1736,12 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
                 ),
                 child: OutlinedButton.icon(
                   onPressed:
-                      () => _showClassDetails(context, courseTitle, item),
+                      () => _showClassDetails(
+                        context,
+                        courseTitle,
+                        item,
+                        courseObjective: widget.courseObjective,
+                      ),
                   icon: Icon(
                     Icons.info_rounded,
                     size: 14,
@@ -4041,8 +4053,9 @@ String _classTypeBadgeLabel(String typeCode) {
 void _showClassDetails(
   BuildContext context,
   String courseTitle,
-  CourseStructureItem item,
-) {
+  CourseStructureItem item, {
+  String courseObjective = '',
+}) {
   showDialog(
     context: context,
     barrierColor: Colors.black.withValues(alpha: 0.5),
@@ -4057,7 +4070,11 @@ void _showClassDetails(
           elevation: 0,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
-            child: _ClassDetailsDialog(courseTitle: courseTitle, item: item),
+            child: _ClassDetailsDialog(
+              courseTitle: courseTitle,
+              item: item,
+              courseObjective: courseObjective,
+            ),
           ),
         ),
   );
@@ -4067,13 +4084,23 @@ void _showClassDetails(
 // In-Person/Virtual Class show the class's own Objective (when the API
 // carries one) and Description cards, then the Schedule section; every
 // other type uses `Lmsclass::getAttribDetail()`'s type-specific attribute
-// list instead (built below by `_attributeCards`). Never the *course's*
-// objective — that was the wrong data source entirely.
+// list instead (built below by `_attributeCards`).
 class _ClassDetailsDialog extends StatelessWidget {
-  const _ClassDetailsDialog({required this.courseTitle, required this.item});
+  const _ClassDetailsDialog({
+    required this.courseTitle,
+    required this.item,
+    this.courseObjective = '',
+  });
 
   final String courseTitle;
   final CourseStructureItem item;
+
+  /// Course-level objective, used ONLY as a fallback when the class itself
+  /// carries none — the join-course-detail API currently omits the
+  /// per-class `objective` key (see the backend one-liner), so without
+  /// this the Objective card the website always shows would never render.
+  /// The class's own objective always wins when present.
+  final String courseObjective;
 
   @override
   Widget build(BuildContext context) {
@@ -4081,6 +4108,9 @@ class _ClassDetailsDialog extends StatelessWidget {
     // short web label ('Virtual', not 'Virtual Class'), never the raw API
     // type string.
     final typeName = _classTypeBadgeLabel(item.typeCode);
+    // Class objective first; course objective as fallback (see field).
+    final objective =
+        item.objective.isNotEmpty ? item.objective : courseObjective;
     return ConstrainedBox(
       constraints: const BoxConstraints(maxHeight: 540),
       child: Column(
@@ -4217,16 +4247,16 @@ class _ClassDetailsDialog extends StatelessWidget {
                   // neither branch.
                   if (item.typeCode == '2' || item.typeCode == '3') ...[
                     // Web `_partial-class-detail.php`: Objective card first
-                    // (whenever the class carries one), then Description —
-                    // 12px `.le-detail-cards` gaps between them.
-                    if (item.objective.isNotEmpty) ...[
+                    // (class's own, else the course fallback), then
+                    // Description — 12px `.le-detail-cards` gaps.
+                    if (objective.isNotEmpty) ...[
                       _LeDetailCard(
                         label: 'Objective',
-                        value: item.objective,
+                        value: objective,
                       ),
                     ],
                     if (item.description.isNotEmpty) ...[
-                      if (item.objective.isNotEmpty)
+                      if (objective.isNotEmpty)
                         const SizedBox(height: 12),
                       _LeDetailCard(
                         label: 'Description',
@@ -4234,7 +4264,7 @@ class _ClassDetailsDialog extends StatelessWidget {
                       ),
                     ],
                     if (item.learningEvents.isNotEmpty) ...[
-                      if (item.objective.isNotEmpty ||
+                      if (objective.isNotEmpty ||
                           item.description.isNotEmpty)
                         const SizedBox(height: 12),
                       // CSS ref: `.lc-section-label` — 12px/weight600/
