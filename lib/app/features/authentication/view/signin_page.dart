@@ -22,9 +22,9 @@ import '../viewmodel/signin_viewmodel.dart';
 // Roboto for that reason.
 //
 // body.login — bg #ECE9FF with login-bg.png pinned bottom/contain.
-// .form-wrap — desktop 610px pushed right (margin 9% auto 16.7% 55%);
-//   <=1500px 450px; <=991px centered (margin 10% auto); <=640px full
-//   width with 20px sides and stacked full-width buttons.
+// .form-wrap — desktop 700px pushed right (the live card renders wider
+// than the checked-in 610px); 520px at <=1500px; <=991px centered;
+// <=640px full width with 20px sides and stacked full-width buttons.
 // .form-content — white card, padding 20/60 (10/30 <=1500px),
 //   border 1px --primary-first, shadow 0 4px 26px rgba(0,0,0,.15),
 //   radius 16; transparent (no chrome) on phones.
@@ -32,8 +32,8 @@ import '../viewmodel/signin_viewmodel.dart';
 //   margins 20/0/35).
 // .form-control — border #BFC9D4, text #3B3F5C 15px, padding 8/10,
 //   radius 6, envelope/lock prefix icons.
-// Buttons — centered row of 107x40 Log in (primary) + Sign up (white,
-//   purple border, hover #F6F8F9); stacked full-width on phones.
+// Buttons — centered row of 107x40 Log in (radius 8, purple-darken
+// hover) + plain purple "Sign up" text link; stacked on phones.
 // .forgot-password — centered, link 18px #979797 with NO underline.
 // Deliberate deviations: both fields stay visible (the site reveals the
 // password box only after a valid email via JS); the Privacy Policy link
@@ -50,7 +50,7 @@ const _signUpUrl =
     'https://staging.trainingpipeline.com/backend/web/sign-in/sign-up';
 const _forgotPasswordUrl =
     'https://staging.trainingpipeline.com/backend/web/sign-in/request-password-reset';
-const _supportEmail = 'support@leadershipedge.live';
+const _supportEmail = 'support@trainingpipeline.com';
 
 class SignInPage extends ConsumerWidget {
   const SignInPage({super.key});
@@ -61,9 +61,9 @@ class SignInPage extends ConsumerWidget {
     final width = MediaQuery.sizeOf(context).width;
     final phone = width < 768;
     final tablet = width >= 768 && width < 992;
-    // Card 610px on wide desktop, 450px at <=1500px (both right-aligned);
+    // Card 700px on wide desktop, 520px at <=1500px (both right-aligned);
     // centered on tablets; transparent full-width strip on phones.
-    final cardWidth = width > 1500 ? 610.0 : 450.0;
+    final cardWidth = width > 1500 ? 700.0 : 520.0;
 
     return Scaffold(
       backgroundColor: _loginBg,
@@ -192,12 +192,16 @@ class _LoginForm extends ConsumerWidget {
             decoration: InputDecoration(
               hintText: "email".translate(context),
               prefixIcon: Padding(
-                padding: const EdgeInsets.only(left: 10),
+                padding: const EdgeInsets.fromLTRB(14, 0, 18, 0),
                 child: SvgPicture.asset(
                   'assets/images/envelope.svg',
                   width: 32,
                   fit: BoxFit.contain,
                 ),
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 0,
+                minHeight: 0,
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 10,
@@ -239,12 +243,16 @@ class _LoginForm extends ConsumerWidget {
                 decoration: InputDecoration(
                   hintText: "password".translate(context),
                   prefixIcon: Padding(
-                    padding: const EdgeInsets.only(left: 10),
+                    padding: const EdgeInsets.fromLTRB(14, 0, 18, 0),
                     child: SvgPicture.asset(
                       'assets/images/lock.svg',
                       width: 26,
                       fit: BoxFit.contain,
                     ),
+                  ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 0,
+                    minHeight: 0,
                   ),
                   suffixIcon: IconButton(
                     onPressed: () {
@@ -286,15 +294,36 @@ class _LoginForm extends ConsumerWidget {
               Checkbox(
                 value: viewModel.rememberMe,
                 onChanged: viewModel.toggleRememberMe,
-                // Web custom-control: square box, #ADB5BD border.
+                // Live site: square box; checked fill is green.
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.zero,
                 ),
                 side: const BorderSide(color: Color(0xFFADB5BD)),
+                fillColor: WidgetStateProperty.resolveWith(
+                  (states) =>
+                      states.contains(WidgetState.selected)
+                          ? const Color(0xFF28A745)
+                          : Colors.white,
+                ),
+                checkColor: Colors.white,
               ),
-              Text(
-                "keep_me_logged_in".translate(context),
-                style: context.textTheme.bodySmall,
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap:
+                      () => viewModel.toggleRememberMe(
+                        !viewModel.rememberMe,
+                      ),
+                  child: Text(
+                    "keep_me_logged_in".translate(context),
+                    style: GoogleFonts.roboto(
+                      color: const Color(0xFF6B7280),
+                      fontSize: 14,
+                      decoration: TextDecoration.underline,
+                      decorationColor: const Color(0xFF6B7280),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -302,14 +331,14 @@ class _LoginForm extends ConsumerWidget {
           if (phone) ...[
             _LoginButton(viewModel: viewModel, fullWidth: true),
             const SizedBox(height: 10),
-            _SignUpButton(fullWidth: true),
+            const Center(child: _SignUpButton()),
           ] else ...[
             // .form-buttons-group — centered row.
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _LoginButton(viewModel: viewModel),
-                const SizedBox(width: 8),
+                const SizedBox(width: 24),
                 const _SignUpButton(),
               ],
             ),
@@ -399,7 +428,8 @@ class _LoginForm extends ConsumerWidget {
 }
 
 /// Log in button — 107x40 desktop/tablet, full-width on phones.
-/// Hover follows this theme's `.btn-primary:hover` (#4043AF).
+/// Hover darkens the purple (the live button reads as a purple-darken,
+/// not the stale theme's blue `.btn-primary:hover`).
 class _LoginButton extends StatelessWidget {
   const _LoginButton({required this.viewModel, this.fullWidth = false});
 
@@ -411,7 +441,7 @@ class _LoginButton extends StatelessWidget {
     final style = ElevatedButton.styleFrom(
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(8),
       ),
       textStyle: GoogleFonts.roboto(
         fontSize: 16,
@@ -425,7 +455,7 @@ class _LoginButton extends StatelessWidget {
       backgroundColor: WidgetStateProperty.resolveWith(
         (states) =>
             states.contains(WidgetState.hovered)
-                ? const Color(0xFF4043AF)
+                ? const Color(0xFF5A3480)
                 : _loginPurple,
       ),
     );
@@ -464,51 +494,32 @@ class _LoginButton extends StatelessWidget {
   }
 }
 
-/// Sign up button — white with purple border (hover #F6F8F9), opens the
-/// site's sign-up page in-app.
+/// Sign up — plain purple text link on the live site (no box/border).
 class _SignUpButton extends StatelessWidget {
-  const _SignUpButton({this.fullWidth = false});
-
-  final bool fullWidth;
+  const _SignUpButton();
 
   @override
   Widget build(BuildContext context) {
-    final style = OutlinedButton.styleFrom(
-      foregroundColor: _loginPurple,
-      side: const BorderSide(color: _loginPurple),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(4),
-      ),
-      textStyle: GoogleFonts.roboto(
-        fontSize: 16,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 1,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-      fixedSize: fullWidth ? null : const Size(107, 40),
-      minimumSize: fullWidth ? const Size(double.infinity, 40) : const Size(107, 40),
-    ).copyWith(
-      backgroundColor: WidgetStateProperty.resolveWith(
-        (states) =>
-            states.contains(WidgetState.hovered)
-                ? const Color(0xFFF6F8F9)
-                : Colors.white,
-      ),
-    );
-    final button = OutlinedButton(
-      style: style,
-      onPressed:
-          () => InAppWebViewPage.show(
-            context,
-            url: _signUpUrl,
-            title: 'Sign up',
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap:
+            () => InAppWebViewPage.show(
+              context,
+              url: _signUpUrl,
+              title: 'Sign up',
+            ),
+        child: Text(
+          'Sign up',
+          style: GoogleFonts.roboto(
+            color: _loginPurple,
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 1,
           ),
-      child: const Text('Sign up'),
+        ),
+      ),
     );
-    if (fullWidth) {
-      return SizedBox(width: double.infinity, height: 40, child: button);
-    }
-    return button;
   }
 }
 
