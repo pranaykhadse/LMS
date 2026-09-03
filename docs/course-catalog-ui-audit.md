@@ -5454,3 +5454,29 @@ elsewhere in the app for a live balance check without visiting it).
 issue, pre-existing (`auth_state_provider.dart`'s unrelated empty catch
 block), no new ones. Full-project `flutter analyze` — 43 issues
 (current baseline, unchanged).
+
+## Follow-up: points badge now syncs from Dashboard load, not just Redeem Points
+
+**Report**: confirmed the prior fix worked ("once opened, showing the
+correct one"), but asked for the sync to happen earlier — "if the
+Redeem your Points screen is not opened, then showing 288" — rather
+than only once that specific, opt-in screen has been visited.
+
+**Fix**: `lib/app/features/dashboard/viewmodel/learning_progress_view_model.dart`
+— `LearningProgressViewModel` (the shared viewmodel behind BOTH
+`DashboardPage` and `LearningProgressPage`, confirmed by both watching
+`LearningProgressViewModel.provider`) now takes a `ref` and, after
+every successful `fetch()`, calls the same `AuthStateNotifier
+.updatePoints()` added for Redeem Points — this time with
+`data.extras.rewards?.totalPoints`, a live balance this same dashboard
+endpoint already returns. Since the Dashboard is the first screen
+nearly every user lands on post-login (unlike Redeem Points, which is
+opt-in), the nav badge now syncs to the truth from the very start of a
+session rather than staying stuck at the login-time snapshot until
+Redeem Points happens to be opened. The earlier
+`item_inventory_view_model.dart` sync point is kept as a second,
+redundant-but-harmless sync opportunity.
+
+**Verification**: `dart format` + `flutter analyze` on
+`learning_progress_view_model.dart` — 0 issues. Full-project `flutter
+analyze` — 43 issues (current baseline, unchanged).

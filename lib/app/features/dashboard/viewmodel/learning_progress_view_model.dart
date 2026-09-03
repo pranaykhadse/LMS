@@ -9,21 +9,26 @@ class LearningProgressViewModel
   LearningProgressViewModel({
     required this.repository,
     required this.userId,
+    required this.ref,
   }) : super(DataState.idle<LearningProgressData>()) {
     fetch();
   }
 
   static final provider = StateNotifierProvider.autoDispose<
-      LearningProgressViewModel, DataState<LearningProgressData>>((ref) {
+    LearningProgressViewModel,
+    DataState<LearningProgressData>
+  >((ref) {
     final userId = ref.watch(AuthStateNotifier.provider)?.user?.id;
     return LearningProgressViewModel(
       repository: ref.watch(LearningProgressRepository.provider),
       userId: userId,
+      ref: ref,
     );
   });
 
   final LearningProgressRepository repository;
   final int? userId;
+  final Ref ref;
 
   Future<void> fetch() async {
     if (userId == null) {
@@ -35,6 +40,17 @@ class LearningProgressViewModel
       final data = await repository.fetch(userId: userId!);
       if (!mounted) return;
       state = DataState.onData(data);
+      // The Dashboard/Learning Progress screen is the first thing most
+      // users see post-login, well before they'd ever open Redeem Points
+      // — syncing the live balance here (rather than only on that opt-in
+      // screen) means the nav bar's "Redeem your Points" badge reflects
+      // reality from the start of the session, not just after that one
+      // specific screen has been visited. `AuthState.userProfile.points`
+      // otherwise only ever reflects whatever it was at login time.
+      final totalPoints = data.extras.rewards?.totalPoints;
+      if (totalPoints != null) {
+        ref.read(AuthStateNotifier.provider.notifier).updatePoints(totalPoints);
+      }
     } catch (e) {
       if (!mounted) return;
       state = DataState.onError(_friendly(e));
