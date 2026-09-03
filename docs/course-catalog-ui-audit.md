@@ -5600,3 +5600,41 @@ actually known — never a static placeholder digit.
 `dashboard_page.dart` — 14 issues, all pre-existing baseline, no new
 ones. Full-project `flutter analyze` — 43 issues (current baseline,
 unchanged).
+
+## Follow-up: proactive points fetch used a different query than the real screen (perPage: 1 vs 10)
+
+**Report**: "Why it is showing 288 then?" — after confirming via `git
+log`/`grep` that the committed code genuinely reads from
+`UserPointsViewModel` everywhere (no stale/reverted code), and that
+this app's `getRequest` never serves a cached response for a
+`RequestCacheType.none` call (it throws instead, doesn't silently
+return old data) — ruling out both a code regression and a caching
+explanation.
+
+**Real candidate bug found**: `UserPointsViewModel.fetchIfNeeded()`
+(the proactive app-open/login fetch added two follow-ups ago) requested
+`perPage: 1` to keep the call cheap — a genuinely different query than
+what `ItemInventoryViewModel.fetch()` (the Redeem Points screen's own
+fetch) ever makes (`perPage: 10`). A mismatched balance for the same
+user, moments apart, is exactly the symptom of a backend response for
+this endpoint that isn't purely independent of page size — plausible
+given `user_points` is returned alongside a paginated item list rather
+than as its own dedicated endpoint.
+
+**Fix**: `fetchIfNeeded()` now requests `page: 1, perPage: 10` — the
+exact same request shape `ItemInventoryViewModel.fetch()`'s own default
+call already makes — removing any possibility of the two diverging due
+to a page-size-dependent backend response. Slightly larger payload than
+the previous `perPage: 1`, still a single lightweight request.
+
+**Still unconfirmed**: whether this was actually the cause, or whether
+the screenshot was from a build that hadn't picked up the prior
+follow-ups yet (the immediately preceding build attempt on the test
+machine failed with an unrelated Xcode/Swift compiler error) — no way
+to tell from this session without a fresh, confirmed-successful rebuild
+to test against. Flagged this explicitly rather than assuming either
+explanation.
+
+**Verification**: `dart format` + `flutter analyze` on
+`user_points_view_model.dart` — 0 issues. Full-project `flutter
+analyze` — 43 issues (current baseline, unchanged).

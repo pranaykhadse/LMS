@@ -31,9 +31,18 @@ class UserPointsViewModel extends StateNotifier<int?> {
   /// Fetches the live balance if it isn't already known and a fetch isn't
   /// already in flight — called once at app open / right after login (see
   /// `AuthGate`), so the badge has a real number even if the user never
-  /// opens Redeem Points or Dashboard this session. Cheap: asks for a
-  /// single item per page since the balance (returned on every page
-  /// regardless of size) is the only thing this call is used for here.
+  /// opens Redeem Points or Dashboard this session.
+  ///
+  /// Uses the SAME `page`/`perPage` (1/10) as
+  /// `ItemInventoryViewModel.fetch`'s own default request — an earlier
+  /// version of this requested `perPage: 1` to keep the call cheap, but
+  /// that's a different query than what the Redeem Points screen itself
+  /// ever makes, and a mismatched-balance report (this badge showing a
+  /// different number than that screen, for the same user, moments apart)
+  /// is exactly the symptom of a backend response that isn't purely
+  /// page-size-independent. Matching the real screen's own request
+  /// exactly removes that as a possible cause, at the cost of a slightly
+  /// larger response.
   Future<void> fetchIfNeeded() async {
     if (state != null || _fetching) return;
     final userId = _ref.read(AuthStateNotifier.provider)?.user?.id;
@@ -42,7 +51,7 @@ class UserPointsViewModel extends StateNotifier<int?> {
     try {
       final result = await _ref
           .read(ItemInventoryRepository.provider)
-          .fetch(userId: userId, page: 1, perPage: 1);
+          .fetch(userId: userId, page: 1, perPage: 10);
       if (mounted) state = result.userPoints;
     } catch (_) {
       // Leave state null - a later screen visit (Redeem Points/Dashboard,
