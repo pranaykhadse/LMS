@@ -409,25 +409,46 @@ class _HeroPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(30),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .15),
-            border: Border.all(color: Colors.white.withValues(alpha: .25)),
+    return HoverBuilder(
+      builder: (context, hovering) => Container(
+        transform: hovering
+            ? Matrix4.translationValues(0, -1, 0)
+            : Matrix4.identity(),
+        transformAlignment: Alignment.center,
+        decoration: BoxDecoration(
+          boxShadow: hovering
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(30),
-          ),
-          child: DefaultTextStyle(
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: hovering ? 0.25 : 0.15),
+                border: Border.all(
+                    color: Colors.white.withValues(alpha: hovering ? 0.5 : 0.25)),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: DefaultTextStyle(
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                child: child,
+              ),
             ),
-            child: child,
           ),
         ),
       ),
@@ -2082,18 +2103,31 @@ class _OnlineActionButton extends ConsumerWidget {
     // 13px/weight600 (was 12.5/700), min-height 38 (was 32), shadow
     // 0 2px 4px rgba(0,0,0,.02) (was none).
     return HoverBuilder(
-      builder:
-          (context, hovering) => Container(
-            constraints: const BoxConstraints(minHeight: 38),
-            decoration: const BoxDecoration(
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x05000000),
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
+      builder: (context, hovering) {
+        final hoverActive = hovering && isOnline;
+        return Container(
+          constraints: const BoxConstraints(minHeight: 38),
+          transform: hoverActive && !danger
+              ? Matrix4.translationValues(0, -1, 0)
+              : Matrix4.identity(),
+          transformAlignment: Alignment.center,
+          decoration: BoxDecoration(
+            boxShadow: hoverActive && !danger
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF5C52D4).withValues(alpha: 0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : const [
+                    BoxShadow(
+                      color: Color(0x05000000),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+          ),
             child:
                 danger
                     ? OutlinedButton.icon(
@@ -2159,7 +2193,8 @@ class _OnlineActionButton extends ConsumerWidget {
                         ),
                       ),
                     ),
-          ),
+          );
+        },
     );
   }
 }
@@ -3783,36 +3818,43 @@ void _showCancelConfirmationDialog(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF3F4F6),
-                        foregroundColor: const Color(0xFF374151),
-                        side: const BorderSide(color: FigmaTokens.cardBorders),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    HoverBuilder(
+                      builder: (context, hovering) => OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: hovering
+                              ? const Color(0xFFE5E7EB)
+                              : const Color(0xFFF3F4F6),
+                          foregroundColor: const Color(0xFF374151),
+                          side: const BorderSide(color: FigmaTokens.cardBorders),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: Text(
-                        'No, Keep It',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                        child: Text(
+                          'No, Keep It',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        onConfirm();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _detailPurple,
+                    HoverBuilder(
+                      builder: (context, hovering) => ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onConfirm();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: hovering
+                              ? FigmaTokens.purpleHover
+                              : _detailPurple,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -3831,6 +3873,7 @@ void _showCancelConfirmationDialog(
                         ),
                       ),
                     ),
+                  ),
                   ],
                 ),
               ),
