@@ -2055,6 +2055,9 @@ class _ProfileMenuRow extends StatelessWidget {
   // tint + #e53e3e instead. Wrapped `PopupMenuButton` in a transparent-
   // hover Theme above, so PopupMenuItem's default light-blue ink no
   // longer shows behind this pill.
+  static const _hoverDuration = Duration(milliseconds: 180);
+  static const _hoverCurve = Curves.easeOut;
+
   @override
   Widget build(BuildContext context) => HoverBuilder(
     cursor: SystemMouseCursors.click,
@@ -2065,38 +2068,49 @@ class _ProfileMenuRow extends StatelessWidget {
       final textColor = hovering
           ? (isLogout ? const Color(0xFFE53E3E) : _appPurple)
           : const Color(0xFF4A5568);
-      // Hover on the main container (the padded pill row) directly drives
-      // the pill background — not an inner wrapper — so the highlight
-      // tracks the item's full hit area instead of just the text line.
+      final iconColor = textColor.withValues(alpha: 0.8);
+      // Hover on the main container directly drives the pill — background,
+      // slide, icon and text all share the same duration/curve so they
+      // start/end together (previously the pill faded 150 ms while the
+      // text/icon and translate snapped instantly).
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
+          duration: _hoverDuration,
+          curve: _hoverCurve,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: hovering ? tint : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Transform.translate(
-            offset: hovering ? const Offset(6, 0) : Offset.zero,
-            child: Row(
-              children: [
-                Icon(
+          transform: hovering
+              ? Matrix4.translationValues(6, 0, 0)
+              : Matrix4.identity(),
+          transformAlignment: Alignment.centerLeft,
+          child: Row(
+            children: [
+              TweenAnimationBuilder<Color?>(
+                duration: _hoverDuration,
+                curve: _hoverCurve,
+                tween: ColorTween(end: iconColor),
+                builder: (context, color, _) => Icon(
                   icon,
                   size: 16,
-                  color: textColor.withValues(alpha: 0.8),
+                  color: color ?? iconColor,
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    color: textColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+              ),
+              const SizedBox(width: 12),
+              AnimatedDefaultTextStyle(
+                duration: _hoverDuration,
+                curve: _hoverCurve,
+                style: GoogleFonts.inter(
+                  color: textColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
-              ],
-            ),
+                child: Text(label),
+              ),
+            ],
           ),
         ),
       );
