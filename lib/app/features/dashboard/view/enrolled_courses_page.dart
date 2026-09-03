@@ -96,115 +96,128 @@ class _Body extends StatelessWidget {
         // flows immediately below the grid, still inside `.structure-block`
         // (the white card), not pinned to the bottom of the viewport as a
         // separate element outside the scrollable area.
-        return RefreshIndicator(
-          color: _purple,
-          onRefresh: () async {
-            await notifier.fetch(page: state.page);
-          },
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            children: [
-              // ── White card: title + grid + pagination ──────────────
-              // Design ref: .structure-block — bg #fff, radius 16px,
-              // border 1px solid #E7E4FF (rgb(231,228,255)),
-              // padding 20px, margin-bottom (h1) 8px.
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  // CSS ref, confirmed against `origin/staging`'s
-                  // dist/app.css: `.structure-block { border: 1px solid
-                  // #E7E4FF }` — was wrongly 0.8px (copy-pasted from
-                  // elsewhere; Course Catalog's own `.structure-block`
-                  // already uses the correct default 1px).
-                  border: Border.all(color: const Color(0xFFE7E4FF)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        // Per explicit request: the footer should span the full window
+        // width on every screen, like the header above it — it was the
+        // last child of this ListView, inheriting the ListView's own
+        // horizontal `padding` instead of running edge to edge.
+        return Column(
+          children: [
+            Expanded(
+              child: RefreshIndicator(
+                color: _purple,
+                onRefresh: () async {
+                  await notifier.fetch(page: state.page);
+                },
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   children: [
-                    // Design ref: h1 — color #A20067 (rgb(162,0,103)),
-                    // 24px / weight 400, line-height 28px, margin-
-                    // bottom 8px.
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        'My Enrolled Courses',
-                        style: GoogleFonts.inter(
-                          color: _titleColor,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w400,
-                          height: 28 / 24,
-                        ),
+                    // ── White card: title + grid + pagination ──────────────
+                    // Design ref: .structure-block — bg #fff, radius 16px,
+                    // border 1px solid #E7E4FF (rgb(231,228,255)),
+                    // padding 20px, margin-bottom (h1) 8px.
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        // CSS ref, confirmed against `origin/staging`'s
+                        // dist/app.css: `.structure-block { border: 1px solid
+                        // #E7E4FF }` — was wrongly 0.8px (copy-pasted from
+                        // elsewhere; Course Catalog's own `.structure-block`
+                        // already uses the correct default 1px).
+                        border: Border.all(color: const Color(0xFFE7E4FF)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Design ref: h1 — color #A20067 (rgb(162,0,103)),
+                          // 24px / weight 400, line-height 28px, margin-
+                          // bottom 8px.
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'My Enrolled Courses',
+                              style: GoogleFonts.inter(
+                                color: _titleColor,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w400,
+                                height: 28 / 24,
+                              ),
+                            ),
+                          ),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final columns = _columnsFor(
+                                MediaQuery.sizeOf(context).width,
+                              );
+                              const gap = 30.0;
+                              // CSS ref: .card-image-wrapper — padding-top:
+                              // 56.25% (16:9) of the card's own fluid width, not
+                              // a fixed pixel value — same fix as Course
+                              // Catalog's grid (see docs/course-catalog-ui-audit
+                              // .md). The old fixed 320/360 ignored actual card
+                              // width entirely.
+                              final cardWidth =
+                                  (constraints.maxWidth - (columns - 1) * gap) /
+                                  columns;
+                              final imageHeight = cardWidth * 9 / 16;
+                              // Below-image content budget: this card is the
+                              // exact same `.modern-course-card` markup/CSS as
+                              // Course Catalog's (session-info + rating-bar are
+                              // independent there too, not either/or), so it
+                              // gets the identical live-measured budget rather
+                              // than a separately-derived one — was a much
+                              // taller from-scratch "widest case" estimate
+                              // (~204-210px) that made this screen's cards
+                              // visibly taller than Course Catalog's for the
+                              // same content. `Spacer()` below still absorbs
+                              // slack on shorter cards.
+                              final contentBudget =
+                                  columns == 4 ? 172.0 : 200.0;
+                              final extent = imageHeight + contentBudget;
+                              final rows =
+                                  (state.courses.length / columns).ceil();
+                              final gridHeight =
+                                  rows * extent + (rows - 1) * gap;
+                              return SizedBox(
+                                height: gridHeight,
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: columns,
+                                        crossAxisSpacing: gap,
+                                        mainAxisSpacing: gap,
+                                        mainAxisExtent: extent,
+                                      ),
+                                  itemCount: state.courses.length,
+                                  itemBuilder:
+                                      (ctx, i) =>
+                                          _CourseCard(course: state.courses[i]),
+                                ),
+                              );
+                            },
+                          ),
+                          // Design ref: #pagination — margin-top 30px from the
+                          // last row of cards.
+                          const SizedBox(height: 30),
+                          PaginationWidget(
+                            page: state.page,
+                            pages: state.totalPages,
+                            onPage: (page) => _goToPage(context, page),
+                            showProgressBar: true,
+                          ),
+                        ],
                       ),
                     ),
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final columns = _columnsFor(
-                          MediaQuery.sizeOf(context).width,
-                        );
-                        const gap = 30.0;
-                        // CSS ref: .card-image-wrapper — padding-top:
-                        // 56.25% (16:9) of the card's own fluid width, not
-                        // a fixed pixel value — same fix as Course
-                        // Catalog's grid (see docs/course-catalog-ui-audit
-                        // .md). The old fixed 320/360 ignored actual card
-                        // width entirely.
-                        final cardWidth =
-                            (constraints.maxWidth - (columns - 1) * gap) /
-                            columns;
-                        final imageHeight = cardWidth * 9 / 16;
-                        // Below-image content budget: this card is the
-                        // exact same `.modern-course-card` markup/CSS as
-                        // Course Catalog's (session-info + rating-bar are
-                        // independent there too, not either/or), so it
-                        // gets the identical live-measured budget rather
-                        // than a separately-derived one — was a much
-                        // taller from-scratch "widest case" estimate
-                        // (~204-210px) that made this screen's cards
-                        // visibly taller than Course Catalog's for the
-                        // same content. `Spacer()` below still absorbs
-                        // slack on shorter cards.
-                        final contentBudget = columns == 4 ? 172.0 : 200.0;
-                        final extent = imageHeight + contentBudget;
-                        final rows = (state.courses.length / columns).ceil();
-                        final gridHeight = rows * extent + (rows - 1) * gap;
-                        return SizedBox(
-                          height: gridHeight,
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: columns,
-                                  crossAxisSpacing: gap,
-                                  mainAxisSpacing: gap,
-                                  mainAxisExtent: extent,
-                                ),
-                            itemCount: state.courses.length,
-                            itemBuilder:
-                                (ctx, i) =>
-                                    _CourseCard(course: state.courses[i]),
-                          ),
-                        );
-                      },
-                    ),
-                    // Design ref: #pagination — margin-top 30px from the
-                    // last row of cards.
-                    const SizedBox(height: 30),
-                    PaginationWidget(
-                      page: state.page,
-                      pages: state.totalPages,
-                      onPage: (page) => _goToPage(context, page),
-                      showProgressBar: true,
-                    ),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              const AppFooter(),
-            ],
-          ),
+            ),
+            const AppFooter(),
+          ],
         );
     }
   }

@@ -5353,3 +5353,65 @@ screenshot shows (sitting beside the text, not overlapping anything).
 issue, pre-existing (`app_drawer.dart`'s unrelated `withOpacity`
 deprecation), no new ones. Full-project `flutter analyze` — 43 issues
 (current baseline, unchanged).
+
+## Follow-up: Learning Paths width over-corrected + app-wide AppFooter sweep (full-width + missing screens)
+
+**Report, part 1**: "You have decrease[d] the width of the Learning
+Paths screen a lot. It should have been very less so that the search
+icon should not have touched the right and left edge of the screen."
+
+**Root cause**: the prior follow-up's `Center`+`ConstrainedBox
+(maxWidth: 960/1140)` reproduced Bootstrap's `.container` max-width
+capping literally — correct per `origin/staging`'s CSS, but far more
+aggressive a width cut than intended on an actual desktop window, and
+made it worse for the search bar specifically: `_SearchBar`'s own Row
+has zero horizontal inset of its own at this width (`searchOuter =
+EdgeInsets.zero` for non-phone), relying entirely on the outer
+container's padding — which was ALSO zero at this width — so the
+search box's white card spanned edge-to-edge of that now visibly
+narrower box.
+
+**Fix**: replaced the width-capping `Center`/`ConstrainedBox` with a
+flat `EdgeInsets.symmetric(horizontal: 40)` above 991.98px — the same
+40px convention Course Catalog's own desktop container already uses.
+Much smaller a width reduction, and (since it's real padding, not a
+width cap with zero padding inside it) the search bar now genuinely
+has breathing room from the screen edges.
+
+**Report, part 2**: "The footer should take whole width of the screen
+like the horizontal ruler and options and linked icon container and
+footer should be there in each screen."
+
+**Investigation**: audited every screen using `AppFooter` (~17 files)
+plus every `AppScaffold`-based screen for one missing it entirely.
+Several screens (`courses_page.dart`, `item_inventory_page.dart`,
+`redeem_history_page.dart`, `view_competency_page.dart`,
+`calendar_courses_page.dart`, `course_classes_page.dart`,
+`notifications_page.dart`, `widgets/offline_courses_section.dart`)
+already placed `AppFooter` correctly outside their own content padding
+— no change needed there. The rest had it as the LAST CHILD of a
+padded `ListView`/`Column`, inheriting that horizontal inset instead of
+running edge to edge, or (on the dashboard) explicitly wrapped in a
+`Padding` "so it doesn't touch the screen edges" — a deliberate choice
+now reversed per this explicit follow-up.
+
+**Fixed for full width** (restructured so `AppFooter` sits as a sibling
+*outside* the padded scroll area, typically `Column([Expanded(padded
+ListView/RefreshIndicator), AppFooter()])`):
+`learning_paths_page.dart`, `account_settings_page.dart`,
+`badges_page.dart`, `completed_courses_page.dart`, `dashboard_page.dart`
+(removed the deliberate wrapping `Padding`), `development_plan_page.dart`,
+`enrolled_courses_page.dart`, `my_courses_page.dart`,
+`required_courses_page.dart`.
+
+**Added where missing entirely**: `all_course_progress_page.dart`,
+`in_progress_courses_page.dart` (both worked on earlier this session,
+never had a footer at all). `learning_progress_page.dart` needed no
+change — it reuses `DashboardBody` directly, so it already picked up
+the dashboard's own fix automatically.
+
+**Verification**: `dart format` + `flutter analyze` on all 11 touched
+files — 16 issues, all pre-existing baseline warnings in
+`dashboard_page.dart`/`development_plan_page.dart` (unused elements,
+deprecated `withOpacity`, ...), no new ones. Full-project `flutter
+analyze` — 43 issues (current baseline, unchanged).

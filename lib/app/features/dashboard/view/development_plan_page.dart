@@ -97,252 +97,279 @@ class _Body extends StatelessWidget {
               // page-specific override, different from the flat 20px
               // used elsewhere. Was ignoring this entirely.
               final narrow = MediaQuery.sizeOf(context).width <= 768;
-              return ListView(
-                padding: EdgeInsets.fromLTRB(16, narrow ? 26 : 16, 16, 0),
+              // Per explicit request: the footer should span the full
+              // window width on every screen, like the header above it —
+              // it was the last child of this ListView, inheriting the
+              // ListView's own horizontal `padding` instead of running
+              // edge to edge.
+              return Column(
                 children: [
-                  Container(
-                    // Design ref, confirmed against live computed style:
-                    // this table sits inside the same `.structure-block`
-                    // white card as every other My Courses screen — bg
-                    // #fff, radius 16px, border 0.8px solid #E7E4FF, no
-                    // box-shadow (not the 12px-radius/shadow card this
-                    // previously used).
-                    padding:
-                        narrow
-                            ? const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 15,
-                            )
-                            : const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      // CSS ref: .structure-block { border: 1px solid
-                      // #E7E4FF }.
-                      border: Border.all(color: const Color(0xFFE7E4FF)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.fromLTRB(16, narrow ? 26 : 16, 16, 0),
                       children: [
-                        // CSS ref, confirmed against `origin/staging`'s
-                        // my-development-plan/index.php: this page has no
-                        // `#my-courses`/`#resources`-scoped title (unlike
-                        // every other My Courses screen) — its markup is
-                        // a bare `<h2 class="title mb-0">` inside
-                        // `<div class="sec-title" style="margin-bottom:
-                        // 20px;gap:15px">`. None of `dist/app.css`'s
-                        // `#my-courses .sec-title h2`/`#resources .sec-
-                        // title h2` rules apply (they're ID-scoped to
-                        // different pages) — this h2 falls through to the
-                        // generic Bootstrap heading rules instead: `h2{
-                        // font-size:2rem}` + `h1..h6{font-weight:500;
-                        // line-height:1.2}`, color unset (inherits body's
-                        // #2A2A2A) — was wrongly #2D3748 with no
-                        // real basis. `.mb-0` zeroes the h2's own margin;
-                        // the real gap before the table is the `.sec-
-                        // title` div's own inline `margin-bottom:20px` —
-                        // was wrongly 8px wrapping just this row.
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: Builder(
-                            builder: (context) {
-                              final title = Text(
-                                'My Development Plan',
-                                style: GoogleFonts.inter(
-                                  color: const Color(0xFF2A2A2A),
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.2,
-                                ),
-                              );
-                              // CSS ref, corrected via a live devtools
-                              // full-cascade dump: this button ALSO
-                              // matches a site-wide, `!important`
-                              // override — `.btn,button,input[type=
-                              // submit],...{font-family:var(--primary-
-                              // font)!important;border-radius:8px
-                              // !important;font-weight:600!important;
-                              // font-size:14px!important;padding:4px 4px
-                              // !important;border:none!important}` —
-                              // which beats the vanilla `.btn-primary`
-                              // values (padding 5px 20px, 16px/w400,
-                              // radius 4px, a visible border) this had
-                              // been using. Also picks up `button.btn{
-                              // letter-spacing:1px}` (survives, not
-                              // touched by the override). Confirmed
-                              // exactly by the live box model: 195.39×29
-                              // total, 4px padding all sides, 187.387×21
-                              // content (21px = the real `.btn{line-
-                              // height:21px}`, which the override
-                              // doesn't touch either). `.btn-primary,
-                              // .btn-purple,.btn-default{background:var(
-                              // --primary-color)!important;color:white
-                              // !important}` confirms the fill/text
-                              // color (already correct) — no visible
-                              // border at all (`border:none!important`
-                              // wins), so the hover border added earlier
-                              // was never real either.
-                              //
-                              // Hover ref: also found `bluetheme-layout
-                              // .css`'s OWN `.btn-primary:hover{
-                              // background:var(--primary-dark)
-                              // !important; box-shadow:var(--shadow-md)
-                              // !important; transform:translateY(-1px)}`
-                              // — loaded AFTER `dist/app.css` with
-                              // `!important`, so it wins over that
-                              // file's `.btn-primary:hover{background:
-                              // #4043AF}` this had been using (a Round
-                              // 29 finding that turns out to only be
-                              // correct in isolation, not against this
-                              // later override). `--primary-dark`=
-                              // `#5A3480` — the same `FigmaTokens
-                              // .purpleHover` token used everywhere else
-                              // in the app, not a bespoke color.
-                              final addButton = HoverBuilder(
-                                builder:
-                                    (context, hovering) => AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 150,
+                        Container(
+                          // Design ref, confirmed against live computed style:
+                          // this table sits inside the same `.structure-block`
+                          // white card as every other My Courses screen — bg
+                          // #fff, radius 16px, border 0.8px solid #E7E4FF, no
+                          // box-shadow (not the 12px-radius/shadow card this
+                          // previously used).
+                          padding:
+                              narrow
+                                  ? const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 15,
+                                  )
+                                  : const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            // CSS ref: .structure-block { border: 1px solid
+                            // #E7E4FF }.
+                            border: Border.all(color: const Color(0xFFE7E4FF)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // CSS ref, confirmed against `origin/staging`'s
+                              // my-development-plan/index.php: this page has no
+                              // `#my-courses`/`#resources`-scoped title (unlike
+                              // every other My Courses screen) — its markup is
+                              // a bare `<h2 class="title mb-0">` inside
+                              // `<div class="sec-title" style="margin-bottom:
+                              // 20px;gap:15px">`. None of `dist/app.css`'s
+                              // `#my-courses .sec-title h2`/`#resources .sec-
+                              // title h2` rules apply (they're ID-scoped to
+                              // different pages) — this h2 falls through to the
+                              // generic Bootstrap heading rules instead: `h2{
+                              // font-size:2rem}` + `h1..h6{font-weight:500;
+                              // line-height:1.2}`, color unset (inherits body's
+                              // #2A2A2A) — was wrongly #2D3748 with no
+                              // real basis. `.mb-0` zeroes the h2's own margin;
+                              // the real gap before the table is the `.sec-
+                              // title` div's own inline `margin-bottom:20px` —
+                              // was wrongly 8px wrapping just this row.
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: Builder(
+                                  builder: (context) {
+                                    final title = Text(
+                                      'My Development Plan',
+                                      style: GoogleFonts.inter(
+                                        color: const Color(0xFF2A2A2A),
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.2,
                                       ),
-                                      transform: Matrix4.translationValues(
-                                        0,
-                                        hovering ? -1 : 0,
-                                        0,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        boxShadow:
-                                            hovering
-                                                ? [
-                                                  BoxShadow(
-                                                    color: Colors.black
-                                                        .withValues(alpha: 0.1),
-                                                    blurRadius: 12,
-                                                    offset: const Offset(0, 4),
+                                    );
+                                    // CSS ref, corrected via a live devtools
+                                    // full-cascade dump: this button ALSO
+                                    // matches a site-wide, `!important`
+                                    // override — `.btn,button,input[type=
+                                    // submit],...{font-family:var(--primary-
+                                    // font)!important;border-radius:8px
+                                    // !important;font-weight:600!important;
+                                    // font-size:14px!important;padding:4px 4px
+                                    // !important;border:none!important}` —
+                                    // which beats the vanilla `.btn-primary`
+                                    // values (padding 5px 20px, 16px/w400,
+                                    // radius 4px, a visible border) this had
+                                    // been using. Also picks up `button.btn{
+                                    // letter-spacing:1px}` (survives, not
+                                    // touched by the override). Confirmed
+                                    // exactly by the live box model: 195.39×29
+                                    // total, 4px padding all sides, 187.387×21
+                                    // content (21px = the real `.btn{line-
+                                    // height:21px}`, which the override
+                                    // doesn't touch either). `.btn-primary,
+                                    // .btn-purple,.btn-default{background:var(
+                                    // --primary-color)!important;color:white
+                                    // !important}` confirms the fill/text
+                                    // color (already correct) — no visible
+                                    // border at all (`border:none!important`
+                                    // wins), so the hover border added earlier
+                                    // was never real either.
+                                    //
+                                    // Hover ref: also found `bluetheme-layout
+                                    // .css`'s OWN `.btn-primary:hover{
+                                    // background:var(--primary-dark)
+                                    // !important; box-shadow:var(--shadow-md)
+                                    // !important; transform:translateY(-1px)}`
+                                    // — loaded AFTER `dist/app.css` with
+                                    // `!important`, so it wins over that
+                                    // file's `.btn-primary:hover{background:
+                                    // #4043AF}` this had been using (a Round
+                                    // 29 finding that turns out to only be
+                                    // correct in isolation, not against this
+                                    // later override). `--primary-dark`=
+                                    // `#5A3480` — the same `FigmaTokens
+                                    // .purpleHover` token used everywhere else
+                                    // in the app, not a bespoke color.
+                                    final addButton = HoverBuilder(
+                                      builder:
+                                          (
+                                            context,
+                                            hovering,
+                                          ) => AnimatedContainer(
+                                            duration: const Duration(
+                                              milliseconds: 150,
+                                            ),
+                                            transform:
+                                                Matrix4.translationValues(
+                                                  0,
+                                                  hovering ? -1 : 0,
+                                                  0,
+                                                ),
+                                            decoration: BoxDecoration(
+                                              boxShadow:
+                                                  hovering
+                                                      ? [
+                                                        BoxShadow(
+                                                          color: Colors.black
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              ),
+                                                          blurRadius: 12,
+                                                          offset: const Offset(
+                                                            0,
+                                                            4,
+                                                          ),
+                                                        ),
+                                                      ]
+                                                      : null,
+                                            ),
+                                            child: ElevatedButton(
+                                              onPressed:
+                                                  () => _showAddPlanItemDialog(
+                                                    context,
+                                                    notifier,
                                                   ),
-                                                ]
-                                                : null,
-                                      ),
-                                      child: ElevatedButton(
-                                        onPressed:
-                                            () => _showAddPlanItemDialog(
-                                              context,
-                                              notifier,
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    hovering
+                                                        ? FigmaTokens
+                                                            .purpleHover
+                                                        : _purple,
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                minimumSize: Size.zero,
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                // Padding adjusted per
+                                                // explicit user request (a
+                                                // deliberate deviation from
+                                                // the real 4px, not a
+                                                // web-match fix).
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 14,
+                                                    ),
+                                                side: BorderSide.none,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                textStyle: GoogleFonts.inter(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                  height: 21 / 14,
+                                                  letterSpacing: 1,
+                                                ),
+                                              ),
+                                              // Built as a plain `ElevatedButton`
+                                              // with a manual `Row` instead of
+                                              // `.icon(...)` — the icon+label
+                                              // constructor lays the label out
+                                              // via its own internal padding/
+                                              // baseline rules, which was
+                                              // reading as vertically off-
+                                              // center against the icon.
+                                              // `crossAxisAlignment.center`
+                                              // aligns both by their layout
+                                              // box instead of by text baseline.
+                                              child: const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.add_rounded,
+                                                    size: 14,
+                                                  ),
+                                                  SizedBox(width: 8),
+                                                  Text('Add Custom Plan Item'),
+                                                ],
+                                              ),
                                             ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              hovering
-                                                  ? FigmaTokens.purpleHover
-                                                  : _purple,
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          minimumSize: Size.zero,
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                          // Padding adjusted per
-                                          // explicit user request (a
-                                          // deliberate deviation from
-                                          // the real 4px, not a
-                                          // web-match fix).
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 14,
                                           ),
-                                          side: BorderSide.none,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
+                                    );
+                                    // Phone: "Add Custom Plan Item" doesn't fit
+                                    // next to the title in a Row (overflowed by
+                                    // 38px) - stack title above a full-width
+                                    // button instead. CSS ref: the real `.sec-
+                                    // title`'s own `gap:15px` governs the space
+                                    // between the wrapped title/button here too
+                                    // (flex `gap` applies across wrapped lines,
+                                    // not just `justify-content:space-between`'s
+                                    // one-line case below) — was 12px.
+                                    if (!Responsive.isTablet(context)) {
+                                      return Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          title,
+                                          const SizedBox(height: 15),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: addButton,
                                           ),
-                                          textStyle: GoogleFonts.inter(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 14,
-                                            height: 21 / 14,
-                                            letterSpacing: 1,
-                                          ),
-                                        ),
-                                        // Built as a plain `ElevatedButton`
-                                        // with a manual `Row` instead of
-                                        // `.icon(...)` — the icon+label
-                                        // constructor lays the label out
-                                        // via its own internal padding/
-                                        // baseline rules, which was
-                                        // reading as vertically off-
-                                        // center against the icon.
-                                        // `crossAxisAlignment.center`
-                                        // aligns both by their layout
-                                        // box instead of by text baseline.
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Icon(Icons.add_rounded, size: 14),
-                                            SizedBox(width: 8),
-                                            Text('Add Custom Plan Item'),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                              );
-                              // Phone: "Add Custom Plan Item" doesn't fit
-                              // next to the title in a Row (overflowed by
-                              // 38px) - stack title above a full-width
-                              // button instead. CSS ref: the real `.sec-
-                              // title`'s own `gap:15px` governs the space
-                              // between the wrapped title/button here too
-                              // (flex `gap` applies across wrapped lines,
-                              // not just `justify-content:space-between`'s
-                              // one-line case below) — was 12px.
-                              if (!Responsive.isTablet(context)) {
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    title,
-                                    const SizedBox(height: 15),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: addButton,
-                                    ),
-                                  ],
-                                );
-                              }
-                              return Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [title, addButton],
-                              );
-                            },
+                                        ],
+                                      );
+                                    }
+                                    return Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [title, addButton],
+                                    );
+                                  },
+                                ),
+                              ),
+                              if (state.courses.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 40, bottom: 40),
+                                  child: _EmptyState(),
+                                )
+                              // Same table on every device - _DevelopmentPlanTable
+                              // switches its own row layout between a stacked
+                              // phone card and the full multi-column row for
+                              // tablet+ (see _TableDataRow), instead of phone
+                              // getting an unrelated image-grid design.
+                              else
+                                _DevelopmentPlanTable(
+                                  courses: state.courses,
+                                  notifier: notifier,
+                                  startIndex:
+                                      (state.page - 1) * state.perPage + 1,
+                                ),
+                              if (state.courses.isNotEmpty) ...[
+                                const SizedBox(height: 30),
+                                PaginationWidget(
+                                  page: state.page,
+                                  pages: state.totalPages,
+                                  onPage: (page) => _goToPage(context, page),
+                                  showProgressBar: true,
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        if (state.courses.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 40, bottom: 40),
-                            child: _EmptyState(),
-                          )
-                        // Same table on every device - _DevelopmentPlanTable
-                        // switches its own row layout between a stacked
-                        // phone card and the full multi-column row for
-                        // tablet+ (see _TableDataRow), instead of phone
-                        // getting an unrelated image-grid design.
-                        else
-                          _DevelopmentPlanTable(
-                            courses: state.courses,
-                            notifier: notifier,
-                            startIndex: (state.page - 1) * state.perPage + 1,
-                          ),
-                        if (state.courses.isNotEmpty) ...[
-                          const SizedBox(height: 30),
-                          PaginationWidget(
-                            page: state.page,
-                            pages: state.totalPages,
-                            onPage: (page) => _goToPage(context, page),
-                            showProgressBar: true,
-                          ),
-                        ],
+                        const SizedBox(height: 16),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
                   const AppFooter(),
                 ],
               );

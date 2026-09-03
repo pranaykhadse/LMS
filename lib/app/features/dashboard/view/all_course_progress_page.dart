@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
+import 'package:lms/app/core/views/elements/app_footer.dart';
 import 'package:lms/app/core/views/elements/app_scaffold.dart';
 import 'package:lms/app/core/views/elements/horizontal_scroll_hint.dart';
 import 'package:lms/app/core/views/elements/pagination_widget.dart';
@@ -184,6 +185,10 @@ class _Body extends StatelessWidget {
                   onPage: (page) => _goToPage(context, page),
                 ),
               ),
+            // Per explicit request: every screen should show the shared
+            // footer, spanning the full window width like the header
+            // above it — missing from this screen entirely before.
+            const AppFooter(),
           ],
         );
     }

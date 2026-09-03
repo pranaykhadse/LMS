@@ -103,27 +103,26 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
     // search block and structure-block sit inside the same container
     // inset as the web page.
     //
-    // Above 991.98px that override no longer applies, so it's Bootstrap's
-    // base `.container` rule instead — `padding` is commented out there
-    // (confirmed against `origin/staging`'s `app.css`), but that rule ALSO
-    // caps `max-width` (960px at >=992px, 1140px at >=1200px) and centers
-    // via `margin:auto`. A prior pass read only the padding half of that
-    // rule and rendered this page full-bleed on desktop — a live
-    // screenshot shows the real page has a clear side margin there, which
-    // is that max-width capping + centering, not padding. Reproduced with
-    // `Center`+`ConstrainedBox` instead of literal padding, since the
-    // margin here comes from the container not spanning the full width in
-    // the first place.
+    // Above 991.98px, Bootstrap's base `.container` rule also caps
+    // max-width (960/1140px) and centers via margin:auto — a prior pass
+    // reproduced that literally via `Center`+`ConstrainedBox`, but per
+    // explicit follow-up feedback that read as far too aggressive a width
+    // cut on an actual desktop window, and — since the search bar's own
+    // Row has no horizontal inset of its own at this width, relying
+    // entirely on this outer padding — left the search box's white card
+    // spanning edge-to-edge of that now visibly narrower box, closer to
+    // "touching the edges" than before. Using a flat, modest side inset
+    // here instead (same 40px convention already used by the Course
+    // Catalog page's own desktop container), which both keeps the
+    // reduction small and gives the search bar real breathing room.
     final w = MediaQuery.sizeOf(context).width;
     final EdgeInsets containerPadding;
-    double? containerMaxWidth;
     if (w <= 640) {
       containerPadding = const EdgeInsets.all(5);
     } else if (w <= 991.98) {
       containerPadding = const EdgeInsets.symmetric(horizontal: 15);
     } else {
-      containerPadding = EdgeInsets.zero;
-      containerMaxWidth = w >= 1200 ? 1140 : 960;
+      containerPadding = const EdgeInsets.symmetric(horizontal: 40);
     }
 
     return AppScaffold(
@@ -137,27 +136,34 @@ class _LearningPathsPageState extends ConsumerState<LearningPathsPage> {
                     ? null
                     : _searchController.text.trim(),
           ),
-      body: Padding(
-        padding: containerPadding,
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: containerMaxWidth ?? double.infinity,
-            ),
-            child: Column(
-              children: [
-                _SearchBar(
-                  controller: _searchController,
-                  onSearch: _onSearch,
-                  onReset: _onReset,
-                ),
-                Expanded(
-                  child: _Body(state: state, onRetry: () => notifier.fetch()),
-                ),
-              ],
+      // Per explicit request: the footer should span the full window width
+      // on every screen, like the header above it — it was nested inside
+      // this page's own `containerPadding` (as the last child of `_Body`'s
+      // Column), so it inherited that horizontal inset instead of running
+      // edge to edge. Moved out here as a sibling AFTER the padded content
+      // instead, so it always renders full-width regardless of `_Body`'s
+      // own provider state (loading/error/empty/data).
+      body: Column(
+        children: [
+          Expanded(
+            child: Padding(
+              padding: containerPadding,
+              child: Column(
+                children: [
+                  _SearchBar(
+                    controller: _searchController,
+                    onSearch: _onSearch,
+                    onReset: _onReset,
+                  ),
+                  Expanded(
+                    child: _Body(state: state, onRetry: () => notifier.fetch()),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
+          const AppFooter(),
+        ],
       ),
     );
   }
@@ -605,8 +611,6 @@ class _Body extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            const AppFooter(),
           ],
         );
     }

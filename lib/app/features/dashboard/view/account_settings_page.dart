@@ -305,495 +305,528 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     final notificationTypeSelection =
         (profile.notificationType?.toString() ?? '').toLowerCase();
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(
-        Responsive.isTablet(context) ? 16 : 10,
-        16,
-        Responsive.isTablet(context) ? 16 : 10,
-        32,
-      ),
+    // Per explicit request: the footer should span the full window width
+    // on every screen, like the header above it. It was the last child
+    // of this ListView, inheriting the ListView's own horizontal
+    // `padding` instead of running edge to edge — split into an
+    // `Expanded` scroll area (still carrying that padding) plus a
+    // sibling `AppFooter` outside it.
+    return Column(
       children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
-            child: Container(
-              // CSS ref: .profile-block padding 24px desktop, 12px ≤768px.
-              padding: EdgeInsets.all(Responsive.isTablet(context) ? 24 : 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFF1F5F9)),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x05000000),
-                    blurRadius: 3,
-                    offset: Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ── Title bar — matches .profile-title ──────────
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 20,
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(
+              Responsive.isTablet(context) ? 16 : 10,
+              16,
+              Responsive.isTablet(context) ? 16 : 10,
+              32,
+            ),
+            children: [
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1000),
+                  child: Container(
+                    // CSS ref: .profile-block padding 24px desktop, 12px ≤768px.
+                    padding: EdgeInsets.all(
+                      Responsive.isTablet(context) ? 24 : 12,
                     ),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(14),
-                        topRight: Radius.circular(14),
-                      ),
-                      border: Border(
-                        bottom: BorderSide(color: Color(0xFFF3F4F6)),
-                      ),
-                    ),
-                    child: Builder(
-                      builder: (context) {
-                        // ≤540px: the edit/save buttons drop below the title
-                        // (web: .profile-edit-btns { margin: 45px 0 10px auto; }).
-                        final actions = Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (_isEditing) ...[
-                              TextButton(
-                                onPressed: _isSaving ? null : _cancelEditing,
-                                style: TextButton.styleFrom(
-                                  foregroundColor: const Color(0xFF6B7280),
-                                ),
-                                child: const Text(
-                                  'Cancel',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 15),
-                              HoverBuilder(
-                                builder:
-                                    (context, hovering) => ElevatedButton(
-                                      onPressed: _isSaving ? null : _save,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            hovering
-                                                ? FigmaTokens.purpleHover
-                                                : _asPurple,
-                                        foregroundColor: Colors.white,
-                                        elevation: hovering ? 4 : 0,
-                                        shadowColor: FigmaTokens.primaryPurple
-                                            .withValues(alpha: 0.2),
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical:
-                                              Responsive.isTablet(context)
-                                                  ? 16
-                                                  : 10,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        textStyle: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                      child:
-                                          _isSaving
-                                              ? const SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      color: Colors.white,
-                                                    ),
-                                              )
-                                              : const Text('Save'),
-                                    ),
-                              ),
-                            ] else
-                              HoverBuilder(
-                                builder:
-                                    (context, hovering) => ElevatedButton.icon(
-                                      onPressed: _startEditing,
-                                      icon: const Icon(
-                                        Icons.edit_outlined,
-                                        size: 9,
-                                      ),
-                                      label: const Text('Edit'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            hovering
-                                                ? FigmaTokens.purpleHover
-                                                : _asPurple,
-                                        foregroundColor: Colors.white,
-                                        elevation: hovering ? 4 : 0,
-                                        shadowColor: FigmaTokens.primaryPurple
-                                            .withValues(alpha: 0.2),
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical:
-                                              Responsive.isTablet(context)
-                                                  ? 16
-                                                  : 10,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        textStyle: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                              ),
-                          ],
-                        );
-                        final title = Row(
-                          children: [
-                            const Icon(
-                              Icons.person_outline_rounded,
-                              color: _asPurple,
-                              size: 22,
-                            ),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Profile',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF111827),
-                                height: 1.2,
-                              ),
-                            ),
-                          ],
-                        );
-                        // Web keeps Profile title + Edit/Save/Cancel on a single
-                        // flex row (space-between) at every width — same here.
-                        return Row(children: [title, const Spacer(), actions]);
-                      },
-                    ),
-                  ),
-                  // ── Profile header ──────────────────────────────
-                  _ProfileHeaderCard(
-                    name: name.isEmpty ? 'User' : name,
-                    email: user.email ?? '',
-                    profile: profile,
-                    isEditing: _isEditing,
-                    isSaving: _isSaving,
-                    firstnameController: _firstnameCtrl,
-                    lastnameController: _lastnameCtrl,
-                    isUploadingAvatar: _isUploadingAvatar,
-                    onPickAvatar: _pickAndUploadAvatar,
-                    onEdit: _startEditing,
-                    onCancel: _cancelEditing,
-                    onSave: _save,
-                  ),
-                  // ── Each section is its own bordered, rounded-corner box
-                  // (CSS: .personal-details — white, padding 15, radius 16,
-                  // border #f3f4f6; blocks are flush, only the Primary Group
-                  // carries an explicit 24px bottom margin) ──────────────
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // ── Personal Details ──────────────────────────────────
-                      _SectionBlock(
-                        icon: Icons.person_outline_rounded,
-                        title: 'Personal Details',
-                        spacing: 22.5,
-                        children: [
-                          // Web: Select2 bound to timezone_id, showing the
-                          // selected state name ("Alaska") grouped under its
-                          // country. Its PHP source marks the widget
-                          // `disabled: true`, but a live screenshot of the
-                          // real site shows it's actually open/searchable
-                          // there — trusting that live evidence over the
-                          // static source. See `_selectedStateName`'s own
-                          // comment for why picking a new value here isn't
-                          // sent on Save yet.
-                          _StateFieldRow(
-                            value: _selectedStateName,
-                            isEditing: _isEditing,
-                            onChanged:
-                                _isEditing
-                                    ? (name) => setState(
-                                      () => _selectedStateName = name,
-                                    )
-                                    : null,
-                          ),
-                          _FieldRow(
-                            label: 'Location',
-                            value: profile.location,
-                            controller: _isEditing ? _locationCtrl : null,
-                          ),
-                          _FieldRow(
-                            label: 'Website',
-                            value: profile.website?.toString(),
-                            controller: _isEditing ? _websiteCtrl : null,
-                          ),
-                          _FieldRow(
-                            label: 'LinkedIn',
-                            value: profile.linkedIn?.toString(),
-                            controller: _isEditing ? _linkedInCtrl : null,
-                          ),
-                          _PhoneFieldRow(
-                            label: 'Phone Number',
-                            value: widget.detail.phoneNumber,
-                            controller: _isEditing ? _phoneCtrl : null,
-                            countryCode: _countryCode,
-                            countryIso: _countryIso,
-                            onCountryChanged:
-                                _isEditing
-                                    ? (country) => setState(() {
-                                      _countryCode = country.dialCode;
-                                      _countryIso = country.iso2;
-                                    })
-                                    : null,
-                          ),
-                          _CheckboxRow(
-                            label: 'Receive Text Message Reminders',
-                            value: widget.detail.enableTextMessages,
-                            onChanged:
-                                _isSavingReminders
-                                    ? null
-                                    : _toggleTextReminders,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // ── Work Information ──────────────────────────────────
-                      _SectionBlock(
-                        icon: Icons.work_rounded,
-                        title: 'Work Information',
-                        spacing: 22.5,
-                        children: [
-                          _FieldRow(
-                            label: 'Division',
-                            value: profile.division,
-                            controller: _isEditing ? _divisionCtrl : null,
-                          ),
-                          _FieldRow(
-                            label: 'Department',
-                            value: profile.department,
-                            controller: _isEditing ? _departmentCtrl : null,
-                          ),
-                          // CSS ref: real Work Information section is
-                          // Division/Department/Cost Code/Supervisor Name/
-                          // Supervisor Email only — "Employee ID" doesn't
-                          // exist anywhere in `account.php`, removed.
-                          _FieldRow(
-                            label: 'Cost Code',
-                            value: user.costCode,
-                            isEditing: _isEditing,
-                          ),
-                          // Web: supervisor firstname/lastname inputs; the
-                          // login API carries the supervisor as username +
-                          // email, so username stands in for the name row.
-                          _FieldRow(
-                            label: 'Supervisor Name',
-                            value: loginExtras?.supervisor?.username,
-                            isEditing: _isEditing,
-                          ),
-                          _FieldRow(
-                            label: 'Supervisor Email',
-                            value: loginExtras?.supervisor?.email,
-                            isEditing: _isEditing,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // ── Preferences (Two-Factor Auth) ─────────────────
-                      // CSS ref, confirmed against `origin/staging`'s
-                      // sign-in/auth.php (rendered via
-                      // `renderPartial('auth')` between Work Information
-                      // and Primary Group in account.php — missed on an
-                      // earlier pass because it lives in a separate
-                      // partial file, not account.php itself, and was
-                      // wrongly deleted as if invented; restored here).
-                      _SectionBlock(
-                        icon: Icons.tune_rounded,
-                        title: 'Preferences',
-                        children: [
-                          _ToggleRow(
-                            label: 'Two-Factor Auth',
-                            sublabel: 'Add an extra layer of security',
-                            value: user.enableTwoFactorAuth == 1,
-                            boxed: true,
-                            isEditing: _isEditing,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // ── Primary Group ─────────────────────────────────────
-                      // Web: .personal-details style="margin-bottom: 24px;"
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 24),
-                        child: _SectionBlock(
-                          icon: Icons.groups_rounded,
-                          title: 'Primary Group',
-                          // CSS: each .custom-radio has margin-bottom 12px.
-                          spacing: 12,
-                          children: [
-                            // Web renders the user's full group list as
-                            // disabled radios (primary_group.php) with the
-                            // primary one checked — the login API's `group`
-                            // array plus `primary_group` id drive the same
-                            // here. Falls back to the primary label alone
-                            // when the list hasn't arrived.
-                            ...() {
-                              final groups = loginExtras?.group ?? [];
-                              if (groups.isEmpty) {
-                                return [
-                                  _RadioRow(
-                                    label:
-                                        user.primaryGroupLabel ??
-                                        'Not assigned',
-                                    selected: user.primaryGroupLabel != null,
-                                  ),
-                                ];
-                              }
-                              final primaryId =
-                                  user.primaryGroup ??
-                                  loginExtras?.user?.primaryGroup;
-                              return groups
-                                  .map(
-                                    (g) => _RadioRow(
-                                      label: g.name ?? 'Unnamed group',
-                                      selected:
-                                          g.id != null && g.id == primaryId,
-                                    ),
-                                  )
-                                  .toList();
-                            }(),
-                          ],
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x05000000),
+                          blurRadius: 3,
+                          offset: Offset(0, 1),
                         ),
-                      ),
-                      // ── Notification Type ─────────────────────────────────
-                      _SectionBlock(
-                        icon: Icons.notifications_rounded,
-                        title: 'Notification Type',
-                        // CSS: each .custom-radio has margin-bottom 12px
-                        spacing: 12,
-                        children: [
-                          ..._notificationOptions.map(
-                            (label) => _RadioRow(
-                              label: label,
-                              selected: notificationTypeSelection.contains(
-                                label.split(' ').first.toLowerCase(),
-                              ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // ── Title bar — matches .profile-title ──────────
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 20,
+                          ),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(14),
+                              topRight: Radius.circular(14),
+                            ),
+                            border: Border(
+                              bottom: BorderSide(color: Color(0xFFF3F4F6)),
                             ),
                           ),
-                          // The number that channel actually sends to - only shown
-                          // once that channel is selected, matching the reference.
-                          if (notificationTypeSelection.contains('text') ||
-                              notificationTypeSelection.contains('sms'))
-                            _PlainValueBox(
-                              value: profile.textPhoneNumber?.toString(),
-                              isEditing: _isEditing,
-                            )
-                          else if (notificationTypeSelection.contains(
-                            'whatsapp',
-                          ))
-                            _PlainValueBox(
-                              value: profile.whatsappPhoneNumber?.toString(),
-                              isEditing: _isEditing,
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      // ── Security ──────────────────────────────────────────
-                      _SectionBlock(
-                        icon: Icons.security_rounded,
-                        title: 'Security',
-                        children: [
-                          // CSS ref: .reset-block h2 a — border #d1d5db, radius 12,
-                          // padding 12, w500 #374151 14px, centered, white bg,
-                          // box-shadow 0 1px 2px rgba(0,0,0,0.05);
-                          // hover → bg #f9fafb, border #9ca3af.
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x0D000000),
-                                  blurRadius: 2,
-                                  offset: Offset(0, 1),
+                          child: Builder(
+                            builder: (context) {
+                              // ≤540px: the edit/save buttons drop below the title
+                              // (web: .profile-edit-btns { margin: 45px 0 10px auto; }).
+                              final actions = Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (_isEditing) ...[
+                                    TextButton(
+                                      onPressed:
+                                          _isSaving ? null : _cancelEditing,
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: const Color(
+                                          0xFF6B7280,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Cancel',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 15),
+                                    HoverBuilder(
+                                      builder:
+                                          (context, hovering) => ElevatedButton(
+                                            onPressed: _isSaving ? null : _save,
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  hovering
+                                                      ? FigmaTokens.purpleHover
+                                                      : _asPurple,
+                                              foregroundColor: Colors.white,
+                                              elevation: hovering ? 4 : 0,
+                                              shadowColor: FigmaTokens
+                                                  .primaryPurple
+                                                  .withValues(alpha: 0.2),
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                                vertical:
+                                                    Responsive.isTablet(context)
+                                                        ? 16
+                                                        : 10,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              textStyle: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            child:
+                                                _isSaving
+                                                    ? const SizedBox(
+                                                      width: 16,
+                                                      height: 16,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            color: Colors.white,
+                                                          ),
+                                                    )
+                                                    : const Text('Save'),
+                                          ),
+                                    ),
+                                  ] else
+                                    HoverBuilder(
+                                      builder:
+                                          (
+                                            context,
+                                            hovering,
+                                          ) => ElevatedButton.icon(
+                                            onPressed: _startEditing,
+                                            icon: const Icon(
+                                              Icons.edit_outlined,
+                                              size: 9,
+                                            ),
+                                            label: const Text('Edit'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  hovering
+                                                      ? FigmaTokens.purpleHover
+                                                      : _asPurple,
+                                              foregroundColor: Colors.white,
+                                              elevation: hovering ? 4 : 0,
+                                              shadowColor: FigmaTokens
+                                                  .primaryPurple
+                                                  .withValues(alpha: 0.2),
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 16,
+                                                vertical:
+                                                    Responsive.isTablet(context)
+                                                        ? 16
+                                                        : 10,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              textStyle: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                    ),
+                                ],
+                              );
+                              final title = Row(
+                                children: [
+                                  const Icon(
+                                    Icons.person_outline_rounded,
+                                    color: _asPurple,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text(
+                                    'Profile',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF111827),
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                ],
+                              );
+                              // Web keeps Profile title + Edit/Save/Cancel on a single
+                              // flex row (space-between) at every width — same here.
+                              return Row(
+                                children: [title, const Spacer(), actions],
+                              );
+                            },
+                          ),
+                        ),
+                        // ── Profile header ──────────────────────────────
+                        _ProfileHeaderCard(
+                          name: name.isEmpty ? 'User' : name,
+                          email: user.email ?? '',
+                          profile: profile,
+                          isEditing: _isEditing,
+                          isSaving: _isSaving,
+                          firstnameController: _firstnameCtrl,
+                          lastnameController: _lastnameCtrl,
+                          isUploadingAvatar: _isUploadingAvatar,
+                          onPickAvatar: _pickAndUploadAvatar,
+                          onEdit: _startEditing,
+                          onCancel: _cancelEditing,
+                          onSave: _save,
+                        ),
+                        // ── Each section is its own bordered, rounded-corner box
+                        // (CSS: .personal-details — white, padding 15, radius 16,
+                        // border #f3f4f6; blocks are flush, only the Primary Group
+                        // carries an explicit 24px bottom margin) ──────────────
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // ── Personal Details ──────────────────────────────────
+                            _SectionBlock(
+                              icon: Icons.person_outline_rounded,
+                              title: 'Personal Details',
+                              spacing: 22.5,
+                              children: [
+                                // Web: Select2 bound to timezone_id, showing the
+                                // selected state name ("Alaska") grouped under its
+                                // country. Its PHP source marks the widget
+                                // `disabled: true`, but a live screenshot of the
+                                // real site shows it's actually open/searchable
+                                // there — trusting that live evidence over the
+                                // static source. See `_selectedStateName`'s own
+                                // comment for why picking a new value here isn't
+                                // sent on Save yet.
+                                _StateFieldRow(
+                                  value: _selectedStateName,
+                                  isEditing: _isEditing,
+                                  onChanged:
+                                      _isEditing
+                                          ? (name) => setState(
+                                            () => _selectedStateName = name,
+                                          )
+                                          : null,
+                                ),
+                                _FieldRow(
+                                  label: 'Location',
+                                  value: profile.location,
+                                  controller: _isEditing ? _locationCtrl : null,
+                                ),
+                                _FieldRow(
+                                  label: 'Website',
+                                  value: profile.website?.toString(),
+                                  controller: _isEditing ? _websiteCtrl : null,
+                                ),
+                                _FieldRow(
+                                  label: 'LinkedIn',
+                                  value: profile.linkedIn?.toString(),
+                                  controller: _isEditing ? _linkedInCtrl : null,
+                                ),
+                                _PhoneFieldRow(
+                                  label: 'Phone Number',
+                                  value: widget.detail.phoneNumber,
+                                  controller: _isEditing ? _phoneCtrl : null,
+                                  countryCode: _countryCode,
+                                  countryIso: _countryIso,
+                                  onCountryChanged:
+                                      _isEditing
+                                          ? (country) => setState(() {
+                                            _countryCode = country.dialCode;
+                                            _countryIso = country.iso2;
+                                          })
+                                          : null,
+                                ),
+                                _CheckboxRow(
+                                  label: 'Receive Text Message Reminders',
+                                  value: widget.detail.enableTextMessages,
+                                  onChanged:
+                                      _isSavingReminders
+                                          ? null
+                                          : _toggleTextReminders,
                                 ),
                               ],
                             ),
-                            child: HoverBuilder(
-                              builder:
-                                  (context, hovering) => SizedBox(
-                                    width: double.infinity,
-                                    child: OutlinedButton.icon(
-                                      onPressed:
-                                          () => showDialog(
-                                            context: context,
-                                            // .modal-backdrop.show — opacity .5.
-                                            barrierColor: const Color(
-                                              0x80000000,
-                                            ),
-                                            builder:
-                                                (_) =>
-                                                    const _ResetPasswordDialog(),
-                                          ),
-                                      icon: Icon(
-                                        Icons.lock_outline_rounded,
-                                        size: 12,
-                                        color: Color(0xFF6B7280),
-                                      ),
-                                      label: const Text('Reset Password'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: const Color(
-                                          0xFF374151,
-                                        ),
-                                        backgroundColor:
-                                            hovering
-                                                ? const Color(0xFFF9FAFB)
-                                                : Colors.white,
-                                        overlayColor: Colors.transparent,
-                                        side: BorderSide(
-                                          color:
-                                              hovering
-                                                  ? const Color(0xFF9CA3AF)
-                                                  : const Color(0xFFD1D5DB),
-                                          width: 1,
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 20,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        textStyle: const TextStyle(
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                            const SizedBox(height: 16),
+                            // ── Work Information ──────────────────────────────────
+                            _SectionBlock(
+                              icon: Icons.work_rounded,
+                              title: 'Work Information',
+                              spacing: 22.5,
+                              children: [
+                                _FieldRow(
+                                  label: 'Division',
+                                  value: profile.division,
+                                  controller: _isEditing ? _divisionCtrl : null,
+                                ),
+                                _FieldRow(
+                                  label: 'Department',
+                                  value: profile.department,
+                                  controller:
+                                      _isEditing ? _departmentCtrl : null,
+                                ),
+                                // CSS ref: real Work Information section is
+                                // Division/Department/Cost Code/Supervisor Name/
+                                // Supervisor Email only — "Employee ID" doesn't
+                                // exist anywhere in `account.php`, removed.
+                                _FieldRow(
+                                  label: 'Cost Code',
+                                  value: user.costCode,
+                                  isEditing: _isEditing,
+                                ),
+                                // Web: supervisor firstname/lastname inputs; the
+                                // login API carries the supervisor as username +
+                                // email, so username stands in for the name row.
+                                _FieldRow(
+                                  label: 'Supervisor Name',
+                                  value: loginExtras?.supervisor?.username,
+                                  isEditing: _isEditing,
+                                ),
+                                _FieldRow(
+                                  label: 'Supervisor Email',
+                                  value: loginExtras?.supervisor?.email,
+                                  isEditing: _isEditing,
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(height: 16),
+                            // ── Preferences (Two-Factor Auth) ─────────────────
+                            // CSS ref, confirmed against `origin/staging`'s
+                            // sign-in/auth.php (rendered via
+                            // `renderPartial('auth')` between Work Information
+                            // and Primary Group in account.php — missed on an
+                            // earlier pass because it lives in a separate
+                            // partial file, not account.php itself, and was
+                            // wrongly deleted as if invented; restored here).
+                            _SectionBlock(
+                              icon: Icons.tune_rounded,
+                              title: 'Preferences',
+                              children: [
+                                _ToggleRow(
+                                  label: 'Two-Factor Auth',
+                                  sublabel: 'Add an extra layer of security',
+                                  value: user.enableTwoFactorAuth == 1,
+                                  boxed: true,
+                                  isEditing: _isEditing,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            // ── Primary Group ─────────────────────────────────────
+                            // Web: .personal-details style="margin-bottom: 24px;"
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 24),
+                              child: _SectionBlock(
+                                icon: Icons.groups_rounded,
+                                title: 'Primary Group',
+                                // CSS: each .custom-radio has margin-bottom 12px.
+                                spacing: 12,
+                                children: [
+                                  // Web renders the user's full group list as
+                                  // disabled radios (primary_group.php) with the
+                                  // primary one checked — the login API's `group`
+                                  // array plus `primary_group` id drive the same
+                                  // here. Falls back to the primary label alone
+                                  // when the list hasn't arrived.
+                                  ...() {
+                                    final groups = loginExtras?.group ?? [];
+                                    if (groups.isEmpty) {
+                                      return [
+                                        _RadioRow(
+                                          label:
+                                              user.primaryGroupLabel ??
+                                              'Not assigned',
+                                          selected:
+                                              user.primaryGroupLabel != null,
+                                        ),
+                                      ];
+                                    }
+                                    final primaryId =
+                                        user.primaryGroup ??
+                                        loginExtras?.user?.primaryGroup;
+                                    return groups
+                                        .map(
+                                          (g) => _RadioRow(
+                                            label: g.name ?? 'Unnamed group',
+                                            selected:
+                                                g.id != null &&
+                                                g.id == primaryId,
+                                          ),
+                                        )
+                                        .toList();
+                                  }(),
+                                ],
+                              ),
+                            ),
+                            // ── Notification Type ─────────────────────────────────
+                            _SectionBlock(
+                              icon: Icons.notifications_rounded,
+                              title: 'Notification Type',
+                              // CSS: each .custom-radio has margin-bottom 12px
+                              spacing: 12,
+                              children: [
+                                ..._notificationOptions.map(
+                                  (label) => _RadioRow(
+                                    label: label,
+                                    selected: notificationTypeSelection
+                                        .contains(
+                                          label.split(' ').first.toLowerCase(),
+                                        ),
+                                  ),
+                                ),
+                                // The number that channel actually sends to - only shown
+                                // once that channel is selected, matching the reference.
+                                if (notificationTypeSelection.contains(
+                                      'text',
+                                    ) ||
+                                    notificationTypeSelection.contains('sms'))
+                                  _PlainValueBox(
+                                    value: profile.textPhoneNumber?.toString(),
+                                    isEditing: _isEditing,
+                                  )
+                                else if (notificationTypeSelection.contains(
+                                  'whatsapp',
+                                ))
+                                  _PlainValueBox(
+                                    value:
+                                        profile.whatsappPhoneNumber?.toString(),
+                                    isEditing: _isEditing,
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            // ── Security ──────────────────────────────────────────
+                            _SectionBlock(
+                              icon: Icons.security_rounded,
+                              title: 'Security',
+                              children: [
+                                // CSS ref: .reset-block h2 a — border #d1d5db, radius 12,
+                                // padding 12, w500 #374151 14px, centered, white bg,
+                                // box-shadow 0 1px 2px rgba(0,0,0,0.05);
+                                // hover → bg #f9fafb, border #9ca3af.
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x0D000000),
+                                        blurRadius: 2,
+                                        offset: Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
+                                  child: HoverBuilder(
+                                    builder:
+                                        (context, hovering) => SizedBox(
+                                          width: double.infinity,
+                                          child: OutlinedButton.icon(
+                                            onPressed:
+                                                () => showDialog(
+                                                  context: context,
+                                                  // .modal-backdrop.show — opacity .5.
+                                                  barrierColor: const Color(
+                                                    0x80000000,
+                                                  ),
+                                                  builder:
+                                                      (_) =>
+                                                          const _ResetPasswordDialog(),
+                                                ),
+                                            icon: Icon(
+                                              Icons.lock_outline_rounded,
+                                              size: 12,
+                                              color: Color(0xFF6B7280),
+                                            ),
+                                            label: const Text('Reset Password'),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: const Color(
+                                                0xFF374151,
+                                              ),
+                                              backgroundColor:
+                                                  hovering
+                                                      ? const Color(0xFFF9FAFB)
+                                                      : Colors.white,
+                                              overlayColor: Colors.transparent,
+                                              side: BorderSide(
+                                                color:
+                                                    hovering
+                                                        ? const Color(
+                                                          0xFF9CA3AF,
+                                                        )
+                                                        : const Color(
+                                                          0xFFD1D5DB,
+                                                        ),
+                                                width: 1,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 20,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              textStyle: const TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
-        const SizedBox(height: 20),
         const AppFooter(),
       ],
     );

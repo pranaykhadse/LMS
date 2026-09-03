@@ -90,70 +90,82 @@ class _MyCoursesPageState extends ConsumerState<MyCoursesPage> {
           ),
           onRetry: () => ref.read(MyCoursesViewModel.provider.notifier).fetch(),
         ),
-        DataProviderState.data => ListView(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        // Per explicit request: the footer should span the full window
+        // width on every screen, like the header above it — it was the
+        // last child of this ListView, inheriting the ListView's own
+        // horizontal `padding` instead of running edge to edge.
+        DataProviderState.data => Column(
           children: [
-            // CSS ref: the real page's filter panel is `_searchCatalogue.
-            // php` — the same 5-field Search/Strategic Imperative/
-            // Competencies/Skills/Calendar panel Course Catalog uses.
-            // The mobile `my-courses` endpoint only accepts `page`/
-            // `limit` (confirmed against `LmsScreenController::
-            // actionMyCourses`'s @SWG doc — no search/filter params at
-            // all), so that panel can't actually be wired here without a
-            // backend addition; kept as this simplified client-side
-            // search+status-filter substitute rather than building
-            // non-functional UI for fields nothing can filter by yet.
-            _FiltersPanel(
-              expanded: _filtersExpanded,
-              onToggle:
-                  () => setState(() => _filtersExpanded = !_filtersExpanded),
-              searchController: _searchController,
-              statusFilter: _statusFilter,
-              onStatusChanged: (v) => setState(() => _statusFilter = v),
-            ),
-            const SizedBox(height: 18),
-            // CSS ref: `#resources` — white bg, border 1px #E7E4FF,
-            // radius 14px, padding 30px (was a plain radius-14 white
-            // card with no matching padding/border spec cited, and the
-            // grid/title lived loose in the page rather than inside this
-            // wrapper).
-            Container(
-              padding: const EdgeInsets.all(30),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFE7E4FF)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 children: [
-                  // CSS ref: `#resources .sec-title h2` — 24px/weight400/
-                  // lineHeight28, color var(--primary-second)=#A20067,
-                  // margin-bottom 20px (was a 4px accent bar + 20px/900
-                  // heading with a 14px gap after — an invented "section
-                  // header" pattern from elsewhere in the app, not this
-                  // real page's own title).
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: Text(
-                      'My Courses',
-                      style: GoogleFonts.inter(
-                        color: _titleColor,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w400,
-                        height: 28 / 24,
-                      ),
+                  // CSS ref: the real page's filter panel is `_searchCatalogue.
+                  // php` — the same 5-field Search/Strategic Imperative/
+                  // Competencies/Skills/Calendar panel Course Catalog uses.
+                  // The mobile `my-courses` endpoint only accepts `page`/
+                  // `limit` (confirmed against `LmsScreenController::
+                  // actionMyCourses`'s @SWG doc — no search/filter params at
+                  // all), so that panel can't actually be wired here without a
+                  // backend addition; kept as this simplified client-side
+                  // search+status-filter substitute rather than building
+                  // non-functional UI for fields nothing can filter by yet.
+                  _FiltersPanel(
+                    expanded: _filtersExpanded,
+                    onToggle:
+                        () => setState(
+                          () => _filtersExpanded = !_filtersExpanded,
+                        ),
+                    searchController: _searchController,
+                    statusFilter: _statusFilter,
+                    onStatusChanged: (v) => setState(() => _statusFilter = v),
+                  ),
+                  const SizedBox(height: 18),
+                  // CSS ref: `#resources` — white bg, border 1px #E7E4FF,
+                  // radius 14px, padding 30px (was a plain radius-14 white
+                  // card with no matching padding/border spec cited, and the
+                  // grid/title lived loose in the page rather than inside this
+                  // wrapper).
+                  Container(
+                    padding: const EdgeInsets.all(30),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE7E4FF)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // CSS ref: `#resources .sec-title h2` — 24px/weight400/
+                        // lineHeight28, color var(--primary-second)=#A20067,
+                        // margin-bottom 20px (was a 4px accent bar + 20px/900
+                        // heading with a 14px gap after — an invented "section
+                        // header" pattern from elsewhere in the app, not this
+                        // real page's own title).
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: Text(
+                            'My Courses',
+                            style: GoogleFonts.inter(
+                              color: _titleColor,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w400,
+                              height: 28 / 24,
+                            ),
+                          ),
+                        ),
+                        _CoursesList(
+                          courses: state.data?.courses ?? const [],
+                          query: _query,
+                          statusFilter: _statusFilter,
+                        ),
+                      ],
                     ),
                   ),
-                  _CoursesList(
-                    courses: state.data?.courses ?? const [],
-                    query: _query,
-                    statusFilter: _statusFilter,
-                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
             const AppFooter(),
           ],
         ),

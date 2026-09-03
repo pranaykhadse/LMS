@@ -96,20 +96,28 @@ class _Body extends StatelessWidget {
         // CSS ref: .badges-profile is col-12 below 768 (stacked full width);
         // side-by-side at col-md-3/9 (≥768) and col-lg-2/10 (≥992).
         final sideBySide = w >= 768;
-        final content = sideBySide
-            ? _rowLayout(w, (w - 2 * hPad) + 30, result)
-            : _stackedLayout(result, isPhone);
-        return RefreshIndicator(
-          color: _indigo,
-          onRefresh: () async => onRetry(),
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(hPad, topPad, hPad, 32),
-            children: [
-              content,
-              const SizedBox(height: 24),
-              const AppFooter(),
-            ],
-          ),
+        final content =
+            sideBySide
+                ? _rowLayout(w, (w - 2 * hPad) + 30, result)
+                : _stackedLayout(result, isPhone);
+        // Per explicit request: the footer should span the full window
+        // width on every screen, like the header above it — it was the
+        // last child of this ListView, inheriting the ListView's own
+        // horizontal `padding` instead of running edge to edge.
+        return Column(
+          children: [
+            Expanded(
+              child: RefreshIndicator(
+                color: _indigo,
+                onRefresh: () async => onRetry(),
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(hPad, topPad, hPad, 32),
+                  children: [content, const SizedBox(height: 24)],
+                ),
+              ),
+            ),
+            const AppFooter(),
+          ],
         );
     }
   }
@@ -118,7 +126,10 @@ class _Body extends StatelessWidget {
     // Profile column shares: 2/12 (≥992) or 3/12 (768-991) of the web row
     // (container+30 due to the .row -15px margins), minus both 15px col
     // paddings; the remaining width (minus the 30px gutter) is the badges.
-    final profileW = (rowW * (w >= 992 ? 2 / 12 : 3 / 12) - 30).clamp(120.0, 300.0);
+    final profileW = (rowW * (w >= 992 ? 2 / 12 : 3 / 12) - 30).clamp(
+      120.0,
+      300.0,
+    );
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -295,9 +306,10 @@ class _BadgesBlock extends StatelessWidget {
     // 1px #F3F4F6, shadow 0 1px 3px rgba(0,0,0,.02).
     return Container(
       width: double.infinity,
-      padding: isPhone
-          ? const EdgeInsets.fromLTRB(16, 20, 16, 20)
-          : const EdgeInsets.all(30),
+      padding:
+          isPhone
+              ? const EdgeInsets.fromLTRB(16, 20, 16, 20)
+              : const EdgeInsets.all(30),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -351,7 +363,11 @@ class _SectionHeader extends StatelessWidget {
 const _badgePageSize = 12;
 
 class _BadgeGrid extends StatefulWidget {
-  const _BadgeGrid({required this.badges, required this.earned, required this.isPhone});
+  const _BadgeGrid({
+    required this.badges,
+    required this.earned,
+    required this.isPhone,
+  });
   final List<UserBadge> badges;
   final bool earned;
   final bool isPhone;
@@ -368,10 +384,8 @@ class _BadgeGridState extends State<_BadgeGrid> {
     final w = MediaQuery.sizeOf(context).width;
     final pages = (widget.badges.length / _badgePageSize).ceil();
     final page = _page.clamp(0, pages - 1);
-    final visible = widget.badges
-        .skip(page * _badgePageSize)
-        .take(_badgePageSize)
-        .toList();
+    final visible =
+        widget.badges.skip(page * _badgePageSize).take(_badgePageSize).toList();
     // CSS ref: desktop/.badge-items — Bootstrap row gutter 30px horizontal,
     // .my-1 → 8px vertical; ≤768 media query — margin -6 + padding 6 → 12px.
     final crossGap = widget.isPhone ? 12.0 : 30.0;
@@ -390,10 +404,8 @@ class _BadgeGridState extends State<_BadgeGrid> {
             childAspectRatio: 1.0,
           ),
           itemCount: visible.length,
-          itemBuilder: (ctx, i) => _BadgeCard(
-            badge: visible[i],
-            earned: widget.earned,
-          ),
+          itemBuilder:
+              (ctx, i) => _BadgeCard(badge: visible[i], earned: widget.earned),
         ),
         if (pages > 1) ...[
           // CSS ref: layout '<div class="mt-4 d-flex justify-content-center">{pager}</div>'
@@ -439,28 +451,31 @@ class _BadgeCard extends StatelessWidget {
               color: locked ? _lockedBg : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: hovering
-                    ? _indigo.withValues(alpha: 0.15)
-                    : (locked ? _lockedBorder : _cardBorder),
+                color:
+                    hovering
+                        ? _indigo.withValues(alpha: 0.15)
+                        : (locked ? _lockedBorder : _cardBorder),
               ),
-              boxShadow: hovering
-                  ? [
-                      BoxShadow(
-                        color: _indigo.withValues(alpha: 0.08),
-                        blurRadius: 24,
-                        offset: const Offset(0, 12),
-                      ),
-                    ]
-                  : _badgeShadow,
+              boxShadow:
+                  hovering
+                      ? [
+                        BoxShadow(
+                          color: _indigo.withValues(alpha: 0.08),
+                          blurRadius: 24,
+                          offset: const Offset(0, 12),
+                        ),
+                      ]
+                      : _badgeShadow,
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
-              onTap: earned
-                  ? () => showDialog(
-                    context: context,
-                    builder: (_) => _BadgeDetailDialog(badge: badge),
-                  )
-                  : null,
+              onTap:
+                  earned
+                      ? () => showDialog(
+                        context: context,
+                        builder: (_) => _BadgeDetailDialog(badge: badge),
+                      )
+                      : null,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -470,22 +485,26 @@ class _BadgeCard extends StatelessWidget {
                   // query caps the img at 60px max-width.
                   Padding(
                     padding: const EdgeInsets.all(4),
-                    child: isSmall
-                        ? Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 60, maxHeight: 60),
-                              child: _BadgeImage(
-                                imageUrl: badge.image,
-                                earned: earned,
-                                lockedHover: locked && hovering,
+                    child:
+                        isSmall
+                            ? Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 60,
+                                  maxHeight: 60,
+                                ),
+                                child: _BadgeImage(
+                                  imageUrl: badge.image,
+                                  earned: earned,
+                                  lockedHover: locked && hovering,
+                                ),
                               ),
+                            )
+                            : _BadgeImage(
+                              imageUrl: badge.image,
+                              earned: earned,
+                              lockedHover: locked && hovering,
                             ),
-                          )
-                        : _BadgeImage(
-                            imageUrl: badge.image,
-                            earned: earned,
-                            lockedHover: locked && hovering,
-                          ),
                   ),
                   if (locked)
                     Positioned(
@@ -504,26 +523,30 @@ class _BadgeCard extends StatelessWidget {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: hovering
-                                ? _indigoPink.withValues(alpha: 0.95)
-                                : _indigo.withValues(alpha: 0.9),
+                            color:
+                                hovering
+                                    ? _indigoPink.withValues(alpha: 0.95)
+                                    : _indigo.withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
-                            boxShadow: hovering
-                                ? [
-                                    BoxShadow(
-                                      color: _indigoPink.withValues(alpha: 0.45),
-                                      blurRadius: 18,
-                                      offset: const Offset(0, 6),
-                                    ),
-                                  ]
-                                : [
-                                    BoxShadow(
-                                      color: _indigo.withValues(alpha: 0.35),
-                                      blurRadius: 14,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
+                            boxShadow:
+                                hovering
+                                    ? [
+                                      BoxShadow(
+                                        color: _indigoPink.withValues(
+                                          alpha: 0.45,
+                                        ),
+                                        blurRadius: 18,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ]
+                                    : [
+                                      BoxShadow(
+                                        color: _indigo.withValues(alpha: 0.35),
+                                        blurRadius: 14,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
                           ),
                           child: const Icon(
                             Icons.lock_rounded,
@@ -546,7 +569,11 @@ class _BadgeCard extends StatelessWidget {
 // ─── Badge image (web .badge-container img / locked filter) ─────────────────
 
 class _BadgeImage extends StatelessWidget {
-  const _BadgeImage({this.imageUrl, required this.earned, this.lockedHover = false});
+  const _BadgeImage({
+    this.imageUrl,
+    required this.earned,
+    this.lockedHover = false,
+  });
   final String? imageUrl;
   final bool earned;
   // Shadows the web .locked hover: grayscale(60%) opacity(60%) vs base
@@ -558,10 +585,26 @@ class _BadgeImage extends StatelessWidget {
     const g = 0.2126, r = 0.7152, b = 0.0722;
     final i = 1 - p;
     return [
-      (p * g + i) * o, p * r * o, p * b * o, 0, 0,
-      p * g * o, (p * r + i) * o, p * b * o, 0, 0,
-      p * g * o, p * r * o, (p * b + i) * o, 0, 0,
-      0, 0, 0, o, 0,
+      (p * g + i) * o,
+      p * r * o,
+      p * b * o,
+      0,
+      0,
+      p * g * o,
+      (p * r + i) * o,
+      p * b * o,
+      0,
+      0,
+      p * g * o,
+      p * r * o,
+      (p * b + i) * o,
+      0,
+      0,
+      0,
+      0,
+      0,
+      o,
+      0,
     ];
   }
 
@@ -577,13 +620,14 @@ class _BadgeImage extends StatelessWidget {
       size: 60,
       color: earned ? const Color(0xFFFFC107) : _muted,
     );
-    final child = imageUrl == null || imageUrl!.isEmpty
-        ? fallback
-        : Image.network(
-            imageUrl!,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => fallback,
-          );
+    final child =
+        imageUrl == null || imageUrl!.isEmpty
+            ? fallback
+            : Image.network(
+              imageUrl!,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => fallback,
+            );
     return ColorFiltered(
       colorFilter: ColorFilter.matrix(_grayMatrix(p, o)),
       child: child,
@@ -684,35 +728,44 @@ class _Pager extends StatelessWidget {
     final numbers = _pageNumbers(page, pages);
     return Wrap(
       spacing: 3,
-      children: numbers.map((p) {
-        if (p == -1) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-            child: Text('...', style: GoogleFonts.roboto(color: _muted, fontSize: 14)),
-          );
-        }
-        final isCurrent = p == page;
-        return InkWell(
-          onTap: isCurrent ? null : () => onPage(p),
-          borderRadius: BorderRadius.circular(8),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isCurrent ? _indigo : Colors.white,
+      children:
+          numbers.map((p) {
+            if (p == -1) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                child: Text(
+                  '...',
+                  style: GoogleFonts.roboto(color: _muted, fontSize: 14),
+                ),
+              );
+            }
+            final isCurrent = p == page;
+            return InkWell(
+              onTap: isCurrent ? null : () => onPage(p),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: isCurrent ? _indigo : const Color(0xFFE5E7EB)),
-            ),
-            child: Text(
-              '$p',
-              style: GoogleFonts.roboto(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isCurrent ? Colors.white : const Color(0xFF374151),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: isCurrent ? _indigo : Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isCurrent ? _indigo : const Color(0xFFE5E7EB),
+                  ),
+                ),
+                child: Text(
+                  '$p',
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isCurrent ? Colors.white : const Color(0xFF374151),
+                  ),
+                ),
               ),
-            ),
-          ),
-        );
-      }).toList(),
+            );
+          }).toList(),
     );
   }
 

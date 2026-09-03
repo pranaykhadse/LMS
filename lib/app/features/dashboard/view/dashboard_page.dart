@@ -543,12 +543,13 @@ class DashboardBody extends ConsumerWidget {
                     padding: EdgeInsets.fromLTRB(outerH, gapV, outerH, gapV),
                     child: _RequiredForYouCard(required: data.requiredForYou),
                   ),
-                  // Footer: wrapped in same horizontal padding as all other
-                  // sections so it doesn't touch the screen edges.
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: outerH),
-                    child: const AppFooter(),
-                  ),
+                  // Per explicit follow-up request: the footer should span
+                  // the FULL window width on every screen, like the header
+                  // above it — reverses the prior "wrap it in the same
+                  // horizontal padding as every other section" choice,
+                  // which kept it from touching the screen edges but also
+                  // kept it from ever running truly edge to edge.
+                  const AppFooter(),
                 ],
               );
             },
