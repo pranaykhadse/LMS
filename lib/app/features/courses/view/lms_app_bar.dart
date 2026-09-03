@@ -925,8 +925,17 @@ class _NavSubItem {
 // no second network round-trip) for real vector icons that have no
 // embedded raster at all.
 class _NavIcon extends StatefulWidget {
-  const _NavIcon({required this.url});
+  const _NavIcon({required this.url, required this.color});
   final String url;
+
+  // App-only deviation, per explicit request: every icon across a
+  // dropdown is tinted to this one color (its own label's color) instead
+  // of each icon's native/mixed color, so the whole list reads as
+  // visually consistent. Applied at build time (not baked into the
+  // cached decoded icon itself) so the same cached SVG/PNG can be
+  // re-tinted per render as its highlighted state changes.
+  final Color color;
+
   // CSS ref: `#navbarMenu .nav-link img{width:14px;height:14px}` — the
   // one size every dropdown item icon uses; not exposed as a
   // constructor param since nothing needs a different size.
@@ -1010,10 +1019,17 @@ class _NavIconState extends State<_NavIcon> {
 
   @override
   Widget build(BuildContext context) {
+    final resolved = _resolved;
     return SizedBox(
       width: _NavIcon._size,
       height: _NavIcon._size,
-      child: _resolved,
+      child:
+          resolved == null
+              ? null
+              : ColorFiltered(
+                colorFilter: ColorFilter.mode(widget.color, BlendMode.srcIn),
+                child: resolved,
+              ),
     );
   }
 }
@@ -1268,12 +1284,24 @@ class _NavDropdownState extends State<_NavDropdown> {
                               // (a `<span>`/`<i>` with that class), never
                               // to the real `<img>` markup these items
                               // actually use, which has no color/filter
-                              // rule at all. A live screenshot confirmed
-                              // the real icons render in their own native
-                              // color, not tinted — removed the filter.
+                              // rule at all, and a live screenshot
+                              // confirmed the real icons render in their
+                              // own native (mixed) colors.
+                              //
+                              // App-only deviation, per explicit request:
+                              // the real site's own mixed icon colors read
+                              // as inconsistent in this app, so every
+                              // dropdown icon is now tinted to the same
+                              // color as its own label — `_navDefault`
+                              // normally, `_navActive` while
+                              // hovered/selected — the same two colors the
+                              // label text right beside it already uses.
                               Opacity(
                                 opacity: highlighted ? 1 : 0.8,
-                                child: _NavIcon(url: items[i].iconAsset),
+                                child: _NavIcon(
+                                  url: items[i].iconAsset,
+                                  color: highlighted ? _navActive : _navDefault,
+                                ),
                               ),
                               const SizedBox(width: 18),
                               // No `Flexible`/`overflow:ellipsis` here —

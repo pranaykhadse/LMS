@@ -5080,3 +5080,39 @@ network SVGs).
 **Verification**: `dart format` + `flutter analyze` on
 `lms_app_bar.dart` — 0 issues. Full-project `flutter analyze` — 43
 issues (current baseline, unchanged).
+
+## Follow-up: Nav dropdown icons — uniform color across each dropdown list
+
+**Report**: "The color of all the icons being rendered in each dropdown
+list should be of same color."
+
+**Context**: the real site's own `<img>`-based dropdown icons render in
+their own native, mixed colors (confirmed by an earlier live-screenshot
+pass, documented in this file already), and this app was matching that
+— plus, separately, working around one specific case (pattern-fill
+icons decoding to a much heavier-looking raster PNG next to the flat
+vector ones) with a tuned `Opacity` fade rather than a real recolor.
+Per explicit request this is now a deliberate app-only deviation: every
+dropdown icon is tinted to one flat color instead of its native art,
+overriding the earlier native-color finding for this specific visual
+choice.
+
+**Fix**: `_NavIcon` (`lib/app/features/courses/view/lms_app_bar.dart`)
+takes a new required `color`, applied via `ColorFiltered(colorFilter:
+ColorFilter.mode(color, BlendMode.srcIn))` around the resolved
+SVG/PNG at build time (not baked into the cached decoded icon, so the
+same cached asset re-tints correctly as its highlighted state
+changes). Its one call site now passes `highlighted ? _navActive :
+_navDefault` — the exact same two colors (purple / slate gray) the
+label text right beside each icon already uses for its own
+default/hover-selected state — so every icon in a dropdown matches its
+own label, and by extension every default-state icon in that list
+matches every other. The existing `Opacity: 0.35` fade on the
+pattern-fill raster icons was left in place — it compensates for that
+art's heavier pixel coverage (thicker apparent strokes), which a flat
+recolor alone doesn't fix, so the two icon kinds still read as the same
+visual weight now that they're also the same color.
+
+**Verification**: `dart format` + `flutter analyze` on
+`lms_app_bar.dart` — 0 issues. Full-project `flutter analyze` — 43
+issues (current baseline, unchanged).
