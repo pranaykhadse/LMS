@@ -138,10 +138,12 @@ class DashboardCourse {
           json['name']?.toString() ??
           json['title']?.toString() ??
           '',
-      logo:
-          json['logo']?.toString().isNotEmpty == true
-              ? json['logo'].toString()
-              : null,
+      // The completed-courses endpoint only recently started sending a
+      // logo — accept every key convention this API family uses (`logo`,
+      // `course_logo`, `image`, or a `logo_path` + `logo_base_url` pair,
+      // same as DashboardResource below) so the card renders it no
+      // matter which one arrives.
+      logo: _courseLogo(json),
       // Non-course items report their completion percentage via `status`
       // instead of `progress` (which is always null for them).
       progress: _asInt(progressValue),
@@ -258,4 +260,18 @@ int _asInt(dynamic value) {
 double _asDouble(dynamic value) {
   if (value is num) return value.toDouble();
   return double.tryParse(value?.toString() ?? '') ?? 0.0;
+}
+
+/// First non-empty logo across this API family's key conventions; joins
+/// a relative `logo_path` onto `logo_base_url` when that's all we get.
+String? _courseLogo(Map<String, dynamic> json) {
+  for (final key in ['logo', 'course_logo', 'courseLogo', 'image']) {
+    final value = json[key]?.toString() ?? '';
+    if (value.isNotEmpty) return value;
+  }
+  final path = json['logo_path']?.toString() ?? '';
+  if (path.isNotEmpty) {
+    return '${json['logo_base_url']?.toString() ?? ''}$path';
+  }
+  return null;
 }
