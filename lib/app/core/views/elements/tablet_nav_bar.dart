@@ -291,7 +291,6 @@ class TabletNavBar extends ConsumerWidget {
       case ShellDestination.myCompletedCourses:
       case ShellDestination.myDevelopmentPlan:
       case ShellDestination.myRequiredCourses:
-      case ShellDestination.myRecommendedCourses:
         return 2;
       case ShellDestination.learningPaths:
         return 3;

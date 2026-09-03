@@ -14,7 +14,6 @@ import 'package:lms/app/features/dashboard/viewmodel/item_inventory_view_model.d
 import 'package:lms/app/features/dashboard/viewmodel/learning_paths_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/learning_progress_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/my_courses_view_model.dart';
-import 'package:lms/app/features/dashboard/viewmodel/recommended_courses_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/redeem_history_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/required_courses_view_model.dart';
 import 'package:lms/app/features/dashboard/viewmodel/view_competency_view_model.dart';
@@ -56,7 +55,6 @@ void refreshAllOnReconnect(Ref ref) {
     EnrolledCoursesViewModel.provider,
     CompletedCoursesViewModel.provider,
     RequiredCoursesViewModel.provider,
-    RecommendedCoursesViewModel.provider,
     DashboardViewModel.provider,
     DevelopmentPlanViewModel.provider,
     CalendarViewModel.provider,

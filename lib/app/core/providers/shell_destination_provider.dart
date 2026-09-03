@@ -12,7 +12,6 @@ enum ShellDestination {
   myCompletedCourses,
   myDevelopmentPlan,
   myRequiredCourses,
-  myRecommendedCourses,
   learningPaths,
   badges,
   redeemPoints,

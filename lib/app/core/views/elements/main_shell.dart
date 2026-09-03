@@ -12,7 +12,6 @@ import 'package:lms/app/features/dashboard/view/development_plan_page.dart';
 import 'package:lms/app/features/dashboard/view/enrolled_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/item_inventory_page.dart';
 import 'package:lms/app/features/dashboard/view/learning_paths_page.dart';
-import 'package:lms/app/features/dashboard/view/recommended_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/required_courses_page.dart';
 
 /// Top-level navigation shell. Handles three device tiers:
@@ -48,8 +47,6 @@ class MainShell extends ConsumerWidget {
         return const DevelopmentPlanPage();
       case ShellDestination.myRequiredCourses:
         return const RequiredCoursesPage();
-      case ShellDestination.myRecommendedCourses:
-        return const RecommendedCoursesPage();
       case ShellDestination.learningPaths:
         return const LearningPathsPage();
       case ShellDestination.badges:

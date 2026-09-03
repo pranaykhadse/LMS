@@ -9,7 +9,6 @@ import 'package:lms/app/features/dashboard/view/all_course_progress_page.dart';
 import 'package:lms/app/features/dashboard/view/badges_page.dart';
 import 'package:lms/app/features/dashboard/view/item_inventory_page.dart';
 import 'package:lms/app/features/dashboard/view/learning_paths_page.dart';
-import 'package:lms/app/features/dashboard/view/recommended_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/required_courses_page.dart';
 import 'package:lms/app/features/dashboard/view/my_courses_page.dart';
 import 'package:lms/app_module.dart';
@@ -28,7 +27,6 @@ class CoursesModule extends Module {
   static const completedCourses = "/completed-courses";
   static const developmentPlan = "/development-plan";
   static const requiredCourses = "/required-courses";
-  static const recommendedCourses = "/recommended-courses";
   static const learningPaths = "/learning-paths";
   static const badges = "/badges";
   static const redeemPoints = "/redeem-points";
@@ -75,10 +73,6 @@ class CoursesModule extends Module {
     r.child(
       requiredCourses,
       child: (context) => const AuthGate(child: RequiredCoursesPage()),
-    );
-    r.child(
-      recommendedCourses,
-      child: (context) => const AuthGate(child: RecommendedCoursesPage()),
     );
     r.child(
       learningPaths,
