@@ -140,6 +140,19 @@ flutter:
   assets:
     - assets/images/
     - assets/translations/
+    # Explicit nav-icon entries: the directory glob above intermittently
+    # skips this subdirectory on some toolchains, so each file is also
+    # listed (duplicates are harmless - bundling deduplicates by key).
+    - assets/images/nav/catalog-icon.svg
+    - assets/images/nav/courses-icon.svg
+    - assets/images/nav/learning-path-icon.svg
+    - assets/images/nav/points-and-badges-icon.svg
+    - assets/images/nav/redeem-icon.svg
+    - assets/images/nav/my-courses.png
+    - assets/images/nav/development-plan.png
+    - assets/images/nav/required-courses.png
+    - assets/images/nav/badges.png
+    - assets/images/nav/coach.png
 
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
