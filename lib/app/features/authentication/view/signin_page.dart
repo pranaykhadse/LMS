@@ -520,8 +520,9 @@ class _SignUpButton extends StatelessWidget {
                   url: _signUpUrl,
                   title: 'Sign up',
                 ),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+            // Instant (non-animated) swap: lerping transparent-black to
+            // lavender would flash an intermediate grey, i.e. a second bg.
+            child: Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 8,
