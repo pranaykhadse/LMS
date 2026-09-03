@@ -2062,57 +2062,57 @@ class _ProfileMenuRow extends StatelessWidget {
   Widget build(BuildContext context) => HoverBuilder(
     cursor: SystemMouseCursors.click,
     builder: (context, hovering) {
-      final tint = isLogout
-          ? const Color(0x1AEF4444)
-          : FigmaTokens.badgeBackground;
-      final textColor = hovering
-          ? (isLogout ? const Color(0xFFE53E3E) : _appPurple)
-          : const Color(0xFF4A5568);
-      final iconColor = textColor.withValues(alpha: 0.8);
-      // Hover on the main container directly drives the pill — background,
-      // slide, icon and text all share the same duration/curve so they
-      // start/end together (previously the pill faded 150 ms while the
-      // text/icon and translate snapped instantly).
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        child: AnimatedContainer(
-          duration: _hoverDuration,
-          curve: _hoverCurve,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: hovering ? tint : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          transform: hovering
-              ? Matrix4.translationValues(6, 0, 0)
-              : Matrix4.identity(),
-          transformAlignment: Alignment.centerLeft,
-          child: Row(
-            children: [
-              TweenAnimationBuilder<Color?>(
-                duration: _hoverDuration,
-                curve: _hoverCurve,
-                tween: ColorTween(end: iconColor),
-                builder: (context, color, _) => Icon(
-                  icon,
-                  size: 16,
-                  color: color ?? iconColor,
-                ),
+      // Single t drives every visual property together so background,
+      // slide, icon and text never stagger — previously AnimatedContainer
+      // + Transform + separate text/icon tweens each owned their own
+      // controller and could start a frame apart, making the color look
+      // late.
+      return TweenAnimationBuilder<double>(
+        duration: _hoverDuration,
+        curve: _hoverCurve,
+        tween: Tween<double>(begin: 0, end: hovering ? 1 : 0),
+        builder: (context, t, _) {
+          final tint = isLogout
+              ? const Color(0x1AEF4444)
+              : FigmaTokens.badgeBackground;
+          final bg = Color.lerp(Colors.transparent, tint, t)!;
+          final defaultColor = const Color(0xFF4A5568);
+          final hoverColor = isLogout
+              ? const Color(0xFFE53E3E)
+              : _appPurple;
+          final textColor = Color.lerp(defaultColor, hoverColor, t)!;
+          final iconColor =
+              Color.lerp(defaultColor.withValues(alpha: 0.8),
+                  hoverColor.withValues(alpha: 0.8), t)!;
+          final dx = 6 * t;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(20),
               ),
-              const SizedBox(width: 12),
-              AnimatedDefaultTextStyle(
-                duration: _hoverDuration,
-                curve: _hoverCurve,
-                style: GoogleFonts.inter(
-                  color: textColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-                child: Text(label),
+              transform: Matrix4.translationValues(dx, 0, 0),
+              transformAlignment: Alignment.centerLeft,
+              child: Row(
+                children: [
+                  Icon(icon, size: 16, color: iconColor),
+                  const SizedBox(width: 12),
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      color: textColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       );
     },
   );
