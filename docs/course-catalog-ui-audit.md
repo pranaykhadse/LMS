@@ -5520,3 +5520,36 @@ for free — no separate loading-state plumbing needed.
 files — 1 issue, pre-existing (`app_drawer.dart`'s unrelated
 `withOpacity` deprecation), no new ones. Full-project `flutter
 analyze` — 43 issues (current baseline, unchanged).
+
+## Follow-up: profile dropdown's "My Points" was a separate, still-stale source
+
+**Report**: screenshot of the mobile profile dropdown ("Shilpa Rozara")
+showing "My Points: 288" — the previous follow-ups fixed the top-nav
+"Points & Badges" dropdown's badge, but this is a genuinely different
+element that was never touched.
+
+**Root cause**: `lms_app_bar.dart`'s `_profileMenuItems` built its "My
+Points: X" row from `profile?.points` directly (the `UserProfile`
+passed into it) — the same login-time `AuthState` snapshot the nav
+badge used to read before being switched to `UserPointsViewModel`, but
+this row was a completely separate code path that fix never touched.
+
+**Fix**: `_profileMenuItems` now takes an explicit `points` param (the
+live `UserPointsViewModel` value) instead of reading `profile.points`
+itself; both call sites (`_ProfileMenuButton`'s desktop `itemBuilder`
+and the mobile `PopupMenuButton`'s `itemBuilder`) now pass
+`ref.watch(UserPointsViewModel.provider)`. Row text is `'My Points'`
+(no number) while that's still null, `'My Points: $points'` once known
+— same "blank rather than a stale/wrong number" behavior as the nav
+badge.
+
+Confirmed via a repo-wide grep that no other `profile.points`/
+`userProfile.points` reads remain outside `dashboard_page.dart`'s
+`_RewardsPointsCard`, which already prioritizes the live
+`rewards?.totalPoints` and only falls back to the stale snapshot when
+`rewards` itself is unavailable (e.g. an error state) — a legitimate
+fallback, not a bug.
+
+**Verification**: `dart format` + `flutter analyze` on
+`lms_app_bar.dart` — 0 issues. Full-project `flutter analyze` — 43
+issues (current baseline, unchanged).

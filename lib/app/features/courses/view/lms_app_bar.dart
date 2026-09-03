@@ -236,6 +236,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               (context) => _profileMenuItems(
                 profile,
                 ref.watch(AuthStateNotifier.provider)?.role?.itemName,
+                ref.watch(UserPointsViewModel.provider),
               ),
         ),
       ],
@@ -501,6 +502,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
                       (context) => _profileMenuItems(
                         profile,
                         ref.watch(AuthStateNotifier.provider)?.role?.itemName,
+                        ref.watch(UserPointsViewModel.provider),
                       ),
                   padding: EdgeInsets.zero,
                   // Phone-only: avatar sits inside a small rounded box with a
@@ -636,6 +638,7 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
   List<PopupMenuEntry<String>> _profileMenuItems(
     dynamic profile,
     String? role,
+    int? points,
   ) => [
     PopupMenuItem<String>(
       enabled: false,
@@ -650,9 +653,15 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
     PopupMenuItem<String>(
       value: 'points',
       padding: EdgeInsets.zero,
+      // `points` is the live balance from UserPointsViewModel (null
+      // until a real fetch completes) — was `profile?.points`, the
+      // login-time AuthState snapshot that never updates, showing a
+      // stale number here even after the same fix was already applied
+      // to the nav dropdown's own points badge. Blank rather than a
+      // wrong/stale number while unknown, same as that badge.
       child: _ProfileMenuRow(
         icon: Icons.workspace_premium_outlined,
-        label: 'My Points: ${profile?.points ?? 0}',
+        label: points == null ? 'My Points' : 'My Points: $points',
       ),
     ),
     const PopupMenuDivider(),
