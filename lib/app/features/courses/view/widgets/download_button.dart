@@ -103,14 +103,25 @@ class DownloadButton extends ConsumerWidget {
     ref.watch(SyncViewModel.provider);
 
     // Show toast when a download transitions from in-progress → cached
+    // (success) or in-progress → gone (failure — `_downloadRegular`/
+    // `_downloadHls` catch every error and just drop the state entry, with
+    // no signal to the user at all: a failed fetch — bad URL, auth, no
+    // network mid-download — looked identical to never having tapped the
+    // button in the first place, just silently reverting to the "Download"
+    // state. Surfacing that here, rather than in the view model itself,
+    // since Toast needs a BuildContext the plain ChangeNotifier doesn't
+    // have.
     ref.listen<FileCacheViewModel>(FileCacheViewModel.provider, (prev, next) {
       if (url == null) return;
       final wasDownloading =
           prev?.getSync(url!)?.progress != null &&
           prev?.getSync(url!)?.file == null;
-      final isNowCached = next.getSync(url!)?.file != null;
-      if (wasDownloading && isNowCached && context.mounted) {
+      if (!wasDownloading || !context.mounted) return;
+      final nextState = next.getSync(url!);
+      if (nextState?.file != null) {
         Toast.success(context, '$label saved for offline access');
+      } else if (nextState == null) {
+        Toast.error(context, 'Unable to download $label - please try again.');
       }
     });
 
@@ -500,9 +511,8 @@ class _GuidePill extends StatelessWidget {
       builder: (context, hovering) {
         final fill = hovering;
         return Container(
-          transform: fill
-              ? Matrix4.translationValues(0, -1, 0)
-              : Matrix4.identity(),
+          transform:
+              fill ? Matrix4.translationValues(0, -1, 0) : Matrix4.identity(),
           transformAlignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
@@ -511,15 +521,16 @@ class _GuidePill extends StatelessWidget {
               color: const Color(0xFF5C52D4).withValues(alpha: 0.08),
             ),
             borderRadius: BorderRadius.circular(10),
-            boxShadow: fill
-                ? const [
-                    BoxShadow(
-                      color: Color(0x335C52D4),
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ]
-                : null,
+            boxShadow:
+                fill
+                    ? const [
+                      BoxShadow(
+                        color: Color(0x335C52D4),
+                        blurRadius: 12,
+                        offset: Offset(0, 4),
+                      ),
+                    ]
+                    : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

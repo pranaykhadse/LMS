@@ -5222,3 +5222,35 @@ are unchanged — those already matched.
 **Verification**: `dart format` + `flutter analyze` on
 `learning_paths_page.dart` — 0 issues. Full-project `flutter analyze`
 — 43 issues (current baseline, unchanged).
+
+## Follow-up: Download Participant Guide — failed downloads now surface an error (were silently failing)
+
+**Report**: screenshot of a Course Details page's "Download Participant
+Guide" pill, with "Not able to download the participant guide."
+
+**Root cause**: `FileCacheViewModel._downloadRegular`/`_downloadHls`
+(`lib/app/features/courses/viewmodel/file_cache_view_model.dart`) wrap
+their whole fetch in `try { ... } catch (_) { ...; cachedState.remove
+(url); }` — any failure (bad URL, timeout, server error, dropped
+connection mid-download) silently reverts the cache entry to nothing,
+with zero signal to the user. `DownloadButton` only ever listened for
+the success transition (in-progress → cached, → a "saved for offline
+access" toast); a failed download looked identical to the button never
+having been tapped at all — it just reverted to the plain "Download"
+state with no error, no toast, nothing.
+
+**Fix**: `lib/app/features/courses/view/widgets/download_button.dart` —
+the existing `ref.listen` now also checks for the in-progress → gone
+transition (the state entry disappearing entirely, distinct from the
+in-progress → cached success path) and shows `Toast.error('Unable to
+download $label - please try again.')` for it. Root cause of the
+underlying fetch failure itself (why the actual request errors) wasn't
+reachable from this session — the URL and file-cache view model both
+check out fine in the code, and this environment has no way to inspect
+the live request/response; this at least turns a silent, unexplained
+no-op into a visible, actionable error so it can be diagnosed with an
+actual error message next time.
+
+**Verification**: `dart format` + `flutter analyze` on
+`download_button.dart` — 0 issues. Full-project `flutter analyze` — 43
+issues (current baseline, unchanged).
