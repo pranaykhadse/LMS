@@ -297,16 +297,22 @@ class _CourseHero extends StatelessWidget {
     // `@media (max-width:767px)` `32px 0 24px`. Bottom 44/24 forms the
     // purple gap above the launch panel after its negative translate
     // (44−20=24 desktop, 24−16=8 mobile). `::after` notch is commented
-    // out, so none drawn. Full-bleed purple; inner content centered
-    // at 95% with title/rating `padding-left 6px` desktop / `0` mobile.
+    // out, so none drawn. Full-bleed purple; inner content SPANS 95%
+    // (minWidth = maxWidth) with title/rating `padding-left 6px`
+    // desktop / `0` mobile. The minWidth is load-bearing: `#page-heading
+    // h2` is a full-width block, so with maxWidth alone the column
+    // shrink-wraps to a short title and `Center` parks that sliver mid-
+    // band — the centered-title bug.
     final phone = MediaQuery.sizeOf(context).width < 768;
+    final contentWidth = MediaQuery.sizeOf(context).width * 0.95;
     return Container(
       color: _detailPurple,
       padding: EdgeInsets.fromLTRB(0, phone ? 32 : 48, 0, phone ? 24 : 44),
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: MediaQuery.sizeOf(context).width * 0.95,
+            minWidth: contentWidth,
+            maxWidth: contentWidth,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2750,8 +2756,11 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                     ),
                   ),
                   Positioned(
-                    right: -6,
-                    top: -2,
+                    // Kept fully inside the header padding — negative
+                    // offsets pushed the circle into the dialog's rounded
+                    // corner clip so the X looked cut off.
+                    right: 0,
+                    top: 0,
                     child: SizedBox(
                       width: 32,
                       height: 32,
@@ -3115,8 +3124,11 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                     ),
                   ),
                   Positioned(
-                    right: -6,
-                    top: -2,
+                    // Kept fully inside the header padding — negative
+                    // offsets pushed the circle into the dialog's rounded
+                    // corner clip so the X looked cut off.
+                    right: 0,
+                    top: 0,
                     child: SizedBox(
                       width: 32,
                       height: 32,
@@ -4036,14 +4048,20 @@ class _ClassDetailsDialog extends StatelessWidget {
               ),
             ),
             child: Stack(
+              alignment: Alignment.center,
               children: [
+                // Live reference: title + type badge are centered as one
+                // group (equal 32px side reserves keep it truly centered),
+                // with the close button absolute at the inner top-right.
                 Padding(
-                  padding: const EdgeInsets.only(right: 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
+                      Flexible(
                         child: Text(
                           courseTitle,
+                          textAlign: TextAlign.center,
                           style: GoogleFonts.inter(
                             color: Colors.white,
                             fontSize: 18,
@@ -4076,8 +4094,11 @@ class _ClassDetailsDialog extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  right: -6,
-                  top: -2,
+                  // Fully inside the header padding (was right:-6/top:-2,
+                  // which pushed the circle into the dialog's rounded
+                  // corner clip so the X looked cut off).
+                  right: 0,
+                  top: 0,
                   child: SizedBox(
                     width: 32,
                     height: 32,
