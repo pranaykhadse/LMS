@@ -2816,6 +2816,12 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
           child: HoverBuilder(
             builder:
                 (context, hovering) => Container(
+                  // CSS ref: `.btn-modal-primary:hover` — lifts 1px as well
+                  // as glowing (was shadow-only).
+                  transform: hovering
+                      ? Matrix4.translationValues(0, -1, 0)
+                      : Matrix4.identity(),
+                  transformAlignment: Alignment.center,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     boxShadow:
@@ -2916,6 +2922,12 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
             HoverBuilder(
               builder:
                   (context, hovering) => Container(
+                    // CSS ref: `.btn-modal-primary:hover` — lifts 1px as
+                    // well as glowing (was shadow-only).
+                    transform: hovering
+                        ? Matrix4.translationValues(0, -1, 0)
+                        : Matrix4.identity(),
+                    transformAlignment: Alignment.center,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       boxShadow:
@@ -3230,6 +3242,12 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
           child: HoverBuilder(
             builder:
                 (context, hovering) => Container(
+                  // CSS ref: `.btn-modal-primary:hover` — lifts 1px as well
+                  // as glowing (was shadow-only).
+                  transform: hovering
+                      ? Matrix4.translationValues(0, -1, 0)
+                      : Matrix4.identity(),
+                  transformAlignment: Alignment.center,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     boxShadow:
@@ -3351,6 +3369,12 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
             HoverBuilder(
               builder:
                   (context, hovering) => Container(
+                    // CSS ref: `.btn-modal-primary:hover` — lifts 1px as
+                    // well as glowing (was shadow-only).
+                    transform: hovering
+                        ? Matrix4.translationValues(0, -1, 0)
+                        : Matrix4.identity(),
+                    transformAlignment: Alignment.center,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       boxShadow:
@@ -3872,41 +3896,64 @@ void _showCancelConfirmationDialog(
                           'No, Keep It',
                           style: GoogleFonts.inter(
                             fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     HoverBuilder(
-                      builder: (context, hovering) => ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          onConfirm();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: hovering
-                              ? FigmaTokens.purpleHover
-                              : _detailPurple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
+                      builder: (context, hovering) => Container(
+                        // CSS ref: `.btn-modal-primary:hover` — the Yes
+                        // button lifts 1px and glows on hover (was
+                        // background-only).
+                        transform: hovering
+                            ? Matrix4.translationValues(0, -1, 0)
+                            : Matrix4.identity(),
+                        transformAlignment: Alignment.center,
+                        decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
+                          boxShadow: hovering
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFF5C52D4,
+                                    ).withValues(alpha: 0.3),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ]
+                              : null,
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 10,
-                        ),
-                      ),
-                      child: Text(
-                        'Yes, Cancel',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            onConfirm();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: hovering
+                                ? FigmaTokens.purpleHover
+                                : _detailPurple,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 10,
+                            ),
+                          ),
+                          child: Text(
+                            'Yes, Cancel',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   ],
                 ),
               ),
@@ -4034,16 +4081,38 @@ class _ClassDetailsDialog extends StatelessWidget {
                   child: SizedBox(
                     width: 32,
                     height: 32,
-                    child: Material(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => Navigator.pop(context),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 18,
+                    // CSS ref: `.modal-close-btn` — the shared blurred
+                    // gradient circle (was a flat white-.2 circle here,
+                    // unlike the register dialog which already had this).
+                    child: ClipOval(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.2),
+                                const Color(
+                                  0xFF5C52D4,
+                                ).withValues(alpha: 0.4),
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () => Navigator.pop(context),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -4387,18 +4456,29 @@ class _LearningEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return HoverBuilder(
+      builder: (context, hovering) => Container(
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(color: const Color(0xFFF3F4F6)),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
+        // CSS ref: `.event-card:hover` — lifts into a soft shadow on
+        // hover (was a flat resting shadow at all times).
+        boxShadow: hovering
+            ? const [
+                BoxShadow(
+                  color: Color(0x0F000000),
+                  blurRadius: 12,
+                  offset: Offset(0, 4),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 3,
+                  offset: const Offset(0, 1),
+                ),
+              ],
       ),
       clipBehavior: Clip.antiAlias,
       child: IntrinsicHeight(
@@ -4495,7 +4575,7 @@ class _LearningEventCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 
