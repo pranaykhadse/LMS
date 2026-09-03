@@ -17,7 +17,11 @@ class AuthState {
   final int? jobRoleId;
   final String? jobRole;
   final List<Group>? group;
-  final List<dynamic>? supervisor;
+  // Login API sends `supervisor` as a single user object (or [] when the
+  // user has none) — never a list. Only id/username/email are kept: the
+  // Account Settings screen shows username as the supervisor name and
+  // email as the supervisor email.
+  final Supervisor? supervisor;
 
   AuthState({
     this.user,
@@ -38,7 +42,7 @@ class AuthState {
     int? jobRoleId,
     String? jobRole,
     List<Group>? group,
-    List<dynamic>? supervisor,
+    Supervisor? supervisor,
   }) => AuthState(
     user: user ?? this.user,
     role: role ?? this.role,
@@ -75,7 +79,14 @@ class AuthState {
           json["group"] == null
               ? []
               : List<Group>.from(json["group"]!.map((x) => Group.fromJson(x))),
-      // supervisor: json["supervisor"] == null ? [] : List<dynamic>.from(json["supervisor"]!.map((x) => x)),
+      // `supervisor` arrives as a single user object; the API sends [] when
+      // the user has none, so only Maps become a Supervisor.
+      supervisor:
+          json["supervisor"] is Map
+              ? Supervisor.fromJson(
+                Map<String, dynamic>.from(json["supervisor"]),
+              )
+              : null,
     );
   }
 
@@ -88,7 +99,7 @@ class AuthState {
     "job_role": jobRole,
     "group":
         group == null ? [] : List<dynamic>.from(group!.map((x) => x.toJson())),
-    // "supervisor": supervisor == null ? [] : List<dynamic>.from(supervisor!.map((x) => x)),
+    "supervisor": supervisor?.toJson(),
   };
 }
 
@@ -127,6 +138,41 @@ class Role {
       Role(itemName: _asString(json["item_name"]));
 
   Map<String, dynamic> toJson() => {"item_name": itemName};
+}
+
+/// The logged-in user's supervisor, from the login API's `supervisor`
+/// object (a flat user row). Shown on Account Settings as username
+/// (name row) + email (email row).
+class Supervisor {
+  final int? id;
+  final String? username;
+  final String? email;
+
+  Supervisor({this.id, this.username, this.email});
+
+  Supervisor copyWith({int? id, String? username, String? email}) =>
+      Supervisor(
+        id: id ?? this.id,
+        username: username ?? this.username,
+        email: email ?? this.email,
+      );
+
+  factory Supervisor.fromRawJson(String str) =>
+      Supervisor.fromJson(json.decode(str));
+
+  String toRawJson() => json.encode(toJson());
+
+  factory Supervisor.fromJson(Map<String, dynamic> json) => Supervisor(
+    id: _asInt(json["id"]),
+    username: _asString(json["username"]),
+    email: _asString(json["email"]),
+  );
+
+  Map<String, dynamic> toJson() => {
+    "id": id,
+    "username": username,
+    "email": email,
+  };
 }
 
 class User {
