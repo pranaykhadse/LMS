@@ -456,57 +456,64 @@ class LmsAppBar extends ConsumerWidget implements PreferredSizeWidget {
               ),
               // gap-3 = 12px between bell and profile
               const SizedBox(width: 12),
-              PopupMenuButton<String>(
-                offset: const Offset(0, 34),
-                // Same web-matched panel as the desktop _ProfileMenuButton:
-                // `.dropdown-profile .dropdown-menu` = 250px, white,
-                // radius 16, `0 15px 50px rgba(0,0,0,.2)`.
-                constraints: const BoxConstraints(
-                  minWidth: 250,
-                  maxWidth: 250,
+              Theme(
+                data: Theme.of(context).copyWith(
+                  hoverColor: Colors.transparent,
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
                 ),
-                color: Colors.white,
-                surfaceTintColor: Colors.transparent,
-                elevation: 12,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                onSelected:
-                    (value) => _onProfileMenuSelected(context, ref, value),
-                itemBuilder: (context) => _profileMenuItems(
-                  profile,
-                  ref.watch(AuthStateNotifier.provider)?.role?.itemName,
-                ),
-                padding: EdgeInsets.zero,
-                // Phone-only: avatar sits inside a small rounded box with a
-                // dropdown chevron, instead of desktop's bare avatar + name.
-                child: Container(
-                  padding:
-                      useDashboardMobileProfileStyle
-                          ? EdgeInsets.zero
-                          : const EdgeInsets.fromLTRB(4, 4, 6, 4),
-                  decoration:
-                      useDashboardMobileProfileStyle
-                          ? null
-                          : BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      LmsAvatar(
-                        profile: profile,
-                        radius: useDashboardMobileProfileStyle ? 10 : 12,
-                        fallbackColor: _appPurple,
-                      ),
-                      SizedBox(width: useDashboardMobileProfileStyle ? 6 : 2),
-                      const Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: Colors.white,
-                        size: 11,
-                      ),
-                    ],
+                child: PopupMenuButton<String>(
+                  offset: const Offset(0, 34),
+                  // Same web-matched panel as the desktop _ProfileMenuButton:
+                  // `.dropdown-profile .dropdown-menu` = 250px, white,
+                  // radius 16, `0 15px 50px rgba(0,0,0,.2)`.
+                  constraints: const BoxConstraints(
+                    minWidth: 250,
+                    maxWidth: 250,
+                  ),
+                  color: Colors.white,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 12,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  onSelected:
+                      (value) => _onProfileMenuSelected(context, ref, value),
+                  itemBuilder: (context) => _profileMenuItems(
+                    profile,
+                    ref.watch(AuthStateNotifier.provider)?.role?.itemName,
+                  ),
+                  padding: EdgeInsets.zero,
+                  // Phone-only: avatar sits inside a small rounded box with a
+                  // dropdown chevron, instead of desktop's bare avatar + name.
+                  child: Container(
+                    padding:
+                        useDashboardMobileProfileStyle
+                            ? EdgeInsets.zero
+                            : const EdgeInsets.fromLTRB(4, 4, 6, 4),
+                    decoration:
+                        useDashboardMobileProfileStyle
+                            ? null
+                            : BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        LmsAvatar(
+                          profile: profile,
+                          radius: useDashboardMobileProfileStyle ? 10 : 12,
+                          fallbackColor: _appPurple,
+                        ),
+                        SizedBox(width: useDashboardMobileProfileStyle ? 6 : 2),
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Colors.white,
+                          size: 11,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1073,58 +1080,65 @@ class _ProfileMenuButtonState extends State<_ProfileMenuButton> {
 
   @override
   Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      offset: const Offset(0, 38),
-      // CSS ref (`origin/staging` bluetheme-layout.css:
-      // `.dropdown-profile .dropdown-menu{width:250px!important;
-      // min-width:250px!important;padding:0;overflow:hidden;border:none;
-      // box-shadow:0 15px 50px rgba(0,0,0,.2)!important}`) — pinned to a
-      // fixed 250px panel, white bg, radius 16, deep drop shadow.
-      constraints: const BoxConstraints(minWidth: 250, maxWidth: 250),
-      color: Colors.white,
-      surfaceTintColor: Colors.transparent,
-      elevation: 12,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      onOpened: () => setState(() => _isOpen = true),
-      onCanceled: () => setState(() => _isOpen = false),
-      onSelected: (value) {
-        setState(() => _isOpen = false);
-        widget.onSelected(value);
-      },
-      itemBuilder: widget.itemBuilder,
-      // Design ref: no background pill - just avatar (w-5 h-5) + name
-      // (text-xs, #FFFFFF, Inter) + chevron (w-[11px] h-[11px]) directly
-      // on the purple bar, 6px gap between them (gap-1.5).
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          LmsAvatar(
-            profile: widget.profile,
-            radius: 10,
-            fallbackColor: const Color(0xFF693D94),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            _lastFirst(widget.profile),
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              height: 16 / 12,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        hoverColor: Colors.transparent,
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+      ),
+      child: PopupMenuButton<String>(
+        offset: const Offset(0, 38),
+        // CSS ref (`origin/staging` bluetheme-layout.css:
+        // `.dropdown-profile .dropdown-menu{width:250px!important;
+        // min-width:250px!important;padding:0;overflow:hidden;border:none;
+        // box-shadow:0 15px 50px rgba(0,0,0,.2)!important}`) — pinned to a
+        // fixed 250px panel, white bg, radius 16, deep drop shadow.
+        constraints: const BoxConstraints(minWidth: 250, maxWidth: 250),
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 12,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        onOpened: () => setState(() => _isOpen = true),
+        onCanceled: () => setState(() => _isOpen = false),
+        onSelected: (value) {
+          setState(() => _isOpen = false);
+          widget.onSelected(value);
+        },
+        itemBuilder: widget.itemBuilder,
+        // Design ref: no background pill - just avatar (w-5 h-5) + name
+        // (text-xs, #FFFFFF, Inter) + chevron (w-[11px] h-[11px]) directly
+        // on the purple bar, 6px gap between them (gap-1.5).
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            LmsAvatar(
+              profile: widget.profile,
+              radius: 10,
+              fallbackColor: const Color(0xFF693D94),
             ),
-          ),
-          const SizedBox(width: 6),
-          Transform.translate(
-            offset: const Offset(0, 1.0),
-            child: Icon(
-              _isOpen
-                  ? Icons.keyboard_arrow_up_rounded
-                  : Icons.keyboard_arrow_down_rounded,
-              color: Colors.white,
-              size: 11,
+            const SizedBox(width: 6),
+            Text(
+              _lastFirst(widget.profile),
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                height: 16 / 12,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 6),
+            Transform.translate(
+              offset: const Offset(0, 1.0),
+              child: Icon(
+                _isOpen
+                    ? Icons.keyboard_arrow_up_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                color: Colors.white,
+                size: 11,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2027,28 +2041,34 @@ class _ProfileMenuRow extends StatelessWidget {
   final String label;
   final bool isLogout;
 
-  // Matches the reference site's a.dropdown-item exactly (#4A5568, Inter
-  // 14px/500, margin 2/10 + padding 10/15 = combined h25/v12 inset here).
+  // Matches the reference site's a.dropdown-item (#4A5568, Inter
+  // 14px/500, margin 2/10 + padding 10/15) but split into an outer
+  // margin (8/2) and an inner padded pill so the hover highlight can
+  // breathe — the web pill is inset with generous internal padding.
   // Hover mirrors `.dropdown-profile .dropdown-item:hover`: background
-  // rgba(84,87,193,.1) + primary color + translateX(6px); the logout item
-  // (.logout-item:hover) uses a red tint + #e53e3e instead.
+  // var(--primary-soft) / FigmaTokens.badgeBackground + primary color +
+  // translateX(6px); the logout item (.logout-item:hover) uses a red
+  // tint + #e53e3e instead. Wrapped `PopupMenuButton` in a transparent-
+  // hover Theme above, so PopupMenuItem's default light-blue ink no
+  // longer shows behind this pill.
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
     child: HoverBuilder(
       cursor: SystemMouseCursors.click,
       builder: (context, hovering) {
         final tint = isLogout
             ? const Color(0x1AEF4444)
-            : const Color(0x1A5457C1);
+            : FigmaTokens.badgeBackground;
         final textColor = hovering
             ? (isLogout ? const Color(0xFFE53E3E) : _appPurple)
             : const Color(0xFF4A5568);
         return AnimatedContainer(
           duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: hovering ? tint : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Transform.translate(
             offset: hovering ? const Offset(6, 0) : Offset.zero,
