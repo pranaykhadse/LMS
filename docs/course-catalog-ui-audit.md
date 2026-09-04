@@ -5884,3 +5884,28 @@ Behavior" specifically) stayed fully interactive.
 (`_catalogUndoBlue` unused, unused `response` local), no new ones.
 Full-project `flutter analyze` — 43 issues (current baseline,
 unchanged).
+
+## Follow-up: Redeem Points — default item image now matches the real site's trophy box
+
+**Report**: screenshot of the real site's "G1 item" card with no image
+uploaded, showing a small dark slate-blue rounded square with a white
+trophy icon centered in the card's image area — asked whether this
+app's own fallback could match it.
+
+**Fix**: `lib/app/features/dashboard/view/item_inventory_page.dart` —
+both image-fallback widgets now render that same box instead of a bare
+icon:
+- `_ItemImage`'s fallback (the inventory grid cards) — was a plain
+  `Icon(Icons.redeem_outlined, color: _indigo, size: 40)` with no box
+  at all; now a 48×48 `Container` (slate `#475569`, radius 6) holding a
+  white 24px `Icons.emoji_events_rounded` (Material's closest
+  equivalent to a trophy cup), centered in the image area — matching
+  the screenshot exactly.
+- `_DialogImageFallback` (the item detail dialog's larger image area) —
+  same treatment, scaled up (64×64 box, 32px icon) for that bigger
+  space.
+
+**Verification**: `dart format` + `flutter analyze` on
+`item_inventory_page.dart` — 1 issue, pre-existing baseline (unused
+`_perPage` field), no new ones. Full-project `flutter analyze` — 43
+issues (current baseline, unchanged).

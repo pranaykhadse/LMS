@@ -10,7 +10,8 @@ import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/core/views/elements/retry_button.dart';
 import 'package:lms/app/core/views/elements/toast.dart';
 import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
-import 'package:lms/app/features/courses/view/lms_app_bar.dart' show watchIsOnline;
+import 'package:lms/app/features/courses/view/lms_app_bar.dart'
+    show watchIsOnline;
 import 'package:lms/app/features/dashboard/model/inventory_item.dart';
 import 'package:lms/app/features/dashboard/view/redeem_history_page.dart';
 import 'package:lms/app/features/dashboard/view/widgets/offline_courses_section.dart'
@@ -52,7 +53,9 @@ class _ItemInventoryPageState extends ConsumerState<ItemInventoryPage> {
 
   void _handleSubmitted() {
     if (isEffectivelyOffline(ref)) return;
-    ref.read(ItemInventoryViewModel.provider.notifier).search(_searchController.text);
+    ref
+        .read(ItemInventoryViewModel.provider.notifier)
+        .search(_searchController.text);
   }
 
   @override
@@ -137,7 +140,11 @@ class _Body extends ConsumerWidget {
     return _buildList(context, ref, result);
   }
 
-  Widget _buildList(BuildContext context, WidgetRef ref, InventoryResult result) {
+  Widget _buildList(
+    BuildContext context,
+    WidgetRef ref,
+    InventoryResult result,
+  ) {
     final w = MediaQuery.sizeOf(context).width;
     // Staging container padding: <=576 => 8, <=768 => 12, desktop => 16 (gutter so cards don't touch screen edges)
     final isPhone = w <= 768;
@@ -153,14 +160,28 @@ class _Body extends ConsumerWidget {
         // Points card — staging #inventory-wrap .points-card
         SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(outerHPad, isPhone ? 12 : 16, outerHPad, 0),
-            child: _PointsCard(points: result.userPoints, isPhone: isPhone, isSmallPhone: isSmallPhone),
+            padding: EdgeInsets.fromLTRB(
+              outerHPad,
+              isPhone ? 12 : 16,
+              outerHPad,
+              0,
+            ),
+            child: _PointsCard(
+              points: result.userPoints,
+              isPhone: isPhone,
+              isSmallPhone: isSmallPhone,
+            ),
           ),
         ),
         // Main inventory-card — staging .inventory-card
         SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(outerHPad, isPhone ? 12 : 24, outerHPad, isPhone ? 12 : 24),
+            padding: EdgeInsets.fromLTRB(
+              outerHPad,
+              isPhone ? 12 : 24,
+              outerHPad,
+              isPhone ? 12 : 24,
+            ),
             child: Container(
               padding: EdgeInsets.fromLTRB(
                 isSmallPhone ? 16 : (isPhone ? 20 : 32),
@@ -173,7 +194,11 @@ class _Body extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(isPhone ? 12 : 16),
                 border: Border.all(color: _cardBorder),
                 boxShadow: const [
-                  BoxShadow(color: Color(0x05000000), blurRadius: 3, offset: Offset(0, 1)),
+                  BoxShadow(
+                    color: Color(0x05000000),
+                    blurRadius: 3,
+                    offset: Offset(0, 1),
+                  ),
                 ],
               ),
               child: Column(
@@ -196,15 +221,19 @@ class _Body extends ConsumerWidget {
                   ],
                   const SizedBox(height: 24),
                   if (items.isEmpty)
-                    state.query.isNotEmpty ? const _NoSearchResults() : const _EmptyState()
+                    state.query.isNotEmpty
+                        ? const _NoSearchResults()
+                        : const _EmptyState()
                   else ...[
                     // inventory-grid
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final cols = _inventoryColumnsFor(w);
                         // inventory-row margin -8 (-6 phone, -4 small)
-                        final rowMargin = isSmallPhone ? -4.0 : (isPhone ? -6.0 : -8.0);
-                        final colPad = isSmallPhone ? 4.0 : (isPhone ? 6.0 : 8.0);
+                        final rowMargin =
+                            isSmallPhone ? -4.0 : (isPhone ? -6.0 : -8.0);
+                        final colPad =
+                            isSmallPhone ? 4.0 : (isPhone ? 6.0 : 8.0);
                         return Padding(
                           padding: EdgeInsets.all(-rowMargin),
                           child: GridView.builder(
@@ -212,23 +241,33 @@ class _Body extends ConsumerWidget {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: items.length,
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: cols,
-                              mainAxisSpacing: colPad * 2,
-                              crossAxisSpacing: colPad * 2,
-                              childAspectRatio: _cardAspectForWidth(w),
-                            ),
-                            itemBuilder: (context, index) => Padding(
-                              padding: EdgeInsets.all(colPad),
-                              child: _ItemCard(
-                                item: items[index],
-                                isPhone: isPhone,
-                                isSmallPhone: isSmallPhone,
-                                isRedeeming: state.redeemingId == items[index].id,
-                                onRedeem: () => _showRedeemDialog(context, items[index], notifier),
-                                onView: () => _showDetail(context, items[index]),
-                              ),
-                            ),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: cols,
+                                  mainAxisSpacing: colPad * 2,
+                                  crossAxisSpacing: colPad * 2,
+                                  childAspectRatio: _cardAspectForWidth(w),
+                                ),
+                            itemBuilder:
+                                (context, index) => Padding(
+                                  padding: EdgeInsets.all(colPad),
+                                  child: _ItemCard(
+                                    item: items[index],
+                                    isPhone: isPhone,
+                                    isSmallPhone: isSmallPhone,
+                                    isRedeeming:
+                                        state.redeemingId == items[index].id,
+                                    onRedeem:
+                                        () => _showRedeemDialog(
+                                          context,
+                                          items[index],
+                                          notifier,
+                                        ),
+                                    onView:
+                                        () =>
+                                            _showDetail(context, items[index]),
+                                  ),
+                                ),
                           ),
                         );
                       },
@@ -250,7 +289,12 @@ class _Body extends ConsumerWidget {
         // Second inventory-card with point-system explainer (staging inventory-card text-center img)
         SliverToBoxAdapter(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(outerHPad, 0, outerHPad, isPhone ? 12 : 16),
+            padding: EdgeInsets.fromLTRB(
+              outerHPad,
+              0,
+              outerHPad,
+              isPhone ? 12 : 16,
+            ),
             child: Container(
               padding: EdgeInsets.fromLTRB(
                 isSmallPhone ? 16 : (isPhone ? 20 : 32),
@@ -263,7 +307,11 @@ class _Body extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(isPhone ? 12 : 16),
                 border: Border.all(color: _cardBorder),
                 boxShadow: const [
-                  BoxShadow(color: Color(0x05000000), blurRadius: 3, offset: Offset(0, 1)),
+                  BoxShadow(
+                    color: Color(0x05000000),
+                    blurRadius: 3,
+                    offset: Offset(0, 1),
+                  ),
                 ],
               ),
               child: const _PointSystemExplainer(),
@@ -286,22 +334,37 @@ class _Body extends ConsumerWidget {
     showDialog(context: context, builder: (_) => _ItemDetailDialog(item: item));
   }
 
-  void _showRedeemDialog(BuildContext context, InventoryItem item, ItemInventoryViewModel notifier) {
+  void _showRedeemDialog(
+    BuildContext context,
+    InventoryItem item,
+    ItemInventoryViewModel notifier,
+  ) {
     showDialog(
       context: context,
-      builder: (dialogContext) => _RedeemDialog(
-        item: item,
-        onConfirm: (address, note) async {
-          final result = await notifier.redeem(item.id, address: address, note: note.isNotEmpty ? note : null);
-          if (dialogContext.mounted) Navigator.pop(dialogContext);
-          if (!context.mounted) return;
-          if (result.success) {
-            Toast.success(context, result.message ?? 'Item redeemed successfully.');
-          } else {
-            Toast.error(context, result.message ?? 'Failed to redeem. Please try again.');
-          }
-        },
-      ),
+      builder:
+          (dialogContext) => _RedeemDialog(
+            item: item,
+            onConfirm: (address, note) async {
+              final result = await notifier.redeem(
+                item.id,
+                address: address,
+                note: note.isNotEmpty ? note : null,
+              );
+              if (dialogContext.mounted) Navigator.pop(dialogContext);
+              if (!context.mounted) return;
+              if (result.success) {
+                Toast.success(
+                  context,
+                  result.message ?? 'Item redeemed successfully.',
+                );
+              } else {
+                Toast.error(
+                  context,
+                  result.message ?? 'Failed to redeem. Please try again.',
+                );
+              }
+            },
+          ),
     );
   }
 }
@@ -309,7 +372,11 @@ class _Body extends ConsumerWidget {
 // ─── Points card (staging) ──────────────────────────────────────────────────
 
 class _PointsCard extends StatelessWidget {
-  const _PointsCard({required this.points, required this.isPhone, required this.isSmallPhone});
+  const _PointsCard({
+    required this.points,
+    required this.isPhone,
+    required this.isSmallPhone,
+  });
   final int points;
   final bool isPhone;
   final bool isSmallPhone;
@@ -317,9 +384,12 @@ class _PointsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // staging: .points-card bg linear-gradient(135deg, #5c52d4 0%, #7c73e6 100%), radius 16 (12 phone), padding 28 32 (16 20 phone, 14 16 small), gap 20 (14 phone), icon 56 (44 phone) radius 14, value 32 (24 phone), label 14 (12 phone)
-    final padding = isSmallPhone
-        ? const EdgeInsets.fromLTRB(16, 14, 16, 14)
-        : (isPhone ? const EdgeInsets.fromLTRB(20, 16, 20, 16) : const EdgeInsets.fromLTRB(32, 28, 32, 28));
+    final padding =
+        isSmallPhone
+            ? const EdgeInsets.fromLTRB(16, 14, 16, 14)
+            : (isPhone
+                ? const EdgeInsets.fromLTRB(20, 16, 20, 16)
+                : const EdgeInsets.fromLTRB(32, 28, 32, 28));
     final radius = isPhone ? 12.0 : 16.0;
     final gap = isPhone ? 14.0 : 20.0;
     final iconSize = isPhone ? 44.0 : 56.0;
@@ -338,7 +408,11 @@ class _PointsCard extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         boxShadow: const [
-          BoxShadow(color: Color(0x40693D94), blurRadius: 16, offset: Offset(0, 4)),
+          BoxShadow(
+            color: Color(0x40693D94),
+            blurRadius: 16,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
@@ -351,7 +425,11 @@ class _PointsCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(iconRadius),
             ),
             alignment: Alignment.center,
-            child: Icon(Icons.star_rounded, color: Colors.white, size: isPhone ? 20 : 26),
+            child: Icon(
+              Icons.star_rounded,
+              color: Colors.white,
+              size: isPhone ? 20 : 26,
+            ),
           ),
           SizedBox(width: gap),
           Column(
@@ -417,32 +495,53 @@ class _InventoryHeader extends StatelessWidget {
     );
 
     final historyBtn = HoverBuilder(
-      builder: (context, hovering) => SizedBox(
-        height: 40,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          transform: Matrix4.translationValues(0, hovering ? -1 : 0, 0),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: hovering
-                ? [BoxShadow(color: _indigo.withValues(alpha: 0.2), blurRadius: 12, offset: const Offset(0, 4))]
-                : null,
-          ),
-          child: ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RedeemHistoryPage())),
-            icon: const Icon(Icons.history_rounded, size: 14),
-            label: const Text('Redeem History'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: hovering ? _indigoDark : _indigo,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: EdgeInsets.symmetric(horizontal: isPhone ? 16 : 20, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              textStyle: GoogleFonts.roboto(fontSize: 13, fontWeight: FontWeight.w500),
+      builder:
+          (context, hovering) => SizedBox(
+            height: 40,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              transform: Matrix4.translationValues(0, hovering ? -1 : 0, 0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                boxShadow:
+                    hovering
+                        ? [
+                          BoxShadow(
+                            color: _indigo.withValues(alpha: 0.2),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                        : null,
+              ),
+              child: ElevatedButton.icon(
+                onPressed:
+                    () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const RedeemHistoryPage(),
+                      ),
+                    ),
+                icon: const Icon(Icons.history_rounded, size: 14),
+                label: const Text('Redeem History'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: hovering ? _indigoDark : _indigo,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isPhone ? 16 : 20,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  textStyle: GoogleFonts.roboto(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
     );
 
     if (isPhone) {
@@ -457,11 +556,7 @@ class _InventoryHeader extends StatelessWidget {
     }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: title),
-        const SizedBox(width: 12),
-        historyBtn,
-      ],
+      children: [Expanded(child: title), const SizedBox(width: 12), historyBtn],
     );
   }
 }
@@ -508,33 +603,66 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: widget.isPhone ? double.infinity : 400),
+      constraints: BoxConstraints(
+        maxWidth: widget.isPhone ? double.infinity : 400,
+      ),
       child: Focus(
         onFocusChange: (v) => setState(() => _focused = v),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            boxShadow: _focused && !widget.offline
-                ? [BoxShadow(color: _indigo.withValues(alpha: 0.12), blurRadius: 0, spreadRadius: 3)]
-                : null,
+            boxShadow:
+                _focused && !widget.offline
+                    ? [
+                      BoxShadow(
+                        color: _indigo.withValues(alpha: 0.12),
+                        blurRadius: 0,
+                        spreadRadius: 3,
+                      ),
+                    ]
+                    : null,
           ),
           child: TextField(
             controller: widget.controller,
             enabled: !widget.offline,
             onChanged: _onChanged,
             onSubmitted: (_) => widget.onSearch(),
-            style: GoogleFonts.roboto(fontSize: widget.isPhone ? 14 : 15, color: _textMain),
+            style: GoogleFonts.roboto(
+              fontSize: widget.isPhone ? 14 : 15,
+              color: _textMain,
+            ),
             decoration: InputDecoration(
               hintText: widget.offline ? "You're offline" : 'Search items...',
-              hintStyle: GoogleFonts.roboto(color: _textMuted, fontSize: widget.isPhone ? 14 : 15),
+              hintStyle: GoogleFonts.roboto(
+                color: _textMuted,
+                fontSize: widget.isPhone ? 14 : 15,
+              ),
               filled: true,
               fillColor: Colors.white,
               hoverColor: Colors.transparent,
-              contentPadding: EdgeInsets.fromLTRB(widget.isPhone ? 40 : 44, widget.isPhone ? 10 : 12, 16, widget.isPhone ? 10 : 12),
-              prefixIcon: const Icon(Icons.search_rounded, color: _textMuted, size: 16),
-              prefixIconConstraints: BoxConstraints(minWidth: widget.isPhone ? 40 : 44, minHeight: 0),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _borderInput)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _borderInput)),
+              contentPadding: EdgeInsets.fromLTRB(
+                widget.isPhone ? 40 : 44,
+                widget.isPhone ? 10 : 12,
+                16,
+                widget.isPhone ? 10 : 12,
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: _textMuted,
+                size: 16,
+              ),
+              prefixIconConstraints: BoxConstraints(
+                minWidth: widget.isPhone ? 40 : 44,
+                minHeight: 0,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _borderInput),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: _borderInput),
+              ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: _indigo),
@@ -560,7 +688,11 @@ class _ResetButton extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
-          child: const SizedBox(width: 44, height: 44, child: Icon(Icons.undo_rounded, color: Colors.white, size: 20)),
+          child: const SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(Icons.undo_rounded, color: Colors.white, size: 20),
+          ),
         ),
       ),
     );
@@ -587,7 +719,10 @@ class _ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bodyPad = isPhone ? const EdgeInsets.fromLTRB(14, 12, 14, 14) : const EdgeInsets.fromLTRB(18, 16, 18, 18);
+    final bodyPad =
+        isPhone
+            ? const EdgeInsets.fromLTRB(14, 12, 14, 14)
+            : const EdgeInsets.fromLTRB(18, 16, 18, 18);
     final nameSize = isPhone ? 14.0 : 15.0;
 
     return HoverBuilder(
@@ -599,14 +734,25 @@ class _ItemCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: hovering ? _cardBorderHover : _cardBorder),
-            boxShadow: hovering
-                ? const [
-                    BoxShadow(color: Color(0x14000000), blurRadius: 24, offset: Offset(0, 12)),
-                  ]
-                : const [
-                    BoxShadow(color: Color(0x08000000), blurRadius: 3, offset: Offset(0, 1)),
-                  ],
+            border: Border.all(
+              color: hovering ? _cardBorderHover : _cardBorder,
+            ),
+            boxShadow:
+                hovering
+                    ? const [
+                      BoxShadow(
+                        color: Color(0x14000000),
+                        blurRadius: 24,
+                        offset: Offset(0, 12),
+                      ),
+                    ]
+                    : const [
+                      BoxShadow(
+                        color: Color(0x08000000),
+                        blurRadius: 3,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -645,15 +791,29 @@ class _ItemCard extends StatelessWidget {
                       item.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.roboto(fontSize: nameSize, fontWeight: FontWeight.w600, color: _textMain),
+                      style: GoogleFonts.roboto(
+                        fontSize: nameSize,
+                        fontWeight: FontWeight.w600,
+                        color: _textMain,
+                      ),
                     ),
                     const SizedBox(height: 10),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(color: _badgeBg, borderRadius: BorderRadius.circular(20)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _badgeBg,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Text(
                         '${item.points} pts',
-                        style: GoogleFonts.roboto(fontSize: 13, fontWeight: FontWeight.w600, color: _indigo),
+                        style: GoogleFonts.roboto(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _indigo,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -661,20 +821,39 @@ class _ItemCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: HoverBuilder(
-                            builder: (context, btnHover) => OutlinedButton.icon(
-                              onPressed: onView,
-                              icon: const Icon(Icons.remove_red_eye_outlined, size: 14),
-                              label: const Text('View'),
-                              style: OutlinedButton.styleFrom(
-                                padding: EdgeInsets.symmetric(horizontal: 12, vertical: isPhone ? 9 : 10),
-                                minimumSize: Size(0, isPhone ? 39 : 41),
-                                backgroundColor: btnHover ? const Color(0xFFE5E7EB) : _btnViewBg,
-                                foregroundColor: btnHover ? _textMain : _btnViewText,
-                                side: const BorderSide(color: _cardBorderHover, width: 0.8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                textStyle: GoogleFonts.roboto(fontSize: isPhone ? 12 : 13, fontWeight: FontWeight.w500),
-                              ),
-                            ),
+                            builder:
+                                (context, btnHover) => OutlinedButton.icon(
+                                  onPressed: onView,
+                                  icon: const Icon(
+                                    Icons.remove_red_eye_outlined,
+                                    size: 14,
+                                  ),
+                                  label: const Text('View'),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: isPhone ? 9 : 10,
+                                    ),
+                                    minimumSize: Size(0, isPhone ? 39 : 41),
+                                    backgroundColor:
+                                        btnHover
+                                            ? const Color(0xFFE5E7EB)
+                                            : _btnViewBg,
+                                    foregroundColor:
+                                        btnHover ? _textMain : _btnViewText,
+                                    side: const BorderSide(
+                                      color: _cardBorderHover,
+                                      width: 0.8,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    textStyle: GoogleFonts.roboto(
+                                      fontSize: isPhone ? 12 : 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
                           ),
                         ),
                         SizedBox(width: isPhone ? 8 : 10),
@@ -682,29 +861,72 @@ class _ItemCard extends StatelessWidget {
                           child: Consumer(
                             builder: (context, ref, _) {
                               final isOnline = watchIsOnline(ref);
-                              final canAct = item.canRedeem && !item.isRedeemed && !isRedeeming && isOnline;
-                              final label = item.isRedeemed ? 'Redeemed' : (!isOnline && item.canRedeem ? 'Offline' : 'Redeem');
+                              final canAct =
+                                  item.canRedeem &&
+                                  !item.isRedeemed &&
+                                  !isRedeeming &&
+                                  isOnline;
+                              final label =
+                                  item.isRedeemed
+                                      ? 'Redeemed'
+                                      : (!isOnline && item.canRedeem
+                                          ? 'Offline'
+                                          : 'Redeem');
                               return HoverBuilder(
-                                builder: (context, btnHover) => ElevatedButton.icon(
-                                  onPressed: canAct ? onRedeem : null,
-                                  icon: isRedeeming
-                                      ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                      : Icon(item.isRedeemed ? Icons.check_circle_outline_rounded : Icons.card_giftcard_rounded, size: 14),
-                                  label: Text(label),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: isPhone ? 9 : 10),
-                                    minimumSize: Size(0, isPhone ? 39 : 41),
-                                    backgroundColor: canAct && btnHover ? _indigoDark : _indigo,
-                                    foregroundColor: Colors.white,
-                                    disabledBackgroundColor: const Color(0xFFB0AFD4),
-                                    disabledForegroundColor: Colors.white,
-                                    elevation: canAct && btnHover ? 4 : 0,
-                                    shadowColor: _indigo.withValues(alpha: 0.2),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                    side: BorderSide.none,
-                                    textStyle: GoogleFonts.roboto(fontSize: isPhone ? 12 : 13, fontWeight: FontWeight.w500),
-                                  ),
-                                ),
+                                builder:
+                                    (context, btnHover) => ElevatedButton.icon(
+                                      onPressed: canAct ? onRedeem : null,
+                                      icon:
+                                          isRedeeming
+                                              ? const SizedBox(
+                                                width: 12,
+                                                height: 12,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Colors.white,
+                                                    ),
+                                              )
+                                              : Icon(
+                                                item.isRedeemed
+                                                    ? Icons
+                                                        .check_circle_outline_rounded
+                                                    : Icons
+                                                        .card_giftcard_rounded,
+                                                size: 14,
+                                              ),
+                                      label: Text(label),
+                                      style: ElevatedButton.styleFrom(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: isPhone ? 9 : 10,
+                                        ),
+                                        minimumSize: Size(0, isPhone ? 39 : 41),
+                                        backgroundColor:
+                                            canAct && btnHover
+                                                ? _indigoDark
+                                                : _indigo,
+                                        foregroundColor: Colors.white,
+                                        disabledBackgroundColor: const Color(
+                                          0xFFB0AFD4,
+                                        ),
+                                        disabledForegroundColor: Colors.white,
+                                        elevation: canAct && btnHover ? 4 : 0,
+                                        shadowColor: _indigo.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        side: BorderSide.none,
+                                        textStyle: GoogleFonts.roboto(
+                                          fontSize: isPhone ? 12 : 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
                               );
                             },
                           ),
@@ -729,9 +951,28 @@ class _ItemImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Matches the real site's own default item image exactly (per a live
+    // screenshot): a small dark slate-blue rounded square with a white
+    // trophy glyph, centered in the card's image area — was a bare
+    // indigo gift-box icon with no box at all.
     final fallback = SizedBox(
       height: height,
-      child: const Icon(Icons.redeem_outlined, color: _indigo, size: 40),
+      child: Center(
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: const Color(0xFF475569),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.emoji_events_rounded,
+            color: Colors.white,
+            size: 24,
+          ),
+        ),
+      ),
     );
     if (imageUrl == null || imageUrl!.isEmpty) return fallback;
     return Image.network(
@@ -740,12 +981,19 @@ class _ItemImage extends StatelessWidget {
       width: double.infinity,
       height: height,
       errorBuilder: (_, __, ___) => fallback,
-      loadingBuilder: (context, child, progress) => progress == null
-          ? child
-          : SizedBox(
-              height: height,
-              child: const Center(child: CircularProgressIndicator(strokeWidth: 2, color: _indigo)),
-            ),
+      loadingBuilder:
+          (context, child, progress) =>
+              progress == null
+                  ? child
+                  : SizedBox(
+                    height: height,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: _indigo,
+                      ),
+                    ),
+                  ),
     );
   }
 }
@@ -753,7 +1001,12 @@ class _ItemImage extends StatelessWidget {
 // ─── Pagination (staging pagination-wrap) ───────────────────────────────────
 
 class _WebPaginationRow extends StatelessWidget {
-  const _WebPaginationRow({required this.page, required this.pages, required this.onPage, required this.isPhone});
+  const _WebPaginationRow({
+    required this.page,
+    required this.pages,
+    required this.onPage,
+    required this.isPhone,
+  });
   final int page;
   final int pages;
   final ValueChanged<int> onPage;
@@ -770,35 +1023,50 @@ class _WebPaginationRow extends StatelessWidget {
         Center(
           child: Wrap(
             spacing: 3,
-            children: numbers.map((p) {
-              if (p == -1) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                  child: Text('...', style: GoogleFonts.roboto(color: _textSecondary, fontSize: 14)),
-                );
-              }
-              final isCurrent = p == page;
-              return InkWell(
-                onTap: isCurrent ? null : () => onPage(p),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isCurrent ? _indigo : Colors.white,
+            children:
+                numbers.map((p) {
+                  if (p == -1) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 8,
+                      ),
+                      child: Text(
+                        '...',
+                        style: GoogleFonts.roboto(
+                          color: _textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    );
+                  }
+                  final isCurrent = p == page;
+                  return InkWell(
+                    onTap: isCurrent ? null : () => onPage(p),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: isCurrent ? _indigo : const Color(0xFFE5E7EB)),
-                  ),
-                  child: Text(
-                    '$p',
-                    style: GoogleFonts.roboto(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: isCurrent ? Colors.white : _btnViewText,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isCurrent ? _indigo : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isCurrent ? _indigo : const Color(0xFFE5E7EB),
+                        ),
+                      ),
+                      child: Text(
+                        '$p',
+                        style: GoogleFonts.roboto(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: isCurrent ? Colors.white : _btnViewText,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
         ),
       ],
@@ -865,24 +1133,45 @@ class _ItemDetailDialog extends StatelessWidget {
     final w = MediaQuery.sizeOf(context).width;
     final isPhone = w <= 768;
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPhone ? 12 : 16)),
-      insetPadding: EdgeInsets.symmetric(horizontal: isPhone ? 12 : 40, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(isPhone ? 12 : 16),
+      ),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isPhone ? 12 : 40,
+        vertical: 24,
+      ),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: 520, maxHeight: isPhone ? 600 : 640),
+        constraints: BoxConstraints(
+          maxWidth: 520,
+          maxHeight: isPhone ? 600 : 640,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // modal-header
             Container(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-              decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _modalBorder))),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: _modalBorder)),
+              ),
               child: Row(
                 children: [
-                  Text('Item Details', style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w600, color: _textMain)),
+                  Text(
+                    'Item Details',
+                    style: GoogleFonts.roboto(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: _textMain,
+                    ),
+                  ),
                   const Spacer(),
                   InkWell(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.close_rounded, size: 20, color: _textSecondary),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 20,
+                      color: _textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -899,18 +1188,34 @@ class _ItemDetailDialog extends StatelessWidget {
                         aspectRatio: 16 / 10,
                         child: Container(
                           color: _fallbackBg,
-                          child: item.image != null
-                              ? Image.network(item.image!, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const _DialogImageFallback())
-                              : const _DialogImageFallback(),
+                          child:
+                              item.image != null
+                                  ? Image.network(
+                                    item.image!,
+                                    fit: BoxFit.contain,
+                                    errorBuilder:
+                                        (_, __, ___) =>
+                                            const _DialogImageFallback(),
+                                  )
+                                  : const _DialogImageFallback(),
                         ),
                       ),
                     ),
                     const SizedBox(height: 18),
                     _DetailRow(label: 'Name:', value: item.name),
-                    if (item.groupName != null) _DetailRow(label: 'Group:', value: item.groupName!),
-                    if (item.managedBy != null) _DetailRow(label: 'Managed by:', value: item.managedBy!),
-                    _DetailRow(label: 'Points required:', value: '${item.points}'),
-                    if (item.description.isNotEmpty) _DetailRow(label: 'Description:', value: item.description),
+                    if (item.groupName != null)
+                      _DetailRow(label: 'Group:', value: item.groupName!),
+                    if (item.managedBy != null)
+                      _DetailRow(label: 'Managed by:', value: item.managedBy!),
+                    _DetailRow(
+                      label: 'Points required:',
+                      value: '${item.points}',
+                    ),
+                    if (item.description.isNotEmpty)
+                      _DetailRow(
+                        label: 'Description:',
+                        value: item.description,
+                      ),
                   ],
                 ),
               ),
@@ -918,7 +1223,9 @@ class _ItemDetailDialog extends StatelessWidget {
             // modal-footer
             Container(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-              decoration: const BoxDecoration(border: Border(top: BorderSide(color: _modalBorder))),
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: _modalBorder)),
+              ),
               child: Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
@@ -928,8 +1235,13 @@ class _ItemDetailDialog extends StatelessWidget {
                     foregroundColor: _btnViewText,
                     elevation: 0,
                     side: const BorderSide(color: _cardBorderHover),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
                     textStyle: GoogleFonts.roboto(fontWeight: FontWeight.w500),
                   ),
                   child: const Text('Close'),
@@ -947,7 +1259,24 @@ class _DialogImageFallback extends StatelessWidget {
   const _DialogImageFallback();
   @override
   Widget build(BuildContext context) {
-    return const Center(child: Icon(Icons.redeem_outlined, color: _indigo, size: 56));
+    // Same default-image box as _ItemImage's own fallback, scaled up
+    // slightly for this larger dialog image area.
+    return Center(
+      child: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          color: const Color(0xFF475569),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: const Icon(
+          Icons.emoji_events_rounded,
+          color: Colors.white,
+          size: 32,
+        ),
+      ),
+    );
   }
 }
 
@@ -965,9 +1294,26 @@ class _DetailRow extends StatelessWidget {
         children: [
           SizedBox(
             width: isPhone ? 80 : 110,
-            child: Text(label, style: GoogleFonts.roboto(fontSize: isPhone ? 12 : 13, fontWeight: FontWeight.w600, color: _textSecondary)),
+            child: Text(
+              label,
+              style: GoogleFonts.roboto(
+                fontSize: isPhone ? 12 : 13,
+                fontWeight: FontWeight.w600,
+                color: _textSecondary,
+              ),
+            ),
           ),
-          Expanded(child: Text(value, style: GoogleFonts.roboto(fontSize: isPhone ? 13 : 14, fontWeight: FontWeight.w500, color: _textMain, height: 1.4))),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.roboto(
+                fontSize: isPhone ? 13 : 14,
+                fontWeight: FontWeight.w500,
+                color: _textMain,
+                height: 1.4,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -1000,19 +1346,40 @@ class _RedeemDialogState extends State<_RedeemDialog> {
     final w = MediaQuery.sizeOf(context).width;
     final isPhone = w <= 768;
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isPhone ? 12 : 16)),
-      insetPadding: EdgeInsets.symmetric(horizontal: isPhone ? 12 : 40, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(isPhone ? 12 : 16),
+      ),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isPhone ? 12 : 40,
+        vertical: 24,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _modalBorder))),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: _modalBorder)),
+            ),
             child: Row(
               children: [
-                Text('Confirm Redemption', style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w600, color: _textMain)),
+                Text(
+                  'Confirm Redemption',
+                  style: GoogleFonts.roboto(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _textMain,
+                  ),
+                ),
                 const Spacer(),
-                InkWell(onTap: () => Navigator.pop(context), child: const Icon(Icons.close_rounded, size: 20, color: _textSecondary)),
+                InkWell(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    size: 20,
+                    color: _textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1027,27 +1394,58 @@ class _RedeemDialogState extends State<_RedeemDialog> {
                     Text(
                       'Are you sure you would like to redeem this item for ${widget.item.points} points?',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.roboto(color: _textSecondary, fontSize: 16, height: 1.4),
+                      style: GoogleFonts.roboto(
+                        color: _textSecondary,
+                        fontSize: 16,
+                        height: 1.4,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    Text('Address *', style: GoogleFonts.roboto(color: _textMain, fontSize: 13, fontWeight: FontWeight.w600)),
+                    Text(
+                      'Address *',
+                      style: GoogleFonts.roboto(
+                        color: _textMain,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _addressCtrl,
                       maxLines: 3,
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Address is required' : null,
+                      validator:
+                          (v) =>
+                              v == null || v.trim().isEmpty
+                                  ? 'Address is required'
+                                  : null,
                       style: GoogleFonts.roboto(fontSize: 14, color: _textMain),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: _fallbackBg,
                         contentPadding: const EdgeInsets.all(12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _cardBorder)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _cardBorder)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _indigo)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: _cardBorder),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: _cardBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: _indigo),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
-                    Text('Note', style: GoogleFonts.roboto(color: _textMain, fontSize: 13, fontWeight: FontWeight.w600)),
+                    Text(
+                      'Note',
+                      style: GoogleFonts.roboto(
+                        color: _textMain,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _noteCtrl,
@@ -1056,9 +1454,18 @@ class _RedeemDialogState extends State<_RedeemDialog> {
                         filled: true,
                         fillColor: _fallbackBg,
                         contentPadding: const EdgeInsets.all(12),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _cardBorder)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _cardBorder)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _indigo)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: _cardBorder),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: _cardBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: _indigo),
+                        ),
                       ),
                     ),
                   ],
@@ -1068,43 +1475,70 @@ class _RedeemDialogState extends State<_RedeemDialog> {
           ),
           Container(
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-            decoration: const BoxDecoration(border: Border(top: BorderSide(color: _modalBorder))),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: _modalBorder)),
+            ),
             child: Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: _submitting ? null : () => Navigator.pop(context),
+                    onPressed:
+                        _submitting ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: _cardBorderHover),
                       backgroundColor: _btnViewBg,
                       foregroundColor: _btnViewText,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       minimumSize: const Size(0, 40),
                     ),
-                    child: Text('Cancel', style: GoogleFonts.roboto(fontWeight: FontWeight.w500)),
+                    child: Text(
+                      'Cancel',
+                      style: GoogleFonts.roboto(fontWeight: FontWeight.w500),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _submitting
-                        ? null
-                        : () async {
-                            if (!_formKey.currentState!.validate()) return;
-                            setState(() => _submitting = true);
-                            await widget.onConfirm(_addressCtrl.text.trim(), _noteCtrl.text.trim());
-                            if (mounted) setState(() => _submitting = false);
-                          },
+                    onPressed:
+                        _submitting
+                            ? null
+                            : () async {
+                              if (!_formKey.currentState!.validate()) return;
+                              setState(() => _submitting = true);
+                              await widget.onConfirm(
+                                _addressCtrl.text.trim(),
+                                _noteCtrl.text.trim(),
+                              );
+                              if (mounted) setState(() => _submitting = false);
+                            },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _indigo,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       minimumSize: const Size(0, 40),
                     ),
-                    child: _submitting
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : Text('Yes', style: GoogleFonts.roboto(fontWeight: FontWeight.w700)),
+                    child:
+                        _submitting
+                            ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                            : Text(
+                              'Yes',
+                              style: GoogleFonts.roboto(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                   ),
                 ),
               ],
@@ -1123,7 +1557,11 @@ class _NoSearchResults extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
-        child: Text('No items match your search.', textAlign: TextAlign.center, style: GoogleFonts.roboto(color: _textSecondary, fontSize: 14)),
+        child: Text(
+          'No items match your search.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.roboto(color: _textSecondary, fontSize: 14),
+        ),
       ),
     );
   }
@@ -1142,13 +1580,35 @@ class _EmptyState extends StatelessWidget {
             Container(
               width: 80,
               height: 80,
-              decoration: const BoxDecoration(color: _badgeBg, shape: BoxShape.circle),
-              child: const Icon(Icons.redeem_outlined, color: _indigo, size: 36),
+              decoration: const BoxDecoration(
+                color: _badgeBg,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.redeem_outlined,
+                color: _indigo,
+                size: 36,
+              ),
             ),
             const SizedBox(height: 16),
-            Text('No Items Available', style: GoogleFonts.roboto(color: _textMain, fontSize: 18, fontWeight: FontWeight.w700)),
+            Text(
+              'No Items Available',
+              style: GoogleFonts.roboto(
+                color: _textMain,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text('Redeemable items will appear here once available.', textAlign: TextAlign.center, style: GoogleFonts.roboto(color: _textSecondary, fontSize: 14, height: 1.5)),
+            Text(
+              'Redeemable items will appear here once available.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.roboto(
+                color: _textSecondary,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
           ],
         ),
       ),
@@ -1170,7 +1630,11 @@ class _ErrorView extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, color: _textSecondary, size: 48),
             const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center, style: GoogleFonts.roboto(color: _textSecondary)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.roboto(color: _textSecondary),
+            ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               RetryButton(onRetry: onRetry!, errorMessage: message),
