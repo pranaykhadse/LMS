@@ -1,12 +1,10 @@
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
-import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/core/views/elements/connection_aware_widget.dart';
 import 'package:lms/app/core/views/elements/safe_pop.dart';
-import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 
 class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
@@ -23,17 +21,10 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userProfile = ref.watch(AuthStateNotifier.provider)?.userProfile;
     final isOfflineMode = ref.watch(OfflineModeNotifier.provider);
-    final syncVM = ref.watch(SyncViewModel.provider);
     final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
     // macOS has no status bar — use zero top padding and center items vertically.
     final topPadding = isMacOS ? 0.0 : MediaQuery.of(context).padding.top;
-
-    final userName =
-        '${userProfile?.firstname ?? ''} ${(userProfile?.middlename ?? '').trim()} ${userProfile?.lastname ?? ''}'
-            .trim()
-            .replaceAll(RegExp(r'\s+'), ' ');
 
     return PrimaryCard(
       child: Padding(
@@ -53,7 +44,7 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
             else
               const SizedBox(width: 16),
 
-            // ── Title + OFFLINE chip — Expanded pushes avatar to far right
+            // ── Title + OFFLINE chip ────────────────────────────────────
             Expanded(
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -98,6 +89,8 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
             const SizedBox(width: 8),
 
             // ── Offline toggle (wifi icon + Switch) ────────────────────
+            // NOTE: no user avatar here by design — viewer screens
+            // (the only FlatAppBar consumers) keep a chrome-free header.
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -128,74 +121,6 @@ class FlatAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   ),
                 ),
               ],
-            ),
-
-            // ── User avatar with popup menu ─────────────────────────────
-            PopupMenuButton<String>(
-              padding: EdgeInsets.zero,
-              itemBuilder: (_) => [
-                // Show user name at the top of the menu (non-tappable)
-                if (userName.isNotEmpty)
-                  PopupMenuItem<String>(
-                    enabled: false,
-                    height: 36,
-                    child: Text(
-                      userName,
-                      style: context.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.logout, size: 18),
-                      const SizedBox(width: 8),
-                      const Text('Logout'),
-                    ],
-                  ),
-                ),
-              ],
-              onSelected: (val) {
-                if (val == 'logout') {
-                  ref.read(AuthStateNotifier.provider.notifier).logout();
-                  Modular.to.navigate('/');
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8, right: 16),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    const CircleAvatar(
-                      radius: 16,
-                      child: Icon(Icons.person_rounded, size: 18),
-                    ),
-                    if (syncVM.pendingCount > 0)
-                      Positioned(
-                        top: -3,
-                        right: -3,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
-                            color: Colors.amber,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '${syncVM.pendingCount}',
-                            style: const TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
