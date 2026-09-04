@@ -5711,3 +5711,63 @@ on a `DioException` usually only says "DioException [bad response]:
 analyze` — 43 issues (current baseline, unchanged). Next avatar-upload
 attempt on a debug build will print `[AccountSettingsRepository]
 upload-avatar ...` lines to the console with the real cause.
+
+## Round 44: Redeem History (``redeem_history_page.dart``) - full web-source recheck
+
+Request: "deep research of redeem history screen UI in web app like all
+the HTML, CSS, elements and properties and apply exact same UI in flutter
+application for all breakpoints."
+
+Ground truth: `origin/staging`'s
+`backend/views/item-inventory/redeem-history-user.php` (148 lines of
+markup incl. the `#view-item` detail modal + JS) and `backend/web/dist/
+app.css` (the `.point-card` / `.redeem-*` rules at lines ~3040-3112,
+with responsive overrides at 4500 (`max-width:991.98px`) and 4899
+(`max-width:640px`)).
+
+Confirmed mismatches vs. the previous Flutter page (all fixed):
+
+- **Page title**: web is ``h2 "Redeemed items"`` in `var(--primary-
+  second)` = **#A20067** (not purple), `font-weight:400`, 24px/28px
+  (22px/24px at <=640). Was 20px/w900 purple.
+- **Subtitle**: ``p "Items redeemed by you"`` 16px/20px **#484848**
+  (was 13px muted gray).
+- **"Redeem Points" link**: web is a large 24px/28px (20px/24 at
+  <=640) underlined **#979797** link `margin:30px 0 0 auto` align right
+  in the flex `.redeem-title` (was a small 13px purple underline below
+  the title). At <=640 `.redeem-title` becomes `display:block` and the
+  link stacks below with `margin:20px 0 0` (left-aligned).
+- **Single white `.redeem-block`**: the web keeps the title AND the
+  grid inside ONE white block (`padding:20px`, `margin:30px 0 10px`,
+  `border:1px solid #E7E4FF`, `radius:14px`; at <=640 padding 5px,
+  margin `20px 0 10px`). Was two separate white containers on page bg.
+- **True auto-height grid** (user's choice): web cards have no fixed
+  aspect ratio; each `.point-card` is image-area + content, Bootstrap
+  col padding 15px each side. Rebuilt with `_AutoHeightGrid` = Column
+  of Rows of Expanded cards; first row starts (15+10)=25px below the
+  title, consecutive rows 15+10+10+15=50px apart, horizontal gutter
+  30px (15+15). Column count stays `col-lg-3 col-md-6 col-sm-12 col-12`
+  = 4/2/1 at 992/768.
+- **Card footer `.content-block2` top padding**: base 12px -- at
+  `max-width:991.98px` it drops to 7px. Was a fixed 12px.
+- **Mobile font overrides at <=640**: name 20->18px, points number
+  28->22px/27->24 lh, "Points" 22->18px/27->24 lh.
+- **"View" link**: web is not a plain white text link -- it is a faint
+  pill: `padding:4px 12px`, `margin-right:15px`, `background-color:
+  #8f92ff00` (transparent lavender), `border:1px solid #8f92ff`,
+  `radius:14px`, `box-shadow:1px 1px 5px #2d2d2d1a`, white 15px/18px
+  text. Applied identically.
+- **`.point-card-img`**: web centers the image with `min-height:175px`,
+  `margin:10px auto`, `<img>` capped `max-height:175px` (img-fluid +
+  inline style). Applied via a min-175 ConstrainedBox + max-175 image +
+  `BoxFit.contain`, centered.
+
+Kept unchanged (deliberate): all-items fetching (web pager is Yii
+UI; the app aggregates every page -- user confirmed keep), the
+`#view-item` modal's field set (Name of the Item / Managed by /
+Points required / Description + Close, same as Round 9), empty and
+error states.
+
+Verification: `dart format` + `dart analyze` on
+`redeem_history_page.dart` -- 0 issues. Full-project `flutter analyze`
+-- 43 issues (current baseline, unchanged).

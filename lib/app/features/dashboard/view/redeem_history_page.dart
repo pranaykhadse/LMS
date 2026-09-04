@@ -10,7 +10,18 @@ import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/dashboard/model/redeem_history_item.dart';
 import 'package:lms/app/features/dashboard/viewmodel/redeem_history_view_model.dart';
 
-const _rhPurple = FigmaTokens.primaryPurple;
+// CSS ref, confirmed against `origin/staging`'s dist/app.css.
+const _rhPurple = FigmaTokens.primaryPurple; // var(--primary-first) #693D94
+// .redeem-title h2 color — var(--primary-second)
+const _rhMagenta = Color(0xFFA20067);
+// .redeem-title p color
+const _rhTitleGray = Color(0xFF484848);
+// .redeem-history a color
+const _rhHistoryGray = Color(0xFF979797);
+const _rhCardBg = Color(0xFFF3F3F3);
+const _rhCardBorder = Color(0xFF979797);
+// .redeem-block border
+const _rhBlockBorder = Color(0xFFE7E4FF);
 const _rhInk = FigmaTokens.cardTitles;
 const _rhMuted = FigmaTokens.noteBodyText;
 const _rhBg = FigmaTokens.pageBackground;
@@ -65,85 +76,217 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    // CSS ref: `.redeem-block` base padding 20px; at max-width:640px it
+    // drops to 5px and its margin to `20px 0 10px` (base `30px 0 10px`).
+    final isCompact = width <= 640;
+    final blockPad = isCompact ? 5.0 : 20.0;
+    final blockTopMargin = isCompact ? 20.0 : 30.0;
+    final cols = _redeemHistoryColumnsFor(width);
+
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
-          child: Container(
-            width: double.infinity,
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Redeemed items',
-                  style: TextStyle(
-                    color: _rhPurple,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+          // CSS ref: `.container` wraps `.redeem-block`; match the app's
+          // shared desktop gutter so the block doesn't touch the screen
+          // edges (Item Inventory uses the same 12–16px outer padding).
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: width <= 576 ? 8 : (width <= 768 ? 12 : 16),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: _rhBlockBorder),
+              ),
+              padding: EdgeInsets.all(blockPad),
+              margin: EdgeInsets.only(top: blockTopMargin, bottom: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _TitleRow(
+                    isCompact: isCompact,
+                    onRedeemPoints: () => safePop(context),
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Items redeemed by you',
-                  style: TextStyle(color: _rhMuted, fontSize: 13),
-                ),
-                const SizedBox(height: 10),
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => safePop(context),
-                    child: const Text(
-                      'Redeem Points',
-                      style: TextStyle(
-                        color: _rhPurple,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        decoration: TextDecoration.underline,
-                        decorationColor: _rhPurple,
-                      ),
+                  if (result.items.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: _EmptyState(),
+                    )
+                  else
+                    _AutoHeightGrid(
+                      items: result.items,
+                      cols: cols,
+                      isCompact: isCompact,
+                      // .content-block2 padding drop 12→7px applies at
+                      // ≤991.98px, i.e. any width below the 992×4-col
+                      // breakpoint.
+                      reduceContentPad: width < 992,
                     ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-        if (result.items.isEmpty)
-          const SliverFillRemaining(child: _EmptyState())
-        else
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-            sliver: SliverGrid(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) =>
-                    _RedeemedItemCard(item: result.items[index]),
-                childCount: result.items.length,
-              ),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: _redeemHistoryColumnsFor(
-                  MediaQuery.sizeOf(context).width,
-                ),
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                // The real page has no fixed card aspect ratio at all
-                // (auto height) — loosened from 0.85 to give the now-
-                // taller purple content block (20px 2-line name + 28px/
-                // 22px points block) room without squeezing the image
-                // area to nothing.
-                childAspectRatio: 0.62,
-              ),
-            ),
-          ),
         const SliverToBoxAdapter(child: AppFooter()),
       ],
     );
   }
 }
 
+/// CSS ref: `.redeem-title` — flex row. Left: `h2 "Redeemed items"`
+/// (24px/28, 400, var(--primary-second)) over `p "Items redeemed by you"`
+/// (16px/20, #484848). Right: `.redeem-history a "Redeem Points"`
+/// (24px/28 underlined #979797). At max-width:640px the container becomes
+/// `display:block`, the h2 drops to 22px/24 and the link to 20px/24, and
+/// `.redeem-history` gets `margin: 20px 0 0 auto`.
+class _TitleRow extends StatelessWidget {
+  const _TitleRow({required this.isCompact, required this.onRedeemPoints});
+  final bool isCompact;
+  final VoidCallback onRedeemPoints;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = Text(
+      'Redeemed items',
+      style: TextStyle(
+        color: _rhMagenta,
+        fontSize: isCompact ? 22 : 24,
+        fontWeight: FontWeight.w400,
+        height: isCompact ? 24 / 22 : 28 / 24,
+      ),
+    );
+    final subtitle = const Text(
+      'Items redeemed by you',
+      style: TextStyle(color: _rhTitleGray, fontSize: 16, height: 20 / 16),
+    );
+    final link = MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onRedeemPoints,
+        child: Text(
+          'Redeem Points',
+          style: TextStyle(
+            color: _rhHistoryGray,
+            fontSize: isCompact ? 20 : 24,
+            height: isCompact ? 24 / 20 : 28 / 24,
+            decoration: TextDecoration.underline,
+            decorationColor: _rhHistoryGray,
+          ),
+        ),
+      ),
+    );
+
+    if (isCompact) {
+      // max-width:640px — .redeem-title is display:block; title stacks and
+      // the link sits below it with a 20px top margin.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          title,
+          const SizedBox(height: 2),
+          subtitle,
+          const SizedBox(height: 20),
+          link,
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 30), // .redeem-title h2 margin-top
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [title, const SizedBox(height: 4), subtitle],
+              ),
+            ),
+            // .redeem-history — margin: 30px 0 0 auto
+            Padding(
+              padding: const EdgeInsets.only(top: 30, left: 16),
+              child: link,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Reproduces the web's auto-height grid rows: each row is a Bootstrap
+/// `.col-*` gutter (15px each side ⇒ 30px between cards) and every card is
+/// only as tall as its own image-area + content (no fixed aspect ratio),
+/// exactly like `.point-card` in `redeem-history-user.php`.
+class _AutoHeightGrid extends StatelessWidget {
+  const _AutoHeightGrid({
+    required this.items,
+    required this.cols,
+    required this.isCompact,
+    required this.reduceContentPad,
+  });
+  final List<RedeemHistoryItem> items;
+  final int cols;
+  final bool isCompact;
+  final bool reduceContentPad;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <List<RedeemHistoryItem>>[];
+    for (var i = 0; i < items.length; i += cols) {
+      rows.add(
+        items.sublist(i, i + cols > items.length ? items.length : i + cols),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Bootstrap vertical rhythm: each `.col` pads 15px top/bottom and
+        // `.point-card` adds `margin: 10px 0`, so the first row's cards
+        // start (15+10)=25px below the title and consecutive rows are
+        // 15+10+10+15 = 50px apart.
+        for (var r = 0; r < rows.length; r++)
+          Padding(
+            padding: EdgeInsets.only(top: r == 0 ? 25.0 : 50.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var c = 0; c < rows[r].length; c++) ...[
+                  if (c > 0) const SizedBox(width: 30), // col gutter
+                  Expanded(
+                    child: _RedeemedItemCard(
+                      item: rows[r][c],
+                      isCompact: isCompact,
+                      reduceContentPad: reduceContentPad,
+                    ),
+                  ),
+                ],
+                // Fill the remaining cells with empty flex boxes so a
+                // partial last row doesn't stretch cards to equal height.
+                for (var e = rows[r].length; e < cols; e++)
+                  const Expanded(child: SizedBox()),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _RedeemedItemCard extends StatelessWidget {
-  const _RedeemedItemCard({required this.item});
+  const _RedeemedItemCard({
+    required this.item,
+    required this.isCompact,
+    required this.reduceContentPad,
+  });
   final RedeemHistoryItem item;
+  final bool isCompact;
+  final bool reduceContentPad;
 
   @override
   Widget build(BuildContext context) {
@@ -151,20 +294,19 @@ class _RedeemedItemCard extends StatelessWidget {
     // `.point-card` — this screen uses an older, distinct card style
     // (light gray bg, near-square corners) from the "modern" cards used
     // on My Courses/Item Inventory — bg #F3F3F3, border 1px solid
-    // #979797, radius 3px. Was wrongly built as a white/shadowed/radius-14
-    // "modern" card.
+    // #979797, radius 3px, margin 10px 0.
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF3F3F3),
+        color: _rhCardBg,
         borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: const Color(0xFF979797)),
+        border: Border.all(color: _rhCardBorder),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // CSS ref: .point-card-img — centered, min-height 175px.
-          Expanded(child: _ItemImage(imageUrl: item.image)),
+          _ItemImage(imageUrl: item.image),
           // CSS ref: .point-card-content — flex row, bg var(--primary-
           // first) i.e. the app's usual purple, padding 15px.
           Container(
@@ -173,9 +315,12 @@ class _RedeemedItemCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // CSS ref: .content-block1 h2 — 20px/weight400/lh20,
-                // white, 2-line clamp, margin-bottom 15.
-                // .contentblock-action a ("View") — 15px, white.
+                // CSS ref: .content-block1 h2 — 20px/weight400/lh20
+                // (18px at max-width:640px), white, 2-line clamp,
+                // margin-bottom 15, padding-right 10.
+                // .contentblock-action a ("View") — 15px, white pill with
+                // `background-color:#8f92ff00` (faint), `border-color:
+                // #8f92ff`, radius 14, padding 4/12, margin-right 15.
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,9 +330,9 @@ class _RedeemedItemCard extends StatelessWidget {
                         item.itemName,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 20,
+                          fontSize: isCompact ? 18 : 20,
                           fontWeight: FontWeight.w400,
                           height: 1.0,
                         ),
@@ -197,9 +342,34 @@ class _RedeemedItemCard extends StatelessWidget {
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
                           onTap: () => _showDetail(context, item),
-                          child: const Text(
-                            'View',
-                            style: TextStyle(color: Colors.white, fontSize: 15),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            margin: const EdgeInsets.only(right: 15),
+                            decoration: BoxDecoration(
+                              color: const Color(0x008F92FF),
+                              border: Border.all(
+                                color: const Color(0xFF8F92FF),
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x1A2D2D2D),
+                                  blurRadius: 5,
+                                  offset: Offset(1, 1),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'View',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                height: 18 / 15,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -207,10 +377,17 @@ class _RedeemedItemCard extends StatelessWidget {
                   ),
                 ),
                 // CSS ref: .content-block2 — border-left 1px solid white,
-                // padding 12px 0 0 8px, centered; h1 (number) 28px/700/
-                // lh27 white; h2 ("Points") 22px/400/lh27 white.
+                // padding 12px 0 0 8px (→ 7px 0 0 8px at max-width:
+                // 991.98px), centered; h1 (number) 28px/700/lh27 white
+                // (→ 22px/24 at ≤640), h2 ("Points") 22px/400/lh27 white
+                // (→ 18px/24 at ≤640).
                 Container(
-                  padding: const EdgeInsets.fromLTRB(8, 12, 0, 0),
+                  padding: EdgeInsets.fromLTRB(
+                    8,
+                    reduceContentPad ? 7 : 12,
+                    0,
+                    0,
+                  ),
                   decoration: const BoxDecoration(
                     border: Border(
                       left: BorderSide(color: Colors.white, width: 1),
@@ -222,21 +399,21 @@ class _RedeemedItemCard extends StatelessWidget {
                       Text(
                         '${item.pointsSpent}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 28,
+                          fontSize: isCompact ? 22 : 28,
                           fontWeight: FontWeight.w700,
-                          height: 27 / 28,
+                          height: isCompact ? 24 / 22 : 27 / 28,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'Points',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 22,
+                          fontSize: isCompact ? 18 : 22,
                           fontWeight: FontWeight.w400,
-                          height: 27 / 22,
+                          height: isCompact ? 24 / 18 : 27 / 22,
                         ),
                       ),
                     ],
@@ -274,23 +451,36 @@ class _ItemImage extends StatelessWidget {
       ),
     );
     if (imageUrl == null) return fallback;
-    return Image.network(
-      imageUrl!,
-      fit: BoxFit.cover,
-      width: double.infinity,
-      errorBuilder: (_, __, ___) => fallback,
-      loadingBuilder:
-          (context, child, progress) =>
-              progress == null
-                  ? child
-                  : Container(
-                    color: const Color(0xFFF0ECFF),
-                    alignment: Alignment.center,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: _rhPurple,
-                    ),
-                  ),
+    // CSS ref: `.point-card-img` — centered, `min-height: 175px`,
+    // `margin: 10px auto`; the `<img>` is `max-height: 175px` (img-fluid).
+    // A min-height 175 area with BoxFit.contain keeps the image capped at
+    // 175h and centered — and the same widget stays safe inside the
+    // modal's fixed 90×90 box (tight parent constraints clamp the floor).
+    return Container(
+      constraints: const BoxConstraints(minHeight: 175),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 175),
+        child: Image.network(
+          imageUrl!,
+          fit: BoxFit.contain,
+          width: double.infinity,
+          errorBuilder: (_, __, ___) => fallback,
+          loadingBuilder:
+              (context, child, progress) =>
+                  progress == null
+                      ? child
+                      : Container(
+                        color: const Color(0xFFF0ECFF),
+                        alignment: Alignment.center,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _rhPurple,
+                        ),
+                      ),
+        ),
+      ),
     );
   }
 }
