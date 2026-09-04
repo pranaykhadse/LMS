@@ -225,40 +225,48 @@ class _DownloadTriggerButton extends StatelessWidget {
       return _GuidePill(onTap: onTap, label: guideLabel ?? 'Download $label');
     }
     if (fullWidth) {
-      // Full-width on small screens, dimension-identical to the downloaded
-      // Play/Open button (same padding 16/8, min-height 38, radius 10,
-      // 13px/weight600, icon 17) so Download and Play match except for
-      // color: Play is solid purple, Download is the purple-outlined/clear
-      // variant. On desktop this collapses to the compact chip below, and
-      // the sibling Play row collapses to the same compact chip there too.
-      return SizedBox(
-        width: double.infinity,
-        child: OutlinedButton.icon(
-          onPressed: onTap,
-          icon: Icon(Icons.download_outlined, size: 17, color: primary),
-          label: Text(
-            "Download $label",
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+      // Full-width rows on small screens with the DELETE circle kept OUTSIDE
+      // the buttons (no X embedded in the Play button). The downloaded Play
+      // row is [Expanded(Play) + 8px gap + delete circle (~36px)], so the
+      // Play button is `cardWidth - 44` wide. This identical trailing spacer
+      // is mirrored on the Download row so the Download button and the Play
+      // button have EXACTLY the same width/height/padding — the two states
+      // differ only in colour (Play = solid purple, Download = outlined).
+      // On desktop both collapse to the same compact chip below.
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: onTap,
+              icon: Icon(Icons.download_outlined, size: 17, color: primary),
+              label: Text(
+                "Download $label",
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primary,
+                side: BorderSide(color: primary),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                minimumSize: const Size.fromHeight(38),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                elevation: 0,
+                textStyle: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
           ),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: primary,
-            side: BorderSide(color: primary),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            minimumSize: const Size.fromHeight(38),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            elevation: 0,
-            textStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
+          // Mirrors the downloaded row's [8px gap + 36px delete circle] so
+          // the Download button width equals the Play button width exactly.
+          const SizedBox(width: 44),
+        ],
       );
     }
     // Compact outlined chip — the "earlier" UI, shown on desktop where the
