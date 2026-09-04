@@ -187,6 +187,10 @@ class DownloadButton extends ConsumerWidget {
       label: label,
       guideLabel: guideLabel,
       guidePill: guidePill,
+      // Same breakpoint-driven width as the downloaded Play/Open row so the
+      // Download button and Play button are dimensionally identical (only
+      // color differs) — see _DownloadTriggerButton.build.
+      fullWidth: fullWidth,
       onTap:
           () =>
               rawContent != null
@@ -203,12 +207,14 @@ class _DownloadTriggerButton extends StatelessWidget {
   const _DownloadTriggerButton({
     required this.label,
     required this.onTap,
+    this.fullWidth = false,
     this.guidePill = false,
     this.guideLabel,
   });
 
   final String label;
   final VoidCallback onTap;
+  final bool fullWidth;
   final bool guidePill;
   final String? guideLabel;
 
@@ -218,9 +224,45 @@ class _DownloadTriggerButton extends StatelessWidget {
     if (guidePill) {
       return _GuidePill(onTap: onTap, label: guideLabel ?? 'Download $label');
     }
-    // The download trigger always renders as the compact outlined chip
-    // (the "earlier" UI) regardless of [fullWidth] — only the downloaded
-    // Play/Open row takes the full card width.
+    if (fullWidth) {
+      // Full-width on small screens, dimension-identical to the downloaded
+      // Play/Open button (same padding 16/8, min-height 38, radius 10,
+      // 13px/weight600, icon 17) so Download and Play match except for
+      // color: Play is solid purple, Download is the purple-outlined/clear
+      // variant. On desktop this collapses to the compact chip below, and
+      // the sibling Play row collapses to the same compact chip there too.
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: onTap,
+          icon: Icon(Icons.download_outlined, size: 17, color: primary),
+          label: Text(
+            "Download $label",
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: primary,
+            side: BorderSide(color: primary),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            minimumSize: const Size.fromHeight(38),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            elevation: 0,
+            textStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+      );
+    }
+    // Compact outlined chip — the "earlier" UI, shown on desktop where the
+    // Play/Open row is also a compact chip.
     return appActionChip(
       icon: Icons.download_outlined,
       label: "Download $label",
