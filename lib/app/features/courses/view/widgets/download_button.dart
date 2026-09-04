@@ -192,7 +192,6 @@ class DownloadButton extends ConsumerWidget {
               rawContent != null
                   ? fileCacheVM.saveContent(url!, rawContent!())
                   : fileCacheVM.downloadFile(url!),
-      fullWidth: fullWidth,
     );
   }
 }
@@ -204,14 +203,12 @@ class _DownloadTriggerButton extends StatelessWidget {
   const _DownloadTriggerButton({
     required this.label,
     required this.onTap,
-    this.fullWidth = false,
     this.guidePill = false,
     this.guideLabel,
   });
 
   final String label;
   final VoidCallback onTap;
-  final bool fullWidth;
   final bool guidePill;
   final String? guideLabel;
 
@@ -221,37 +218,9 @@ class _DownloadTriggerButton extends StatelessWidget {
     if (guidePill) {
       return _GuidePill(onTap: onTap, label: guideLabel ?? 'Download $label');
     }
-    if (fullWidth) {
-      // CSS ref, confirmed against `origin/staging`'s joinCourse.php:
-      // this button only ever renders inside the Course Structure
-      // table's ACTION column, so it shares
-      // `#course-structure .static-list-action-btn .btn-ul`'s spec —
-      // radius 10 (was 8), 13px/weight600 (was default/800), min-height
-      // 38 (was a flat 39, close but not exact).
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: onTap,
-          icon: const Icon(Icons.download_outlined, size: 17),
-          label: Text("Download $label"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primary,
-            foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(38),
-            elevation: 0,
-            textStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
-      );
-    }
-    // Same outlined chip style on every platform - previously macOS-only,
-    // with mobile/tablet falling back to a solid ElevatedButton instead.
+    // The download trigger always renders as the compact outlined chip
+    // (the "earlier" UI) regardless of [fullWidth] — only the downloaded
+    // Play/Open row takes the full card width.
     return appActionChip(
       icon: Icons.download_outlined,
       label: "Download $label",
@@ -379,7 +348,24 @@ class _DownloadedRow extends StatelessWidget {
 
     if (fullWidth) {
       // CSS ref: same `.static-list-action-btn` spec as the download
-      // trigger above — radius 10 (was 8), 13px/weight600 (was 800).
+      // trigger above — radius 10 (was 8), 13px/weight600 (was 800). The
+      // padding + tapTargetSize are matched to the sibling _OnlineActionButton
+      // (Attend Class) so the full-width Play row is the exact same height.
+      final matchHeight = ElevatedButton.styleFrom(
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        minimumSize: const Size.fromHeight(38),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        elevation: 0,
+        textStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      );
       return Row(
         children: [
           Expanded(
@@ -387,19 +373,7 @@ class _DownloadedRow extends StatelessWidget {
               onPressed: onOpen,
               icon: Icon(playIcon, size: 17),
               label: Text(playLabel),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(38),
-                elevation: 0,
-                textStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+              style: matchHeight,
             ),
           ),
           const SizedBox(width: 8),
