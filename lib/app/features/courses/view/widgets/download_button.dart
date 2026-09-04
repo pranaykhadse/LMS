@@ -4,8 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/core.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
-import 'package:lms/app/features/courses/view/widgets/link_button.dart'
-    show appActionChip;
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
 import 'package:lms/app/features/courses/model/course_class.dart';
 import 'package:lms/app/features/courses/view/content_view_page.dart';
@@ -218,16 +216,33 @@ class _DownloadTriggerButton extends StatelessWidget {
     if (guidePill) {
       return _GuidePill(onTap: onTap, label: guideLabel ?? 'Download $label');
     }
-    // The download trigger always renders as the compact outlined chip
-    // (the "earlier" UI) regardless of [fullWidth] — only the downloaded
-    // Play/Open row takes the full card width.
-    return appActionChip(
-      icon: Icons.download_outlined,
-      label: "Download $label",
-      fgColor: primary,
-      bgColor: Colors.transparent,
-      borderColor: primary,
+    // Outlined variant of the exact same button spec as the sibling
+    // _OnlineActionButton (Attend Class / Watch Recording): padding 16/8,
+    // min-height 38, radius 10, 13px/600 Inter, icon 14. Only the color
+    // differs (outlined purple vs those buttons' solid purple) so the
+    // Download button is dimension-identical to them. A bare button works
+    // in both parent layouts: the phone Column stretches it full-width,
+    // the tablet/desktop Wrap gives it a natural width.
+    return OutlinedButton.icon(
       onPressed: onTap,
+      icon: Icon(Icons.download_outlined, size: 14, color: primary),
+      label: Text("Download $label"),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primary,
+        side: BorderSide(color: primary),
+        backgroundColor: Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        minimumSize: const Size(0, 38),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        elevation: 0,
+        textStyle: GoogleFonts.inter(
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
     );
   }
 }
@@ -347,20 +362,21 @@ class _DownloadedRow extends StatelessWidget {
     }
 
     if (fullWidth) {
-      // CSS ref: same `.static-list-action-btn` spec as the download
-      // trigger above — radius 10 (was 8), 13px/weight600 (was 800). The
-      // padding + tapTargetSize are matched to the sibling _OnlineActionButton
-      // (Attend Class) so the full-width Play row is the exact same height.
+      // Same button spec as the sibling _OnlineActionButton (Attend Class /
+      // Watch Recording): padding 16/8, min-height 38, radius 10,
+      // 13px/600 Inter, icon 14 — the Play button is dimension-identical to
+      // them (solid purple, same as the other action buttons). The delete
+      // circle stays a separate element beside it.
       final matchHeight = ElevatedButton.styleFrom(
         backgroundColor: primary,
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        minimumSize: const Size.fromHeight(38),
+        minimumSize: const Size(0, 38),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         elevation: 0,
-        textStyle: const TextStyle(
-          fontSize: 13,
+        textStyle: GoogleFonts.inter(
           fontWeight: FontWeight.w600,
+          fontSize: 13,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
@@ -371,7 +387,7 @@ class _DownloadedRow extends StatelessWidget {
           Expanded(
             child: ElevatedButton.icon(
               onPressed: onOpen,
-              icon: Icon(playIcon, size: 17),
+              icon: Icon(playIcon, size: 14),
               label: Text(playLabel),
               style: matchHeight,
             ),
@@ -405,16 +421,30 @@ class _DownloadedRow extends StatelessWidget {
       runSpacing: 4,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        // Same filled chip style on every platform - previously macOS-only,
-        // with mobile/tablet falling back to a visually-similar
-        // ElevatedButton instead.
-        appActionChip(
-          icon: playIcon,
-          label: playLabel,
-          fgColor: Colors.white,
-          bgColor: primary,
-          borderColor: primary,
+        // Same button spec as the sibling _OnlineActionButton (Attend Class
+        // / Watch Recording) — padding 16/8, min-height 38, radius 10,
+        // 13px/600 Inter, icon 14 — solid purple. The delete circle is a
+        // separate trailing element and doesn't affect the button's own
+        // dimensions, so Play looks identical to the other action buttons.
+        ElevatedButton.icon(
           onPressed: onOpen,
+          icon: Icon(playIcon, size: 14),
+          label: Text(playLabel),
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: primary,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            minimumSize: const Size(0, 38),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            elevation: 0,
+            textStyle: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
         ),
         Tooltip(
           message: "Remove offline copy",
