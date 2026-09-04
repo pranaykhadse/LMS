@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' show ImageFilter;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -185,86 +184,83 @@ class _DetailBody extends ConsumerWidget {
                     MediaQuery.sizeOf(context).width < 768 ? 8 : 0,
                   ),
                   child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _CourseHero(
-                      detail: detail,
-                      onTapReviews:
-                          () => showReviewsModal(
-                            context,
-                            ref,
-                            courseId: detail.id,
-                          ),
-                    ),
-                    Transform.translate(
-                      // Web `#launches-haad` pulls the launch card up
-                      // over the hero with `margin-top: -20px`
-                      // (desktop) / `-16px` (mobile).
-                      offset: Offset(
-                        0,
-                        MediaQuery.sizeOf(context).width < 768 ? -16 : -20,
-                      ),
-                      child: _LaunchPanel(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _CourseHero(
                         detail: detail,
-                        fullBleed: true,
-                      ),
-                    ),
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: maxWidth),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // CSS/markup ref, confirmed against `origin/staging`'s
-                            // joinCourse.php: `#participang-area .content-heading-
-                            // title` is a white card (padding 16px 24px) holding
-                            // ("Download Participant Guide") and/or ("WRAP
-                            // Methodology") pill links (bg `--purple-tint-bg`
-                            // #F5F3FF, border rgba(92,82,212,.08), radius 10,
-                            // 14px/600, hover filled #693D94/white) with a 1×24px
-                            // #E5E7EB divider between them when both exist. Shown
-                            // whenever a URL is present (not gated on enrollment,
-                            // mirroring the web), and downloaded through
-                            // DownloadButton (encrypted, in-app-only, never a raw
-                            // external link).
-                            if (detail.participantGuide != null ||
-                                detail.wrapMethodology != null)
-                              _ParticipantGuideCard(detail: detail),
-                            if (constraints.maxWidth >= 760)
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: _DescriptionCard(detail: detail),
-                                  ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: _CourseImageCard(url: detail.logo),
-                                  ),
-                                ],
-                              )
-                            else ...[
-                              _DescriptionCard(detail: detail),
-                              _CourseImageCard(url: detail.logo),
-                            ],
-                            _SkillsCard(skills: detail.skills),
-                            _StructureCard(
+                        onTapReviews:
+                            () => showReviewsModal(
+                              context,
+                              ref,
                               courseId: detail.id,
-                              items: detail.structures,
-                              isEnrolled: detail.isEnrolled,
-                              courseTitle: detail.title,
-                              courseObjective: detail.objective,
                             ),
-                          ],
+                      ),
+                      Transform.translate(
+                        // Web `#launches-haad` pulls the launch card up
+                        // over the hero with `margin-top: -20px`
+                        // (desktop) / `-16px` (mobile).
+                        offset: Offset(
+                          0,
+                          MediaQuery.sizeOf(context).width < 768 ? -16 : -20,
+                        ),
+                        child: _LaunchPanel(detail: detail, fullBleed: true),
+                      ),
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: maxWidth),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // CSS/markup ref, confirmed against `origin/staging`'s
+                              // joinCourse.php: `#participang-area .content-heading-
+                              // title` is a white card (padding 16px 24px) holding
+                              // ("Download Participant Guide") and/or ("WRAP
+                              // Methodology") pill links (bg `--purple-tint-bg`
+                              // #F5F3FF, border rgba(92,82,212,.08), radius 10,
+                              // 14px/600, hover filled #693D94/white) with a 1×24px
+                              // #E5E7EB divider between them when both exist. Shown
+                              // whenever a URL is present (not gated on enrollment,
+                              // mirroring the web), and downloaded through
+                              // DownloadButton (encrypted, in-app-only, never a raw
+                              // external link).
+                              if (detail.participantGuide != null ||
+                                  detail.wrapMethodology != null)
+                                _ParticipantGuideCard(detail: detail),
+                              if (constraints.maxWidth >= 760)
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      flex: 3,
+                                      child: _DescriptionCard(detail: detail),
+                                    ),
+                                    Expanded(
+                                      flex: 2,
+                                      child: _CourseImageCard(url: detail.logo),
+                                    ),
+                                  ],
+                                )
+                              else ...[
+                                _DescriptionCard(detail: detail),
+                                _CourseImageCard(url: detail.logo),
+                              ],
+                              _SkillsCard(skills: detail.skills),
+                              _StructureCard(
+                                courseId: detail.id,
+                                items: detail.structures,
+                                isEnrolled: detail.isEnrolled,
+                                courseTitle: detail.title,
+                                courseObjective: detail.objective,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const AppFooter(),
-                  ],
+                      const AppFooter(),
+                    ],
+                  ),
                 ),
-              ),
-            );
+              );
             },
           ),
         );
@@ -377,8 +373,8 @@ class _CourseHero extends StatelessWidget {
                               TextSpan(
                                 text:
                                     detail.ratingCount == 1
-                                    ? 'review'
-                                    : 'reviews',
+                                        ? 'review'
+                                        : 'reviews',
                               ),
                             ],
                           ),
@@ -430,48 +426,59 @@ class _HeroPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return HoverBuilder(
-      builder: (context, hovering) => Container(
-        transform: hovering
-            ? Matrix4.translationValues(0, -1, 0)
-            : Matrix4.identity(),
-        transformAlignment: Alignment.center,
-        decoration: BoxDecoration(
-          boxShadow: hovering
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(30),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: hovering ? 0.25 : 0.15),
-                border: Border.all(
-                    color: Colors.white.withValues(alpha: hovering ? 0.5 : 0.25)),
+      builder:
+          (context, hovering) => Container(
+            transform:
+                hovering
+                    ? Matrix4.translationValues(0, -1, 0)
+                    : Matrix4.identity(),
+            transformAlignment: Alignment.center,
+            decoration: BoxDecoration(
+              boxShadow:
+                  hovering
+                      ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                      : null,
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
                 borderRadius: BorderRadius.circular(30),
-              ),
-              child: DefaultTextStyle(
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(
+                      alpha: hovering ? 0.25 : 0.15,
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withValues(
+                        alpha: hovering ? 0.5 : 0.25,
+                      ),
+                    ),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: DefaultTextStyle(
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    child: child,
+                  ),
                 ),
-                child: child,
               ),
             ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -633,24 +640,21 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     // line (`display:flex; align-items:center; gap:16px`), vertically
     // centered. Phone (`@media max-width:767px`) stacks them instead with
     // the label centered above the boxes.
-    final countdown = phone
-        ? Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Center(child: countLabel),
-              const SizedBox(height: 14),
-              timeBoxes,
-            ],
-          )
-        : Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              countLabel,
-              const SizedBox(width: 16),
-              timeBoxes,
-            ],
-          );
+    final countdown =
+        phone
+            ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(child: countLabel),
+                const SizedBox(height: 14),
+                timeBoxes,
+              ],
+            )
+            : Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [countLabel, const SizedBox(width: 16), timeBoxes],
+            );
 
     // CSS ref: `#launches-haad`. Desktop keeps the base app.css band
     // (background #EEEFF9, padding 10px) and pulls the card up with
@@ -664,19 +668,21 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     final card = _InfoCard(
       margin: EdgeInsets.zero,
       // .launches-box: desktop `padding: 20px 24px`; mobile 16px.
-      padding: phone
-          ? const EdgeInsets.all(16)
-          : const EdgeInsets.fromLTRB(24, 20, 24, 20),
-      boxShadow: phone
-          // mobile `.launches-box` shadow is the stronger indigo one.
-          ? const [
-            BoxShadow(
-              color: Color(0x265C52D4),
-              blurRadius: 30,
-              offset: Offset(0, 8),
-            ),
-          ]
-          : null,
+      padding:
+          phone
+              ? const EdgeInsets.all(16)
+              : const EdgeInsets.fromLTRB(24, 20, 24, 20),
+      boxShadow:
+          phone
+              // mobile `.launches-box` shadow is the stronger indigo one.
+              ? const [
+                BoxShadow(
+                  color: Color(0x265C52D4),
+                  blurRadius: 30,
+                  offset: Offset(0, 8),
+                ),
+              ]
+              : null,
       child: Column(
         children: [
           // Only show the countdown once the learner is actually enrolled -
@@ -703,10 +709,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                     // status pill horizontally.
                     Center(child: statusBadge),
                     const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: _actionButton(),
-                    ),
+                    SizedBox(width: double.infinity, child: _actionButton()),
                   ],
                 );
               }
@@ -820,9 +823,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       // pull-up lives on _DetailBody's Transform.translate.
       margin: const EdgeInsets.only(bottom: 20),
       padding: phone ? EdgeInsets.zero : const EdgeInsets.all(10),
-      decoration: phone
-          ? null
-          : const BoxDecoration(color: Color(0xFFEEEFF9)),
+      decoration: phone ? null : const BoxDecoration(color: Color(0xFFEEEFF9)),
       child: card,
     );
 
@@ -832,20 +833,18 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     // (~98% of the viewport); on mobile the card fills the main
     // container (the 8px page margin supplies the side gutters).
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final cardMaxWidth = phone
-        // The overlapping white card stays narrower than the hero —
-        // 8px page margin plus 8px centering each side — instead of
-        // spanning the full container width into the purple.
-        ? screenWidth - 32
-        : screenWidth * 0.98;
+    final cardMaxWidth =
+        phone
+            // The overlapping white card stays narrower than the hero —
+            // 8px page margin plus 8px centering each side — instead of
+            // spanning the full container width into the purple.
+            ? screenWidth - 32
+            : screenWidth * 0.98;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      decoration: phone
-          ? null
-          : const BoxDecoration(color: Color(0xFFEEEFF9)),
-      padding: phone
-          ? EdgeInsets.zero
-          : const EdgeInsets.symmetric(vertical: 10),
+      decoration: phone ? null : const BoxDecoration(color: Color(0xFFEEEFF9)),
+      padding:
+          phone ? EdgeInsets.zero : const EdgeInsets.symmetric(vertical: 10),
       width: double.infinity,
       child: Center(
         child: ConstrainedBox(
@@ -934,9 +933,10 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     return HoverBuilder(
       builder:
           (context, hovering) => Container(
-            transform: hovering
-                ? Matrix4.translationValues(0, -2, 0)
-                : Matrix4.identity(),
+            transform:
+                hovering
+                    ? Matrix4.translationValues(0, -2, 0)
+                    : Matrix4.identity(),
             transformAlignment: Alignment.center,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
@@ -1156,28 +1156,30 @@ class _CourseImageCard extends StatelessWidget {
     return _InfoCard(
       padding: const EdgeInsets.all(16),
       child: HoverBuilder(
-        builder: (context, hovering) => ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Transform.scale(
-            // CSS ref: `.emotional-leadership:hover img` — the image
-            // gently scales up to 1.02 on hover.
-            scale: hovering ? 1.02 : 1.0,
-            child: SizedBox(
-              width: double.infinity,
-              height: 220,
-              child:
-                  url == null
-                      ? const CourseImageFallback()
-                      : Image.network(
-                        url!,
-                        width: double.infinity,
-                        height: 220,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const CourseImageFallback(),
-                      ),
+        builder:
+            (context, hovering) => ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Transform.scale(
+                // CSS ref: `.emotional-leadership:hover img` — the image
+                // gently scales up to 1.02 on hover.
+                scale: hovering ? 1.02 : 1.0,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 220,
+                  child:
+                      url == null
+                          ? const CourseImageFallback()
+                          : Image.network(
+                            url!,
+                            width: double.infinity,
+                            height: 220,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (_, __, ___) => const CourseImageFallback(),
+                          ),
+                ),
+              ),
             ),
-          ),
-        ),
       ),
     );
   }
@@ -1210,55 +1212,61 @@ class _SkillsCard extends StatelessWidget {
                   skills
                       .map(
                         (skill) => HoverBuilder(
-                          builder: (context, hovering) => Container(
-                            transform: hovering
-                                ? Matrix4.translationValues(0, -2, 0)
-                                : Matrix4.identity(),
-                            transformAlignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: hovering
-                                  ? const [
-                                      BoxShadow(
-                                        color: Color(0x1A5C52D4),
-                                        blurRadius: 10,
-                                        offset: Offset(0, 4),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: hovering
-                                    ? _detailPurple
-                                    : const Color(0xFFF5F3FF),
-                                // rgba(92,82,212,.08) — the same distinct
-                                // indigo (#5C52D4), not this app's purple.
-                                border: Border.all(
-                                  color: hovering
-                                      ? _detailPurple
-                                      : const Color(
-                                          0xFF5C52D4,
-                                        ).withValues(alpha: 0.08),
+                          builder:
+                              (context, hovering) => Container(
+                                transform:
+                                    hovering
+                                        ? Matrix4.translationValues(0, -2, 0)
+                                        : Matrix4.identity(),
+                                transformAlignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow:
+                                      hovering
+                                          ? const [
+                                            BoxShadow(
+                                              color: Color(0x1A5C52D4),
+                                              blurRadius: 10,
+                                              offset: Offset(0, 4),
+                                            ),
+                                          ]
+                                          : null,
                                 ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                skill,
-                                style: GoogleFonts.inter(
-                                  color: hovering
-                                      ? Colors.white
-                                      : _detailPurple,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        hovering
+                                            ? _detailPurple
+                                            : const Color(0xFFF5F3FF),
+                                    // rgba(92,82,212,.08) — the same distinct
+                                    // indigo (#5C52D4), not this app's purple.
+                                    border: Border.all(
+                                      color:
+                                          hovering
+                                              ? _detailPurple
+                                              : const Color(
+                                                0xFF5C52D4,
+                                              ).withValues(alpha: 0.08),
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    skill,
+                                    style: GoogleFonts.inter(
+                                      color:
+                                          hovering
+                                              ? Colors.white
+                                              : _detailPurple,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
                         ),
                       )
                       .toList(),
@@ -1357,11 +1365,7 @@ class _StructureCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.swipe_rounded,
-                      size: 14,
-                      color: _detailMuted,
-                    ),
+                    Icon(Icons.swipe_rounded, size: 14, color: _detailMuted),
                     SizedBox(width: 4),
                     Text(
                       'Swipe to see Next Session, Status & Actions',
@@ -1960,7 +1964,9 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
       child:
           (liveNextSession != null && item.isEnrolledInClass)
               ? (upcomingEvent != null
-                  ? _CompactLaunchCountdown(target: upcomingEvent.startDateTime!)
+                  ? _CompactLaunchCountdown(
+                    target: upcomingEvent.startDateTime!,
+                  )
                   : Text(
                     liveNextSession,
                     // CSS ref: `#course-class-report td span[id^=timer_
@@ -2009,22 +2015,22 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             // look shifted upward relative to its neighbors.
             : (widget.phone
                 ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    // Mobile stacked cards stack the action buttons
-                    // full-width, so give each one breathing room.
-                    children: [
-                      for (var i = 0; i < actions.length; i++) ...[
-                        if (i > 0) const SizedBox(height: 8),
-                        actions[i],
-                      ],
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  // Mobile stacked cards stack the action buttons
+                  // full-width, so give each one breathing room.
+                  children: [
+                    for (var i = 0; i < actions.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 8),
+                      actions[i],
                     ],
-                  )
+                  ],
+                )
                 : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: actions,
-                  ));
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: actions,
+                ));
 
     // Small screens (≤767px) render each row as its own stacked white card
     // per the web's mobile UI: no # column, title on its own line, then
@@ -2139,10 +2145,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
               child: titleCell,
             ),
           ),
-          Expanded(
-            flex: 2,
-            child: nextSessionCell,
-          ),
+          Expanded(flex: 2, child: nextSessionCell),
           statusCell,
           const SizedBox(width: 16),
           Expanded(flex: 6, child: actionsCell),
@@ -2184,141 +2187,104 @@ class _OnlineActionButton extends ConsumerWidget {
     // — padding 8px 16px (was 12 horizontal only), radius 10 (was 8),
     // 13px/weight600 (was 12.5/700), min-height 38 (was 32), shadow
     // 0 2px 4px rgba(0,0,0,.02) (was none).
-    return _CourseActionHeightLogger(
-      title: label,
-      child: HoverBuilder(
-        builder: (context, hovering) {
+    return HoverBuilder(
+      builder: (context, hovering) {
         final hoverActive = hovering && isOnline;
         return Container(
           constraints: const BoxConstraints(minHeight: 38),
-          transform: hoverActive && !danger
-              ? Matrix4.translationValues(0, -1, 0)
-              : Matrix4.identity(),
+          transform:
+              hoverActive && !danger
+                  ? Matrix4.translationValues(0, -1, 0)
+                  : Matrix4.identity(),
           transformAlignment: Alignment.center,
           decoration: BoxDecoration(
-            boxShadow: hoverActive && !danger
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF5C52D4).withValues(alpha: 0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : const [
-                    BoxShadow(
-                      color: Color(0x05000000),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+            boxShadow:
+                hoverActive && !danger
+                    ? [
+                      BoxShadow(
+                        color: const Color(0xFF5C52D4).withValues(alpha: 0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                    : const [
+                      BoxShadow(
+                        color: Color(0x05000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
           ),
-            child:
-                danger
-                    ? OutlinedButton.icon(
-                      onPressed: isOnline ? onPressed : null,
-                      icon: Icon(
-                        isOnline ? icon : Icons.cloud_off_rounded,
-                        size: 14,
-                        color: const Color(0xFFDC2626),
+          child:
+              danger
+                  ? OutlinedButton.icon(
+                    onPressed: isOnline ? onPressed : null,
+                    icon: Icon(
+                      isOnline ? icon : Icons.cloud_off_rounded,
+                      size: 14,
+                      color: const Color(0xFFDC2626),
+                    ),
+                    label: Text(isOnline ? label : 'Internet required'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFDC2626),
+                      backgroundColor:
+                          hovering
+                              ? const Color(0xFFFEE2E2)
+                              : const Color(0xFFFEF2F2),
+                      side: const BorderSide(color: Color(0xFFFEE2E2)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
-                      label: Text(isOnline ? label : 'Internet required'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFFDC2626),
-                        backgroundColor:
-                            hovering
-                                ? const Color(0xFFFEE2E2)
-                                : const Color(0xFFFEF2F2),
-                        side: const BorderSide(color: Color(0xFFFEE2E2)),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        minimumSize: const Size(0, 38),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        textStyle: GoogleFonts.inter(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                      minimumSize: const Size(0, 38),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      textStyle: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
                       ),
-                    )
-                    : ElevatedButton.icon(
-                      onPressed: isOnline ? onPressed : null,
-                      icon: Icon(
-                        isOnline ? icon : Icons.cloud_off_rounded,
-                        size: isOnline ? iconSize : 14,
-                        color: isOnline ? iconColor : null,
-                      ),
-                      label: Text(isOnline ? label : 'Internet required'),
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor:
-                            !isOnline
-                                ? Colors.grey.shade400
-                                : (hovering
-                                    ? FigmaTokens.purpleHover
-                                    : _detailPurple),
-                        disabledBackgroundColor: Colors.grey.shade400,
-                        disabledForegroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        minimumSize: const Size(0, 38),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        elevation: 0,
-                        textStyle: GoogleFonts.inter(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-          );
-        },
-      ),
+                  )
+                  : ElevatedButton.icon(
+                    onPressed: isOnline ? onPressed : null,
+                    icon: Icon(
+                      isOnline ? icon : Icons.cloud_off_rounded,
+                      size: isOnline ? iconSize : 14,
+                      color: isOnline ? iconColor : null,
+                    ),
+                    label: Text(isOnline ? label : 'Internet required'),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor:
+                          !isOnline
+                              ? Colors.grey.shade400
+                              : (hovering
+                                  ? FigmaTokens.purpleHover
+                                  : _detailPurple),
+                      disabledBackgroundColor: Colors.grey.shade400,
+                      disabledForegroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      minimumSize: const Size(0, 38),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      elevation: 0,
+                      textStyle: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+        );
+      },
     );
   }
-}
-
-class _CourseActionHeightLogger extends StatefulWidget {
-  const _CourseActionHeightLogger({required this.title, required this.child});
-  final String title;
-  final Widget child;
-  @override
-  State<_CourseActionHeightLogger> createState() =>
-      _CourseActionHeightLoggerState();
-}
-
-class _CourseActionHeightLoggerState extends State<_CourseActionHeightLogger> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _log());
-  }
-
-  @override
-  void didUpdateWidget(covariant _CourseActionHeightLogger oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _log());
-  }
-
-  void _log() {
-    if (!kDebugMode || !mounted) return;
-    final box = context.findRenderObject() as RenderBox?;
-    if (box != null && box.hasSize) {
-      debugPrint(
-        '[BTN_HEIGHT] ${widget.title} => h=${box.size.height.toStringAsFixed(1)} w=${box.size.width.toStringAsFixed(1)}',
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
 }
 
 /// The generic course-structure action button (e.g. "Agreement", "Launch
@@ -2424,7 +2390,8 @@ class _InfoCard extends StatelessWidget {
     // content cards to padding 20/radius 12.
     final phone = MediaQuery.sizeOf(context).width < 768;
     final effectivePadding =
-        padding ?? (phone ? const EdgeInsets.all(20) : const EdgeInsets.all(24));
+        padding ??
+        (phone ? const EdgeInsets.all(20) : const EdgeInsets.all(24));
     return Container(
       margin: margin,
       padding: effectivePadding,
@@ -2849,37 +2816,36 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                     width: 32,
                     height: 32,
                     child: ClipOval(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.2),
-                                  const Color(0xFF5C52D4)
-                                      .withValues(alpha: 0.4),
-                                ],
-                              ),
-                              shape: BoxShape.circle,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.2),
+                                const Color(0xFF5C52D4).withValues(alpha: 0.4),
+                              ],
                             ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                customBorder: const CircleBorder(),
-                                onTap: () => Navigator.pop(context),
-                                child: const Icon(
-                                  Icons.close_rounded,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () => Navigator.pop(context),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                                size: 18,
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
@@ -2910,9 +2876,10 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                 (context, hovering) => Container(
                   // CSS ref: `.btn-modal-primary:hover` — lifts 1px as well
                   // as glowing (was shadow-only).
-                  transform: hovering
-                      ? Matrix4.translationValues(0, -1, 0)
-                      : Matrix4.identity(),
+                  transform:
+                      hovering
+                          ? Matrix4.translationValues(0, -1, 0)
+                          : Matrix4.identity(),
                   transformAlignment: Alignment.center,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
@@ -3016,9 +2983,10 @@ class _SessionRegisterDialogState extends State<_SessionRegisterDialog> {
                   (context, hovering) => Container(
                     // CSS ref: `.btn-modal-primary:hover` — lifts 1px as
                     // well as glowing (was shadow-only).
-                    transform: hovering
-                        ? Matrix4.translationValues(0, -1, 0)
-                        : Matrix4.identity(),
+                    transform:
+                        hovering
+                            ? Matrix4.translationValues(0, -1, 0)
+                            : Matrix4.identity(),
                     transformAlignment: Alignment.center,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
@@ -3217,37 +3185,36 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                     width: 32,
                     height: 32,
                     child: ClipOval(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.2),
-                                  const Color(0xFF5C52D4)
-                                      .withValues(alpha: 0.4),
-                                ],
-                              ),
-                              shape: BoxShape.circle,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.2),
+                                const Color(0xFF5C52D4).withValues(alpha: 0.4),
+                              ],
                             ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                customBorder: const CircleBorder(),
-                                onTap: () => Navigator.pop(context),
-                                child: const Icon(
-                                  Icons.close_rounded,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () => Navigator.pop(context),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                color: Colors.white,
+                                size: 18,
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
+                  ),
                 ],
               ),
             ),
@@ -3339,9 +3306,10 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                 (context, hovering) => Container(
                   // CSS ref: `.btn-modal-primary:hover` — lifts 1px as well
                   // as glowing (was shadow-only).
-                  transform: hovering
-                      ? Matrix4.translationValues(0, -1, 0)
-                      : Matrix4.identity(),
+                  transform:
+                      hovering
+                          ? Matrix4.translationValues(0, -1, 0)
+                          : Matrix4.identity(),
                   transformAlignment: Alignment.center,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
@@ -3466,9 +3434,10 @@ class _MultiClassRegisterDialogState extends State<_MultiClassRegisterDialog> {
                   (context, hovering) => Container(
                     // CSS ref: `.btn-modal-primary:hover` — lifts 1px as
                     // well as glowing (was shadow-only).
-                    transform: hovering
-                        ? Matrix4.translationValues(0, -1, 0)
-                        : Matrix4.identity(),
+                    transform:
+                        hovering
+                            ? Matrix4.translationValues(0, -1, 0)
+                            : Matrix4.identity(),
                     transformAlignment: Alignment.center,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
@@ -3819,7 +3788,10 @@ void _showNotEnrolledDialog(BuildContext context) {
     barrierColor: Colors.black.withValues(alpha: 0.5),
     builder:
         (context) => Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -3847,9 +3819,7 @@ void _showNotEnrolledDialog(BuildContext context) {
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
                   decoration: const BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: Color(0xFFF3F4F6)),
-                    ),
+                    border: Border(top: BorderSide(color: Color(0xFFF3F4F6))),
                   ),
                   child: Align(
                     alignment: Alignment.centerRight,
@@ -3895,8 +3865,10 @@ void _showCancelConfirmationDialog(
     barrierColor: Colors.black.withValues(alpha: 0.5),
     builder:
         (context) => Dialog(
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -3953,111 +3925,130 @@ void _showCancelConfirmationDialog(
                     ),
                   ],
                 ),
-                const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                child: Text(
-                  'Would you like to cancel your registration for this course?',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF333333),
-                    fontSize: 16,
-                    height: 1.5,
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF3F4F6),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 20,
+                  ),
+                  child: Text(
+                    'Would you like to cancel your registration for this course?',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF333333),
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
                   ),
                 ),
-              ),
-              const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    HoverBuilder(
-                      builder: (context, hovering) => OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: hovering
-                              ? const Color(0xFFE5E7EB)
-                              : const Color(0xFFF3F4F6),
-                          foregroundColor: const Color(0xFF374151),
-                          side: const BorderSide(color: FigmaTokens.cardBorders),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 8,
-                          ),
-                        ),
-                        child: Text(
-                          'No, Keep It',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    HoverBuilder(
-                      builder: (context, hovering) => Container(
-                        // CSS ref: `.btn-modal-primary:hover` — the Yes
-                        // button lifts 1px and glows on hover (was
-                        // background-only).
-                        transform: hovering
-                            ? Matrix4.translationValues(0, -1, 0)
-                            : Matrix4.identity(),
-                        transformAlignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: hovering
-                              ? [
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFF5C52D4,
-                                    ).withValues(alpha: 0.3),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            onConfirm();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: hovering
-                                ? FigmaTokens.purpleHover
-                                : _detailPurple,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 10,
-                            ),
-                          ),
-                          child: Text(
-                            'Yes, Cancel',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF3F4F6),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      HoverBuilder(
+                        builder:
+                            (context, hovering) => OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor:
+                                    hovering
+                                        ? const Color(0xFFE5E7EB)
+                                        : const Color(0xFFF3F4F6),
+                                foregroundColor: const Color(0xFF374151),
+                                side: const BorderSide(
+                                  color: FigmaTokens.cardBorders,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 8,
+                                ),
+                              ),
+                              child: Text(
+                                'No, Keep It',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                      ),
+                      const SizedBox(width: 10),
+                      HoverBuilder(
+                        builder:
+                            (context, hovering) => Container(
+                              // CSS ref: `.btn-modal-primary:hover` — the Yes
+                              // button lifts 1px and glows on hover (was
+                              // background-only).
+                              transform:
+                                  hovering
+                                      ? Matrix4.translationValues(0, -1, 0)
+                                      : Matrix4.identity(),
+                              transformAlignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow:
+                                    hovering
+                                        ? [
+                                          BoxShadow(
+                                            color: const Color(
+                                              0xFF5C52D4,
+                                            ).withValues(alpha: 0.3),
+                                            blurRadius: 16,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ]
+                                        : null,
+                              ),
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  onConfirm();
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      hovering
+                                          ? FigmaTokens.purpleHover
+                                          : _detailPurple,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 10,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Yes, Cancel',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
   );
 }
 
@@ -4112,7 +4103,10 @@ void _showClassDetails(
     barrierColor: Colors.black.withValues(alpha: 0.5),
     builder:
         (context) => Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -4254,9 +4248,7 @@ class _ClassDetailsDialog extends StatelessWidget {
                             end: Alignment.bottomRight,
                             colors: [
                               Colors.white.withValues(alpha: 0.2),
-                              const Color(
-                                0xFF5C52D4,
-                              ).withValues(alpha: 0.4),
+                              const Color(0xFF5C52D4).withValues(alpha: 0.4),
                             ],
                           ),
                           shape: BoxShape.circle,
@@ -4266,19 +4258,19 @@ class _ClassDetailsDialog extends StatelessWidget {
                           child: InkWell(
                             customBorder: const CircleBorder(),
                             onTap: () => Navigator.pop(context),
-                              child: const Icon(
-                                Icons.close_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              color: Colors.white,
+                              size: 18,
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
           ),
           Flexible(
             child: SingleChildScrollView(
@@ -4301,22 +4293,17 @@ class _ClassDetailsDialog extends StatelessWidget {
                     // (class's own, else the course fallback), then
                     // Description — 12px `.le-detail-cards` gaps.
                     if (objective.isNotEmpty) ...[
-                      _LeDetailCard(
-                        label: 'Objective',
-                        value: objective,
-                      ),
+                      _LeDetailCard(label: 'Objective', value: objective),
                     ],
                     if (item.description.isNotEmpty) ...[
-                      if (objective.isNotEmpty)
-                        const SizedBox(height: 12),
+                      if (objective.isNotEmpty) const SizedBox(height: 12),
                       _LeDetailCard(
                         label: 'Description',
                         value: item.description,
                       ),
                     ],
                     if (item.learningEvents.isNotEmpty) ...[
-                      if (objective.isNotEmpty ||
-                          item.description.isNotEmpty)
+                      if (objective.isNotEmpty || item.description.isNotEmpty)
                         const SizedBox(height: 12),
                       // CSS ref: `.lc-section-label` — 12px/weight600/
                       // #9CA3AF/uppercase/letter-spacing .8px, margin 12px 0
@@ -4628,125 +4615,128 @@ class _LearningEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return HoverBuilder(
-      builder: (context, hovering) => Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFF3F4F6)),
-        borderRadius: BorderRadius.circular(12),
-        // CSS ref: `.event-card:hover` — lifts into a soft shadow on
-        // hover (was a flat resting shadow at all times).
-        boxShadow: hovering
-            ? const [
-                BoxShadow(
-                  color: Color(0x0F000000),
-                  blurRadius: 12,
-                  offset: Offset(0, 4),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 3,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              width: 4,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [_detailPurple, _detailPurple2],
-                ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _EcField.dateTime(
-                            label: 'Start',
-                            dateTime: event.startDateTime,
-                          ),
+      builder:
+          (context, hovering) => Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFFF3F4F6)),
+              borderRadius: BorderRadius.circular(12),
+              // CSS ref: `.event-card:hover` — lifts into a soft shadow on
+              // hover (was a flat resting shadow at all times).
+              boxShadow:
+                  hovering
+                      ? const [
+                        BoxShadow(
+                          color: Color(0x0F000000),
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
                         ),
-                        Padding(
-                          padding: EdgeInsets.only(top: 14),
-                          child: Text(
-                            '→',
-                            style: GoogleFonts.inter(
-                              color: Color(0xFFD1D5DB),
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: _EcField.dateTime(
-                            label: 'End',
-                            dateTime: event.endDateTime,
-                          ),
+                      ]
+                      : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.02),
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
                         ),
                       ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    width: 4,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [_detailPurple, _detailPurple2],
+                      ),
                     ),
-                    if (event.instructor.isNotEmpty ||
-                        event.location.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      const Divider(height: 1, color: Color(0xFFF3F4F6)),
-                      const SizedBox(height: 6),
-                      Row(
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (event.instructor.isNotEmpty)
-                            Expanded(
-                              child: _EcField(
-                                label: 'Instructor',
-                                value: event.instructor,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: _EcField.dateTime(
+                                  label: 'Start',
+                                  dateTime: event.startDateTime,
+                                ),
                               ),
-                            ),
-                          if (event.instructor.isNotEmpty &&
-                              event.location.isNotEmpty)
-                            const SizedBox(width: 8),
-                          if (event.location.isNotEmpty)
-                            Expanded(
-                              child: _EcField(
-                                label: 'Location',
-                                value: event.location,
+                              Padding(
+                                padding: EdgeInsets.only(top: 14),
+                                child: Text(
+                                  '→',
+                                  style: GoogleFonts.inter(
+                                    color: Color(0xFFD1D5DB),
+                                    fontSize: 18,
+                                  ),
+                                ),
                               ),
+                              Expanded(
+                                child: _EcField.dateTime(
+                                  label: 'End',
+                                  dateTime: event.endDateTime,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (event.instructor.isNotEmpty ||
+                              event.location.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                            const SizedBox(height: 6),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (event.instructor.isNotEmpty)
+                                  Expanded(
+                                    child: _EcField(
+                                      label: 'Instructor',
+                                      value: event.instructor,
+                                    ),
+                                  ),
+                                if (event.instructor.isNotEmpty &&
+                                    event.location.isNotEmpty)
+                                  const SizedBox(width: 8),
+                                if (event.location.isNotEmpty)
+                                  Expanded(
+                                    child: _EcField(
+                                      label: 'Location',
+                                      value: event.location,
+                                    ),
+                                  ),
+                              ],
                             ),
+                          ],
+                          if (event.instructions.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                            const SizedBox(height: 6),
+                            _EcField(
+                              label: 'Instructions',
+                              value: event.instructions,
+                            ),
+                          ],
                         ],
                       ),
-                    ],
-                    if (event.instructions.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      const Divider(height: 1, color: Color(0xFFF3F4F6)),
-                      const SizedBox(height: 6),
-                      _EcField(
-                        label: 'Instructions',
-                        value: event.instructions,
-                      ),
-                    ],
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    ));
+          ),
+    );
   }
 }
 
@@ -4853,7 +4843,11 @@ class _StatusChip extends StatelessWidget {
         status,
         softWrap: false,
         overflow: TextOverflow.visible,
-        style: GoogleFonts.inter(color: fg, fontSize: 12, fontWeight: FontWeight.w600),
+        style: GoogleFonts.inter(
+          color: fg,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -4897,4 +4891,3 @@ String _formatFriendlyMoment(DateTime dateTime) {
       .padLeft(2, '0');
   return '$day $month ${dateTime.year} $hour12:$minute $amPm';
 }
-

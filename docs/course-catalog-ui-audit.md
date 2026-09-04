@@ -5638,3 +5638,47 @@ explanation.
 **Verification**: `dart format` + `flutter analyze` on
 `user_points_view_model.dart` — 0 issues. Full-project `flutter
 analyze` — 43 issues (current baseline, unchanged).
+
+## Follow-up: Download/Play buttons — found why "same spec" wasn't rendering the same height
+
+**Report**: after several rounds of trying to make Course Details'
+Download/Play buttons dimension-match the sibling Attend Class/Watch
+Recording buttons (same `minimumSize`, padding, radius, font, icon
+size in the `ButtonStyle`), they still didn't look identical. A debug
+height logger (added in a prior round) confirmed it directly:
+`Attend Class`/`Watch Recording` consistently rendered at **h=38.0**,
+while `Download Recording`/`Play Recording`/every `DownloadButton`-
+based action consistently rendered at **h=30.0** — despite an
+identical `minimumSize: Size(0, 38)` on both.
+
+**Root cause**: `_OnlineActionButton`
+(`course_classes_page.dart`, backs Attend Class/Watch Recording/Cancel
+Registration) wraps its `ElevatedButton`/`OutlinedButton` in an OUTER
+`Container(constraints: BoxConstraints(minHeight: 38))`, on top of the
+button's own `minimumSize`. `DownloadButton`'s buttons
+(`_DownloadTriggerButton`, `_DownloadedRow`'s Play button — both the
+`fullWidth` Row variant and the `Wrap`/chip variant) only ever had the
+button's own `minimumSize`, no outer wrapper. In the `Wrap`/`Column`
+contexts these actually render in, the bare `minimumSize` alone wasn't
+reliably reaching 38px — the outer `Container` constraint is what
+actually makes `_OnlineActionButton` robust, not the `ButtonStyle`
+alone. Matching every `ButtonStyle` property without also matching
+that outer wrapper meant the *spec* matched but the *rendered* height
+didn't.
+
+**Fix**: added the identical `Container(constraints: BoxConstraints
+(minHeight: 38))` wrapper around all three `DownloadButton` button
+sites — `_DownloadTriggerButton`'s `OutlinedButton.icon`,
+`_DownloadedRow`'s fullWidth `ElevatedButton.icon` (inside its
+`Expanded`), and its `Wrap`/chip `ElevatedButton.icon`. Also removed
+the temporary debug-height-logging widgets/calls from both files
+(`_DebugHeight` in `download_button.dart`,
+`_CourseActionHeightLogger` in `course_classes_page.dart`) now that
+they've served their purpose, along with the now-unused
+`package:flutter/foundation.dart` import in `course_classes_page.dart`.
+
+**Verification**: `dart format` + `flutter analyze` on both files — 4
+issues, all pre-existing baseline (`danger` unused param, 3×
+`curly_braces_in_flow_control_structures` elsewhere in the file), no
+new ones. Full-project `flutter analyze` — 43 issues (current
+baseline, unchanged).

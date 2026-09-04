@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -224,8 +223,16 @@ class _DownloadTriggerButton extends StatelessWidget {
     // Download button is dimension-identical to them. A bare button works
     // in both parent layouts: the phone Column stretches it full-width,
     // the tablet/desktop Wrap gives it a natural width.
-    return _DebugHeight(
-      title: 'Download $label',
+    //
+    // The button's own `minimumSize: Size(0, 38)` alone wasn't reliably
+    // reaching 38px in this Wrap/Column context (measured 30px via a
+    // debug height logger) — `_OnlineActionButton` never had that problem
+    // because it also wraps its button in an outer `Container(constraints:
+    // BoxConstraints(minHeight: 38))`, which is the actual floor that
+    // makes it robust regardless of parent layout. Added the same outer
+    // constraint here so Download genuinely matches, not just in spec.
+    return Container(
+      constraints: const BoxConstraints(minHeight: 38),
       child: OutlinedButton.icon(
         onPressed: onTap,
         icon: Icon(Icons.download_outlined, size: 14, color: primary),
@@ -371,6 +378,14 @@ class _DownloadedRow extends StatelessWidget {
       // 13px/600 Inter, icon 14 — the Play button is dimension-identical to
       // them (solid purple, same as the other action buttons). The delete
       // circle stays a separate element beside it.
+      //
+      // The button's own `minimumSize: Size(0, 38)` alone wasn't reliably
+      // reaching 38px here (measured 30px via a debug height logger) —
+      // `_OnlineActionButton` never had that problem because it also
+      // wraps its button in an outer `Container(constraints:
+      // BoxConstraints(minHeight: 38))`, the actual floor that makes it
+      // robust regardless of parent layout. Added the same outer
+      // constraint here so Play genuinely matches, not just in spec.
       final matchHeight = ElevatedButton.styleFrom(
         backgroundColor: primary,
         foregroundColor: Colors.white,
@@ -378,19 +393,14 @@ class _DownloadedRow extends StatelessWidget {
         minimumSize: const Size(0, 38),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         elevation: 0,
-        textStyle: GoogleFonts.inter(
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 13),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       );
-      return _DebugHeight(
-        title: playLabel,
-        child: Row(
-          children: [
-            Expanded(
+      return Row(
+        children: [
+          Expanded(
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 38),
               child: ElevatedButton.icon(
                 onPressed: onOpen,
                 icon: Icon(playIcon, size: 14),
@@ -398,44 +408,47 @@ class _DownloadedRow extends StatelessWidget {
                 style: matchHeight,
               ),
             ),
-            const SizedBox(width: 8),
-            Tooltip(
-              message: "Remove offline copy",
-              child: InkWell(
-                onTap: onDelete,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.red.shade300),
-                  ),
-                  child: Icon(
-                    Icons.delete_outline_rounded,
-                    size: 18,
-                    color: Colors.red.shade400,
-                  ),
+          ),
+          const SizedBox(width: 8),
+          Tooltip(
+            message: "Remove offline copy",
+            child: InkWell(
+              onTap: onDelete,
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.red.shade300),
+                ),
+                child: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: Colors.red.shade400,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       );
     }
 
-    return _DebugHeight(
-      title: playLabel,
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          // Same button spec as the sibling _OnlineActionButton (Attend Class
-          // / Watch Recording) — padding 16/8, min-height 38, radius 10,
-          // 13px/600 Inter, icon 14 — solid purple. The delete circle is a
-          // separate trailing element and doesn't affect the button's own
-          // dimensions, so Play looks identical to the other action buttons.
-          ElevatedButton.icon(
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        // Same button spec as the sibling _OnlineActionButton (Attend Class
+        // / Watch Recording) — padding 16/8, min-height 38, radius 10,
+        // 13px/600 Inter, icon 14 — solid purple. The delete circle is a
+        // separate trailing element and doesn't affect the button's own
+        // dimensions, so Play looks identical to the other action buttons.
+        // Wrapped in the same outer `Container(minHeight: 38)` floor
+        // `_OnlineActionButton` uses — see the fullWidth branch above for
+        // why the button's own `minimumSize` alone wasn't reliable here.
+        Container(
+          constraints: const BoxConstraints(minHeight: 38),
+          child: ElevatedButton.icon(
             onPressed: onOpen,
             icon: Icon(playIcon, size: 14),
             label: Text(playLabel),
@@ -455,6 +468,7 @@ class _DownloadedRow extends StatelessWidget {
               ),
             ),
           ),
+        ),
         Tooltip(
           message: "Remove offline copy",
           child: InkWell(
@@ -475,45 +489,8 @@ class _DownloadedRow extends StatelessWidget {
           ),
         ),
       ],
-      ),
     );
   }
-}
-
-// ── Debug helper: prints the rendered button height with its title ────────
-class _DebugHeight extends StatefulWidget {
-  const _DebugHeight({required this.title, required this.child});
-  final String title;
-  final Widget child;
-  @override
-  State<_DebugHeight> createState() => _DebugHeightState();
-}
-
-class _DebugHeightState extends State<_DebugHeight> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _log());
-  }
-
-  @override
-  void didUpdateWidget(covariant _DebugHeight oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _log());
-  }
-
-  void _log() {
-    if (!kDebugMode || !mounted) return;
-    final box = context.findRenderObject() as RenderBox?;
-    if (box != null && box.hasSize) {
-      debugPrint(
-        '[BTN_HEIGHT] ${widget.title} => h=${box.size.height.toStringAsFixed(1)} w=${box.size.width.toStringAsFixed(1)}',
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
