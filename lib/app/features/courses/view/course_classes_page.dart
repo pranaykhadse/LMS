@@ -7,6 +7,7 @@ import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/design/responsive.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/core/provider/internet_connection_provider.dart';
 import 'package:lms/app/core/provider/offline_mode_provider.dart';
@@ -1809,10 +1810,10 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             label: 'Recording',
             icon: Icons.videocam_rounded,
             courseClass: null,
-            // Full-width like the sibling action buttons (Details / Attend
-            // Class / Watch Recording): solid trigger + expanded Play row
-            // with the delete circle pinned at the end.
-            fullWidth: true,
+            // Full-width only on small screens — on desktop the Play/Open
+            // row reverts to the compact chip (matches the sibling action
+            // buttons on large layouts).
+            fullWidth: !Responsive.isDesktop(context),
             builder:
                 (ctx, file) => VideoContentViewer(
                   file: file,
@@ -1882,8 +1883,8 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             label: _downloadLabel(item.typeCode),
             icon: Icons.videocam_rounded,
             courseClass: null,
-            // Full-width like every other action button on this screen.
-            fullWidth: true,
+            // Full-width only on small screens; compact chip on desktop.
+            fullWidth: !Responsive.isDesktop(context),
             builder:
                 (ctx, file) => VideoContentViewer(
                   file: file,
@@ -1897,8 +1898,8 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             label: _downloadLabel(item.typeCode),
             icon: Icons.picture_as_pdf_rounded,
             courseClass: null,
-            // Full-width like every other action button on this screen.
-            fullWidth: true,
+            // Full-width only on small screens; compact chip on desktop.
+            fullWidth: !Responsive.isDesktop(context),
             builder: (ctx, file) => PdfContentViewer(file: file),
           ),
       // Certificate (typeCode '12') has no downloadUrl at all - the API
@@ -1912,8 +1913,8 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           label: 'Certificate',
           icon: Icons.workspace_premium_rounded,
           courseClass: null,
-          // Full-width like every other action button on this screen.
-          fullWidth: true,
+          // Full-width only on small screens; compact chip on desktop.
+          fullWidth: !Responsive.isDesktop(context),
           builder: (ctx, file) => CertificateContentViewer(file: file),
         ),
     ];
