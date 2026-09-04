@@ -5771,3 +5771,32 @@ error states.
 Verification: `dart format` + `dart analyze` on
 `redeem_history_page.dart` -- 0 issues. Full-project `flutter analyze`
 -- 43 issues (current baseline, unchanged).
+
+## Follow-up: Redeem History "View" — plain underlined text link, not a bordered pill
+
+**Report**: side-by-side screenshots of the Redeem History screen (our
+app vs. the real site) — "Just match the UI of View button as per web
+app in redeem history screen." The real site's "View" renders as a
+plain white underlined text link with no border, fill, or shadow; this
+app rendered it as a bordered/shadowed pill.
+
+**Root cause / correction of an earlier assumption**: the existing
+code cited this component's static CSS directly (`.contentblock-action
+a` — border-color #8f92ff, radius 14, padding 4/12, a drop shadow) and
+built exactly that: a bordered, shadowed pill. The live screenshot
+contradicts it outright — no pill shape, no border, no shadow, just
+underlined text. Per the standing rule that live evidence overrides a
+static CSS reading, the screenshot wins.
+
+**Fix**: `lib/app/features/dashboard/view/redeem_history_page.dart` —
+replaced the `Container` (border/fill/shadow/padding/margin) wrapping
+"View" with a plain `Text` styled `TextDecoration.underline`, white —
+the same plain-underlined-link treatment this page's own "Redeem
+Points" link (`_TitleRow`) already uses elsewhere on this screen, just
+white instead of gray since this one sits on the purple card rather
+than the white page background. Tap handling (`_showDetail`) is
+unchanged.
+
+**Verification**: `dart format` + `flutter analyze` on
+`redeem_history_page.dart` — 0 issues. Full-project `flutter analyze`
+— 43 issues (current baseline, unchanged).

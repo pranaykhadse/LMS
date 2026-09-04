@@ -318,9 +318,15 @@ class _RedeemedItemCard extends StatelessWidget {
                 // CSS ref: .content-block1 h2 — 20px/weight400/lh20
                 // (18px at max-width:640px), white, 2-line clamp,
                 // margin-bottom 15, padding-right 10.
-                // .contentblock-action a ("View") — 15px, white pill with
-                // `background-color:#8f92ff00` (faint), `border-color:
-                // #8f92ff`, radius 14, padding 4/12, margin-right 15.
+                // "View" — a live screenshot of the real site shows a
+                // plain underlined white text link here, not a pill: no
+                // border, no fill, no shadow. A prior pass built it as a
+                // bordered/shadowed pill straight from this component's
+                // static CSS, but that reading is superseded by the live
+                // evidence — matches the same plain-underlined-link
+                // pattern this page's own "Redeem Points" link already
+                // uses (see `_TitleRow`), just in white instead of gray
+                // since this sits on the purple card, not the white page.
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,33 +348,14 @@ class _RedeemedItemCard extends StatelessWidget {
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
                           onTap: () => _showDetail(context, item),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            margin: const EdgeInsets.only(right: 15),
-                            decoration: BoxDecoration(
-                              color: const Color(0x008F92FF),
-                              border: Border.all(
-                                color: const Color(0xFF8F92FF),
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x1A2D2D2D),
-                                  blurRadius: 5,
-                                  offset: Offset(1, 1),
-                                ),
-                              ],
-                            ),
-                            child: const Text(
-                              'View',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 15,
-                                height: 18 / 15,
-                              ),
+                          child: const Text(
+                            'View',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              height: 18 / 15,
+                              decoration: TextDecoration.underline,
+                              decorationColor: Colors.white,
                             ),
                           ),
                         ),
