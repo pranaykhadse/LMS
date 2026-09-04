@@ -273,7 +273,12 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           linkedIn: _linkedInCtrl.text.trim(),
           division: _divisionCtrl.text.trim(),
           department: _departmentCtrl.text.trim(),
-          phoneNumber: _phoneCtrl.text.trim(),
+          // Strip anything but digits before sending — the backend's
+          // phone_number schema rejects formatting characters
+          // (parentheses/dashes/spaces), which a user could still type or
+          // paste in manually even though the field now always starts
+          // clean (see UserProfileDetail.fromJson's own _digitsOnly).
+          phoneNumber: _phoneCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''),
           countryCode: _countryCode,
           countryIso: _countryIso,
         );

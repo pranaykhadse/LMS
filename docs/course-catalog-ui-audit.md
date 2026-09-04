@@ -5800,3 +5800,33 @@ unchanged.
 **Verification**: `dart format` + `flutter analyze` on
 `redeem_history_page.dart` — 0 issues. Full-project `flutter analyze`
 — 43 issues (current baseline, unchanged).
+
+## Follow-up: phone number formatting characters (brackets/dash/space) rejected by the backend schema
+
+**Report**: the debug logging added for the avatar-upload failure
+surfaced that a save was failing because the phone number field
+contained formatting characters ("(201) 552-1423") the backend's
+phone_number schema rejects (digits only). Requested: strip any
+formatting from the API-supplied number so it always round-trips
+clean, regardless of which field triggers a save.
+
+**Fix**:
+- `lib/app/features/dashboard/model/user_profile_detail.dart` —
+  `UserProfileDetail.fromJson` now runs `phone_number` through a new
+  `_digitsOnly` helper (strips everything but `0-9`) before storing it.
+  Fixed at the parse boundary, once, rather than at every save call
+  site — the edit field itself always starts clean, so there's no path
+  for a formatted value to ever reach the server again.
+- `lib/app/features/dashboard/view/account_settings_page.dart` —
+  `_save()` also strips non-digit characters from `_phoneCtrl.text`
+  before sending, as a second line of defense in case a user manually
+  types or pastes a formatted number into the field during an edit
+  (the field has no input mask preventing that).
+
+`country_code`/`country_iso` are already separate fields from this
+one, so a bare local-number digit string is always what the backend
+expects here — no formatting was ever meaningful to keep.
+
+**Verification**: `dart format` + `flutter analyze` on both files — 0
+issues. Full-project `flutter analyze` — 43 issues (current baseline,
+unchanged).
