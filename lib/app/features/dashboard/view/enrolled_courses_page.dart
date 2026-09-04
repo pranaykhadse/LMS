@@ -154,7 +154,7 @@ class _Body extends StatelessWidget {
                               // CSS ref: .card-image-wrapper — padding-top:
                               // 56.25% (16:9) of the card's own fluid width, not
                               // a fixed pixel value — same fix as Course
-                              // Catalog's grid (see docs/course-catalog-ui-audit
+                              // Catalog's grid (see docs/offline_lms_ui_audit
                               // .md). The old fixed 320/360 ignored actual card
                               // width entirely.
                               final cardWidth =
@@ -333,7 +333,7 @@ class _CourseCard extends ConsumerWidget {
                                 ),
                               // CSS ref: .session-info's own margin-bottom is
                               // commented out in the real stylesheet (dead —
-                              // see docs/course-catalog-ui-audit.md), so no
+                              // see docs/offline_lms_ui_audit.md), so no
                               // gap belongs here regardless of what follows.
                               if (course.displayRating &&
                                   course.ratingCount > 0) ...[
@@ -682,7 +682,7 @@ class _NextSessionRow extends StatelessWidget {
 // _required_courses.php: `date("M d, h:i A", $date)` — PHP's `d` is a
 // zero-padded day (01-31), e.g. "Nov 05, 05:30 AM" — was missing its
 // .padLeft (same bug found and fixed on Course Catalog's card, see
-// docs/course-catalog-ui-audit.md).
+// docs/offline_lms_ui_audit.md).
 String _formatNextSession(DateTime dt) {
   const months = [
     'Jan',
@@ -722,7 +722,7 @@ class _RatingBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // CSS ref, confirmed against `origin/staging`'s modern-course-cards
     // .css (same `.rating-bar` class Course Catalog uses — see
-    // docs/course-catalog-ui-audit.md): height 32px explicit (not left to
+    // docs/offline_lms_ui_audit.md): height 32px explicit (not left to
     // padding+content, which only reaches ~26px), padding 4px 12px,
     // radius 8px; stars color #FFD700 with a 1px gap between glyphs (was
     // wrongly #FFA534 with no gap); .average-rating color #1E293B (was

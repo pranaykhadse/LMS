@@ -1,7 +1,7 @@
 # Mobile API Additions Needed
 
 Drafted for the backend team, covering items confirmed backend-blocked
-during the UI exactness audit (see `docs/course-catalog-ui-audit.md`,
+during the UI exactness audit (see `docs/offline_lms_ui_audit.md`,
 Rounds 8 and 18). Each was verified by reading the actual mobile API source
 (`api/modules/v1/controllers/API/user/LmsScreenController.php` and
 `AuthController.php` on `origin/staging`) — none of these can be completed

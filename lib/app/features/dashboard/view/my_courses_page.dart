@@ -395,7 +395,7 @@ class _CoursesList extends StatelessWidget {
         // Below-image content budget: this is the exact same `.modern-
         // course-card` markup/CSS as Course Catalog's, so it gets the
         // identical live-measured budget rather than a separately-
-        // derived one (see docs/course-catalog-ui-audit.md) — keeps
+        // derived one (see docs/offline_lms_ui_audit.md) — keeps
         // this screen's card height pixel-identical to Course
         // Catalog's for the same content. `Spacer()` on the card
         // absorbs slack when session-info/rating-bar are absent.
@@ -641,7 +641,7 @@ class _CourseCardState extends ConsumerState<_CourseCard> {
                               // wrongly dismissed as a typo without tracing
                               // this cascade), margin-bottom 8px. Exactly
                               // matches Course Catalog's card (see docs/
-                              // course-catalog-ui-audit.md).
+                              // offline_lms_ui_audit.md).
                               //
                               // `.course-title a:hover{color:var(--primary-
                               // color)}` also exists in the stylesheet, but

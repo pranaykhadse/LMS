@@ -34,7 +34,7 @@ const _titleColor = Color(0xFFA20067);
 // screen's model) has no `points` field at all — the API this app
 // consumes doesn't expose it. Adding this needs an API/model change, not
 // just a UI fix; same category as the "deleted group" case flagged in
-// docs/course-catalog-ui-audit.md. Skipped for now.
+// docs/offline_lms_ui_audit.md. Skipped for now.
 
 /// CSS ref, confirmed against `origin/staging`'s
 /// backend/views/lmsclass/_completed_course.php: `.group-item` column
@@ -152,7 +152,7 @@ class _Body extends StatelessWidget {
                               // CSS ref: .card-image-wrapper — padding-top:
                               // 56.25% (16:9) of the card's own fluid width —
                               // same fix as Course Catalog/Enrolled Courses
-                              // (see docs/course-catalog-ui-audit.md). The old
+                              // (see docs/offline_lms_ui_audit.md). The old
                               // fixed 320/360 ignored actual card width.
                               final cardWidth =
                                   (constraints.maxWidth - (columns - 1) * gap) /
@@ -162,7 +162,7 @@ class _Body extends StatelessWidget {
                               // same `.modern-course-card` markup/CSS as
                               // Course Catalog's, so it gets the identical
                               // live-measured budget rather than a separately-
-                              // derived one (see docs/course-catalog-ui-audit
+                              // derived one (see docs/offline_lms_ui_audit
                               // .md) — keeps this screen's card height pixel-
                               // identical to Course Catalog's. This card never
                               // shows a rating-bar (confirmed absent from the
@@ -311,7 +311,7 @@ class _CourseCard extends ConsumerWidget {
                               ),
                               // CSS ref: .session-info's own margin-bottom is
                               // commented out in the real stylesheet (dead —
-                              // see docs/course-catalog-ui-audit.md), so no
+                              // see docs/offline_lms_ui_audit.md), so no
                               // gap belongs here.
                               // CSS ref: `.course-title` is defined TWICE —
                               // modern-course-cards.css (18px/700, margin-
@@ -327,7 +327,7 @@ class _CourseCard extends ConsumerWidget {
                               // wrongly dismissed as a typo without tracing
                               // this cascade), margin-bottom 8px. Exactly
                               // matches Course Catalog's card (see docs/
-                              // course-catalog-ui-audit.md).
+                              // offline_lms_ui_audit.md).
                               //
                               // `.course-title a:hover{color:var(--primary-
                               // color)}` also exists in the stylesheet, but

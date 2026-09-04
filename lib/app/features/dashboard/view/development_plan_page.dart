@@ -497,7 +497,7 @@ class _AddPlanItemDialogState extends State<_AddPlanItemDialog> {
 // exact modal (real markup: `.modal-header`+`.close`+`.modal-title`
 // h4 +`.modal-body`+`.modal-footer` with a plain `.btn.btn-primary`) —
 // the SAME real chrome already traced for the Calendar screen's Event
-// Details modal (docs/course-catalog-ui-audit.md, Rounds 29-37). This
+// Details modal (docs/offline_lms_ui_audit.md, Rounds 29-37). This
 // dialog was previously a plain invented card (16px radius, no
 // border, 17px/w800 title, full-width 44px-tall button) with none of
 // that. Real values: `.modal-content{border:1px solid #693D94;
@@ -919,7 +919,7 @@ class _DevelopmentPlanTable extends StatelessWidget {
       children: [
         // CSS ref: this table shares the same generic `.table`/`.table
         // thead th` rules as Learning Paths/View Competency (see
-        // docs/course-catalog-ui-audit.md, Round 7) — border color
+        // docs/offline_lms_ui_audit.md, Round 7) — border color
         // #DBE5E9 (was the generic app-wide cardBorders token, #E5E7EB,
         // a different hue entirely) — missed when those two tables were
         // rebuilt since this screen wasn't re-checked at the time.
@@ -1184,7 +1184,7 @@ class _TableDataRow extends ConsumerWidget {
     // (12px)}` rule the header row uses (was 15px). Data-cell text isn't
     // touched by either `.table td, .table th` block — it inherits
     // `.table{color:#212529}` (Block2, later in dist/app.css) and body's
-    // real font-size:14px!important (see docs/course-catalog-ui-audit
+    // real font-size:14px!important (see docs/offline_lms_ui_audit
     // .md, Round 29's body-font-size finding) — was #1E2939 (`_ink`, a
     // different token with no real basis here)/13px. None of these
     // columns' PHP `value` closures apply any bold/weight styling to the

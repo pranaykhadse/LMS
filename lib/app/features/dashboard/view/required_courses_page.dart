@@ -147,7 +147,7 @@ class _Body extends StatelessWidget {
                               // CSS ref: .card-image-wrapper — padding-top:
                               // 56.25% (16:9) of the card's own fluid width —
                               // same fix as every other My Courses screen (see
-                              // docs/course-catalog-ui-audit.md).
+                              // docs/offline_lms_ui_audit.md).
                               final cardWidth =
                                   (constraints.maxWidth - (columns - 1) * gap) /
                                   columns;
@@ -162,7 +162,7 @@ class _Body extends StatelessWidget {
                               // taller than the other two for the same content,
                               // exactly the same bug Enrolled Courses' own
                               // history already found and fixed (see
-                              // docs/course-catalog-ui-audit.md). `Spacer()`
+                              // docs/offline_lms_ui_audit.md). `Spacer()`
                               // below still absorbs slack on shorter cards.
                               final contentBudget =
                                   columns == 4 ? 172.0 : 200.0;
