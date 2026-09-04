@@ -5682,3 +5682,32 @@ issues, all pre-existing baseline (`danger` unused param, 3×
 `curly_braces_in_flow_control_structures` elsewhere in the file), no
 new ones. Full-project `flutter analyze` — 43 issues (current
 baseline, unchanged).
+
+## Follow-up: Avatar upload failure — added diagnostic logging for the actual server error
+
+**Report**: screenshot of "Failed to save avatar." toast when
+uploading a profile picture, with the request: "Please print/log the
+response from API to get exact issue/error."
+
+**Context**: `AccountSettingsRepository.uploadAvatar` already caught
+every failure path (a `status: 0` API response, or a thrown
+exception) and returned only a top-level `message` string to the UI
+toast — exactly what the screenshot shows — with no visibility into
+the actual server response body that would explain *why* (a
+validation error, a file-size/type limit, an auth issue, ...).
+
+**Fix**: added `kDebugMode`-gated `debugPrint` calls (matching this
+file's existing debug-logging convention on `fetch()`/`update()`) at
+three points in `uploadAvatar`: before the request (filename + byte
+size), the full raw response body on any completed request (success
+or `status: 0`), and — in the `catch` block — the exception, its
+stack trace, and (for a `DioException` specifically) its HTTP status
+code and the server's own `response.data`, since `e.toString()` alone
+on a `DioException` usually only says "DioException [bad response]:
+..." without the actual server-provided detail.
+
+**Verification**: `dart format` + `flutter analyze` on
+`account_settings_repository.dart` — 0 issues. Full-project `flutter
+analyze` — 43 issues (current baseline, unchanged). Next avatar-upload
+attempt on a debug build will print `[AccountSettingsRepository]
+upload-avatar ...` lines to the console with the real cause.

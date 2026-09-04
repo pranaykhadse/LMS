@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,7 +32,9 @@ class AccountSettingsRepository with RepoNetworkHelper {
   AccountSettingsRepository(this.config);
 
   static final provider = Provider<AccountSettingsRepository>((ref) {
-    return AccountSettingsRepository(ref.watch(ServerProvider.repoConfigProvider));
+    return AccountSettingsRepository(
+      ref.watch(ServerProvider.repoConfigProvider),
+    );
   });
 
   @override
@@ -44,11 +45,14 @@ class AccountSettingsRepository with RepoNetworkHelper {
       'user-profile/$userId',
       cacheType: RequestCacheType.none,
     );
-    final json = raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+    final json =
+        raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
     if (kDebugMode) {
       // Temporary: checking whether country_iso round-trips through a save.
-      debugPrint('[AccountSettingsRepository] GET user-profile/$userId -> '
-          'country_code=${json['country_code']}, country_iso=${json['country_iso']}');
+      debugPrint(
+        '[AccountSettingsRepository] GET user-profile/$userId -> '
+        'country_code=${json['country_code']}, country_iso=${json['country_iso']}',
+      );
     }
     return UserProfileDetail.fromJson(json);
   }
@@ -59,8 +63,10 @@ class AccountSettingsRepository with RepoNetworkHelper {
   }) async {
     if (kDebugMode) {
       // Temporary: checking whether country_iso round-trips through a save.
-      debugPrint('[AccountSettingsRepository] PUT user-profile/$userId body '
-          'country_code=${body['country_code']}, country_iso=${body['country_iso']}');
+      debugPrint(
+        '[AccountSettingsRepository] PUT user-profile/$userId body '
+        'country_code=${body['country_code']}, country_iso=${body['country_iso']}',
+      );
     }
     try {
       final raw = await put(
@@ -71,10 +77,12 @@ class AccountSettingsRepository with RepoNetworkHelper {
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
       if (kDebugMode) {
-        debugPrint('[AccountSettingsRepository] PUT response: '
-            'status=${data['status']}, message=${data['message']}, '
-            'country_code=${data['country_code']}, country_iso=${data['country_iso']}, '
-            'payload=${data['payload']}');
+        debugPrint(
+          '[AccountSettingsRepository] PUT response: '
+          'status=${data['status']}, message=${data['message']}, '
+          'country_code=${data['country_code']}, country_iso=${data['country_iso']}, '
+          'payload=${data['payload']}',
+        );
       }
       if (data['status']?.toString() == '0') {
         return AccountSettingsUpdateResult(
@@ -101,13 +109,28 @@ class AccountSettingsRepository with RepoNetworkHelper {
     required String filename,
   }) async {
     try {
+      if (kDebugMode) {
+        debugPrint(
+          '[AccountSettingsRepository] POST user-profile/upload-avatar '
+          'filename=$filename bytes=${bytes.length}',
+        );
+      }
       final raw = await post(
         'user-profile/upload-avatar',
-        data: {
-          'avatar': MultipartFile.fromBytes(bytes, filename: filename),
-        },
+        data: {'avatar': MultipartFile.fromBytes(bytes, filename: filename)},
         cacheType: RequestCacheType.none,
       );
+      if (kDebugMode) {
+        // The exact server response — the toast only ever showed the top-
+        // level `message`, which can be a generic fallback string that
+        // hides the actual reason (a validation error on a specific
+        // field, a size/type limit, an auth issue, ...). Logging the
+        // whole raw body surfaces whatever detail the server actually
+        // sent back.
+        debugPrint(
+          '[AccountSettingsRepository] upload-avatar raw response: $raw',
+        );
+      }
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
       if (data['status']?.toString() == '0') {
@@ -116,16 +139,33 @@ class AccountSettingsRepository with RepoNetworkHelper {
           message: data['message']?.toString() ?? 'Unable to upload avatar.',
         );
       }
-      final payload = data['payload'] is Map
-          ? Map<String, dynamic>.from(data['payload'])
-          : <String, dynamic>{};
+      final payload =
+          data['payload'] is Map
+              ? Map<String, dynamic>.from(data['payload'])
+              : <String, dynamic>{};
       return AvatarUploadResult(
         success: true,
         message: data['message']?.toString(),
         avatarPath: payload['avatar_path']?.toString(),
         avatarBaseUrl: payload['avatar_base_url']?.toString(),
       );
-    } catch (e) {
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[AccountSettingsRepository] upload-avatar threw: $e');
+        // A DioException's own `.response` (status code + server body) is
+        // the actual diagnostic payload for an HTTP-level failure (4xx/5xx,
+        // a validation error body, ...) — `e.toString()` alone usually
+        // only says "DioException [bad response]: ...", not what the
+        // server actually said.
+        if (e is DioException) {
+          debugPrint(
+            '[AccountSettingsRepository] upload-avatar DioException: '
+            'type=${e.type} statusCode=${e.response?.statusCode} '
+            'responseData=${e.response?.data}',
+          );
+        }
+        debugPrint('[AccountSettingsRepository] upload-avatar stack: $st');
+      }
       return AvatarUploadResult(success: false, message: e.toString());
     }
   }
