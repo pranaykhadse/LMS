@@ -61,8 +61,17 @@ class SignInPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewModel = ref.watch(SignInViewModel.provider);
     final width = MediaQuery.sizeOf(context).width;
+    final height = MediaQuery.sizeOf(context).height;
     final phone = width < 768;
     final tablet = width >= 768 && width < 992;
+    // TEMP DIAGNOSTIC (will revert): reports the exact numbers the device
+    // computes for the bg layout — paste the [SignInBg] log lines.
+    // ignore: avoid_print
+    print(
+      '[SignInBg] screen=${width.toStringAsFixed(1)}x${height.toStringAsFixed(1)} '
+      'phone=$phone imgH=${(width * 495 / 1440).toStringAsFixed(1)} '
+      'bottomPadding=${MediaQuery.paddingOf(context).bottom}',
+    );
     // Card 780px on wide desktop, 580px at <=1500px (both right-aligned);
     // centered on tablets; transparent full-width strip on phones.
     final cardWidth = width > 1500 ? 780.0 : 580.0;
