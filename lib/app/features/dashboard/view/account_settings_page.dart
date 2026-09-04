@@ -537,15 +537,13 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                 // static source. See `_selectedStateName`'s own
                                 // comment for why picking a new value here isn't
                                 // sent on Save yet.
+                                // State has no update path (never sent on Save),
+                                // so it stays disabled even in edit mode.
                                 _StateFieldRow(
                                   value: _selectedStateName,
                                   isEditing: _isEditing,
-                                  onChanged:
-                                      _isEditing
-                                          ? (name) => setState(
-                                            () => _selectedStateName = name,
-                                          )
-                                          : null,
+                                  disabled: true,
+                                  onChanged: null,
                                 ),
                                 _FieldRow(
                                   label: 'Location',
@@ -608,10 +606,15 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                 // Division/Department/Cost Code/Supervisor Name/
                                 // Supervisor Email only — "Employee ID" doesn't
                                 // exist anywhere in `account.php`, removed.
+                                // Cost Code, Supervisor Name/Email have no update
+                                // path (absent from PUT user-profile) — disabled
+                                // even in edit mode, like the web's
+                                // disabled/readonly inputs.
                                 _FieldRow(
                                   label: 'Cost Code',
                                   value: user.costCode,
                                   isEditing: _isEditing,
+                                  disabled: true,
                                 ),
                                 // Web: supervisor firstname/lastname inputs; the
                                 // login API carries the supervisor as username +
@@ -620,11 +623,13 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                   label: 'Supervisor Name',
                                   value: loginExtras?.supervisor?.username,
                                   isEditing: _isEditing,
+                                  disabled: true,
                                 ),
                                 _FieldRow(
                                   label: 'Supervisor Email',
                                   value: loginExtras?.supervisor?.email,
                                   isEditing: _isEditing,
+                                  disabled: true,
                                 ),
                               ],
                             ),
@@ -1716,6 +1721,7 @@ class _FieldRow extends StatefulWidget {
     this.value,
     this.controller,
     this.isEditing = false,
+    this.disabled = false,
   });
   final String label;
   final String? value;
@@ -1725,6 +1731,10 @@ class _FieldRow extends StatefulWidget {
   // instead of grey read-only-looking ones. Grey is only for true
   // read-only (page not editing).
   final bool isEditing;
+  // True for fields with no update path (State, Cost Code, Supervisor
+  // Name/Email — absent from PUT user-profile) — rendered grey and
+  // non-interactive even in edit mode, like the web's disabled inputs.
+  final bool disabled;
 
   @override
   State<_FieldRow> createState() => _FieldRowState();
@@ -1815,8 +1825,14 @@ class _FieldRowState extends State<_FieldRow> {
             : Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
+                // Bootstrap .form-control:disabled grey; forced for
+                // no-update-path rows even mid-editing.
                 color:
-                    widget.isEditing ? Colors.white : const Color(0xFFF9FAFB),
+                    widget.disabled
+                        ? const Color(0xFFE9ECEF)
+                        : widget.isEditing
+                        ? Colors.white
+                        : const Color(0xFFF9FAFB),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
               ),
@@ -1826,7 +1842,9 @@ class _FieldRowState extends State<_FieldRow> {
                     : 'Not provided',
                 style: TextStyle(
                   color:
-                      (widget.value ?? '').trim().isNotEmpty
+                      widget.disabled
+                          ? const Color(0xFF6B7280)
+                          : (widget.value ?? '').trim().isNotEmpty
                           ? const Color(0xFF4B5563)
                           : const Color(0xFF9CA3AF),
                   fontSize: 15,
@@ -1877,6 +1895,7 @@ class _StateFieldRow extends StatefulWidget {
     required this.value,
     required this.isEditing,
     required this.onChanged,
+    this.disabled = false,
   });
 
   final String? value;
@@ -1885,6 +1904,10 @@ class _StateFieldRow extends StatefulWidget {
   /// Null (not just a no-op) while not editing, so the field renders
   /// non-interactive rather than merely un-tappable-looking.
   final ValueChanged<String>? onChanged;
+
+  /// True when the field has no update path — grey and non-interactive
+  /// even in edit mode (State is never sent on Save).
+  final bool disabled;
 
   @override
   State<_StateFieldRow> createState() => _StateFieldRowState();
@@ -1916,20 +1939,30 @@ class _StateFieldRowState extends State<_StateFieldRow> {
     final field = HoverBuilder(
       builder:
           (context, hovering) => InkWell(
-            onTap: widget.isEditing ? () => _open(context) : null,
+            onTap:
+                !widget.disabled && widget.isEditing
+                    ? () => _open(context)
+                    : null,
             borderRadius: BorderRadius.circular(10),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color:
-                    widget.isEditing ? Colors.white : const Color(0xFFF9FAFB),
+                    widget.disabled
+                        ? const Color(0xFFE9ECEF)
+                        : widget.isEditing
+                        ? Colors.white
+                        : const Color(0xFFF9FAFB),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color:
-                      widget.isEditing && hovering
+                      !widget.disabled && widget.isEditing && hovering
                           ? _asPurple
                           : const Color(0xFFD1D5DB),
-                  width: widget.isEditing && hovering ? 1.5 : 1,
+                  width:
+                      !widget.disabled && widget.isEditing && hovering
+                          ? 1.5
+                          : 1,
                 ),
               ),
               child: Row(
@@ -1938,14 +1971,19 @@ class _StateFieldRowState extends State<_StateFieldRow> {
                     child: Text(
                       hasValue ? widget.value! : 'Select State',
                       style: TextStyle(
-                        color: hasValue ? const Color(0xFF4B5563) : _asMuted,
+                        color:
+                            widget.disabled
+                                ? const Color(0xFF6B7280)
+                                : hasValue
+                                ? const Color(0xFF4B5563)
+                                : _asMuted,
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
                         height: 1.5,
                       ),
                     ),
                   ),
-                  if (widget.isEditing) ...[
+                  if (widget.isEditing && !widget.disabled) ...[
                     const SizedBox(width: 8),
                     const Icon(
                       Icons.keyboard_arrow_down_rounded,
