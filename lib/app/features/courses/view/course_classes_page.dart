@@ -1809,6 +1809,10 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             label: 'Recording',
             icon: Icons.videocam_rounded,
             courseClass: null,
+            // Full-width like the sibling action buttons (Details / Attend
+            // Class / Watch Recording): solid trigger + expanded Play row
+            // with the delete circle pinned at the end.
+            fullWidth: true,
             builder:
                 (ctx, file) => VideoContentViewer(
                   file: file,
@@ -1878,6 +1882,8 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             label: _downloadLabel(item.typeCode),
             icon: Icons.videocam_rounded,
             courseClass: null,
+            // Full-width like every other action button on this screen.
+            fullWidth: true,
             builder:
                 (ctx, file) => VideoContentViewer(
                   file: file,
@@ -1891,6 +1897,8 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             label: _downloadLabel(item.typeCode),
             icon: Icons.picture_as_pdf_rounded,
             courseClass: null,
+            // Full-width like every other action button on this screen.
+            fullWidth: true,
             builder: (ctx, file) => PdfContentViewer(file: file),
           ),
       // Certificate (typeCode '12') has no downloadUrl at all - the API
@@ -1904,6 +1912,8 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
           label: 'Certificate',
           icon: Icons.workspace_premium_rounded,
           courseClass: null,
+          // Full-width like every other action button on this screen.
+          fullWidth: true,
           builder: (ctx, file) => CertificateContentViewer(file: file),
         ),
     ];
