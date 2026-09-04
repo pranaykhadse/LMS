@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' show ImageFilter;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -2183,8 +2184,10 @@ class _OnlineActionButton extends ConsumerWidget {
     // — padding 8px 16px (was 12 horizontal only), radius 10 (was 8),
     // 13px/weight600 (was 12.5/700), min-height 38 (was 32), shadow
     // 0 2px 4px rgba(0,0,0,.02) (was none).
-    return HoverBuilder(
-      builder: (context, hovering) {
+    return _CourseActionHeightLogger(
+      title: label,
+      child: HoverBuilder(
+        builder: (context, hovering) {
         final hoverActive = hovering && isOnline;
         return Container(
           constraints: const BoxConstraints(minHeight: 38),
@@ -2277,8 +2280,45 @@ class _OnlineActionButton extends ConsumerWidget {
                     ),
           );
         },
+      ),
     );
   }
+}
+
+class _CourseActionHeightLogger extends StatefulWidget {
+  const _CourseActionHeightLogger({required this.title, required this.child});
+  final String title;
+  final Widget child;
+  @override
+  State<_CourseActionHeightLogger> createState() =>
+      _CourseActionHeightLoggerState();
+}
+
+class _CourseActionHeightLoggerState extends State<_CourseActionHeightLogger> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _log());
+  }
+
+  @override
+  void didUpdateWidget(covariant _CourseActionHeightLogger oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _log());
+  }
+
+  void _log() {
+    if (!kDebugMode || !mounted) return;
+    final box = context.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize) {
+      debugPrint(
+        '[BTN_HEIGHT] ${widget.title} => h=${box.size.height.toStringAsFixed(1)} w=${box.size.width.toStringAsFixed(1)}',
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// The generic course-structure action button (e.g. "Agreement", "Launch

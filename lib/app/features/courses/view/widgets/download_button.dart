@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -223,24 +224,27 @@ class _DownloadTriggerButton extends StatelessWidget {
     // Download button is dimension-identical to them. A bare button works
     // in both parent layouts: the phone Column stretches it full-width,
     // the tablet/desktop Wrap gives it a natural width.
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(Icons.download_outlined, size: 14, color: primary),
-      label: Text("Download $label"),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: primary,
-        side: BorderSide(color: primary),
-        backgroundColor: Colors.transparent,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        minimumSize: const Size(0, 38),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        elevation: 0,
-        textStyle: GoogleFonts.inter(
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+    return _DebugHeight(
+      title: 'Download $label',
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(Icons.download_outlined, size: 14, color: primary),
+        label: Text("Download $label"),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primary,
+          side: BorderSide(color: primary),
+          backgroundColor: Colors.transparent,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          minimumSize: const Size(0, 38),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          elevation: 0,
+          textStyle: GoogleFonts.inter(
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       ),
     );
@@ -382,70 +386,75 @@ class _DownloadedRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
         ),
       );
-      return Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: onOpen,
-              icon: Icon(playIcon, size: 14),
-              label: Text(playLabel),
-              style: matchHeight,
+      return _DebugHeight(
+        title: playLabel,
+        child: Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: onOpen,
+                icon: Icon(playIcon, size: 14),
+                label: Text(playLabel),
+                style: matchHeight,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Tooltip(
-            message: "Remove offline copy",
-            child: InkWell(
-              onTap: onDelete,
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.red.shade300),
-                ),
-                child: Icon(
-                  Icons.delete_outline_rounded,
-                  size: 18,
-                  color: Colors.red.shade400,
+            const SizedBox(width: 8),
+            Tooltip(
+              message: "Remove offline copy",
+              child: InkWell(
+                onTap: onDelete,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.red.shade300),
+                  ),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 18,
+                    color: Colors.red.shade400,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
-    return Wrap(
-      spacing: 6,
-      runSpacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        // Same button spec as the sibling _OnlineActionButton (Attend Class
-        // / Watch Recording) — padding 16/8, min-height 38, radius 10,
-        // 13px/600 Inter, icon 14 — solid purple. The delete circle is a
-        // separate trailing element and doesn't affect the button's own
-        // dimensions, so Play looks identical to the other action buttons.
-        ElevatedButton.icon(
-          onPressed: onOpen,
-          icon: Icon(playIcon, size: 14),
-          label: Text(playLabel),
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: primary,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            minimumSize: const Size(0, 38),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            elevation: 0,
-            textStyle: GoogleFonts.inter(
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+    return _DebugHeight(
+      title: playLabel,
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          // Same button spec as the sibling _OnlineActionButton (Attend Class
+          // / Watch Recording) — padding 16/8, min-height 38, radius 10,
+          // 13px/600 Inter, icon 14 — solid purple. The delete circle is a
+          // separate trailing element and doesn't affect the button's own
+          // dimensions, so Play looks identical to the other action buttons.
+          ElevatedButton.icon(
+            onPressed: onOpen,
+            icon: Icon(playIcon, size: 14),
+            label: Text(playLabel),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: primary,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: const Size(0, 38),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              elevation: 0,
+              textStyle: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
-        ),
         Tooltip(
           message: "Remove offline copy",
           child: InkWell(
@@ -466,8 +475,45 @@ class _DownloadedRow extends StatelessWidget {
           ),
         ),
       ],
+      ),
     );
   }
+}
+
+// ── Debug helper: prints the rendered button height with its title ────────
+class _DebugHeight extends StatefulWidget {
+  const _DebugHeight({required this.title, required this.child});
+  final String title;
+  final Widget child;
+  @override
+  State<_DebugHeight> createState() => _DebugHeightState();
+}
+
+class _DebugHeightState extends State<_DebugHeight> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _log());
+  }
+
+  @override
+  void didUpdateWidget(covariant _DebugHeight oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _log());
+  }
+
+  void _log() {
+    if (!kDebugMode || !mounted) return;
+    final box = context.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize) {
+      debugPrint(
+        '[BTN_HEIGHT] ${widget.title} => h=${box.size.height.toStringAsFixed(1)} w=${box.size.width.toStringAsFixed(1)}',
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
