@@ -826,16 +826,21 @@ class _FilterPanelState extends State<_FilterPanel> {
           onSubmitted: (_) => onApply(),
         );
 
-        // CSS ref: Strategic Imperative input — same style as search
+        // CSS ref: Strategic Imperative input — same style as search.
+        // Per explicit request, every filter field shows the same
+        // "You're offline" placeholder as the search box (not just its
+        // own name) whenever offline, matching that field's disabled
+        // treatment instead of just being non-interactive while still
+        // showing its normal label.
         final strategicField = _CatalogField(
-          hint: 'Strategic Imperative',
+          hint: offline ? "You're offline" : 'Strategic Imperative',
           showLeadingIcon: true,
           enabled: !offline,
         );
 
         // CSS ref: Competencies input — same style as search
         final competenciesField = _CatalogField(
-          hint: 'Competencies',
+          hint: offline ? "You're offline" : 'Competencies',
           showLeadingIcon: true,
           enabled: !offline,
         );
@@ -850,6 +855,7 @@ class _FilterPanelState extends State<_FilterPanel> {
           skills: skills,
           value: selectedSkillId,
           onChanged: onSkillChanged,
+          enabled: !offline,
         );
 
         // CSS ref: undo-btn — bg-[#f1f5f9] text-[#64748b] rounded-[12px] h-[42px] w-[30%]
@@ -1605,10 +1611,16 @@ class _SkillDropdown extends StatefulWidget {
     required this.skills,
     required this.value,
     required this.onChanged,
+    this.enabled = true,
   });
   final List<CatalogSkill> skills;
   final String? value;
   final ValueChanged<String?> onChanged;
+
+  /// Matches every other filter field's offline handling: disabled and
+  /// showing "You're offline" in place of its normal placeholder, rather
+  /// than staying interactive while the other fields beside it don't.
+  final bool enabled;
 
   @override
   State<_SkillDropdown> createState() => _SkillDropdownState();
@@ -1663,9 +1675,10 @@ class _SkillDropdownState extends State<_SkillDropdown> {
         }.values.toList();
     final selected = _selectedSkill(unique, widget.value);
 
+    final enabled = widget.enabled;
     final field = InkWell(
       onTap:
-          unique.isEmpty
+          !enabled || unique.isEmpty
               ? null
               : () =>
                   _open
@@ -1685,38 +1698,42 @@ class _SkillDropdownState extends State<_SkillDropdown> {
           // default to top-aligned within the forced 42px box.
           textAlignVertical: TextAlignVertical.center,
           decoration: _fieldDecoration(
-            'Skills or Behavior',
+            enabled ? 'Skills or Behavior' : "You're offline",
             showLeadingIcon: true, // CSS ref: fa-search prefix icon
           ).copyWith(
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (selected != null)
-                  IconButton(
-                    tooltip: 'Clear',
-                    onPressed: () {
-                      widget.onChanged(null);
-                      _removeOverlay();
-                    },
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      color: Color(0xFF94A3B8),
-                      size: 18,
+            enabled: enabled,
+            suffixIcon:
+                !enabled
+                    ? null
+                    : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (selected != null)
+                          IconButton(
+                            tooltip: 'Clear',
+                            onPressed: () {
+                              widget.onChanged(null);
+                              _removeOverlay();
+                            },
+                            icon: const Icon(
+                              Icons.close_rounded,
+                              color: Color(0xFF94A3B8),
+                              size: 18,
+                            ),
+                          ),
+                        Icon(
+                          _open
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
+                          color: const Color(0xFF94A3B8),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                     ),
-                  ),
-                Icon(
-                  _open
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  color: const Color(0xFF94A3B8),
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
           ),
           child: Text(
-            selected?.name ?? 'Skills or Behavior',
+            enabled ? (selected?.name ?? 'Skills or Behavior') : '',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(

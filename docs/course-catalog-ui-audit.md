@@ -5855,3 +5855,32 @@ so a bare digit string is all this field should ever hold.
 **Verification**: `dart format` + `flutter analyze` on both files — 0
 issues. Full-project `flutter analyze` — 43 issues (current baseline,
 unchanged).
+
+## Follow-up: Course Catalog filter panel — every field disables and shows "You're offline" now, not just Search
+
+**Report**: screenshot of the Course Catalog filter panel while
+offline — only the "Search" field showed "You're offline" as its
+placeholder; "Strategic Imperative", "Competencies", and "Skills or
+Behavior" still showed their normal labels and (for "Skills or
+Behavior" specifically) stayed fully interactive.
+
+**Fix**: `lib/app/features/courses/view/courses_page.dart`'s
+`_FilterPanelState.build()`:
+- `strategicField`/`competenciesField` — hint now
+  `offline ? "You're offline" : '<field name>'`, matching the search
+  field's own existing pattern (both already had `enabled: !offline`,
+  just not the matching placeholder text).
+- `_SkillDropdown` — gained a new `enabled` param (defaults `true`),
+  wired to `!offline` at its one call site. Previously had no offline
+  awareness at all: `onTap` disabled when `!enabled` (on top of the
+  existing empty-list guard), its `InputDecoration` gets
+  `enabled: false` and its hint swaps to "You're offline", the
+  clear/chevron suffix icons are hidden, and its label text is blanked
+  out while disabled — matching the other three fields' disabled
+  presentation instead of staying fully interactive.
+
+**Verification**: `dart format` + `flutter analyze` on
+`courses_page.dart` — 2 issues, both pre-existing baseline
+(`_catalogUndoBlue` unused, unused `response` local), no new ones.
+Full-project `flutter analyze` — 43 issues (current baseline,
+unchanged).
