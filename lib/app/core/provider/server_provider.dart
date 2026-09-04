@@ -19,7 +19,20 @@ class ServerProvider {
   static final repoConfigProvider = Provider<RepoNetworkConfig>((ref) {
     return RepoNetworkConfig(
       url: ref.watch(serverUrl),
-      authToken: ref.watch(AuthStateNotifier.provider)?.token,
+      // Deliberately `.select((s) => s?.token)` rather than watching the
+      // whole AuthStateNotifier: the token string is all the network layer
+      // needs, and watching the whole notifier rebuilt every repo/viewmodel
+      // that depends on this config on ANY AuthState change — including an
+      // avatar upload, which syncs a new profile via
+      // AuthStateNotifier.updateProfile() (a fresh AuthState identity even
+      // though the token itself is unchanged). That rebuild tears down and
+      // recreates the currently-open Account Settings viewmodel, whose
+      // fresh fetch() can then flash the whole screen to the "Unable to
+      // load your profile" error. Selecting only the token means repos only
+      // rebuild when the token actually changes (login/logout/token-refresh).
+      authToken: ref.watch(
+        AuthStateNotifier.provider.select((s) => s?.token),
+      ),
       connectionProvider: ref.watch(InternetConnectionProvider.provider),
       requestCacheProvider: ref.watch(RequestCacheProvider.provider),
       // Deliberately ref.read (not watch) via a live closure, not a frozen
