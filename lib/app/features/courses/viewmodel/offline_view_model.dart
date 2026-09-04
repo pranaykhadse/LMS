@@ -68,12 +68,10 @@ class OfflineViewModel extends ChangeNotifier {
       );
       notifyListeners();
 
-      if (kDebugMode) debugPrint('[OfflineViewModel] download(${course.id}): fetching class list…');
       // Save the course + lesson metadata first (legacy allcourse/events +
       // roster pipeline - kept for the offline course list/metadata index
       // this populates, see repository.getCachedClasses/getCachedCourses).
       final classes = await repository.download(course);
-      if (kDebugMode) debugPrint('[OfflineViewModel] download(${course.id}): got ${classes.length} classes');
 
       // The actual course page (course_classes_page.dart) is built
       // entirely on join-course-detail, not on allcourse/events - and
@@ -88,9 +86,7 @@ class OfflineViewModel extends ChangeNotifier {
       // this once here also happens to warm join-course-detail's own
       // offline cache (see CourseJoinDetailRepository.fetch), which is
       // what actually lets the course page open with no connection at all.
-      if (kDebugMode) debugPrint('[OfflineViewModel] download(${course.id}): fetching join-course-detail…');
       final detail = await _fetchJoinDetail(course.id);
-      if (kDebugMode) debugPrint('[OfflineViewModel] download(${course.id}): join-course-detail ${detail == null ? 'FAILED/null' : 'ok (${detail.structures.length} items)'}');
 
       // Then download every lesson's actual content (video/PDF/article/
       // agreement/peer-coaching/recording) too - a "saved offline" course
@@ -106,13 +102,20 @@ class OfflineViewModel extends ChangeNotifier {
       // while already offline, with nothing cached for it yet either) -
       // better to grab whatever those had than nothing.
       for (final c in classes) {
-        if (_validUrl(c.classInfo?.videoUploadUrl)) urls.add(c.classInfo!.videoUploadUrl!);
-        if (_validUrl(c.classInfo?.articleFile)) urls.add(c.classInfo!.articleFile!);
-        if (_validUrl(c.classInfo?.peerCoachingFile)) urls.add(c.classInfo!.peerCoachingFile!);
+        if (_validUrl(c.classInfo?.videoUploadUrl)) {
+          urls.add(c.classInfo!.videoUploadUrl!);
+        }
+        if (_validUrl(c.classInfo?.articleFile)) {
+          urls.add(c.classInfo!.articleFile!);
+        }
+        if (_validUrl(c.classInfo?.peerCoachingFile)) {
+          urls.add(c.classInfo!.peerCoachingFile!);
+        }
         if (_validUrl(c.scannedPdf)) urls.add(c.scannedPdf!);
         urls.addAll(c.recordingUrls.where(_validUrl));
       }
-      final pgUrl = detail?.participantGuide ?? course.participantGuideFile?.toString();
+      final pgUrl =
+          detail?.participantGuide ?? course.participantGuideFile?.toString();
       final wmUrl = course.wrapMethodologyFile?.toString();
       if (_validUrl(pgUrl)) urls.add(pgUrl!);
       if (_validUrl(wmUrl)) urls.add(wmUrl!);
@@ -123,20 +126,16 @@ class OfflineViewModel extends ChangeNotifier {
 
       _progress[course.id ?? -1] = _CourseDownloadProgress(
         completed: 0,
-        total: urls.isEmpty && certificates.isEmpty
-            ? 1
-            : urls.length + certificates.length,
+        total:
+            urls.isEmpty && certificates.isEmpty
+                ? 1
+                : urls.length + certificates.length,
       );
       notifyListeners();
 
-      if (kDebugMode) {
-        debugPrint('[OfflineViewModel] download(${course.id}): ${urls.length} file(s) + '
-            '${certificates.length} certificate(s) queued');
-      }
       final fileVM = ref.read(FileCacheViewModel.provider);
       var completed = 0;
       for (final url in urls) {
-        if (kDebugMode) debugPrint('[OfflineViewModel] download(${course.id}): downloading $url');
         await fileVM.downloadFile(url);
         completed++;
         _progress[course.id ?? -1]?.completed = completed;
@@ -156,7 +155,8 @@ class OfflineViewModel extends ChangeNotifier {
         title: 'Download Failed',
         message:
             "Couldn't save '${course.name ?? 'this course'}' for offline access.",
-        idSuffix: 'failed-${course.id}-${DateTime.now().millisecondsSinceEpoch}',
+        idSuffix:
+            'failed-${course.id}-${DateTime.now().millisecondsSinceEpoch}',
       );
       rethrow;
     } finally {
@@ -168,7 +168,8 @@ class OfflineViewModel extends ChangeNotifier {
     _notifyDownload(
       title: 'Download Complete',
       message: "'${course.name ?? 'Course'}' is now available offline.",
-      idSuffix: 'complete-${course.id}-${DateTime.now().millisecondsSinceEpoch}',
+      idSuffix:
+          'complete-${course.id}-${DateTime.now().millisecondsSinceEpoch}',
     );
     _fetch();
   }
@@ -181,7 +182,9 @@ class OfflineViewModel extends ChangeNotifier {
     required String message,
     required String idSuffix,
   }) {
-    ref.read(NotificationsViewModel.provider.notifier).addLocal(
+    ref
+        .read(NotificationsViewModel.provider.notifier)
+        .addLocal(
           NotificationItem(
             id: 'download-$idSuffix',
             title: title,
@@ -236,7 +239,8 @@ class OfflineViewModel extends ChangeNotifier {
     }
 
     // Delete course-level PDFs.
-    final pgUrl = detail?.participantGuide ?? course.participantGuideFile?.toString();
+    final pgUrl =
+        detail?.participantGuide ?? course.participantGuideFile?.toString();
     final wmUrl = course.wrapMethodologyFile?.toString();
     if (_validUrl(pgUrl)) {
       fileVM.delete(pgUrl!);

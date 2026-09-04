@@ -47,13 +47,6 @@ class AccountSettingsRepository with RepoNetworkHelper {
     );
     final json =
         raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
-    if (kDebugMode) {
-      // Temporary: checking whether country_iso round-trips through a save.
-      debugPrint(
-        '[AccountSettingsRepository] GET user-profile/$userId -> '
-        'country_code=${json['country_code']}, country_iso=${json['country_iso']}',
-      );
-    }
     return UserProfileDetail.fromJson(json);
   }
 
@@ -61,13 +54,6 @@ class AccountSettingsRepository with RepoNetworkHelper {
     required int userId,
     required Map<String, dynamic> body,
   }) async {
-    if (kDebugMode) {
-      // Temporary: checking whether country_iso round-trips through a save.
-      debugPrint(
-        '[AccountSettingsRepository] PUT user-profile/$userId body '
-        'country_code=${body['country_code']}, country_iso=${body['country_iso']}',
-      );
-    }
     try {
       final raw = await put(
         'user-profile/$userId',
@@ -76,14 +62,6 @@ class AccountSettingsRepository with RepoNetworkHelper {
       );
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
-      if (kDebugMode) {
-        debugPrint(
-          '[AccountSettingsRepository] PUT response: '
-          'status=${data['status']}, message=${data['message']}, '
-          'country_code=${data['country_code']}, country_iso=${data['country_iso']}, '
-          'payload=${data['payload']}',
-        );
-      }
       if (data['status']?.toString() == '0') {
         return AccountSettingsUpdateResult(
           success: false,
@@ -109,28 +87,11 @@ class AccountSettingsRepository with RepoNetworkHelper {
     required String filename,
   }) async {
     try {
-      if (kDebugMode) {
-        debugPrint(
-          '[AccountSettingsRepository] POST user-profile/upload-avatar '
-          'filename=$filename bytes=${bytes.length}',
-        );
-      }
       final raw = await post(
         'user-profile/upload-avatar',
         data: {'avatar': MultipartFile.fromBytes(bytes, filename: filename)},
         cacheType: RequestCacheType.none,
       );
-      if (kDebugMode) {
-        // The exact server response — the toast only ever showed the top-
-        // level `message`, which can be a generic fallback string that
-        // hides the actual reason (a validation error on a specific
-        // field, a size/type limit, an auth issue, ...). Logging the
-        // whole raw body surfaces whatever detail the server actually
-        // sent back.
-        debugPrint(
-          '[AccountSettingsRepository] upload-avatar raw response: $raw',
-        );
-      }
       final data =
           raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
       if (data['status']?.toString() == '0') {
@@ -149,23 +110,7 @@ class AccountSettingsRepository with RepoNetworkHelper {
         avatarPath: payload['avatar_path']?.toString(),
         avatarBaseUrl: payload['avatar_base_url']?.toString(),
       );
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('[AccountSettingsRepository] upload-avatar threw: $e');
-        // A DioException's own `.response` (status code + server body) is
-        // the actual diagnostic payload for an HTTP-level failure (4xx/5xx,
-        // a validation error body, ...) — `e.toString()` alone usually
-        // only says "DioException [bad response]: ...", not what the
-        // server actually said.
-        if (e is DioException) {
-          debugPrint(
-            '[AccountSettingsRepository] upload-avatar DioException: '
-            'type=${e.type} statusCode=${e.response?.statusCode} '
-            'responseData=${e.response?.data}',
-          );
-        }
-        debugPrint('[AccountSettingsRepository] upload-avatar stack: $st');
-      }
+    } catch (e) {
       return AvatarUploadResult(success: false, message: e.toString());
     }
   }

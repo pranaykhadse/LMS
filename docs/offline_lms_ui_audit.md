@@ -5909,3 +5909,32 @@ icon:
 `item_inventory_page.dart` — 1 issue, pre-existing baseline (unused
 `_perPage` field), no new ones. Full-project `flutter analyze` — 43
 issues (current baseline, unchanged).
+
+## Follow-up: removed debug prints/logs ahead of App Store deployment
+
+**Report**: "Remove prints/logs within the application as we had to move
+to deploy it to app store."
+
+**Fix**: stripped every remaining `debugPrint`/`kDebugMode`-gated
+diagnostic call left over from earlier debugging passes in this audit
+(none were ever `print()` directly — a full-repo grep for bare `print(`
+came back empty both before and after):
+- `lib/app/features/dashboard/repository/account_settings_repository.dart`
+  — removed the `country_code`/`country_iso` round-trip logging in
+  `fetch()`/`update()`, the request/response/exception logging added for
+  the avatar-upload investigation in `uploadAvatar()` (including the
+  `DioException`-specific branch), and the now-unused `kDebugMode`
+  checks. `dio`/`foundation` imports both still needed (`MultipartFile`,
+  `Uint8List`) — left in place.
+- `lib/app/features/courses/viewmodel/offline_view_model.dart` — removed
+  every `[OfflineViewModel] download(...)` progress log inside
+  `download()`. Reformatting after their removal left three
+  `if (...) urls.add(...)` statements without braces, which
+  `flutter analyze` flagged as new `curly_braces_in_flow_control_structures`
+  info-lints — added braces to keep the file at zero *new* issues rather
+  than leaving them as fresh lint noise.
+
+**Verification**: `dart format` + `flutter analyze` on both files — 0
+issues in either. Full-project `flutter analyze` — 43 issues (current
+baseline, unchanged). Full-repo grep for `debugPrint(`/`print(` — no
+matches left anywhere in `lib/`.
