@@ -78,19 +78,31 @@ class SignInPage extends ConsumerWidget {
       backgroundColor: _loginBg,
       body: Stack(
         children: [
-          // body.login background — same treatment on all breakpoints
-          // (web parity): full-width scene anchored to the bottom. The
-          // source art is very wide (1440x495), so it renders as a compact
-          // band with the lavender page bg above it, exactly like the site.
-          Positioned.fill(
-            child: Align(
-              alignment: Alignment.bottomCenter,
+          // body.login background — desktop/tablet keep web parity
+          // (full-width scene anchored bottom). On phones the scene fills
+          // the whole screen top to bottom (BoxFit.cover): uniform 1.77x
+          // scale on a 402x874 phone, sides center-cropped (the lighthouse
+          // sits near the art's horizontal center, so it survives the
+          // crop), bottom row pinned so purple meets the screen edge. No
+          // distortion — the price is the zoom, inherent to fitting 2.9:1
+          // art on a 1:2.2 screen.
+          if (phone)
+            Positioned.fill(
               child: Assets.images.loginBg.image(
-                width: width,
-                fit: BoxFit.fitWidth,
+                fit: BoxFit.cover,
+                alignment: Alignment.bottomCenter,
+              ),
+            )
+          else
+            Positioned.fill(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Assets.images.loginBg.image(
+                  width: width,
+                  fit: BoxFit.fitWidth,
+                ),
               ),
             ),
-          ),
           SafeArea(
             child:
                 phone
