@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -2345,6 +2346,15 @@ class _PhoneFieldRowState extends State<_PhoneFieldRow> {
                         child: TextField(
                           controller: widget.controller,
                           keyboardType: TextInputType.phone,
+                          // Country code/dial prefix is its own separate
+                          // picker beside this field, so this box should
+                          // only ever hold the bare local number - blocked
+                          // at input time rather than only stripped on
+                          // save, so a formatted paste ((201) 552-1423)
+                          // can't even land in the field to begin with.
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           style: const TextStyle(
                             color: _asInk,
                             fontSize: 15,

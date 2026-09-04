@@ -5830,3 +5830,28 @@ expects here — no formatting was ever meaningful to keep.
 **Verification**: `dart format` + `flutter analyze` on both files — 0
 issues. Full-project `flutter analyze` — 43 issues (current baseline,
 unchanged).
+
+## Follow-up: "View" underline removed; phone number field now blocks non-digit input
+
+**Report**: "1. Don't show underline as well under View. 2. Don't allow
+special characters in phone number input box."
+
+**Fix 1** — `redeem_history_page.dart`: removed the
+`TextDecoration.underline`/`decorationColor` from the "View" link's
+`TextStyle`, per this explicit follow-up — plain white text now, no
+pill (from the prior follow-up) and no underline either.
+
+**Fix 2** — `account_settings_page.dart`'s `_PhoneFieldRow`: added
+`inputFormatters: [FilteringTextInputFormatter.digitsOnly]` to the
+phone number `TextField`. The previous follow-up only stripped
+formatting characters at save time (and at parse time for
+API-supplied values) — this blocks them at the INPUT level too, so a
+user typing or pasting a formatted number ("(201) 552-1423") can't
+even get those characters into the field to begin with, rather than
+having them silently stripped later. `country_code`/`country_iso`
+remain their own separate fields (a dedicated picker beside this one),
+so a bare digit string is all this field should ever hold.
+
+**Verification**: `dart format` + `flutter analyze` on both files — 0
+issues. Full-project `flutter analyze` — 43 issues (current baseline,
+unchanged).

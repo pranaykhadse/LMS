@@ -318,15 +318,9 @@ class _RedeemedItemCard extends StatelessWidget {
                 // CSS ref: .content-block1 h2 — 20px/weight400/lh20
                 // (18px at max-width:640px), white, 2-line clamp,
                 // margin-bottom 15, padding-right 10.
-                // "View" — a live screenshot of the real site shows a
-                // plain underlined white text link here, not a pill: no
-                // border, no fill, no shadow. A prior pass built it as a
-                // bordered/shadowed pill straight from this component's
-                // static CSS, but that reading is superseded by the live
-                // evidence — matches the same plain-underlined-link
-                // pattern this page's own "Redeem Points" link already
-                // uses (see `_TitleRow`), just in white instead of gray
-                // since this sits on the purple card, not the white page.
+                // "View" — plain white text, no pill (border/fill/shadow
+                // all removed per a live screenshot of the real site) and
+                // no underline either, per explicit follow-up request.
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -354,8 +348,6 @@ class _RedeemedItemCard extends StatelessWidget {
                               color: Colors.white,
                               fontSize: 15,
                               height: 18 / 15,
-                              decoration: TextDecoration.underline,
-                              decorationColor: Colors.white,
                             ),
                           ),
                         ),
