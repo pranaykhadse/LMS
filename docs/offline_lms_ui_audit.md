@@ -6124,3 +6124,63 @@ down to.
 **Verification**: `dart format` + `flutter analyze` on `course_classes_page.dart`
 - 4 issues, all pre-existing baseline. Full-project `flutter analyze` -
 43 issues (current baseline, unchanged).
+
+## Follow-up: Cancel Registration now uses the server's own gating flag
+
+**Report**: "And what about progress?" - follow-up on the previous
+Cancel Registration fix, which re-derived the 50% cutoff client-side from
+`progressPercentage`.
+
+**Investigation**: traced the actual REST API backing this screen
+(`api/modules/v1/controllers/API/user/LmsScreenController.php`, distinct
+from the legacy `joinCourse.php` web view used for the earlier launches-box
+comparisons) and found it already computes and returns exactly this
+decision server-side:
+```php
+$courseProgress = ModelsCourse::getCourseStatus($userId, $courseId);
+$canCancelRegistration = $isUserEnrolled && $courseProgress < 50;
+// ...
+'action_buttons' => [
+    'can_enroll' => $canEnroll,
+    'can_cancel_registration' => $canCancelRegistration,
+    'registration_limit_reached' => $registrationLimitReached,
+    'course_progress_percentage' => $courseProgress,
+],
+```
+None of `can_enroll` / `can_cancel_registration` / `registration_limit_reached`
+were being parsed by `CourseJoinDetail` at all - the previous fix's
+client-side `progressPercentage >= 0.5` check happened to agree with the
+server's flag (both trace back to the same `getCourseStatus` call) but was
+an indirect re-derivation rather than reading the authoritative flag the
+server already hands over.
+
+Also surfaced, but NOT fixed (flagging for a decision, not a clear bug):
+the pre-enrollment status pill's percentage ring has no real data source
+in this REST API at all. The legacy web view's pre-enrollment pill
+percentage (`$percentage = floor(registeredCount / max_registrations *
+100)`, a seats-booked ratio) is purely a `backend/controllers/CourseController.php`
+rendering detail for the old Yii2 page - this REST API's `booking_status`
+only exposes a boolean-derived Open/Closed (`$isOpen = !($maxReg > 0 &&
+$registeredCount >= $maxReg)`), no percentage number. Our app's
+pre-enrollment pill currently shows `progressPercentage` (from
+`course_progress_percentage`, which is the *completion* status field and
+is literally the string `"Not Enrolled"` pre-enrollment) - it reads 0%
+only because parsing that non-numeric string silently falls back to 0.0,
+not because that's a real seats-booked percentage. Since the REST API
+doesn't expose the data needed to compute the real metric, this can't be
+exactly matched without a backend change; left as-is (showing 0%) pending
+a decision on whether to hide the percentage number pre-enrollment instead.
+
+**Fix**: added `CourseJoinDetail.canCancelRegistration` (nullable bool,
+parsed from `action_buttons.can_cancel_registration` via new helper
+`_actionButtonsBool`) in
+`lib/app/features/courses/model/course_join_detail.dart`. `_actionSlot()`
+in `lib/app/features/courses/view/course_classes_page.dart` now reads
+`detail.canCancelRegistration ?? (detail.progressPercentage < 0.5)` -
+preferring the server's own flag, falling back to the percentage
+heuristic only if a payload without `action_buttons` is ever parsed by
+this model elsewhere.
+
+**Verification**: `dart format` + `flutter analyze` on both touched files
+- 6 issues, all pre-existing baseline. Full-project `flutter analyze` -
+43 issues (current baseline, unchanged).

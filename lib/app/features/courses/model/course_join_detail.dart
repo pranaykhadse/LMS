@@ -16,6 +16,7 @@ class CourseJoinDetail {
     required this.progressPercentage,
     required this.primaryAction,
     required this.isEnrolled,
+    this.canCancelRegistration,
     required this.allowRating,
     required this.displayRating,
     required this.averageRating,
@@ -46,6 +47,13 @@ class CourseJoinDetail {
   final double progressPercentage; // 0.0 to 1.0
   final String primaryAction;
   final bool isEnrolled;
+  // API ref: `action_buttons.can_cancel_registration` - the server's own
+  // `$courseProgress < 50` check (LmsScreenController.php), authoritative
+  // over re-deriving the same 50% cutoff client-side from
+  // [progressPercentage]. Null when the payload this was parsed from
+  // doesn't carry an `action_buttons` object at all - callers should fall
+  // back to the progressPercentage-based heuristic in that case.
+  final bool? canCancelRegistration;
   final bool allowRating;
   // CSS/markup ref, confirmed against `origin/staging`'s
   // _rating_summary.php: `.average-rating-section` shows the star rating +
@@ -233,6 +241,10 @@ class CourseJoinDetail {
       primaryAction:
           actionLabel ?? (isEnrolled ? 'Cancel Registration' : 'Enroll Now'),
       isEnrolled: isEnrolled,
+      canCancelRegistration: _actionButtonsBool(
+        root,
+        'can_cancel_registration',
+      ),
       allowRating: _asBool(
         _firstValue(root, course, const ['allow_rating', 'allowRating']),
       ),
@@ -822,6 +834,17 @@ DateTime? _combineDateAndTime(String dateStr, String timeStr) {
     minute,
     second,
   ).toLocal();
+}
+
+/// Reads a boolean flag off `payload.action_buttons`, e.g.
+/// `can_cancel_registration` / `can_enroll` / `registration_limit_reached`.
+/// Null when there's no `action_buttons` object or the key isn't in it -
+/// distinct from `false`, so callers can tell "server said no" apart from
+/// "this payload didn't carry the flag at all" and fall back accordingly.
+bool? _actionButtonsBool(Map<String, dynamic> root, String key) {
+  final ab = root['action_buttons'];
+  if (ab is! Map || !ab.containsKey(key)) return null;
+  return _asBool(ab[key]);
 }
 
 double _progressPercent(

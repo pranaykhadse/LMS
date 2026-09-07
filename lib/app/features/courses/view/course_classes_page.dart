@@ -940,7 +940,14 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   /// on) stands in for that server-side check.
   Widget _actionSlot() {
     final detail = widget.detail;
-    if (detail.isEnrolled && detail.progressPercentage >= 0.5) {
+    // API ref: `action_buttons.can_cancel_registration` is the server's own
+    // `$courseProgress < 50` check - authoritative over re-deriving the
+    // same cutoff from progressPercentage client-side. Only falls back to
+    // the percentage heuristic when the payload didn't carry that flag at
+    // all (canCancelRegistration null).
+    final canCancel =
+        detail.canCancelRegistration ?? (detail.progressPercentage < 0.5);
+    if (detail.isEnrolled && !canCancel) {
       // CSS ref: `#launches-haad .flex-item-4 p` — 14px/weight600/#EF4444
       // (red) — shared by this text and the "met your registration limit"
       // message at the top of this same conditional on the real site.
