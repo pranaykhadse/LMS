@@ -5,13 +5,16 @@
 	<!-- Manual App Store export pinned to the one distribution certificate
 	     that the portal's Team Store profile actually lists (259B692C…).
 	     Background: this Mac holds TWO "Apple Distribution: Shawn Snyder"
-	     identities; Xcode's automatic export signed with FF90F2B3… while
-	     embedding a profile that lists 259B692C… -> App Store Connect
-	     rejected it with "Missing code-signing certificate" (409). With
-	     manual signing + explicit profile, xcodebuild can only pick the
+	     identities and the Mac login password is unavailable, so the
+	     duplicate cannot be deleted from the keychain. Instead, the portal
+	     holds a manually-managed profile named exactly "LMS App Store
+	     Manual" that lists ONLY the 259B692C… certificate. With manual
+	     signing + that explicit profile, xcodebuild can only pick the
 	     listed, locally-installed certificate, so signature and profile
-	     always agree. uploadSymbols=false keeps the Tahoe openrsync -E
-	     workaround from ExportOptions.plist (same reason). -->
+	     always agree (this was failing with "Missing code-signing
+	     certificate" (409) under automatic signing). uploadSymbols=false
+	     keeps the Tahoe openrsync -E workaround from ExportOptions.plist
+	     (same reason). -->
 	<key>method</key>
 	<string>app-store</string>
 	<key>teamID</key>
@@ -23,7 +26,7 @@
 	<key>provisioningProfiles</key>
 	<dict>
 		<key>live.leadershipedge.app</key>
-		<string>iOS Team Store Provisioning Profile: live.leadershipedge.app</string>
+		<string>LMS App Store Manual</string>
 	</dict>
 	<key>destination</key>
 	<string>export</string>
