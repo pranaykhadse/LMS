@@ -79,18 +79,28 @@ class MyApp extends StatelessWidget {
             children: [
               child!,
               Positioned.fill(
-                child: Navigator(
-                  key: rootNavigatorKey,
-                  onGenerateRoute:
-                      (settings) => PageRouteBuilder(
-                        settings: settings,
-                        opaque: false,
-                        transitionDuration: Duration.zero,
-                        reverseTransitionDuration: Duration.zero,
-                        pageBuilder:
-                            (context, _, __) =>
-                                const IgnorePointer(child: SizedBox.expand()),
-                      ),
+                // Every Navigator installs its own default HeroController
+                // unless told not to - two Navigators both trying to own
+                // one (this one and Modular's own internal one for the
+                // actual routed content) throws "A HeroController can not
+                // be shared by multiple Navigators" the moment either
+                // tries to run a page transition. This Navigator only
+                // ever hosts dialogs, which don't use Hero animations, so
+                // it doesn't need one at all.
+                child: HeroControllerScope.none(
+                  child: Navigator(
+                    key: rootNavigatorKey,
+                    onGenerateRoute:
+                        (settings) => PageRouteBuilder(
+                          settings: settings,
+                          opaque: false,
+                          transitionDuration: Duration.zero,
+                          reverseTransitionDuration: Duration.zero,
+                          pageBuilder:
+                              (context, _, __) =>
+                                  const IgnorePointer(child: SizedBox.expand()),
+                        ),
+                  ),
                 ),
               ),
             ],

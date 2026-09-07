@@ -6445,3 +6445,30 @@ and renders through to the login screen with no console errors - could
 not verify the dialog's full-screen coverage specifically since that
 screen sits behind login and verifying it would have meant submitting
 browser-autofilled credentials, which wasn't done.
+
+## Follow-up: HeroController crash from the previous fix
+
+**Report**: Thunder Client + VS Code terminal screenshot showing
+`flutter run` throwing "A HeroController can not be shared by multiple
+Navigators" immediately on startup, right after the root-navigator fix
+above landed.
+
+**Root cause**: every `Navigator` widget installs its own default
+`HeroController` unless told not to (for Hero-tag page-transition
+animations). The new wrapping `Navigator` added in the previous follow-up
+(purely to host full-screen dialogs) and Modular's own internal Navigator
+(for the actual routed app content) both ended up trying to own a
+`HeroController`, which Flutter explicitly rejects the moment either
+Navigator runs a page transition.
+
+**Fix**: wrapped the new `Navigator` in `HeroControllerScope.none(...)`
+(`lib/main.dart`) - it only ever hosts dialogs, which don't use Hero
+animations, so it has no need for one at all.
+
+**Verification**: `dart format` + `flutter analyze` on `main.dart` - 0
+issues. Full-project `flutter analyze` - 43 issues (current baseline,
+unchanged). Re-ran the same live smoke test as the previous follow-up
+(`flutter run -d chrome`) - confirmed the app now boots and renders
+through to login with no HeroController exception and no other console
+errors (only harmless residual DWDS dev-tooling websocket messages from
+the previously-stopped server instance).
