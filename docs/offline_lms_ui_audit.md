@@ -6472,3 +6472,41 @@ unchanged). Re-ran the same live smoke test as the previous follow-up
 through to login with no HeroController exception and no other console
 errors (only harmless residual DWDS dev-tooling websocket messages from
 the previously-stopped server instance).
+
+## Follow-up: reverted the root-navigator fix - it made the whole app non-interactive
+
+**Report**: "Nothing is interactive" - after the HeroController fix, the
+entire app stopped responding to any clicks/taps at all.
+
+**Root cause**: the wrapping `Navigator` added to fix the dialog-barrier-
+coverage issue sat in a `Stack` above the real routed app content
+(`child!`). Despite its own base route being an `IgnorePointer`-wrapped
+placeholder (intended to be non-blocking), something in that
+Navigator/Overlay layer ended up intercepting hit-testing for the entire
+screen, silently swallowing every tap before it could reach the real
+content underneath. My own verification of the previous two follow-ups
+only ever took screenshots - it never actually clicked anything, so this
+regression went undetected until real usage caught it.
+
+**Fix**: fully reverted the root-navigator approach -
+`lib/main.dart` back to a plain `MaterialApp.router(routerConfig:
+Modular.routerConfig, ...)` with no custom `builder`/wrapping Navigator;
+deleted the now-unused `lib/app/core/navigation/root_navigator.dart`;
+`reviews_modal.dart`'s `showReviewsModal` back to using the local
+`context` directly. This means the ORIGINAL issue this whole detour was
+trying to fix (the reviews modal's dark backdrop not covering the
+persistent header/nav bar, since `/home` is a nested flutter_modular
+module with its own routing scope) is UNRESOLVED again - left as a known,
+documented cosmetic limitation rather than risk another broad regression
+with an insufficiently-tested fix. A real fix would need a more careful,
+properly-interaction-tested approach to app-wide dialog routing.
+
+**Verification**: `dart format` + `flutter analyze` on both touched
+files - 0 issues. Full-project `flutter analyze` - 43 issues (current
+baseline, unchanged). This time actually verified interactivity live
+(not just screenshots) via `flutter run -d chrome`: clicked the "Keep me
+signed in" checkbox on the login screen and confirmed it visibly toggled
+(and revealed background art that was conditionally hidden, proving a
+real state change occurred), then clicked "Sign up" and confirmed it
+actually navigated to a new screen - both prove real interactivity is
+restored app-wide.
