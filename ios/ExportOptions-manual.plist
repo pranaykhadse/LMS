@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Manual App Store export pinned to the one distribution certificate
+	     that the portal's Team Store profile actually lists (259B692C…).
+	     Background: this Mac holds TWO "Apple Distribution: Shawn Snyder"
+	     identities; Xcode's automatic export signed with FF90F2B3… while
+	     embedding a profile that lists 259B692C… -> App Store Connect
+	     rejected it with "Missing code-signing certificate" (409). With
+	     manual signing + explicit profile, xcodebuild can only pick the
+	     listed, locally-installed certificate, so signature and profile
+	     always agree. uploadSymbols=false keeps the Tahoe openrsync -E
+	     workaround from ExportOptions.plist (same reason). -->
+	<key>method</key>
+	<string>app-store</string>
+	<key>teamID</key>
+	<string>K82H7C692L</string>
+	<key>signingStyle</key>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>live.leadershipedge.app</key>
+		<string>iOS Team Store Provisioning Profile: live.leadershipedge.app</string>
+	</dict>
+	<key>destination</key>
+	<string>export</string>
+	<key>uploadSymbols</key>
+	<false/>
+	<key>stripSwiftSymbols</key>
+	<true/>
+</dict>
+</plist>
