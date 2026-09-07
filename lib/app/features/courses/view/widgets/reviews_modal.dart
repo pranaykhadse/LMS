@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
+import 'package:lms/app/core/navigation/root_navigator.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
 import 'package:lms/app/features/courses/repository/reviews_repository.dart';
 
@@ -25,7 +26,17 @@ void showReviewsModal(
   required int courseId,
 }) {
   showDialog<void>(
-    context: context,
+    // `/home` is a nested flutter_modular child module (see
+    // root_navigator.dart), so the default `useRootNavigator: true`
+    // lookup from a context inside it can't reach the app's true
+    // outermost Navigator — the barrier ended up sized to that module's
+    // own routed viewport, leaving the persistent header/nav bar outside
+    // it undimmed (confirmed via a live screenshot). Anchoring on the
+    // root navigator's own context sidesteps that module boundary
+    // entirely, so the given [context] is only used as a fallback for
+    // the (practically impossible) case where the root key isn't
+    // attached yet.
+    context: rootNavigatorKey.currentContext ?? context,
     // CSS ref: this is a plain Bootstrap `.modal.fade.show`, whose backdrop
     // is the generic `.modal-backdrop` (background rgb(0,0,0)) +
     // `.modal-backdrop.show { opacity: .5 }` — solid black at 50%. (The

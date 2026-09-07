@@ -6392,3 +6392,56 @@ baseline, unchanged) - confirming the four existing `showReviewsModal`
 call sites (`courses_page.dart`, `course_classes_page.dart`,
 `enrolled_courses_page.dart`, `required_courses_page.dart`) still compile
 against the unchanged public signature.
+
+## Follow-up: reviews-modal dialog wasn't dimming the full screen
+
+**Report**: screenshots (mobile + desktop) of the reviews modal showing
+the dark backdrop only covering the page content - the persistent
+header/nav bar (and, on desktop, the Course Catalog filter bar) stayed
+fully bright/undimmed above the dialog, instead of the whole screen
+darkening.
+
+**Root cause**: `AppModule` registers `/home` as a nested flutter_modular
+child *module* (`r.module(home, module: CoursesModule())`,
+`lib/app_module.dart:18`), which gives that module its own internal
+routing scope/Navigator (created by Modular's `RouterDelegate`). Calling
+`showDialog` from anywhere inside that module - which is everywhere
+`MainShell`/`CoursesPage`/etc. live - only ever finds that module's own
+Navigator via `useRootNavigator: true` (Flutter's ancestor walk can't
+cross that routing boundary to reach anything above it), so the modal
+barrier is sized to that module's own routed viewport, not the physical
+screen. This is a structural issue, not specific to the reviews modal -
+any dialog opened from inside the home/courses module would have the
+same problem.
+
+**Fix**:
+- New `lib/app/core/navigation/root_navigator.dart` - a `rootNavigatorKey`
+  (`GlobalKey<NavigatorState>`) for the app's one true outermost
+  Navigator.
+- `lib/main.dart` - `MaterialApp.router` doesn't expose a `navigatorKey`
+  param alongside `routerConfig`, so used its `builder` callback instead
+  to add one extra, permanent Navigator above everything, purely to host
+  full-screen dialogs. The routed app content (`child`) is rendered as a
+  normal `Stack` sibling (always current on every rebuild) - NOT baked
+  into this Navigator's own route, since `onGenerateRoute` only fires
+  once when a Navigator first mounts; a route capturing `child` in a
+  closure would freeze on whatever screen was showing at that moment and
+  never reflect subsequent navigation. This Navigator's own base route is
+  a permanent, empty, `IgnorePointer`-wrapped placeholder instead (so it
+  never blocks taps meant for the real content underneath); dialogs
+  pushed on top of it later are unaffected by that and stay fully
+  interactive.
+- `reviews_modal.dart` - `showReviewsModal` now opens its `showDialog`
+  against `rootNavigatorKey.currentContext` (falling back to the passed
+  `context` only if that key isn't attached yet), bypassing the
+  home/courses module's own routing scope entirely.
+
+**Verification**: `dart format` + `flutter analyze` on all three touched
+files - 0 issues. Full-project `flutter analyze` - 43 issues (current
+baseline, unchanged). Given this touches app bootstrap/routing (higher
+blast radius than a leaf-level UI change), also ran a live smoke test:
+started the app via `flutter run -d chrome`, confirmed it boots cleanly
+and renders through to the login screen with no console errors - could
+not verify the dialog's full-screen coverage specifically since that
+screen sits behind login and verifying it would have meant submitting
+browser-autofilled credentials, which wasn't done.
