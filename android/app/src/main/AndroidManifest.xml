@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for all network access in release builds (APIs, images,
+         downloads). Debug/profile manifests already declare it, but the
+         merged release manifest had no INTERNET permission. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="lms"
         android:name="${applicationName}"
