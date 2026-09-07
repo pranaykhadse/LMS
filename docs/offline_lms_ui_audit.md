@@ -6681,3 +6681,53 @@ states.
 **Verification**: `dart format` + `flutter analyze` on all three touched
 files - 0 issues. Full-project `flutter analyze` - 43 issues (baseline,
 unchanged).
+
+## Follow-up: 2026-09-07 - Notification Type is actually editable (live evidence overturns the static "disabled" markup)
+
+**Report**: "What about notification type? It's not editable" - followed
+by a live screenshot of the real Account page: Slack selected (purple
+highlight), and a live "Enter your slack email" input visible beneath
+the radio list, with a hover outline on "Text Message(SMS)" too.
+
+**Investigation**: the real page's PHP source
+(`backend/views/sign-in/account.php`) marks every notification-type
+radio - and every one of its five channel-specific inputs
+(`text_phone_number`, `whatsapp_phone_number`, `email_options`,
+`slack_email`, `teams_email`) - `disabled=true readonly=true`, which is
+why this app had always rendered that section read-only. But the
+screenshot shows it genuinely working live, the same kind of
+static-source-vs-live-evidence conflict State had earlier (and live
+evidence wins per this project's standing rule). Checked the data layer
+too: `notification_type` and all five channel fields are declared
+`safe` (mass-assignable) on `common\models\UserProfile` - the very same
+model/table the base profile fields already update through this app's
+existing PUT call - so there's a real, confirmed save path, not just a
+guess.
+
+**Fix**:
+- `_notificationOptions` (`account_settings_page.dart`) is now a list of
+  `(key, label)` records matching the real `AccountForm[notification_type]`
+  radioList's keys exactly (`email`/`slack`/`teams`/`text`/`whatsapp`),
+  replacing the old label-substring matching.
+- New `_selectedNotificationType` state field + five new controllers
+  (`_notifTextPhoneCtrl`/`_notifWhatsappPhoneCtrl`/`_notifEmailOptionsCtrl`/
+  `_notifSlackEmailCtrl`/`_notifTeamsEmailCtrl`), initialized from the
+  corresponding `UserProfile` fields (all of which the model already
+  fetched from GET but never had a save path for).
+- `_RadioRow`s for Notification Type now get a real `onTap` while
+  editing (was always `null`); tapping one updates
+  `_selectedNotificationType`.
+- The single channel-specific box beneath the list (`_PlainValueBox`,
+  which gained a `controller`/`hintText` param to become a real editable
+  `TextField` instead of always-static text) now switches on the
+  selected key, matching the real page's five separate
+  `text-options`/`whatsapp-options`/`email-options`/`slack-options`/
+  `teams-options` blocks (only one shown at a time).
+- `AccountSettingsViewModel.update()` takes the six new params, sends
+  them in the PUT body under their real keys, and folds them into the
+  local `updatedProfile` so the screen (and the app-wide cached profile
+  via the existing `updateProfile()` sync) reflect the edit immediately.
+
+**Verification**: `dart format` + `flutter analyze` on both touched
+files - 0 issues. Full-project `flutter analyze` - 43 issues (baseline,
+unchanged).

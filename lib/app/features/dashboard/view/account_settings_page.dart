@@ -139,10 +139,24 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   late final TextEditingController _costCodeCtrl;
   late final TextEditingController _supervisorNameCtrl;
   late final TextEditingController _supervisorEmailCtrl;
+  late final TextEditingController _notifTextPhoneCtrl;
+  late final TextEditingController _notifWhatsappPhoneCtrl;
+  late final TextEditingController _notifEmailOptionsCtrl;
+  late final TextEditingController _notifSlackEmailCtrl;
+  late final TextEditingController _notifTeamsEmailCtrl;
   String? _countryCode;
   String? _countryIso;
   bool _enableTwoFactorAuth = false;
   int? _selectedPrimaryGroupId;
+
+  // Web ref: backend/views/sign-in/account.php - `disabled=true readonly=true`
+  // on every notification-type radio in the PHP source, but a live
+  // screenshot shows them genuinely selectable (Slack selected, its "Enter
+  // your slack email" input live) - trusting that live evidence over the
+  // static source, same as State's own disabled flag being overturned
+  // earlier. Holds one of _notificationOptions' keys ('email'/'slack'/
+  // 'teams'/'text'/'whatsapp').
+  String? _selectedNotificationType;
 
   // Picking a new state from _StatePickerDialog sets both of these
   // together (the id straight from the picked StateOption, not derived
@@ -175,12 +189,28 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _supervisorEmailCtrl = TextEditingController(
       text: loginExtras?.supervisor?.email ?? '',
     );
+    _notifTextPhoneCtrl = TextEditingController(
+      text: p.textPhoneNumber?.toString() ?? '',
+    );
+    _notifWhatsappPhoneCtrl = TextEditingController(
+      text: p.whatsappPhoneNumber?.toString() ?? '',
+    );
+    _notifEmailOptionsCtrl = TextEditingController(
+      text: p.emailOptions?.toString() ?? '',
+    );
+    _notifSlackEmailCtrl = TextEditingController(
+      text: p.slackEmail?.toString() ?? '',
+    );
+    _notifTeamsEmailCtrl = TextEditingController(
+      text: p.teamsEmail?.toString() ?? '',
+    );
     _countryCode = p.countryCode?.toString();
     _countryIso = p.countryIso?.toString();
     _selectedStateId = loginExtras?.stateId;
     _selectedStateName = loginExtras?.stateName;
     _enableTwoFactorAuth = u.enableTwoFactorAuth == 1;
     _selectedPrimaryGroupId = u.primaryGroup ?? loginExtras?.user?.primaryGroup;
+    _selectedNotificationType = p.notificationType?.toString();
   }
 
   @override
@@ -197,6 +227,11 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _costCodeCtrl.dispose();
     _supervisorNameCtrl.dispose();
     _supervisorEmailCtrl.dispose();
+    _notifTextPhoneCtrl.dispose();
+    _notifWhatsappPhoneCtrl.dispose();
+    _notifEmailOptionsCtrl.dispose();
+    _notifSlackEmailCtrl.dispose();
+    _notifTeamsEmailCtrl.dispose();
     super.dispose();
   }
 
@@ -216,12 +251,18 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _costCodeCtrl.text = u.costCode ?? '';
     _supervisorNameCtrl.text = loginExtras?.supervisor?.username ?? '';
     _supervisorEmailCtrl.text = loginExtras?.supervisor?.email ?? '';
+    _notifTextPhoneCtrl.text = p.textPhoneNumber?.toString() ?? '';
+    _notifWhatsappPhoneCtrl.text = p.whatsappPhoneNumber?.toString() ?? '';
+    _notifEmailOptionsCtrl.text = p.emailOptions?.toString() ?? '';
+    _notifSlackEmailCtrl.text = p.slackEmail?.toString() ?? '';
+    _notifTeamsEmailCtrl.text = p.teamsEmail?.toString() ?? '';
     _countryCode = p.countryCode?.toString();
     _countryIso = p.countryIso?.toString();
     _selectedStateId = loginExtras?.stateId;
     _selectedStateName = loginExtras?.stateName;
     _enableTwoFactorAuth = u.enableTwoFactorAuth == 1;
     _selectedPrimaryGroupId = u.primaryGroup ?? loginExtras?.user?.primaryGroup;
+    _selectedNotificationType = p.notificationType?.toString();
   }
 
   void _startEditing() => setState(() => _isEditing = true);
@@ -320,6 +361,12 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           enableTwoFactorAuth: _enableTwoFactorAuth,
           stateId: _selectedStateId,
           stateName: _selectedStateName,
+          notificationType: _selectedNotificationType,
+          textPhoneNumber: _notifTextPhoneCtrl.text.trim(),
+          whatsappPhoneNumber: _notifWhatsappPhoneCtrl.text.trim(),
+          emailOptions: _notifEmailOptionsCtrl.text.trim(),
+          slackEmail: _notifSlackEmailCtrl.text.trim(),
+          teamsEmail: _notifTeamsEmailCtrl.text.trim(),
         );
     if (!mounted) return;
     setState(() {
@@ -347,7 +394,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
       profile.lastname,
     ].where((s) => (s ?? '').trim().isNotEmpty).join(' ');
     final notificationTypeSelection =
-        (profile.notificationType?.toString() ?? '').toLowerCase();
+        (_selectedNotificationType ?? '').toLowerCase();
 
     // Per explicit request: the footer should span the full window width
     // on every screen, like the header above it. It was the last child
@@ -781,6 +828,19 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                               ),
                             ),
                             // ── Notification Type ─────────────────────────────────
+                            // Web: backend/views/sign-in/account.php marks every
+                            // radio + its channel input `disabled=true readonly=true`
+                            // in the PHP source, but a live screenshot shows them
+                            // genuinely selectable (Slack selected, its own "Enter
+                            // your slack email" box live and editable) - trusting
+                            // that live evidence over the static source, the same
+                            // way State's own disabled flag was overturned earlier.
+                            // API ref: notification_type/text_phone_number/
+                            // whatsapp_phone_number/email_options/slack_email/
+                            // teams_email are all `UserProfile` "safe" attributes
+                            // (common/models/UserProfile.php) - the same base
+                            // update path the rest of this page's profile fields
+                            // already use.
                             _SectionBlock(
                               icon: Icons.notifications_rounded,
                               title: 'Notification Type',
@@ -788,32 +848,70 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                               spacing: 12,
                               children: [
                                 ..._notificationOptions.map(
-                                  (label) => _RadioRow(
-                                    label: label,
-                                    selected: notificationTypeSelection
-                                        .contains(
-                                          label.split(' ').first.toLowerCase(),
-                                        ),
+                                  (opt) => _RadioRow(
+                                    label: opt.label,
+                                    selected:
+                                        notificationTypeSelection == opt.key,
+                                    onTap:
+                                        _isEditing
+                                            ? () => setState(
+                                              () =>
+                                                  _selectedNotificationType =
+                                                      opt.key,
+                                            )
+                                            : null,
                                   ),
                                 ),
-                                // The number that channel actually sends to - only shown
-                                // once that channel is selected, matching the reference.
-                                if (notificationTypeSelection.contains(
-                                      'text',
-                                    ) ||
-                                    notificationTypeSelection.contains('sms'))
-                                  _PlainValueBox(
+                                // The channel-specific box the real site shows
+                                // beneath the list - only the one matching the
+                                // current selection.
+                                switch (notificationTypeSelection) {
+                                  'text' => _PlainValueBox(
                                     value: profile.textPhoneNumber?.toString(),
                                     isEditing: _isEditing,
-                                  )
-                                else if (notificationTypeSelection.contains(
-                                  'whatsapp',
-                                ))
-                                  _PlainValueBox(
+                                    controller:
+                                        _isEditing ? _notifTextPhoneCtrl : null,
+                                    hintText: 'Enter your phone number',
+                                  ),
+                                  'whatsapp' => _PlainValueBox(
                                     value:
                                         profile.whatsappPhoneNumber?.toString(),
                                     isEditing: _isEditing,
+                                    controller:
+                                        _isEditing
+                                            ? _notifWhatsappPhoneCtrl
+                                            : null,
+                                    hintText: 'Enter your whatsapp number',
                                   ),
+                                  'email' => _PlainValueBox(
+                                    value: profile.emailOptions?.toString(),
+                                    isEditing: _isEditing,
+                                    controller:
+                                        _isEditing
+                                            ? _notifEmailOptionsCtrl
+                                            : null,
+                                    hintText: 'Enter your email',
+                                  ),
+                                  'slack' => _PlainValueBox(
+                                    value: profile.slackEmail?.toString(),
+                                    isEditing: _isEditing,
+                                    controller:
+                                        _isEditing
+                                            ? _notifSlackEmailCtrl
+                                            : null,
+                                    hintText: 'Enter your slack email',
+                                  ),
+                                  'teams' => _PlainValueBox(
+                                    value: profile.teamsEmail?.toString(),
+                                    isEditing: _isEditing,
+                                    controller:
+                                        _isEditing
+                                            ? _notifTeamsEmailCtrl
+                                            : null,
+                                    hintText: 'Enter your teams email',
+                                  ),
+                                  _ => const SizedBox.shrink(),
+                                },
                               ],
                             ),
                             const SizedBox(height: 16),
@@ -916,12 +1014,15 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   }
 }
 
+// Web ref: backend/views/sign-in/account.php's `notification_type`
+// radioList - same keys/labels/order as the real `AccountForm[notification_type]`
+// field.
 const _notificationOptions = [
-  'Email',
-  'Slack',
-  'Teams',
-  'Text Message(SMS)',
-  'WhatsApp',
+  (key: 'email', label: 'Email'),
+  (key: 'slack', label: 'Slack'),
+  (key: 'teams', label: 'Teams'),
+  (key: 'text', label: 'Text Message(SMS)'),
+  (key: 'whatsapp', label: 'WhatsApp'),
 ];
 
 class _ProfileHeaderCard extends StatelessWidget {
@@ -2896,14 +2997,54 @@ class _ToggleRow extends StatelessWidget {
 /// Plain full-width value box with no label - used for the phone number
 /// tied to the currently-selected notification channel (Text/WhatsApp).
 class _PlainValueBox extends StatelessWidget {
-  const _PlainValueBox({this.value, this.isEditing = false});
+  const _PlainValueBox({
+    this.value,
+    this.isEditing = false,
+    this.controller,
+    this.hintText,
+  });
   final String? value;
   // White while the page is being edited (matches the editable inputs);
   // grey only in true read-only mode.
   final bool isEditing;
 
+  /// Non-null (and isEditing true) switches this to a real TextField -
+  /// same controller-driven convention as [_FieldRow].
+  final TextEditingController? controller;
+  final String? hintText;
+
   @override
   Widget build(BuildContext context) {
+    final ctrl = controller;
+    if (ctrl != null && isEditing) {
+      return TextField(
+        controller: ctrl,
+        style: const TextStyle(
+          color: _asInk,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          height: 1.5,
+        ),
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: const TextStyle(color: _asMuted),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 12,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: _asPurple, width: 1.5),
+          ),
+        ),
+      );
+    }
     final hasValue = (value ?? '').trim().isNotEmpty;
     return Container(
       width: double.infinity,
@@ -2930,10 +3071,10 @@ class _RadioRow extends StatelessWidget {
   const _RadioRow({required this.label, required this.selected, this.onTap});
   final String label;
   final bool selected;
-  // Null (not just a no-op) while this radio isn't selectable (Notification
-  // Type - still no update path; the Primary Group fallback case with no
-  // group list to switch between), so it renders non-interactive rather
-  // than merely un-tappable-looking.
+  // Null (not just a no-op) while this radio isn't selectable (not
+  // currently editing, or the Primary Group fallback case with no group
+  // list to switch between), so it renders non-interactive rather than
+  // merely un-tappable-looking.
   final VoidCallback? onTap;
 
   @override

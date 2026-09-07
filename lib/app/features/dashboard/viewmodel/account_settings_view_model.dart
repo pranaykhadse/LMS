@@ -117,6 +117,20 @@ class AccountSettingsViewModel
     // data back.
     int? stateId,
     String? stateName,
+    // notification_type/text_phone_number/whatsapp_phone_number/
+    // email_options/slack_email/teams_email are all `UserProfile` "safe"
+    // attributes (common/models/UserProfile.php) - the same mass-
+    // assignable set the base profile fields above already go through.
+    // The PHP source marks the whole Notification Type block
+    // `disabled=true readonly=true`, but a live screenshot showed it's
+    // actually editable - see account_settings_page.dart's Notification
+    // Type section comment for that evidence.
+    String? notificationType,
+    String? textPhoneNumber,
+    String? whatsappPhoneNumber,
+    String? emailOptions,
+    String? slackEmail,
+    String? teamsEmail,
   }) async {
     final current = state.data;
     if (userId == null || current == null) {
@@ -154,6 +168,14 @@ class AccountSettingsViewModel
       body['enable_two_factor_auth'] = enableTwoFactorAuth;
     }
     if (stateId != null) body['state_id'] = stateId;
+    if (notificationType != null) body['notification_type'] = notificationType;
+    if (textPhoneNumber != null) body['text_phone_number'] = textPhoneNumber;
+    if (whatsappPhoneNumber != null) {
+      body['whatsapp_phone_number'] = whatsappPhoneNumber;
+    }
+    if (emailOptions != null) body['email_options'] = emailOptions;
+    if (slackEmail != null) body['slack_email'] = slackEmail;
+    if (teamsEmail != null) body['teams_email'] = teamsEmail;
     final result = await repository.update(userId: userId!, body: body);
     if (!result.success) {
       return result.message ?? 'Unable to save your changes. Please try again.';
@@ -169,6 +191,12 @@ class AccountSettingsViewModel
       avatarPath: avatarUrl,
       countryCode: countryCode,
       countryIso: countryIso,
+      notificationType: notificationType,
+      textPhoneNumber: textPhoneNumber,
+      whatsappPhoneNumber: whatsappPhoneNumber,
+      emailOptions: emailOptions,
+      slackEmail: slackEmail,
+      teamsEmail: teamsEmail,
     );
     final updatedUser = current.user.copyWith(
       email: email,
