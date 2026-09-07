@@ -6220,3 +6220,36 @@ of the two. Removed the now-unnecessary wrapping `Column` around the
 **Verification**: `dart format` + `flutter analyze` on
 `course_classes_page.dart` - 4 issues, all pre-existing baseline.
 Full-project `flutter analyze` - 43 issues (current baseline, unchanged).
+
+## Follow-up: blank countdown boxes were taller than the real site's
+
+**Report**: "The difference in height and width" - follow-up on the
+blank-digit countdown box review, pointing at a real visible size
+mismatch between two near-identical screenshots (course id 138,
+"Introduction to Cultural Bridges") that my prior code-level review had
+missed.
+
+**Root cause**: `_TimeBox`'s digit slot used `Text('')` when `value` is
+null. Flutter's `Text` widget always reserves its style's full line
+height for an empty string - but the real site's `<span id="days">` etc.
+is a genuinely empty `display: block` element with zero content (not even
+a placeholder), which generates no line box at all and collapses to 0
+height in real browsers. So the real box visibly shrinks when blank,
+while ours stayed exactly as tall as the populated state - a real,
+measurable difference this session's earlier code-only comparison
+(matching padding/border/radius/shadow/min-width values) didn't catch,
+since none of those properties differ between states - only the
+content-driven height does. The perceived "width" difference was the same
+root cause: a shorter, more compact box reads as differently
+proportioned even though the box's actual width property (fixed 60/50px)
+never changed.
+
+**Fix**: `_TimeBox` (`lib/app/features/courses/view/course_classes_page.dart`)
+now renders `SizedBox.shrink()` instead of `Text('')` for the digit slot
+when `value` is null, collapsing that slot to true zero height and
+letting the box shrink to just its padding + the 2px gap + the label,
+matching the real site's collapsed empty-span behavior.
+
+**Verification**: `dart format` + `flutter analyze` on
+`course_classes_page.dart` - 4 issues, all pre-existing baseline.
+Full-project `flutter analyze` - 43 issues (current baseline, unchanged).

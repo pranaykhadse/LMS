@@ -2597,15 +2597,27 @@ class _TimeBox extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            value == null ? '' : value!.toString().padLeft(2, '0'),
-            style: GoogleFonts.inter(
-              color: _detailPurple,
-              fontSize: phone ? 15 : 18,
-              fontWeight: FontWeight.w700,
-              height: 1.1,
-            ),
-          ),
+          // Web ref: `<span id="days"></span>` etc. with `display: block` —
+          // a truly empty block-level element (no text at all, not even a
+          // placeholder) generates no line box and collapses to 0 height in
+          // real browsers, shrinking the whole box when blank. A Flutter
+          // `Text('')` doesn't behave the same way - it still reserves the
+          // style's full line height for an empty string - so a bare
+          // `Text('')` here left the box just as tall as the populated
+          // state instead of visibly shrinking to match. SizedBox.shrink()
+          // reproduces the real collapse.
+          if (value != null)
+            Text(
+              value.toString().padLeft(2, '0'),
+              style: GoogleFonts.inter(
+                color: _detailPurple,
+                fontSize: phone ? 15 : 18,
+                fontWeight: FontWeight.w700,
+                height: 1.1,
+              ),
+            )
+          else
+            const SizedBox.shrink(),
           const SizedBox(height: 2),
           Text(
             label,
