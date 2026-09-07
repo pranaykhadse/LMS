@@ -1077,7 +1077,13 @@ class _ProfileHeaderCard extends StatelessWidget {
   final TextEditingController emailController;
   final bool isUploadingAvatar;
   final VoidCallback onPickAvatar;
-  final bool isDeletingAvatar;
+  // Nullable on purpose: `isDeletingAvatar` was added to this widget in
+  // commit 368ca4b, hot-reloaded web (DDC) sessions that were alive
+  // before that change can still hold a stale `_ProfileHeaderCard`
+  // instance whose field was never assigned — a non-null `bool` then
+  // crashes the rebuild with `null is not a subtype of bool`. Guard all
+  // reads with `?? false`.
+  final bool? isDeletingAvatar;
   final VoidCallback onDeleteAvatar;
   final VoidCallback onEdit;
   final VoidCallback onCancel;
@@ -1093,7 +1099,7 @@ class _ProfileHeaderCard extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         _Avatar(url: profile.avatarUrl),
-        if (isUploadingAvatar || isDeletingAvatar)
+        if (isUploadingAvatar || (isDeletingAvatar ?? false))
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -1121,7 +1127,7 @@ class _ProfileHeaderCard extends StatelessWidget {
               // (`updateAvatarBadge()`/`.delete-mode` in account.php) -
               // not two separate badges.
               final hasAvatar = profile.avatarUrl.isNotEmpty;
-              final busy = isUploadingAvatar || isDeletingAvatar;
+              final busy = isUploadingAvatar || (isDeletingAvatar ?? false);
               return Positioned(
                 right: 5,
                 bottom: 5,
