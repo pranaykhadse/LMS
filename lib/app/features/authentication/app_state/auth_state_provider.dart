@@ -135,6 +135,8 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     String? supervisorEmail,
     int? primaryGroupId,
     bool? enableTwoFactorAuth,
+    int? stateId,
+    String? stateName,
   }) async {
     final current = state;
     if (current == null) return;
@@ -155,6 +157,8 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     final updated = current.copyWith(
       user: updatedUser,
       supervisor: updatedSupervisor,
+      stateId: stateId,
+      stateName: stateName,
     );
     state = updated;
     await storage.setString("session_data", updated.toRawJson());

@@ -6571,3 +6571,36 @@ longer the blocker, only the missing mapping data is.
 files - 1 issue, pre-existing baseline (an unrelated empty catch block,
 confirmed via `git diff` untouched by this change). Full-project
 `flutter analyze` - 43 issues (current baseline, unchanged).
+
+## Follow-up: State field now updatable too, using a fixed alphabetical id
+
+**Report**: "Apply universal id to state. I mean, whatever the id of
+state is fixed, just use them" - explicit instruction to stop blocking
+State on the missing id-mapping data and just use a fixed/standard
+mapping instead.
+
+**Mapping applied**: `state_id` = 1-based alphabetical position in the
+app's existing `kUsStates` list. This isn't a guess pulled from nowhere -
+the Swagger doc's own example (`"state_id": 27`) lands exactly on
+"Nebraska", the 27th entry in that already-alphabetical list, confirming
+this app's list order matches the real `state` table's seeding order.
+
+**Fix**:
+- `stateIdForName(String? name)` (`account_settings_page.dart`) - new
+  helper, `kUsStates.indexOf(name) + 1`.
+- `_StateFieldRow` - dropped the `disabled: true` gate; now opens the
+  picker and updates `_selectedStateName` like every other editable
+  field. Its now-dead `disabled` param was removed entirely (same
+  cleanup as `_FieldRow`'s in the previous follow-up).
+- `_save()` now passes `stateId: stateIdForName(_selectedStateName)` and
+  `stateName: _selectedStateName` through to the viewmodel.
+- `AccountSettingsViewModel.update()` sends `state_id` in the PUT body
+  and forwards both `stateId`/`stateName` to
+  `AuthStateNotifier.updateAccountExtras()` (extended to accept them),
+  which is where the screen actually reads the current State display
+  value from (`AuthState.stateName`) - `UserProfileDetail` itself has no
+  state field of its own.
+
+**Verification**: `dart format` + `flutter analyze` on all three touched
+files - 1 issue, pre-existing baseline (unrelated empty catch block).
+Full-project `flutter analyze` - 43 issues (current baseline, unchanged).

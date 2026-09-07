@@ -108,6 +108,15 @@ class AccountSettingsViewModel
     String? supervisorEmail,
     int? primaryGroupId,
     bool? enableTwoFactorAuth,
+    // state_id = 1-based alphabetical position in the app's kUsStates
+    // list - see account_settings_page.dart's stateIdForName doc comment
+    // for the evidence behind that mapping (applied per explicit
+    // instruction to use this fixed/universal id). stateName is passed
+    // alongside purely so it can be synced into AuthState's own
+    // stateName display field without this viewmodel needing to import
+    // the view's kUsStates list back.
+    int? stateId,
+    String? stateName,
   }) async {
     final current = state.data;
     if (userId == null || current == null) {
@@ -144,6 +153,7 @@ class AccountSettingsViewModel
     if (enableTwoFactorAuth != null) {
       body['enable_two_factor_auth'] = enableTwoFactorAuth;
     }
+    if (stateId != null) body['state_id'] = stateId;
     final result = await repository.update(userId: userId!, body: body);
     if (!result.success) {
       return result.message ?? 'Unable to save your changes. Please try again.';
@@ -193,6 +203,8 @@ class AccountSettingsViewModel
           supervisorEmail: supervisorEmail,
           primaryGroupId: primaryGroupId,
           enableTwoFactorAuth: enableTwoFactorAuth,
+          stateId: stateId,
+          stateName: stateName,
         );
     return null;
   }

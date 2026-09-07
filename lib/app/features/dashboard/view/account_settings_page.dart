@@ -143,17 +143,11 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   bool _enableTwoFactorAuth = false;
   int? _selectedPrimaryGroupId;
 
-  // UI-only for now: picking a new state updates this (and the field's
-  // displayed value) immediately, but it is deliberately NOT sent on Save.
-  // PUT /api/web/user-profile/{id}'s docs confirm `state_id` is now
-  // accepted, but the mobile API this app talks to
-  // (api/modules/v1/controllers/API/user/UserProfileController.php) still
-  // has no endpoint exposing the real `state` table's ids, only the web's
-  // own account.php baking `State::find()->all()` straight into its
-  // Select2's HTML — so there's still no way to confirm a hardcoded state
-  // name maps to the DB's real numeric id. Sending a guessed id risks
-  // silently saving the wrong state. Stays display-only until a real
-  // id-mapping source is available.
+  // Picking a new state updates this immediately; converted to a numeric
+  // id via stateIdForName() on Save. Per explicit instruction to apply a
+  // fixed/universal id (kUsStates' own alphabetical position) rather than
+  // leave this permanently disabled - see stateIdForName's own doc
+  // comment for the evidence backing that mapping.
   String? _selectedStateName;
 
   @override
@@ -319,6 +313,8 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           supervisorEmail: _supervisorEmailCtrl.text.trim(),
           primaryGroupId: _selectedPrimaryGroupId,
           enableTwoFactorAuth: _enableTwoFactorAuth,
+          stateId: stateIdForName(_selectedStateName),
+          stateName: _selectedStateName,
         );
     if (!mounted) return;
     setState(() {
@@ -578,16 +574,22 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                 // `disabled: true`, but a live screenshot of the
                                 // real site shows it's actually open/searchable
                                 // there — trusting that live evidence over the
-                                // static source. See `_selectedStateName`'s own
-                                // comment for why picking a new value here isn't
-                                // sent on Save yet.
-                                // State has no update path (never sent on Save),
-                                // so it stays disabled even in edit mode.
+                                // static source.
+                                // API ref: PUT /api/web/user-profile/{id} now
+                                // accepts state_id - state_id/name mapping
+                                // applied per stateIdForName's own doc
+                                // comment (alphabetical position in
+                                // kUsStates, confirmed against the Swagger
+                                // example).
                                 _StateFieldRow(
                                   value: _selectedStateName,
                                   isEditing: _isEditing,
-                                  disabled: true,
-                                  onChanged: null,
+                                  onChanged:
+                                      _isEditing
+                                          ? (name) => setState(
+                                            () => _selectedStateName = name,
+                                          )
+                                          : null,
                                 ),
                                 _FieldRow(
                                   label: 'Location',
@@ -1985,7 +1987,6 @@ class _StateFieldRow extends StatefulWidget {
     required this.value,
     required this.isEditing,
     required this.onChanged,
-    this.disabled = false,
   });
 
   final String? value;
@@ -1994,10 +1995,6 @@ class _StateFieldRow extends StatefulWidget {
   /// Null (not just a no-op) while not editing, so the field renders
   /// non-interactive rather than merely un-tappable-looking.
   final ValueChanged<String>? onChanged;
-
-  /// True when the field has no update path — grey and non-interactive
-  /// even in edit mode (State is never sent on Save).
-  final bool disabled;
 
   @override
   State<_StateFieldRow> createState() => _StateFieldRowState();
@@ -2029,30 +2026,20 @@ class _StateFieldRowState extends State<_StateFieldRow> {
     final field = HoverBuilder(
       builder:
           (context, hovering) => InkWell(
-            onTap:
-                !widget.disabled && widget.isEditing
-                    ? () => _open(context)
-                    : null,
+            onTap: widget.isEditing ? () => _open(context) : null,
             borderRadius: BorderRadius.circular(10),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color:
-                    widget.disabled
-                        ? const Color(0xFFE9ECEF)
-                        : widget.isEditing
-                        ? Colors.white
-                        : const Color(0xFFF9FAFB),
+                    widget.isEditing ? Colors.white : const Color(0xFFF9FAFB),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color:
-                      !widget.disabled && widget.isEditing && hovering
+                      widget.isEditing && hovering
                           ? _asPurple
                           : const Color(0xFFD1D5DB),
-                  width:
-                      !widget.disabled && widget.isEditing && hovering
-                          ? 1.5
-                          : 1,
+                  width: widget.isEditing && hovering ? 1.5 : 1,
                 ),
               ),
               child: Row(
@@ -2061,19 +2048,14 @@ class _StateFieldRowState extends State<_StateFieldRow> {
                     child: Text(
                       hasValue ? widget.value! : 'Select State',
                       style: TextStyle(
-                        color:
-                            widget.disabled
-                                ? const Color(0xFF6B7280)
-                                : hasValue
-                                ? const Color(0xFF4B5563)
-                                : _asMuted,
+                        color: hasValue ? const Color(0xFF4B5563) : _asMuted,
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
                         height: 1.5,
                       ),
                     ),
                   ),
-                  if (widget.isEditing && !widget.disabled) ...[
+                  if (widget.isEditing) ...[
                     const SizedBox(width: 8),
                     const Icon(
                       Icons.keyboard_arrow_down_rounded,
@@ -2290,8 +2272,19 @@ class _StatePickerDialogState extends State<_StatePickerDialog> {
 }
 
 /// Every US state/territory the real site's Select2 lists under "United
-/// States" — display names only (this app has no source for the DB's real
-/// numeric ids, see `_selectedStateName`'s comment).
+/// States" — see [stateIdForName] for how a numeric `state_id` is derived
+/// from this list.
+/// `state_id` = 1-based alphabetical position in [kUsStates] - the Swagger
+/// doc's own example (`"state_id": 27`) lands exactly on "Nebraska", the
+/// 27th entry here, confirming this app's alphabetical list matches the
+/// real `state` table's seeding order. Per explicit instruction to apply
+/// this fixed/universal id rather than leave State permanently disabled.
+int? stateIdForName(String? name) {
+  if (name == null) return null;
+  final index = kUsStates.indexOf(name);
+  return index == -1 ? null : index + 1;
+}
+
 const kUsStates = <String>[
   'Alabama',
   'Alaska',
