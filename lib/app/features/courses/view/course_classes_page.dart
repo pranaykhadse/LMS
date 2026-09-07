@@ -680,144 +680,160 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                 ),
               ]
               : null,
-      child: Column(
-        children: [
-          // Only show the countdown once the learner is actually enrolled -
-          // showing a countdown toward a session they haven't registered
-          // for is misleading. On wide screens it sits inline with the
-          // primary action button, matching the reference's single header
-          // bar instead of stacking them.
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final statusBadge = _statusBadge(detail);
-              if (constraints.maxWidth < 768) {
-                // `@media max-width:767px` stacks the flex items into a
-                // column (`.flex-item-1` full-width/centered so the
-                // countdown centers, `.flex-item-4` full-width so the
-                // button stretches) with 16px box gap.
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (hasCountdown) ...[
-                      Center(child: countdown),
-                      const SizedBox(height: 16),
-                    ],
-                    // #launches-haad .flex-item-4 — mobile centers the
-                    // status pill horizontally. Web ref: `.flex-item-2`
-                    // (this pill) only exists in the DOM at all when
-                    // `empty($courseUser)` - i.e. not yet enrolled - so
-                    // skip its box gap entirely once enrolled rather than
-                    // leaving a blank 16px gap where it used to sit.
-                    if (!detail.isEnrolled) ...[
-                      Center(child: statusBadge),
-                      const SizedBox(height: 16),
-                    ],
-                    SizedBox(width: double.infinity, child: _actionSlot()),
-                  ],
-                );
-              }
-              // Desktop: launches-box is `display:flex; justify-content:
-              // space-between` — countdown (label + time boxes on one line)
-              // left, the Open/Close status pill centered, action button
-              // right. The Expanded keeps the card stretched to the full
-              // card width.
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (hasCountdown) countdown,
-                  Expanded(child: Center(child: statusBadge)),
-                  _actionSlot(),
+      // CSS ref: `.learning-path` (`.flex-item-3`) is a sibling flex item
+      // WITHIN the same `.launches-box` row as the countdown/status/button -
+      // not a separate row below them. Previously rendered as its own row
+      // underneath the whole header (even below the action button), which
+      // put it in the wrong place entirely - confirmed via a live
+      // screenshot of an enrolled course with a learning path, where
+      // "Learning Path: ..." sits inline between the countdown and the
+      // Cancel Registration button, in the status pill's usual spot (the
+      // pill itself is absent here since `.flex-item-2` only exists
+      // pre-enrollment).
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final statusBadge = _statusBadge(detail);
+          final learningPath = detail.learningPath;
+          if (constraints.maxWidth < 768) {
+            // `@media max-width:767px` stacks the flex items into a
+            // column (`.flex-item-1` full-width/centered so the
+            // countdown centers, `.flex-item-4` full-width so the
+            // button stretches) with 16px box gap, in DOM order:
+            // countdown, status pill, learning path, button.
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (hasCountdown) ...[
+                  Center(child: countdown),
+                  const SizedBox(height: 16),
                 ],
-              );
-            },
-          ),
-          if (detail.learningPath != null) ...[
-            SizedBox(height: phone ? 16 : 24),
-            // CSS ref: `.learning-path`. Desktop is an UNBOXED sibling
-            // in the launches flex row — `h3` 14px/600/text-dark plus a
-            // light-blue pill (`span`, bg #E0F2FE / color #0369A1, pad
-            // 4px 12px, radius 20, 12px/600, margin-left 6px). The
-            // `@media max-width:767px` override boxes it instead: bg
-            // --purple-tint-bg (#F5F3FF), padding 12px uniform, radius
-            // 10, width 100%, centered, h3 shrinks to 13px, pill margin
-            // becomes 4px top/0 left.
-            if (phone)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF5F3FF),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      'Learning Path: ',
-                      style: GoogleFonts.inter(
-                        color: _detailInk,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE0F2FE),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        detail.learningPath!,
-                        style: GoogleFonts.inter(
-                          color: Color(0xFF0369A1),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    'Learning Path: ',
-                    style: GoogleFonts.inter(
-                      color: _detailInk,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                // #launches-haad .flex-item-4 — mobile centers the
+                // status pill horizontally. Web ref: `.flex-item-2`
+                // (this pill) only exists in the DOM at all when
+                // `empty($courseUser)` - i.e. not yet enrolled - so
+                // skip its box gap entirely once enrolled rather than
+                // leaving a blank 16px gap where it used to sit.
+                if (!detail.isEnrolled) ...[
+                  Center(child: statusBadge),
+                  const SizedBox(height: 16),
+                ],
+                if (learningPath != null) ...[
+                  // CSS ref: `@media max-width:767px` boxes the learning
+                  // path pill instead — bg --purple-tint-bg (#F5F3FF),
+                  // padding 12px uniform, radius 10, width 100%, centered,
+                  // h3 shrinks to 13px, pill margin becomes 4px top/0 left.
                   Container(
-                    margin: const EdgeInsets.only(left: 6),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE0F2FE),
-                      borderRadius: BorderRadius.circular(20),
+                      color: const Color(0xFFF5F3FF),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Text(
-                      detail.learningPath!,
-                      style: GoogleFonts.inter(
-                        color: Color(0xFF0369A1),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          'Learning Path: ',
+                          style: GoogleFonts.inter(
+                            color: _detailInk,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0F2FE),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            learningPath,
+                            style: GoogleFonts.inter(
+                              color: Color(0xFF0369A1),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  const SizedBox(height: 16),
                 ],
+                SizedBox(width: double.infinity, child: _actionSlot()),
+              ],
+            );
+          }
+          // Desktop: launches-box is `display:flex; justify-content:
+          // space-between` — countdown (label + time boxes on one line)
+          // left, the status pill and/or learning path centered (both are
+          // ordinary flex siblings, so they sit side by side with a gap
+          // when both happen to be present, e.g. a not-yet-enrolled course
+          // that also belongs to a learning path), action button right.
+          // The Expanded keeps the card stretched to the full card width.
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (hasCountdown) countdown,
+              Expanded(
+                child: Center(
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 24,
+                    runSpacing: 12,
+                    children: [
+                      if (!detail.isEnrolled) statusBadge,
+                      if (learningPath != null)
+                        // CSS ref: `.learning-path` — UNBOXED on desktop,
+                        // `h3` 14px/600/text-dark plus a light-blue pill
+                        // (`span`, bg #E0F2FE / color #0369A1, pad 4px
+                        // 12px, radius 20, 12px/600, margin-left 6px).
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              'Learning Path: ',
+                              style: GoogleFonts.inter(
+                                color: _detailInk,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            Container(
+                              margin: const EdgeInsets.only(left: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE0F2FE),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                learningPath,
+                                style: GoogleFonts.inter(
+                                  color: Color(0xFF0369A1),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
               ),
-          ],
-        ],
+              _actionSlot(),
+            ],
+          );
+        },
       ),
     );
 

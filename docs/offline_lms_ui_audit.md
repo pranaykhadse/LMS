@@ -6184,3 +6184,39 @@ this model elsewhere.
 **Verification**: `dart format` + `flutter analyze` on both touched files
 - 6 issues, all pre-existing baseline. Full-project `flutter analyze` -
 43 issues (current baseline, unchanged).
+
+## Follow-up: Learning Path pill was in the wrong place entirely
+
+**Report**: screenshot of an enrolled course with a Learning Path
+("Introduction to Cultural Bridges") - the real site shows "Learning
+Path: [pill]" inline in the SAME white launches-box row as the countdown
+and Cancel Registration button (centered, where the status pill normally
+sits). Asked to match this card's UI.
+
+**Root cause**: the Flutter implementation rendered the Learning Path
+pill as a completely separate block *below* the whole countdown/status/
+button row (below the action button too) - its own code comment even
+already said "Desktop is an UNBOXED sibling in the launches flex row",
+but the actual widget tree never put it there. Re-confirmed against
+`joinCourse.php`: `.flex-item-3` (learning path) is an ordinary flex
+sibling of `.flex-item-1` (countdown), `.flex-item-2` (status pill,
+pre-enrollment only) and `.flex-item-4` (button) inside the same
+`.launches-box` flex row - not a separate row underneath.
+
+**Fix**: `lib/app/features/courses/view/course_classes_page.dart` - moved
+the Learning Path pill (both its mobile-boxed and desktop-unboxed
+variants, styling unchanged) into the `LayoutBuilder`'s Column/Row
+alongside the countdown, status pill, and action button, in the same DOM
+order as the real site (countdown → status pill → learning path → button
+on mobile; countdown → status pill/learning path centered together →
+button on desktop). The desktop middle slot is now a `Wrap` that can hold
+both the status pill and the learning path pill side by side if a
+not-yet-enrolled course also happens to belong to a learning path (an
+untested but plausible combination, given the two are independent flex
+items on the real site) - previously that slot could only ever hold one
+of the two. Removed the now-unnecessary wrapping `Column` around the
+`LayoutBuilder` since it's the card's only child now.
+
+**Verification**: `dart format` + `flutter analyze` on
+`course_classes_page.dart` - 4 issues, all pre-existing baseline.
+Full-project `flutter analyze` - 43 issues (current baseline, unchanged).
