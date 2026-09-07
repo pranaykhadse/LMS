@@ -1013,10 +1013,15 @@ class _ContinueLearningCardState extends State<_ContinueLearningCard> {
         // the measured rendered row height (284.8, ~3px of font-metrics
         // rounding) closer than the earlier 290px guess.
         // Mobile height: increased from 242 to 252 to prevent overflow on
-        // cards with longer category labels or multi-word titles. Also wrapped
-        // in ClipRect so any residual font-metrics rounding never shows the
-        // yellow overflow banner to the user.
-        height: isTablet ? 286 : 252,
+        // cards with longer category labels or multi-word titles, then to
+        // 276 once the phone-width card started rendering its description
+        // (previously missing entirely - see the follow-up dated the same
+        // day this bump landed) - a 2-line, 14.4px/1.4-line-height block
+        // plus its 4px top margin needs ~44px, and 252 only had ~17px of
+        // slack left over. Also wrapped in ClipRect so any residual
+        // font-metrics rounding never shows the yellow overflow banner to
+        // the user.
+        height: isTablet ? 286 : 276,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),

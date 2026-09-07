@@ -5967,3 +5967,29 @@ reference.
 - 14 issues, all pre-existing baseline (unused elements/parameters,
 deprecated `withOpacity`, unnecessary import), none on the touched lines.
 Full-project `flutter analyze` - 43 issues (current baseline, unchanged).
+
+## Follow-up: Continue Learning phone card — overflow after the description fix
+
+**Report**: screenshot of the phone-width Continue Learning card showing
+Flutter's yellow/black "BOTTOM OVERFLOWED BY 17 PIXELS" debug banner,
+right where the description text had just been added.
+
+**Root cause**: direct regression from the previous fix. The card's outer
+`Container` has a hardcoded fixed height (`252` for phone, `286` for
+tablet/desktop) sized to fit the card's content *before* the phone branch
+rendered a description at all. Adding a 2-line description block (~44px:
+20px line-height × 2 + 4px top margin) had nowhere to go within the
+existing 252px, and the `clipBehavior: Clip.hardEdge` on the Container
+wasn't enough to fully suppress the overflow indicator once the excess
+grew past its remaining ~17px of slack.
+
+**Fix**: bumped the phone-width fixed height from 252 to 276 in
+`_ContinueLearningCardState.build()`
+(`lib/app/features/dashboard/view/dashboard_page.dart`) - the
+tablet/desktop height (286) was untouched since that branch already
+rendered the description before this whole change and was already sized
+for it.
+
+**Verification**: `dart format` + `flutter analyze` on `dashboard_page.dart`
+- same 14 pre-existing baseline issues, none new. Full-project
+`flutter analyze` - 43 issues (current baseline, unchanged).
