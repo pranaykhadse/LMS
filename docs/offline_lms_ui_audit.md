@@ -6510,3 +6510,64 @@ signed in" checkbox on the login screen and confirmed it visibly toggled
 real state change occurred), then clicked "Sign up" and confirmed it
 actually navigated to a new screen - both prove real interactivity is
 restored app-wide.
+
+## Follow-up: previously-disabled Account Settings fields are now editable
+
+**Report**: Swagger screenshot of `PUT /api/web/user-profile/{id}`,
+updated with a new description: "Beyond the plain profile fields below,
+also accepts email, state_id, cost_code, supervisor_name/
+supervisor_email, primary_group_id(+type/main_id) and
+enable_two_factor_auth, which update tbl_user/tbl_user_group instead of
+tbl_user_profile." Asked to update the previously-disabled fields
+accordingly.
+
+**Implemented** (all confirmed via the new schema, keys as shown in its
+example body):
+- **Email** - `_EditableEmail` (in `_ProfileHeaderCard`) gained a
+  `controller` param; now a real `TextField` in edit mode instead of
+  always-readonly text. Sent as `email`.
+- **Cost Code**, **Supervisor Name**, **Supervisor Email** - switched
+  from `_FieldRow(..., disabled: true)` to `_FieldRow(..., controller:
+  ...)`, same as every other editable field on the screen. Sent as
+  `cost_code` / `supervisor_name` / `supervisor_email`.
+- **Two-Factor Auth** - `_ToggleRow` gained an `onChanged` param (was
+  hardcoded to a "Coming soon." toast, ignoring taps entirely); the
+  switch is now interactive while editing, backed by local
+  `_enableTwoFactorAuth` state. Sent as `enable_two_factor_auth`
+  (boolean).
+- **Primary Group** - `_RadioRow` gained an `onTap` param; tapping a
+  group while editing updates local `_selectedPrimaryGroupId`. Sent as
+  `primary_group_id`, paired with `primary_group_type: 'single_group'`
+  and `primary_group_main_id` set to the same id - the only shape the
+  Swagger example documents (no other `primary_group_type` value is
+  shown anywhere).
+- After a successful save, `AccountSettingsViewModel.update()` now also
+  patches `current.user` (email/costCode/primaryGroup/2FA) and calls a
+  new `AuthStateNotifier.updateAccountExtras(...)` to sync
+  email/costCode/supervisor/primaryGroup/2FA into the app-wide cached
+  `AuthState` too - same rationale as the existing `updateProfile` sync,
+  since Work Information/Preferences/Primary Group read `user`/
+  `loginExtras` directly, not just this screen's own local state.
+- Cleanup: `_FieldRow`'s `isEditing`/`disabled` params became genuinely
+  dead once every remaining call site switched to `controller`-driven
+  editability (no call site sets them anymore, and their branch's
+  distinct "white while editing but disabled" styling can no longer be
+  reached) - removed both params and simplified the plain-box branch's
+  styling accordingly, rather than leaving unused parameters behind.
+
+**NOT implemented - State/Timezone** (stays `disabled: true`, unchanged):
+the new schema confirms `state_id` is accepted, but this app still has
+no source for the actual numeric id ↔ state-name mapping the real `state`
+table uses - `kUsStates` is just a bare list of 50 US state names with no
+ids, and the login response's own `stateId`/`stateName` pair only tells
+us the CURRENT selection's id, not what id any other state name would
+need. Guessing an id (e.g. list position, or an alphabetical-order
+assumption) risks silently saving the wrong state to a real account, so
+this stays exactly as it was pending a real id-mapping source - documented
+inline with an updated comment reflecting that the schema itself is no
+longer the blocker, only the missing mapping data is.
+
+**Verification**: `dart format` + `flutter analyze` on all three touched
+files - 1 issue, pre-existing baseline (an unrelated empty catch block,
+confirmed via `git diff` untouched by this change). Full-project
+`flutter analyze` - 43 issues (current baseline, unchanged).

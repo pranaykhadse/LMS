@@ -119,6 +119,47 @@ class AuthStateNotifier extends StateNotifier<AuthState?> with OfflineVmHelper {
     storage.setString("session_data", updated.toRawJson());
   }
 
+  /// Syncs email/cost code/supervisor/primary group/two-factor-auth edits
+  /// made from Account Settings into the app-wide cached [AuthState] -
+  /// same rationale as [updateProfile]: those fields are read directly
+  /// from here (not the screen's own local state) by the Work
+  /// Information/Preferences/Primary Group sections on that same screen,
+  /// and by anything else that reads them. `null` for any param leaves
+  /// that field unchanged (matches `User.copyWith`'s own `?? this.x`
+  /// pattern) - only pass the fields that were actually part of this
+  /// save.
+  Future<void> updateAccountExtras({
+    String? email,
+    String? costCode,
+    String? supervisorName,
+    String? supervisorEmail,
+    int? primaryGroupId,
+    bool? enableTwoFactorAuth,
+  }) async {
+    final current = state;
+    if (current == null) return;
+    final updatedUser = current.user?.copyWith(
+      email: email,
+      costCode: costCode,
+      primaryGroup: primaryGroupId,
+      enableTwoFactorAuth:
+          enableTwoFactorAuth == null ? null : (enableTwoFactorAuth ? 1 : 0),
+    );
+    final updatedSupervisor =
+        (supervisorName == null && supervisorEmail == null)
+            ? current.supervisor
+            : (current.supervisor ?? Supervisor()).copyWith(
+              username: supervisorName,
+              email: supervisorEmail,
+            );
+    final updated = current.copyWith(
+      user: updatedUser,
+      supervisor: updatedSupervisor,
+    );
+    state = updated;
+    await storage.setString("session_data", updated.toRawJson());
+  }
+
   bool _sameProfile(UserProfile? a, UserProfile b) {
     if (a == null) return false;
     return a.avatarPath == b.avatarPath &&

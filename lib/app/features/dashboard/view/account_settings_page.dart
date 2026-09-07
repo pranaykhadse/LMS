@@ -134,25 +134,34 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   late final TextEditingController _divisionCtrl;
   late final TextEditingController _departmentCtrl;
   late final TextEditingController _phoneCtrl;
+  late final TextEditingController _emailCtrl;
+  late final TextEditingController _costCodeCtrl;
+  late final TextEditingController _supervisorNameCtrl;
+  late final TextEditingController _supervisorEmailCtrl;
   String? _countryCode;
   String? _countryIso;
+  bool _enableTwoFactorAuth = false;
+  int? _selectedPrimaryGroupId;
 
   // UI-only for now: picking a new state updates this (and the field's
   // displayed value) immediately, but it is deliberately NOT sent on Save.
-  // The mobile API this app talks to
-  // (api/modules/v1/controllers/API/user/UserProfileController.php) has no
-  // endpoint exposing the real `state` table's ids, only the web's own
-  // account.php baking `State::find()->all()` straight into its Select2's
-  // HTML — so there's no way to confirm a hardcoded state name maps to the
-  // DB's real numeric id. Sending a guessed id risks silently saving the
-  // wrong state. Per explicit request, this stays display-only until a
-  // real id-mapping source is available.
+  // PUT /api/web/user-profile/{id}'s docs confirm `state_id` is now
+  // accepted, but the mobile API this app talks to
+  // (api/modules/v1/controllers/API/user/UserProfileController.php) still
+  // has no endpoint exposing the real `state` table's ids, only the web's
+  // own account.php baking `State::find()->all()` straight into its
+  // Select2's HTML — so there's still no way to confirm a hardcoded state
+  // name maps to the DB's real numeric id. Sending a guessed id risks
+  // silently saving the wrong state. Stays display-only until a real
+  // id-mapping source is available.
   String? _selectedStateName;
 
   @override
   void initState() {
     super.initState();
     final p = widget.detail.profile;
+    final u = widget.detail.user;
+    final loginExtras = ref.read(AuthStateNotifier.provider);
     _firstnameCtrl = TextEditingController(text: p.firstname ?? '');
     _lastnameCtrl = TextEditingController(text: p.lastname ?? '');
     _locationCtrl = TextEditingController(text: p.location ?? '');
@@ -161,9 +170,19 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _divisionCtrl = TextEditingController(text: p.division ?? '');
     _departmentCtrl = TextEditingController(text: p.department ?? '');
     _phoneCtrl = TextEditingController(text: widget.detail.phoneNumber ?? '');
+    _emailCtrl = TextEditingController(text: u.email ?? '');
+    _costCodeCtrl = TextEditingController(text: u.costCode ?? '');
+    _supervisorNameCtrl = TextEditingController(
+      text: loginExtras?.supervisor?.username ?? '',
+    );
+    _supervisorEmailCtrl = TextEditingController(
+      text: loginExtras?.supervisor?.email ?? '',
+    );
     _countryCode = p.countryCode?.toString();
     _countryIso = p.countryIso?.toString();
-    _selectedStateName = ref.read(AuthStateNotifier.provider)?.stateName;
+    _selectedStateName = loginExtras?.stateName;
+    _enableTwoFactorAuth = u.enableTwoFactorAuth == 1;
+    _selectedPrimaryGroupId = u.primaryGroup ?? loginExtras?.user?.primaryGroup;
   }
 
   @override
@@ -176,11 +195,17 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _divisionCtrl.dispose();
     _departmentCtrl.dispose();
     _phoneCtrl.dispose();
+    _emailCtrl.dispose();
+    _costCodeCtrl.dispose();
+    _supervisorNameCtrl.dispose();
+    _supervisorEmailCtrl.dispose();
     super.dispose();
   }
 
   void _resetControllers() {
     final p = widget.detail.profile;
+    final u = widget.detail.user;
+    final loginExtras = ref.read(AuthStateNotifier.provider);
     _firstnameCtrl.text = p.firstname ?? '';
     _lastnameCtrl.text = p.lastname ?? '';
     _locationCtrl.text = p.location ?? '';
@@ -189,9 +214,15 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _divisionCtrl.text = p.division ?? '';
     _departmentCtrl.text = p.department ?? '';
     _phoneCtrl.text = widget.detail.phoneNumber ?? '';
+    _emailCtrl.text = u.email ?? '';
+    _costCodeCtrl.text = u.costCode ?? '';
+    _supervisorNameCtrl.text = loginExtras?.supervisor?.username ?? '';
+    _supervisorEmailCtrl.text = loginExtras?.supervisor?.email ?? '';
     _countryCode = p.countryCode?.toString();
     _countryIso = p.countryIso?.toString();
-    _selectedStateName = ref.read(AuthStateNotifier.provider)?.stateName;
+    _selectedStateName = loginExtras?.stateName;
+    _enableTwoFactorAuth = u.enableTwoFactorAuth == 1;
+    _selectedPrimaryGroupId = u.primaryGroup ?? loginExtras?.user?.primaryGroup;
   }
 
   void _startEditing() => setState(() => _isEditing = true);
@@ -282,6 +313,12 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           phoneNumber: _phoneCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''),
           countryCode: _countryCode,
           countryIso: _countryIso,
+          email: _emailCtrl.text.trim(),
+          costCode: _costCodeCtrl.text.trim(),
+          supervisorName: _supervisorNameCtrl.text.trim(),
+          supervisorEmail: _supervisorEmailCtrl.text.trim(),
+          primaryGroupId: _selectedPrimaryGroupId,
+          enableTwoFactorAuth: _enableTwoFactorAuth,
         );
     if (!mounted) return;
     setState(() {
@@ -515,6 +552,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                           isSaving: _isSaving,
                           firstnameController: _firstnameCtrl,
                           lastnameController: _lastnameCtrl,
+                          emailController: _emailCtrl,
                           isUploadingAvatar: _isUploadingAvatar,
                           onPickAvatar: _pickAndUploadAvatar,
                           onEdit: _startEditing,
@@ -612,15 +650,17 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                 // Division/Department/Cost Code/Supervisor Name/
                                 // Supervisor Email only — "Employee ID" doesn't
                                 // exist anywhere in `account.php`, removed.
-                                // Cost Code, Supervisor Name/Email have no update
-                                // path (absent from PUT user-profile) — disabled
-                                // even in edit mode, like the web's
-                                // disabled/readonly inputs.
+                                // API ref: PUT /api/web/user-profile/{id} now
+                                // accepts cost_code/supervisor_name/
+                                // supervisor_email (updating tbl_user/
+                                // tbl_user_group) - previously flagged as
+                                // disabled (absent from the PUT schema),
+                                // confirmed newly updatable via that Swagger
+                                // doc.
                                 _FieldRow(
                                   label: 'Cost Code',
                                   value: user.costCode,
-                                  isEditing: _isEditing,
-                                  disabled: true,
+                                  controller: _isEditing ? _costCodeCtrl : null,
                                 ),
                                 // Web: supervisor firstname/lastname inputs; the
                                 // login API carries the supervisor as username +
@@ -628,14 +668,14 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                 _FieldRow(
                                   label: 'Supervisor Name',
                                   value: loginExtras?.supervisor?.username,
-                                  isEditing: _isEditing,
-                                  disabled: true,
+                                  controller:
+                                      _isEditing ? _supervisorNameCtrl : null,
                                 ),
                                 _FieldRow(
                                   label: 'Supervisor Email',
                                   value: loginExtras?.supervisor?.email,
-                                  isEditing: _isEditing,
-                                  disabled: true,
+                                  controller:
+                                      _isEditing ? _supervisorEmailCtrl : null,
                                 ),
                               ],
                             ),
@@ -648,6 +688,10 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                             // earlier pass because it lives in a separate
                             // partial file, not account.php itself, and was
                             // wrongly deleted as if invented; restored here).
+                            // API ref: PUT /api/web/user-profile/{id} now
+                            // accepts enable_two_factor_auth (updating
+                            // tbl_user) - previously display-only, confirmed
+                            // newly updatable via that Swagger doc.
                             _SectionBlock(
                               icon: Icons.tune_rounded,
                               title: 'Preferences',
@@ -655,9 +699,15 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                 _ToggleRow(
                                   label: 'Two-Factor Auth',
                                   sublabel: 'Add an extra layer of security',
-                                  value: user.enableTwoFactorAuth == 1,
+                                  value: _enableTwoFactorAuth,
                                   boxed: true,
                                   isEditing: _isEditing,
+                                  onChanged:
+                                      _isEditing
+                                          ? (v) => setState(
+                                            () => _enableTwoFactorAuth = v,
+                                          )
+                                          : null,
                                 ),
                               ],
                             ),
@@ -673,11 +723,18 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                 spacing: 12,
                                 children: [
                                   // Web renders the user's full group list as
-                                  // disabled radios (primary_group.php) with the
+                                  // radios (primary_group.php) with the
                                   // primary one checked — the login API's `group`
-                                  // array plus `primary_group` id drive the same
-                                  // here. Falls back to the primary label alone
-                                  // when the list hasn't arrived.
+                                  // array drives the same here. Falls back to
+                                  // the primary label alone when the list
+                                  // hasn't arrived (that fallback case has no
+                                  // other group id to switch to, so it stays
+                                  // display-only regardless of edit mode).
+                                  // API ref: PUT /api/web/user-profile/{id}
+                                  // now accepts primary_group_id(+type/
+                                  // main_id) (updating tbl_user_group) -
+                                  // previously always disabled, confirmed
+                                  // newly updatable via that Swagger doc.
                                   ...() {
                                     final groups = loginExtras?.group ?? [];
                                     if (groups.isEmpty) {
@@ -691,16 +748,21 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                         ),
                                       ];
                                     }
-                                    final primaryId =
-                                        user.primaryGroup ??
-                                        loginExtras?.user?.primaryGroup;
                                     return groups
                                         .map(
                                           (g) => _RadioRow(
                                             label: g.name ?? 'Unnamed group',
                                             selected:
                                                 g.id != null &&
-                                                g.id == primaryId,
+                                                g.id == _selectedPrimaryGroupId,
+                                            onTap:
+                                                _isEditing && g.id != null
+                                                    ? () => setState(
+                                                      () =>
+                                                          _selectedPrimaryGroupId =
+                                                              g.id,
+                                                    )
+                                                    : null,
                                           ),
                                         )
                                         .toList();
@@ -861,6 +923,7 @@ class _ProfileHeaderCard extends StatelessWidget {
     required this.isSaving,
     required this.firstnameController,
     required this.lastnameController,
+    required this.emailController,
     required this.isUploadingAvatar,
     required this.onPickAvatar,
     required this.onEdit,
@@ -874,6 +937,7 @@ class _ProfileHeaderCard extends StatelessWidget {
   final bool isSaving;
   final TextEditingController firstnameController;
   final TextEditingController lastnameController;
+  final TextEditingController emailController;
   final bool isUploadingAvatar;
   final VoidCallback onPickAvatar;
   final VoidCallback onEdit;
@@ -1002,7 +1066,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                   },
                 ),
                 const SizedBox(height: 16),
-                _EditableEmail(value: email),
+                _EditableEmail(value: email, controller: emailController),
               ],
             )
             : Column(
@@ -1240,13 +1304,52 @@ class _EditableNameState extends State<_EditableName> {
 }
 
 class _EditableEmail extends StatelessWidget {
-  const _EditableEmail({required this.value});
+  const _EditableEmail({required this.value, this.controller});
   final String value;
+  // API ref: PUT /api/web/user-profile/{id} now accepts `email` (updates
+  // tbl_user, not tbl_user_profile) - previously always read-only ("the
+  // web keeps email readonly even when editing"), confirmed newly
+  // updatable via that Swagger doc. Non-null in edit mode.
+  final TextEditingController? controller;
 
   @override
   Widget build(BuildContext context) {
     // CSS ref: .profile-email-input — smaller, muted, no label; bordered
-    // white box in edit mode (the web keeps email readonly even when editing).
+    // white box in edit mode.
+    if (controller != null) {
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: TextField(
+          controller: controller,
+          keyboardType: TextInputType.emailAddress,
+          style: const TextStyle(
+            color: Color(0xFF64748B),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            height: 1.5,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Email/username',
+            hintStyle: const TextStyle(
+              color: _asMuted,
+              fontSize: 16,
+              height: 1.5,
+            ),
+            border: InputBorder.none,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+          ),
+        ),
+      );
+    }
     final hasValue = value.trim().isNotEmpty;
     return Container(
       width: double.infinity,
@@ -1722,25 +1825,15 @@ class _SectionBlock extends StatelessWidget {
 }
 
 class _FieldRow extends StatefulWidget {
-  const _FieldRow({
-    required this.label,
-    this.value,
-    this.controller,
-    this.isEditing = false,
-    this.disabled = false,
-  });
+  const _FieldRow({required this.label, this.value, this.controller});
   final String label;
   final String? value;
+  // Non-null in edit mode - every field on this page now has an update
+  // path (see the account_settings_view_model.dart follow-up), so the
+  // plain-box branch below only ever renders in true read-only mode
+  // (page not editing) rather than also needing to distinguish a
+  // still-disabled-while-editing state.
   final TextEditingController? controller;
-  // True while the page is in edit mode, so even rows we can't edit (State,
-  // Cost Code, ...) render as white boxes next to the editable inputs
-  // instead of grey read-only-looking ones. Grey is only for true
-  // read-only (page not editing).
-  final bool isEditing;
-  // True for fields with no update path (State, Cost Code, Supervisor
-  // Name/Email — absent from PUT user-profile) — rendered grey and
-  // non-interactive even in edit mode, like the web's disabled inputs.
-  final bool disabled;
 
   @override
   State<_FieldRow> createState() => _FieldRowState();
@@ -1831,14 +1924,7 @@ class _FieldRowState extends State<_FieldRow> {
             : Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                // Bootstrap .form-control:disabled grey; forced for
-                // no-update-path rows even mid-editing.
-                color:
-                    widget.disabled
-                        ? const Color(0xFFE9ECEF)
-                        : widget.isEditing
-                        ? Colors.white
-                        : const Color(0xFFF9FAFB),
+                color: const Color(0xFFF9FAFB),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFD1D5DB), width: 1),
               ),
@@ -1848,9 +1934,7 @@ class _FieldRowState extends State<_FieldRow> {
                     : 'Not provided',
                 style: TextStyle(
                   color:
-                      widget.disabled
-                          ? const Color(0xFF6B7280)
-                          : (widget.value ?? '').trim().isNotEmpty
+                      (widget.value ?? '').trim().isNotEmpty
                           ? const Color(0xFF4B5563)
                           : const Color(0xFF9CA3AF),
                   fontSize: 15,
@@ -2768,6 +2852,7 @@ class _ToggleRow extends StatelessWidget {
     required this.value,
     this.boxed = false,
     this.isEditing = false,
+    this.onChanged,
   });
   final String label;
   final String? sublabel;
@@ -2775,6 +2860,9 @@ class _ToggleRow extends StatelessWidget {
   final bool boxed;
   // White while the page is being edited; grey only in read-only mode.
   final bool isEditing;
+  // Null (not just a no-op) while not editing, so the Switch renders
+  // disabled/greyed rather than merely inert-looking.
+  final ValueChanged<bool>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -2822,7 +2910,7 @@ class _ToggleRow extends StatelessWidget {
           ),
           Switch(
             value: value,
-            onChanged: (_) => Toast.info(context, 'Coming soon.'),
+            onChanged: onChanged,
             activeThumbColor: Colors.white,
             activeTrackColor: _asPurple,
             inactiveThumbColor: Colors.white,
@@ -2868,15 +2956,20 @@ class _PlainValueBox extends StatelessWidget {
 }
 
 class _RadioRow extends StatelessWidget {
-  const _RadioRow({required this.label, required this.selected});
+  const _RadioRow({required this.label, required this.selected, this.onTap});
   final String label;
   final bool selected;
+  // Null (not just a no-op) while this radio isn't selectable (Notification
+  // Type - still no update path; the Primary Group fallback case with no
+  // group list to switch between), so it renders non-interactive rather
+  // than merely un-tappable-looking.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     // CSS ref: .custom-radio — bg #fff, border 1px #e2e8f0, radius 12px,
     // padding 14px 20px; :checked → bg #f5f3ff, border #5c52d4.
-    return Container(
+    final content = Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       decoration: BoxDecoration(
@@ -2911,6 +3004,11 @@ class _RadioRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: content,
     );
   }
 }

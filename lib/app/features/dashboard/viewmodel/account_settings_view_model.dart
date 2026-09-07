@@ -17,7 +17,9 @@ class AccountSettingsViewModel
   }
 
   static final provider = StateNotifierProvider.autoDispose<
-      AccountSettingsViewModel, DataState<UserProfileDetail>>((ref) {
+    AccountSettingsViewModel,
+    DataState<UserProfileDetail>
+  >((ref) {
     // ref.read everywhere here, not ref.watch: fetch() below calls
     // AuthStateNotifier.updateProfile(), which changes AuthStateNotifier's
     // state - and AccountSettingsRepository.provider transitively depends
@@ -66,7 +68,9 @@ class AccountSettingsViewModel
       // above - AuthStateNotifier is a different, kept-alive notifier, so
       // this sync should still happen even if this screen's own state is
       // now moot.
-      await ref.read(AuthStateNotifier.provider.notifier).updateProfile(data.profile);
+      await ref
+          .read(AuthStateNotifier.provider.notifier)
+          .updateProfile(data.profile);
     } catch (e) {
       if (!mounted) return;
       // On a background refresh (data already showing), leave it in place
@@ -91,6 +95,19 @@ class AccountSettingsViewModel
     String? phoneNumber,
     String? countryCode,
     String? countryIso,
+    // API ref: PUT /api/web/user-profile/{id}'s own docs - "Beyond the
+    // plain profile fields below, also accepts email, state_id, cost_code,
+    // supervisor_name/supervisor_email, primary_group_id(+type/main_id)
+    // and enable_two_factor_auth, which update tbl_user/tbl_user_group
+    // instead of tbl_user_profile." These were previously flagged as
+    // disabled (no update path) - confirmed newly available via that
+    // Swagger doc.
+    String? email,
+    String? costCode,
+    String? supervisorName,
+    String? supervisorEmail,
+    int? primaryGroupId,
+    bool? enableTwoFactorAuth,
   }) async {
     final current = state.data;
     if (userId == null || current == null) {
@@ -111,6 +128,22 @@ class AccountSettingsViewModel
     // Not part of the documented PUT schema — included as a best-effort
     // guess (it's the key the GET response returns this value under).
     if (phoneNumber != null) body['phone_number'] = phoneNumber;
+    if (email != null) body['email'] = email;
+    if (costCode != null) body['cost_code'] = costCode;
+    if (supervisorName != null) body['supervisor_name'] = supervisorName;
+    if (supervisorEmail != null) body['supervisor_email'] = supervisorEmail;
+    if (primaryGroupId != null) {
+      body['primary_group_id'] = primaryGroupId;
+      // Swagger's own example pairs primary_group_id with a matching
+      // primary_group_main_id and a literal "single_group" type - no
+      // other type value is documented anywhere, so this is the only
+      // shape confirmed to work.
+      body['primary_group_type'] = 'single_group';
+      body['primary_group_main_id'] = primaryGroupId;
+    }
+    if (enableTwoFactorAuth != null) {
+      body['enable_two_factor_auth'] = enableTwoFactorAuth;
+    }
     final result = await repository.update(userId: userId!, body: body);
     if (!result.success) {
       return result.message ?? 'Unable to save your changes. Please try again.';
@@ -127,11 +160,18 @@ class AccountSettingsViewModel
       countryCode: countryCode,
       countryIso: countryIso,
     );
+    final updatedUser = current.user.copyWith(
+      email: email,
+      costCode: costCode,
+      primaryGroup: primaryGroupId,
+      enableTwoFactorAuth:
+          enableTwoFactorAuth == null ? null : (enableTwoFactorAuth ? 1 : 0),
+    );
     if (mounted) {
       state = DataState.onData(
         UserProfileDetail(
           profile: updatedProfile,
-          user: current.user,
+          user: updatedUser,
           phoneNumber: phoneNumber ?? current.phoneNumber,
           enableTextMessages: current.enableTextMessages,
         ),
@@ -141,7 +181,19 @@ class AccountSettingsViewModel
     // - this screen's own state above isn't visible anywhere else, and
     // AuthStateNotifier is a different, kept-alive notifier, so this
     // should still run even if this screen's own state is now moot.
-    await ref.read(AuthStateNotifier.provider.notifier).updateProfile(updatedProfile);
+    await ref
+        .read(AuthStateNotifier.provider.notifier)
+        .updateProfile(updatedProfile);
+    await ref
+        .read(AuthStateNotifier.provider.notifier)
+        .updateAccountExtras(
+          email: email,
+          costCode: costCode,
+          supervisorName: supervisorName,
+          supervisorEmail: supervisorEmail,
+          primaryGroupId: primaryGroupId,
+          enableTwoFactorAuth: enableTwoFactorAuth,
+        );
     return null;
   }
 
@@ -183,7 +235,10 @@ class AccountSettingsViewModel
   /// failure, or null on success.
   Future<String?> uploadAvatar(Uint8List bytes, String filename) async {
     if (userId == null) return 'Unable to upload avatar — not logged in.';
-    final result = await repository.uploadAvatar(bytes: bytes, filename: filename);
+    final result = await repository.uploadAvatar(
+      bytes: bytes,
+      filename: filename,
+    );
     if (!result.success) {
       return result.message ?? 'Unable to upload avatar. Please try again.';
     }
@@ -203,7 +258,9 @@ class AccountSettingsViewModel
           ),
         );
       }
-      await ref.read(AuthStateNotifier.provider.notifier).updateProfile(patchedProfile);
+      await ref
+          .read(AuthStateNotifier.provider.notifier)
+          .updateProfile(patchedProfile);
     }
     return null;
   }
