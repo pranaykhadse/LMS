@@ -144,10 +144,9 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   int? _selectedPrimaryGroupId;
 
   // Picking a new state updates this immediately; converted to a numeric
-  // id via stateIdForName() on Save. Per explicit instruction to apply a
-  // fixed/universal id (kUsStates' own alphabetical position) rather than
-  // leave this permanently disabled - see stateIdForName's own doc
-  // comment for the evidence backing that mapping.
+  // id via stateIdForName() on Save, using the real id table sourced from
+  // the live web app's State dropdown HTML - see stateIdForName's own doc
+  // comment.
   String? _selectedStateName;
 
   @override
@@ -578,9 +577,8 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                 // API ref: PUT /api/web/user-profile/{id} now
                                 // accepts state_id - state_id/name mapping
                                 // applied per stateIdForName's own doc
-                                // comment (alphabetical position in
-                                // kUsStates, confirmed against the Swagger
-                                // example).
+                                // comment (real ids sourced from the live
+                                // web app's State dropdown HTML).
                                 _StateFieldRow(
                                   value: _selectedStateName,
                                   isEditing: _isEditing,
@@ -2274,15 +2272,72 @@ class _StatePickerDialogState extends State<_StatePickerDialog> {
 /// Every US state/territory the real site's Select2 lists under "United
 /// States" — see [stateIdForName] for how a numeric `state_id` is derived
 /// from this list.
-/// `state_id` = 1-based alphabetical position in [kUsStates] - the Swagger
-/// doc's own example (`"state_id": 27`) lands exactly on "Nebraska", the
-/// 27th entry here, confirming this app's alphabetical list matches the
-/// real `state` table's seeding order. Per explicit instruction to apply
-/// this fixed/universal id rather than leave State permanently disabled.
+/// `state_id` values taken verbatim from the real web app's rendered
+/// `<select id="accountform-timezone_id">` markup (the live "United States"
+/// optgroup's `<option value="N">StateName</option>` entries) - NOT a
+/// derived/alphabetical guess. The real table is Alaska-first (Alaska=1)
+/// with Alabama anomalously appended at the end (64); a stray non-state
+/// "Lima" option (65) in that optgroup has no counterpart in [kUsStates]
+/// and is intentionally omitted. This replaces an earlier alphabetical-
+/// index guess (Alabama=1) that the Swagger example's `state_id: 27`
+/// seemed to confirm (as "Nebraska") but was actually wrong - the real
+/// id 27 is Nevada.
+const _kStateIds = <String, int>{
+  'Alaska': 1,
+  'Arizona': 2,
+  'Arkansas': 3,
+  'California': 4,
+  'Colorado': 5,
+  'Connecticut': 6,
+  'Delaware': 7,
+  'Florida': 8,
+  'Georgia': 9,
+  'Hawaii': 10,
+  'Idaho': 11,
+  'Illinois': 12,
+  'Indiana': 13,
+  'Iowa': 14,
+  'Kansas': 15,
+  'Kentucky': 16,
+  'Louisiana': 17,
+  'Maine': 18,
+  'Maryland': 19,
+  'Massachusetts': 20,
+  'Michigan': 21,
+  'Minnesota': 22,
+  'Mississippi': 23,
+  'Missouri': 24,
+  'Montana': 25,
+  'Nebraska': 26,
+  'Nevada': 27,
+  'New Hampshire': 28,
+  'New Jersey': 29,
+  'New Mexico': 30,
+  'New York': 31,
+  'North Carolina': 32,
+  'North Dakota': 33,
+  'Ohio': 34,
+  'Oklahoma': 35,
+  'Oregon': 36,
+  'Pennsylvania': 37,
+  'Rhode Island': 38,
+  'South Carolina': 39,
+  'South Dakota': 40,
+  'Tennessee': 41,
+  'Texas': 42,
+  'Utah': 43,
+  'Vermont': 44,
+  'Virginia': 45,
+  'Washington': 46,
+  'West Virginia': 47,
+  'Wisconsin': 48,
+  'Wyoming': 49,
+  'Alabama': 64,
+};
+
 int? stateIdForName(String? name) {
   if (name == null) return null;
-  final index = kUsStates.indexOf(name);
-  return index == -1 ? null : index + 1;
+  return _kStateIds[name];
 }
 
 const kUsStates = <String>[

@@ -6604,3 +6604,42 @@ this app's list order matches the real `state` table's seeding order.
 **Verification**: `dart format` + `flutter analyze` on all three touched
 files - 1 issue, pre-existing baseline (unrelated empty catch block).
 Full-project `flutter analyze` - 43 issues (current baseline, unchanged).
+
+## Follow-up: 2026-09-07 - State id mapping corrected against the real dropdown HTML
+
+**Report**: user pasted the actual live web app's rendered
+`<select id="accountform-timezone_id">` State dropdown markup (Select2),
+containing the real `<option value="N">StateName</option>` entries the
+backend actually uses - "This is the html code of states dropdown list.
+It may include id of the state. So, if yes, please add the id as per
+this."
+
+**Problem**: the previous follow-up's `state_id` = alphabetical-position
+mapping (Alabama=1) was WRONG. It had looked confirmed - the Swagger
+example's `"state_id": 27"` landed on "Nebraska" in that alphabetical
+list - but that was a coincidence, not evidence. The real table (per the
+live HTML) is Alaska-first: Alaska=1, Arizona=2, ... Wyoming=49, with
+Alabama anomalously appended at the end as id **64** (not 1). Under the
+real table, `state_id: 27` is **Nevada**, not Nebraska. Per this
+project's standing rule, live evidence (the actual rendered dropdown)
+overrides a static/derived assumption, even one this audit had
+previously logged as "confirmed."
+
+Also present in the same "United States" optgroup: a stray
+`<option value="65">Lima</option>` - not a real US state, no counterpart
+in this app's `kUsStates` list, so it needs no mapping and is left out.
+
+**Fix**: `stateIdForName()` (`account_settings_page.dart`) no longer
+derives the id from `kUsStates`' own index. It now looks the name up in
+a new hardcoded `const _kStateIds = <String, int>{...}` map transcribed
+directly from the real dropdown's option values (Alaska=1 ... Wyoming=49,
+Alabama=64). `kUsStates` itself is unchanged (still just the 50 display
+names for the picker UI) - only the id derivation changed. Updated the
+stale comments referencing the old "alphabetical position" mapping in
+`account_settings_page.dart` (both the field doc comment and the
+`_StateFieldRow` call site) and in
+`account_settings_view_model.dart`'s `update()`.
+
+**Verification**: `dart format` + `flutter analyze` on both touched
+files - 0 issues. Full-project `flutter analyze` - 43 issues (baseline,
+unchanged).
