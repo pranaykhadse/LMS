@@ -6253,3 +6253,40 @@ matching the real site's collapsed empty-span behavior.
 **Verification**: `dart format` + `flutter analyze` on
 `course_classes_page.dart` - 4 issues, all pre-existing baseline.
 Full-project `flutter analyze` - 43 issues (current baseline, unchanged).
+
+## Follow-up: Redeem dialog was modeled on dead/unused markup
+
+**Report**: screenshot of the real site's redeem confirmation modal
+("Enter details and confirm to redeem" - Address/Note fields, single
+centered "Confirm" button) - asked whether the Flutter app has the same
+modal.
+
+**Root cause**: it did have a modal, but shaped completely differently -
+a "Confirm Redemption" header with a close (X) icon, an "Are you sure you
+would like to redeem this item for N points?" sentence, and a two-button
+Cancel/Yes footer. Traced the real site's actual JS
+(`item-inventory/inventory.php`'s `.redeemRender` click handler) and
+found it AJAX-loads `item-inventory/get-redeem-form`
+(= `_item-redeem-form.php`) directly into `#myModal .modal-content` - a
+plain form: centered "Enter details and confirm to redeem" title, an
+Address textarea (required, red asterisk) and a Note text input, one
+centered "Confirm" button. The "Confirm Redemption" / Yes-Cancel markup
+this dialog was modeled on (`#confirmation-modal` in the same PHP file)
+is never referenced by any click handler anywhere in that file - dead,
+unused HTML from a static template block, not the real flow. `#myModal`'s
+own close (X) button is also conditional on `$originalUser` (an
+admin-impersonation-only case), so a normal user sees no close icon
+either - matching the screenshot.
+
+**Fix**: rewrote `_RedeemDialog`
+(`lib/app/features/dashboard/view/item_inventory_page.dart`) as a single
+centered panel - no header bar, no close icon, no confirmation sentence,
+no Cancel button. Kept the existing Address-required validation and the
+`onConfirm(address, note)` callback contract unchanged (only the UI
+around it changed); "Confirm" replaces "Yes" as the (now sole) button
+label, matching the real form's submit button text.
+
+**Verification**: `dart format` + `flutter analyze` on
+`item_inventory_page.dart` - 1 issue, pre-existing baseline (unused
+`_perPage` field). Full-project `flutter analyze` - 43 issues (current
+baseline, unchanged).

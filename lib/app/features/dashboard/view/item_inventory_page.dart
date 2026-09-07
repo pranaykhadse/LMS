@@ -1320,6 +1320,18 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
+// Web ref: `item-inventory/inventory.php`'s `.redeemRender` click handler
+// AJAX-loads `item-inventory/get-redeem-form` (= `_item-redeem-form.php`)
+// straight into `#myModal .modal-content` - a plain PHP form, not the
+// separately-defined `#confirmation-modal` markup ("Confirm Redemption" /
+// "Are you sure..." / Yes-Cancel) that this dialog used to be modeled on.
+// That confirmation-modal markup is never actually referenced by any click
+// handler in the file - dead, unused HTML. The real flow (confirmed via a
+// live screenshot too) is this single-panel form: centered title, Address
+// (required) + Note fields, one centered "Confirm" button - no Cancel, no
+// close icon (`#myModal`'s own close button is conditional on
+// `$originalUser`, an admin-impersonation-only case that doesn't apply to
+// a normal user), no confirmation sentence.
 class _RedeemDialog extends StatefulWidget {
   const _RedeemDialog({required this.item, required this.onConfirm});
   final InventoryItem item;
@@ -1353,154 +1365,107 @@ class _RedeemDialogState extends State<_RedeemDialog> {
         horizontal: isPhone ? 12 : 40,
         vertical: 24,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _modalBorder)),
-            ),
-            child: Row(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(32, 32, 32, 28),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Confirm Redemption',
+                  'Enter details and confirm to redeem',
+                  textAlign: TextAlign.center,
                   style: GoogleFonts.roboto(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
                     color: _textMain,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const Spacer(),
-                InkWell(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(
-                    Icons.close_rounded,
-                    size: 20,
-                    color: _textSecondary,
+                const SizedBox(height: 24),
+                RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.roboto(
+                      color: _textMain,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    children: const [
+                      TextSpan(text: 'Address '),
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(color: Color(0xFFDC2626)),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Are you sure you would like to redeem this item for ${widget.item.points} points?',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.roboto(
-                        color: _textSecondary,
-                        fontSize: 16,
-                        height: 1.4,
-                      ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _addressCtrl,
+                  minLines: 4,
+                  maxLines: 6,
+                  validator:
+                      (v) =>
+                          v == null || v.trim().isEmpty
+                              ? 'Address is required'
+                              : null,
+                  style: GoogleFonts.roboto(fontSize: 14, color: _textMain),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.all(12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _borderInput),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Address *',
-                      style: GoogleFonts.roboto(
-                        color: _textMain,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _borderInput),
                     ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _addressCtrl,
-                      maxLines: 3,
-                      validator:
-                          (v) =>
-                              v == null || v.trim().isEmpty
-                                  ? 'Address is required'
-                                  : null,
-                      style: GoogleFonts.roboto(fontSize: 14, color: _textMain),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: _fallbackBg,
-                        contentPadding: const EdgeInsets.all(12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _cardBorder),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _cardBorder),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _indigo),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Note',
-                      style: GoogleFonts.roboto(
-                        color: _textMain,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextFormField(
-                      controller: _noteCtrl,
-                      style: GoogleFonts.roboto(fontSize: 14, color: _textMain),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: _fallbackBg,
-                        contentPadding: const EdgeInsets.all(12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _cardBorder),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _cardBorder),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: _indigo),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: _modalBorder)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed:
-                        _submitting ? null : () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: _cardBorderHover),
-                      backgroundColor: _btnViewBg,
-                      foregroundColor: _btnViewText,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      minimumSize: const Size(0, 40),
-                    ),
-                    child: Text(
-                      'Cancel',
-                      style: GoogleFonts.roboto(fontWeight: FontWeight.w500),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _indigo),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
+                const SizedBox(height: 18),
+                Text(
+                  'Note',
+                  style: GoogleFonts.roboto(
+                    color: _textMain,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _noteCtrl,
+                  style: GoogleFonts.roboto(fontSize: 14, color: _textMain),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _borderInput),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _borderInput),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: _indigo),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                Center(
                   child: ElevatedButton(
                     onPressed:
                         _submitting
@@ -1521,7 +1486,11 @@ class _RedeemDialogState extends State<_RedeemDialog> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      minimumSize: const Size(0, 40),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 36,
+                        vertical: 12,
+                      ),
+                      minimumSize: const Size(0, 44),
                     ),
                     child:
                         _submitting
@@ -1534,7 +1503,7 @@ class _RedeemDialogState extends State<_RedeemDialog> {
                               ),
                             )
                             : Text(
-                              'Yes',
+                              'Confirm',
                               style: GoogleFonts.roboto(
                                 fontWeight: FontWeight.w700,
                               ),
@@ -1544,7 +1513,7 @@ class _RedeemDialogState extends State<_RedeemDialog> {
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
