@@ -601,10 +601,16 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
 
     // Web ref: `.flex-item-1` starts `d-none` but `#launches-haad
     // .flex-item-1 { display: flex !important; }` unconditionally forces it
-    // visible regardless - so the box (label + boxes, even blank) always
-    // shows once enrolled, it just won't have real digits unless there's an
-    // actual still-open registered session to count down to.
-    final hasCountdown = detail.isEnrolled;
+    // visible - not gated by enrollment at all in the PHP (it's a sibling
+    // of, not nested inside, the `empty($courseUser)` conditional). So the
+    // box (label + boxes, even blank) always shows regardless of
+    // enrollment - confirmed via a not-yet-enrolled course's screenshot
+    // showing it too. It just won't have real digits unless there's an
+    // actual still-open *registered* session to count down to
+    // (_earliestUpcomingVirtualClassEvent already requires
+    // item.isEnrolledInClass, so this stays correctly blank pre-enrollment
+    // on its own).
+    const hasCountdown = true;
     // CSS ref: `#launches-haad .flex-item-1 h6` — 13px/weight700/
     // uppercase/color var(--text-secondary) #6B7280/letter-spacing 0.5px.
     // Static text on the real site - "Launches in" never becomes "Started".

@@ -6095,3 +6095,32 @@ through to the existing `_actionButton()`.
 - 6 issues, all pre-existing baseline (confirmed via `git diff` that none
 of the flagged lines were touched by this change). Full-project
 `flutter analyze` - 43 issues (current baseline, unchanged).
+
+## Follow-up: launches-box countdown also missing entirely pre-enrollment
+
+**Report**: screenshots + payload for a second, not-yet-enrolled course
+(id 242, "TEST_HS_Learning") showing the real site's "LAUNCHES IN" box
+(blank digits, same as before) still visible before enrolling - our app
+showed no countdown box at all in that state, only the status pill and
+Enroll Now button.
+
+**Root cause**: the previous follow-up's `hasCountdown = detail.isEnrolled`
+was too conservative. Re-reading `joinCourse.php`, `.flex-item-1` (the
+countdown) is a sibling of the `empty($courseUser)` conditional wrapping
+the status pill, not nested inside it - it was never gated by enrollment
+in the real markup at all, only made permanently visible by the earlier
+CSS `!important` override regardless of enrollment state. The prior
+follow-up's own doc note ("I won't extend hasCountdown to unconditionally
+show pre-enrollment too... no evidence") turned out wrong once this
+screenshot supplied that evidence.
+
+**Fix**: `hasCountdown` in `lib/app/features/courses/view/course_classes_page.dart`
+is now unconditionally `true` - the box always renders. Digits still stay
+correctly blank pre-enrollment on their own, since
+`_earliestUpcomingVirtualClassEvent` already requires
+`item.isEnrolledInClass` per class before it'll pick a session to count
+down to.
+
+**Verification**: `dart format` + `flutter analyze` on `course_classes_page.dart`
+- 4 issues, all pre-existing baseline. Full-project `flutter analyze` -
+43 issues (current baseline, unchanged).
