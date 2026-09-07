@@ -115,6 +115,30 @@ class AccountSettingsRepository with RepoNetworkHelper {
     }
   }
 
+  /// DELETE user-profile/delete-avatar - clears the authenticated user's
+  /// stored avatar. Same no-user_id convention as [uploadAvatar]: that
+  /// query param is admin-only (delete on behalf of someone else), which
+  /// this app has no UI for.
+  Future<AccountSettingsUpdateResult> deleteAvatar() async {
+    try {
+      final raw = await deleteRequest('user-profile/delete-avatar');
+      final data =
+          raw is Map ? Map<String, dynamic>.from(raw) : <String, dynamic>{};
+      if (data['status']?.toString() == '0') {
+        return AccountSettingsUpdateResult(
+          success: false,
+          message: data['message']?.toString() ?? 'Unable to remove avatar.',
+        );
+      }
+      return AccountSettingsUpdateResult(
+        success: true,
+        message: data['message']?.toString(),
+      );
+    } catch (e) {
+      return AccountSettingsUpdateResult(success: false, message: e.toString());
+    }
+  }
+
   Future<AccountSettingsUpdateResult> changePassword({
     required int userId,
     required String oldPassword,

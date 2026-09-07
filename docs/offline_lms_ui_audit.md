@@ -6731,3 +6731,41 @@ guess.
 **Verification**: `dart format` + `flutter analyze` on both touched
 files - 0 issues. Full-project `flutter analyze` - 43 issues (baseline,
 unchanged).
+
+## Follow-up: 2026-09-07 - Avatar badge doubles as a delete button, matching the real toggle
+
+**Report**: a live screenshot + DOM snapshot of the real Account page
+showing `#avatar-badge.edit-only.delete-mode` - a red circular badge
+with a trash icon in the same bottom-right spot the camera badge
+occupies - plus the API detail: `DELETE /api/web/user-profile/delete-avatar?user_id=...`.
+
+**Investigation**: confirmed via the real source
+(`backend/views/sign-in/account.php`) that this isn't two separate
+badges - it's a single `#avatar-badge` element whose JS
+(`updateAvatarBadge()`) toggles it between two modes: camera/purple
+when no avatar is set (click opens the file picker), trash/red
+(`.delete-mode`) once one is (click removes it instead). This app's
+existing camera badge only ever handled the upload case.
+
+**Fix**:
+- `AccountSettingsRepository.deleteAvatar()` - new, calls
+  `DELETE user-profile/delete-avatar` (no `user_id` - that query param
+  is admin-only, same convention as the existing `uploadAvatar()`).
+- `AccountSettingsViewModel.deleteAvatar()` - new, same immediate-save
+  pattern as `uploadAvatar()`/`setEnableTextMessages()` (not part of the
+  Edit/Save flow). Clears `avatarPath`/`avatarBaseUrl` locally by
+  building a fresh `UserProfile` with every other field carried over -
+  `copyWith`'s `?? this.x` pattern can't null a field back out, so it
+  can't be used here the way every other edit on this screen uses it.
+  Syncs into `AuthStateNotifier` same as every other profile edit.
+- `_ProfileHeaderCard`'s avatar badge (`account_settings_page.dart`) now
+  toggles the same way the real one does: purple camera icon when
+  `profile.avatarUrl` is empty (opens the picker), red trash icon
+  (`0xFFEF4444`, hover `0xFFDC2626` - the real CSS's own
+  `.avatar-badge.delete-mode` colors) once an avatar is set (removes it).
+  Both states share the busy/spinner overlay and disable while a request
+  is in flight.
+
+**Verification**: `dart format` + `flutter analyze` on all three touched
+files - 0 issues. Full-project `flutter analyze` - 43 issues (baseline,
+unchanged).

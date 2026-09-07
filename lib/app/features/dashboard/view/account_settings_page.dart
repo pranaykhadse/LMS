@@ -125,6 +125,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   bool _isEditing = false;
   bool _isSaving = false;
   bool _isUploadingAvatar = false;
+  bool _isDeletingAvatar = false;
   bool _isSavingReminders = false;
 
   late final TextEditingController _firstnameCtrl;
@@ -308,6 +309,27 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
       _showErrorOrRedirect(error);
     } else {
       Toast.success(context, 'Avatar updated successfully.');
+    }
+  }
+
+  /// Immediate removal (not part of the Edit/Save flow), same as
+  /// [_pickAndUploadAvatar] - web ref: the avatar badge switches to a red
+  /// trash icon once an avatar is set and removes it on click rather than
+  /// opening the file picker (`updateAvatarBadge()`/`.delete-mode` in
+  /// account.php).
+  Future<void> _deleteAvatar() async {
+    if (_isDeletingAvatar) return;
+    setState(() => _isDeletingAvatar = true);
+    final error =
+        await ref
+            .read(AccountSettingsViewModel.provider.notifier)
+            .deleteAvatar();
+    if (!mounted) return;
+    setState(() => _isDeletingAvatar = false);
+    if (error != null) {
+      _showErrorOrRedirect(error);
+    } else {
+      Toast.success(context, 'Avatar removed successfully.');
     }
   }
 
@@ -603,6 +625,8 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                           emailController: _emailCtrl,
                           isUploadingAvatar: _isUploadingAvatar,
                           onPickAvatar: _pickAndUploadAvatar,
+                          isDeletingAvatar: _isDeletingAvatar,
+                          onDeleteAvatar: _deleteAvatar,
                           onEdit: _startEditing,
                           onCancel: _cancelEditing,
                           onSave: _save,
@@ -1037,6 +1061,8 @@ class _ProfileHeaderCard extends StatelessWidget {
     required this.emailController,
     required this.isUploadingAvatar,
     required this.onPickAvatar,
+    required this.isDeletingAvatar,
+    required this.onDeleteAvatar,
     required this.onEdit,
     required this.onCancel,
     required this.onSave,
@@ -1051,6 +1077,8 @@ class _ProfileHeaderCard extends StatelessWidget {
   final TextEditingController emailController;
   final bool isUploadingAvatar;
   final VoidCallback onPickAvatar;
+  final bool isDeletingAvatar;
+  final VoidCallback onDeleteAvatar;
   final VoidCallback onEdit;
   final VoidCallback onCancel;
   final VoidCallback onSave;
@@ -1065,7 +1093,7 @@ class _ProfileHeaderCard extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         _Avatar(url: profile.avatarUrl),
-        if (isUploadingAvatar)
+        if (isUploadingAvatar || isDeletingAvatar)
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -1085,43 +1113,68 @@ class _ProfileHeaderCard extends StatelessWidget {
             ),
           ),
         if (isEditing)
-          Positioned(
-            right: 5,
-            bottom: 5,
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x33000000),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
+          Builder(
+            builder: (context) {
+              // Web: a single `#avatar-badge` toggles between an "upload"
+              // (camera, purple) and "remove" (trash, red) mode based on
+              // whether an avatar is already set
+              // (`updateAvatarBadge()`/`.delete-mode` in account.php) -
+              // not two separate badges.
+              final hasAvatar = profile.avatarUrl.isNotEmpty;
+              final busy = isUploadingAvatar || isDeletingAvatar;
+              return Positioned(
+                right: 5,
+                bottom: 5,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x33000000),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: HoverBuilder(
-                builder:
-                    (context, hovering) => Material(
-                      color: hovering ? FigmaTokens.purpleHover : _asPurple,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        onTap: isUploadingAvatar ? null : onPickAvatar,
-                        customBorder: const CircleBorder(),
-                        child: Transform.scale(
-                          scale: hovering ? 1.1 : 1,
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            size: 14,
-                            color: Colors.white,
+                  child: HoverBuilder(
+                    builder:
+                        (context, hovering) => Material(
+                          color:
+                              hasAvatar
+                                  ? (hovering
+                                      ? const Color(0xFFDC2626)
+                                      : const Color(0xFFEF4444))
+                                  : (hovering
+                                      ? FigmaTokens.purpleHover
+                                      : _asPurple),
+                          shape: const CircleBorder(),
+                          child: InkWell(
+                            onTap:
+                                busy
+                                    ? null
+                                    : (hasAvatar
+                                        ? onDeleteAvatar
+                                        : onPickAvatar),
+                            customBorder: const CircleBorder(),
+                            child: Transform.scale(
+                              scale: hovering ? 1.1 : 1,
+                              child: Icon(
+                                hasAvatar
+                                    ? Icons.delete_outline_rounded
+                                    : Icons.camera_alt_rounded,
+                                size: 14,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-              ),
-            ),
+                  ),
+                ),
+              );
+            },
           ),
       ],
     );

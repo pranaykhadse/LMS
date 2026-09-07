@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/logic/data_state/data_state.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
+import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/dashboard/model/user_profile_detail.dart';
 import 'package:lms/app/features/dashboard/repository/account_settings_repository.dart';
 
@@ -287,6 +288,76 @@ class AccountSettingsViewModel
       final patchedProfile = current.profile.copyWith(
         avatarPath: result.avatarPath,
         avatarBaseUrl: result.avatarBaseUrl,
+      );
+      if (mounted) {
+        state = DataState.onData(
+          UserProfileDetail(
+            profile: patchedProfile,
+            user: current.user,
+            phoneNumber: current.phoneNumber,
+            enableTextMessages: current.enableTextMessages,
+          ),
+        );
+      }
+      await ref
+          .read(AuthStateNotifier.provider.notifier)
+          .updateProfile(patchedProfile);
+    }
+    return null;
+  }
+
+  /// Removes the current avatar via DELETE user-profile/delete-avatar -
+  /// web ref: account.php's `#avatar-badge` toggles into a red trash icon
+  /// once an avatar is set (`updateAvatarBadge()`/`.delete-mode`), and
+  /// clicking it removes the image rather than opening the file picker.
+  /// Clears avatarPath/avatarBaseUrl locally on success - copyWith can't
+  /// null a field out (its `?? this.x` pattern only ever fills gaps), so
+  /// a fresh UserProfile is built with every other field carried over
+  /// unchanged. Returns an error message on failure, or null on success.
+  Future<String?> deleteAvatar() async {
+    if (userId == null) return 'Unable to remove avatar — not logged in.';
+    final result = await repository.deleteAvatar();
+    if (!result.success) {
+      return result.message ?? 'Unable to remove avatar. Please try again.';
+    }
+    final current = state.data;
+    if (current != null) {
+      final p = current.profile;
+      final patchedProfile = UserProfile(
+        userId: p.userId,
+        firstname: p.firstname,
+        middlename: p.middlename,
+        lastname: p.lastname,
+        avatarPath: null,
+        avatarBaseUrl: null,
+        locale: p.locale,
+        gender: p.gender,
+        division: p.division,
+        department: p.department,
+        location: p.location,
+        points: p.points,
+        website: p.website,
+        linkedIn: p.linkedIn,
+        supervisorPopupMonth: p.supervisorPopupMonth,
+        mentorPopupMonth: p.mentorPopupMonth,
+        notificationType: p.notificationType,
+        countryCode: p.countryCode,
+        countryIso: p.countryIso,
+        textPhoneNumber: p.textPhoneNumber,
+        emailOptions: p.emailOptions,
+        whatsappPhoneNumber: p.whatsappPhoneNumber,
+        slackEmail: p.slackEmail,
+        teamsEmail: p.teamsEmail,
+        requestDate: p.requestDate,
+        requestCount: p.requestCount,
+        virtualDevelopmentProStatus: p.virtualDevelopmentProStatus,
+        recommendedCourses: p.recommendedCourses,
+        requiredCourses: p.requiredCourses,
+        meteredAccess: p.meteredAccess,
+        restrictedGroupId: p.restrictedGroupId,
+        restrictionType: p.restrictionType,
+        restrictedCourseLimit: p.restrictedCourseLimit,
+        restrictedDate: p.restrictedDate,
       );
       if (mounted) {
         state = DataState.onData(
