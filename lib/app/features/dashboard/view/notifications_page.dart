@@ -38,7 +38,10 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(NotificationsViewModel.provider);
     final items = state.notifications;
-    final pages = ((items.length + _nPageSize - 1) ~/ _nPageSize).clamp(1, 1 << 30);
+    final pages = ((items.length + _nPageSize - 1) ~/ _nPageSize).clamp(
+      1,
+      1 << 30,
+    );
     final page = _page.clamp(1, pages);
     final start = (page - 1) * _nPageSize;
     final end = (start + _nPageSize).clamp(0, items.length);
@@ -72,36 +75,36 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage> {
                 child:
                     state.isLoading
                         ? const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 80),
-                            child: Center(
-                              child: CircularProgressIndicator(color: _nPurple),
-                            ),
-                          )
+                          padding: EdgeInsets.symmetric(vertical: 80),
+                          child: Center(
+                            child: CircularProgressIndicator(color: _nPurple),
+                          ),
+                        )
                         : Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _StatsBar(state: state, ref: ref),
-                              const SizedBox(height: 24),
-                              if (items.isEmpty)
-                                const _EmptyState()
-                              else ...[
-                                for (var i = start; i < end; i++)
-                                  _NotifCard(item: items[i], ref: ref),
-                                // Cards each carry a 10px bottom margin
-                                // (the web's 10px list gap), so the pager
-                                // gets 20 here to honour
-                                // `.notif-pagination-wrap`'s margin-top 30.
-                                if (items.length > _nPageSize) ...[
-                                  const SizedBox(height: 20),
-                                  PaginationWidget(
-                                    page: page,
-                                    pages: pages,
-                                    onPage: (p) => setState(() => _page = p),
-                                  ),
-                                ],
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _StatsBar(state: state, ref: ref),
+                            const SizedBox(height: 24),
+                            if (items.isEmpty)
+                              const _EmptyState()
+                            else ...[
+                              for (var i = start; i < end; i++)
+                                _NotifCard(item: items[i], ref: ref),
+                              // Cards each carry a 10px bottom margin
+                              // (the web's 10px list gap), so the pager
+                              // gets 20 here to honour
+                              // `.notif-pagination-wrap`'s margin-top 30.
+                              if (items.length > _nPageSize) ...[
+                                const SizedBox(height: 20),
+                                PaginationWidget(
+                                  page: page,
+                                  pages: pages,
+                                  onPage: (p) => setState(() => _page = p),
+                                ),
                               ],
                             ],
-                          ),
+                          ],
+                        ),
               ),
             ),
           ),
@@ -197,37 +200,38 @@ class _StatsBar extends StatelessWidget {
           ),
         ],
       ),
-      child: isNarrow
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    _UnreadBadge(count: state.unreadCount),
-                    const Spacer(),
-                    _TotalBadge(count: state.notifications.length),
-                  ],
-                ),
-                if (state.unreadCount > 0) ...[
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: _MarkAllButton(ref: ref),
+      child:
+          isNarrow
+              ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      _UnreadBadge(count: state.unreadCount),
+                      const Spacer(),
+                      _TotalBadge(count: state.notifications.length),
+                    ],
                   ),
+                  if (state.unreadCount > 0) ...[
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: _MarkAllButton(ref: ref),
+                    ),
+                  ],
                 ],
-              ],
-            )
-          : Row(
-              children: [
-                _UnreadBadge(count: state.unreadCount),
-                const SizedBox(width: 16),
-                _TotalBadge(count: state.notifications.length),
-                const Spacer(),
-                // CSS ref: the "Mark all read" link only renders when
-                // $unreadCount > 0.
-                if (state.unreadCount > 0) _MarkAllButton(ref: ref),
-              ],
-            ),
+              )
+              : Row(
+                children: [
+                  _UnreadBadge(count: state.unreadCount),
+                  const SizedBox(width: 16),
+                  _TotalBadge(count: state.notifications.length),
+                  const Spacer(),
+                  // CSS ref: the "Mark all read" link only renders when
+                  // $unreadCount > 0.
+                  if (state.unreadCount > 0) _MarkAllButton(ref: ref),
+                ],
+              ),
     );
   }
 }
@@ -328,15 +332,18 @@ class _MarkAllButtonState extends State<_MarkAllButton> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
-        onTap: () =>
-            widget.ref
-                .read(NotificationsViewModel.provider.notifier)
-                .markAllAsRead(),
+        onTap:
+            () =>
+                widget.ref
+                    .read(NotificationsViewModel.provider.notifier)
+                    .markAllAsRead(),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color:
-                _hover ? _nPurple.withValues(alpha: 0.15) : const Color(0xFFF5F3FF),
+                _hover
+                    ? _nPurple.withValues(alpha: 0.15)
+                    : const Color(0xFFF5F3FF),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -466,73 +473,74 @@ class _NotifCardState extends State<_NotifCard> {
                     child: Padding(
                       padding: EdgeInsets.all(isNarrow ? 16 : 20),
                       child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: isNarrow ? 38 : 44,
-                    height: isNarrow ? 38 : 44,
-                    margin: const EdgeInsets.only(top: 2),
-                    decoration: BoxDecoration(
-                      color: item.isRead
-                          ? const Color(0xFFF5F3FF)
-                          : _nPurple.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.notifications_rounded,
-                      color: _nPurple,
-                      size: isNarrow ? 15 : 18,
-                    ),
-                  ),
-                  SizedBox(width: isNarrow ? 12 : 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.title,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: isNarrow ? 14 : 15,
-                            color: const Color(0xFF111827),
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          item.message,
-                          style: TextStyle(
-                            fontSize: isNarrow ? 13 : 14,
-                            color: const Color(0xFF6B7280),
-                            height: 1.6,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.access_time_rounded,
-                              size: 11,
-                              color: Color(0xFF9CA3AF),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: isNarrow ? 38 : 44,
+                            height: isNarrow ? 38 : 44,
+                            margin: const EdgeInsets.only(top: 2),
+                            decoration: BoxDecoration(
+                              color:
+                                  item.isRead
+                                      ? const Color(0xFFF5F3FF)
+                                      : _nPurple.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _timeAgo(item.createdAt),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF9CA3AF),
-                                fontWeight: FontWeight.w400,
-                              ),
+                            child: Icon(
+                              Icons.notifications_rounded,
+                              color: _nPurple,
+                              size: isNarrow ? 15 : 18,
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  _NotifCardActions(item: item, ref: widget.ref),
-                ],
+                          ),
+                          SizedBox(width: isNarrow ? 12 : 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.title,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: isNarrow ? 14 : 15,
+                                    color: const Color(0xFF111827),
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  item.message,
+                                  style: TextStyle(
+                                    fontSize: isNarrow ? 13 : 14,
+                                    color: const Color(0xFF6B7280),
+                                    height: 1.6,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.access_time_rounded,
+                                      size: 11,
+                                      color: Color(0xFF9CA3AF),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _timeAgo(item.createdAt),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF9CA3AF),
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _NotifCardActions(item: item, ref: widget.ref),
+                        ],
                       ),
                     ),
                   ),
@@ -602,11 +610,7 @@ class _NotifCardActions extends StatelessWidget {
         // delete item is `.text-danger` — red.
         PopupMenuButton<String>(
           padding: EdgeInsets.zero,
-          icon: Icon(
-            Icons.more_vert,
-            size: 18,
-            color: Colors.grey.shade400,
-          ),
+          icon: Icon(Icons.more_vert, size: 18, color: Colors.grey.shade400),
           itemBuilder:
               (context) => [
                 if (!item.isRead)
@@ -643,15 +647,38 @@ class _NotifCardActions extends StatelessWidget {
                 ),
               ],
           onSelected: (value) async {
-            final notifier = ref.read(
-              NotificationsViewModel.provider.notifier,
-            );
+            final notifier = ref.read(NotificationsViewModel.provider.notifier);
             if (value == 'read') {
               final error = await notifier.markOneAsRead(item.id);
               if (context.mounted && error != null) {
                 Toast.error(context, error);
               }
             } else if (value == 'delete') {
+              // Web ref: the delete dropdown item is wired to a native
+              // `confirm('Are you sure you want to delete this
+              // notification?')` before the actual delete request fires -
+              // matched here with an AlertDialog instead of calling
+              // deleteOne immediately on tap.
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder:
+                    (dialogContext) => AlertDialog(
+                      title: const Text(
+                        'Are you sure you want to delete this notification?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext, true),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+              );
+              if (confirmed != true) return;
               final error = await notifier.deleteOne(item.id);
               if (context.mounted && error != null) {
                 Toast.error(context, error);

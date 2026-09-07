@@ -6290,3 +6290,24 @@ label, matching the real form's submit button text.
 `item_inventory_page.dart` - 1 issue, pre-existing baseline (unused
 `_perPage` field). Full-project `flutter analyze` - 43 issues (current
 baseline, unchanged).
+
+## Follow-up: notification delete now confirms first
+
+**Report**: screenshot of the real site's native `confirm('Are you sure
+you want to delete this notification?')` browser dialog, shown before a
+notification is actually deleted. Asked to add the same confirmation to
+the Flutter app.
+
+**Root cause**: the app's Delete menu item (`_NotifCardActions`,
+`lib/app/features/dashboard/view/notifications_page.dart`) called
+`notifier.deleteOne(item.id)` immediately on tap, with no confirmation
+step at all.
+
+**Fix**: added a `showDialog` `AlertDialog` (title: "Are you sure you
+want to delete this notification?", Cancel/OK actions) before the delete
+call - only proceeds to `deleteOne` if the user taps OK, matching the
+real site's native confirm() gate.
+
+**Verification**: `dart format` + `flutter analyze` on
+`notifications_page.dart` - 0 issues. Full-project `flutter analyze` -
+43 issues (current baseline, unchanged).
