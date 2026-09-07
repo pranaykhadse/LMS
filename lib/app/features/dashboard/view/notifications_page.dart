@@ -656,28 +656,13 @@ class _NotifCardActions extends StatelessWidget {
             } else if (value == 'delete') {
               // Web ref: the delete dropdown item is wired to a native
               // `confirm('Are you sure you want to delete this
-              // notification?')` before the actual delete request fires -
-              // matched here with an AlertDialog instead of calling
-              // deleteOne immediately on tap.
-              final confirmed = await showDialog<bool>(
-                context: context,
-                builder:
-                    (dialogContext) => AlertDialog(
-                      title: const Text(
-                        'Are you sure you want to delete this notification?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext, true),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-              );
+              // notification?')` before the actual delete request fires.
+              // Styled to match this app's own established confirm-dialog
+              // pattern (see course_classes_page.dart's
+              // _showCancelConfirmationDialog) rather than a plain default
+              // AlertDialog or the browser's native chrome, for visual
+              // consistency with the rest of the app.
+              final confirmed = await _showDeleteNotificationDialog(context);
               if (confirmed != true) return;
               final error = await notifier.deleteOne(item.id);
               if (context.mounted && error != null) {
@@ -689,6 +674,163 @@ class _NotifCardActions extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Confirm-before-delete dialog, styled to match this app's own
+/// established confirm-dialog pattern (white rounded card, centered title
+/// header with a circular X close button, dividers, centered body text,
+/// Cancel/action footer) - same shape as
+/// course_classes_page.dart's `_showCancelConfirmationDialog`, adapted
+/// with a red "Delete" action instead of a purple "Yes" one since this is
+/// a destructive action, matching the red already used for the Delete
+/// menu item/icon above. Returns true if the user confirmed, false/null
+/// otherwise.
+Future<bool?> _showDeleteNotificationDialog(BuildContext context) {
+  return showDialog<bool>(
+    context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.5),
+    builder:
+        (dialogContext) => Dialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          clipBehavior: Clip.antiAlias,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      color: Colors.white,
+                      child: const Text(
+                        'Delete Notification',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF1E2939),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      right: 12,
+                      top: 12,
+                      child: SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: Material(
+                          color: const Color(0xFFF5F3FF),
+                          shape: const CircleBorder(),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => Navigator.pop(dialogContext, false),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              color: Color(0xFF9CA3AF),
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF3F4F6),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  child: Text(
+                    'Are you sure you want to delete this notification?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF333333),
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF3F4F6),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF3F4F6),
+                          foregroundColor: const Color(0xFF374151),
+                          side: const BorderSide(color: Color(0xFFE5E7EB)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFDC2626),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 10,
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+  );
 }
 
 // ── Empty state ───────────────────────────────────────────────────────────────

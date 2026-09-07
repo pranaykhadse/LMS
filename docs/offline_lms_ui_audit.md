@@ -6311,3 +6311,32 @@ real site's native confirm() gate.
 **Verification**: `dart format` + `flutter analyze` on
 `notifications_page.dart` - 0 issues. Full-project `flutter analyze` -
 43 issues (current baseline, unchanged).
+
+## Follow-up: delete-notification dialog restyled to match the app's own pattern
+
+**Report**: "Either match the UI of the confirmation box with the
+screenshot I provided to you or with some other dialog box that exist
+within the application" - follow-up on the plain default `AlertDialog`
+added in the previous commit, which didn't match anything (not the real
+site's native browser `confirm()` chrome - not worth literally
+replicating, since that's browser chrome rather than product UI - and not
+any existing in-app dialog either).
+
+**Fix**: replaced the plain `AlertDialog` with a new
+`_showDeleteNotificationDialog` in
+`lib/app/features/dashboard/view/notifications_page.dart`, styled to
+match this app's own established confirm-dialog pattern (same shape as
+`course_classes_page.dart`'s `_showCancelConfirmationDialog`): white
+rounded card (radius 16), centered title header with a circular X close
+button (light-lavender bg), top/bottom dividers, centered body text, and
+a Cancel/Delete footer row. Titled "Delete Notification"; the action
+button is red (`#DC2626`, the same red already used for the Delete menu
+item/icon on this page) rather than the cancel-dialog's purple "Yes",
+since this is a destructive action. Kept this file's own plain
+`TextStyle` convention (no `GoogleFonts`/`HoverBuilder` imports, unlike
+the cancel-registration dialog) for consistency with the rest of this
+file, which uses plain `TextStyle` throughout.
+
+**Verification**: `dart format` + `flutter analyze` on
+`notifications_page.dart` - 0 issues. Full-project `flutter analyze` -
+43 issues (current baseline, unchanged).
