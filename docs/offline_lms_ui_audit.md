@@ -5938,3 +5938,32 @@ came back empty both before and after):
 issues in either. Full-project `flutter analyze` — 43 issues (current
 baseline, unchanged). Full-repo grep for `debugPrint(`/`print(` — no
 matches left anywhere in `lib/`.
+
+## Follow-up: Continue Learning card — description missing on narrow/phone widths
+
+**Report**: "The description is not visible in the flutter app in Continue
+Learning Card."
+
+**Root cause**: `_ContinueLearningItem`
+(`lib/app/features/dashboard/view/dashboard_page.dart`) has two separate
+layouts — a tablet/desktop row (thumbnail + text) and a simpler phone-width
+card. The phone branch rendered category, title, due date, and Resume, but
+never the description at all. Its own comment claimed this matched a web
+reference ("hidden sm:flex... phone gets its own simpler card"), but that
+string doesn't exist anywhere in `origin/staging`'s CSS - checked via grep,
+no match. The actual source of truth (`backend/views/course/_dashboardData.php:102-106`
++ `bluetheme-layout.css:2251`, the `.course-description` rule) shows the
+description unconditionally whenever the course has one, at every screen
+width - it isn't gated by any media query.
+
+**Fix**: added the description `Text` (2-line clamp, matching the CSS's
+`-webkit-line-clamp: 2`) to the phone-width branch too, styled per the
+`.course-description` rule's own values (`font-size: 0.9rem` ≈ 14.4,
+`color: var(--close-btn-gray)` = `#99A1AF`, `line-height: 1.4`). Corrected
+the stale comment above the branch to stop citing the nonexistent web
+reference.
+
+**Verification**: `dart format` + `flutter analyze` on `dashboard_page.dart`
+- 14 issues, all pre-existing baseline (unused elements/parameters,
+deprecated `withOpacity`, unnecessary import), none on the touched lines.
+Full-project `flutter analyze` - 43 issues (current baseline, unchanged).

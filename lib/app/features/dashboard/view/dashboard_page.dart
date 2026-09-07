@@ -1175,8 +1175,11 @@ class _ContinueLearningItem extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final viewDisabled = isViewCourseDisabled(ref, course.id);
 
-    // Design ref: the row layout below is "hidden sm:flex" - phone gets
-    // its own simpler card instead (no thumbnail, full-width Resume).
+    // Phone gets its own simpler card (no thumbnail, full-width Resume) -
+    // still includes description though, same as every other width; the
+    // real site's .course-description rule isn't gated by a media query,
+    // it's always shown (confirmed against origin/staging's
+    // _dashboardData.php + bluetheme-layout.css).
     if (!Responsive.isTablet(context)) {
       return Container(
         padding: const EdgeInsets.all(16),
@@ -1216,6 +1219,24 @@ class _ContinueLearningItem extends ConsumerWidget {
                 height: 22 / 16,
               ),
             ),
+            // CSS ref: .course-description (≤480px rule, but unmedia-gated
+            // so it applies at every width) — font-size 0.9rem, color
+            // var(--close-btn-gray) #99A1AF, line-height 1.4,
+            // -webkit-line-clamp: 2. Previously missing from this
+            // phone-width card entirely.
+            if (course.description != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                course.description!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF99A1AF),
+                  fontSize: 14.4,
+                  height: 1.4,
+                ),
+              ),
+            ],
             if (course.dueDate != null) ...[
               // mb-2 = 8px gap above date
               const SizedBox(height: 8),
