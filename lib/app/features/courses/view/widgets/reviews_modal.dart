@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lms/app/core/design/figma_tokens.dart';
 import 'package:lms/app/core/views/elements/hover_builder.dart';
+import 'package:lms/app/features/courses/repository/reviews_repository.dart';
 
-// ignore: unused_element
 const _purple = FigmaTokens.primaryPurple;
 // CSS ref: .rw-summary-stars / .rw-stars — color #f59e0b (amber), not this
 // app's usual purple accent.
@@ -11,27 +11,14 @@ const _starAmber = Color(0xFFF59E0B);
 
 /// Opens the site's course-reviews modal for [courseId].
 ///
-/// `GET /backend/web/course/load-reviews?id=<id>` (the same endpoint the
-/// web app's own `openreviewsModal()` calls) returns a **static** HTML/CSS
-/// fragment — no forms, no client-side interactivity, just server-rendered
-/// display markup (`.rw-summary`, `.rw-card` list, an `.rw-empty` state).
-/// Confirmed against a live capture of the actual response.
-///
-/// PENDING: there's no Bearer-token-authed REST endpoint for this data yet
-/// (only that cookie-session-authenticated legacy web route), and fetching
-/// it through an embedded WebView + auto-login link proved unreliable in
-/// practice — the login-link resolves to a real, well-formed URL, but
-/// visiting it still lands on the site's raw login form instead of
-/// completing the auto-login handshake (confirmed even outside the
-/// WebView, and even via the same mechanism Attend Class already uses
-/// successfully elsewhere — so this is an upstream/server-side redirect
-/// issue, not something fixable from here). Backend team is being asked
-/// for a proper JSON endpoint. Until then this shows the modal's real
-/// chrome/shell (matching the web app exactly) with no review content —
-/// see [_ReviewsDialogState.build] for where to wire a real fetch back in
-/// once that endpoint exists; [_ReviewSummary]/[_ReviewItem]/
-/// [_SummaryRow]/[_ReviewCard] below are already built to render whatever
-/// it returns.
+/// `GET lms-screen/review-modal?course_id=<id>` is the Bearer-token-authed
+/// REST equivalent of the web app's cookie-session `course/load-reviews`
+/// route (its `openreviewsModal()` calls the latter directly). Both return
+/// the same static, server-rendered HTML fragment
+/// (`_course_reviews.php` — `.rw-summary` + `.rw-card` list, or
+/// `.rw-empty`) under `payload.reviews_html` — parsed here via regex
+/// rather than a full HTML parser, since the shape is a fixed template,
+/// not arbitrary markup.
 void showReviewsModal(
   BuildContext context,
   WidgetRef ref, {
@@ -51,8 +38,8 @@ void showReviewsModal(
   );
 }
 
-class _ReviewSummary {
-  const _ReviewSummary({
+class _ReviewsData {
+  const _ReviewsData({
     required this.score,
     required this.countLabel,
     required this.items,
@@ -77,6 +64,74 @@ class _ReviewItem {
   final String comment;
 }
 
+/// Matches `_course_reviews.php`'s fixed template shape via regex — the
+/// summary block always renders (even at 0 reviews), followed by either
+/// the `.rw-card` list or the `.rw-empty` state.
+_ReviewsData _parseReviewsHtml(String html) {
+  final score =
+      double.tryParse(
+        RegExp(
+              r'rw-summary-score">([^<]*)',
+            ).firstMatch(html)?.group(1)?.trim() ??
+            '',
+      ) ??
+      0.0;
+  final label =
+      RegExp(r'rw-summary-label">([^<]*)').firstMatch(html)?.group(1)?.trim() ??
+      '';
+
+  final items = <_ReviewItem>[];
+  final cardChunks = html.split('<div class="rw-card">')..removeAt(0);
+  for (final chunk in cardChunks) {
+    final initial =
+        RegExp(r'rw-avatar">([^<]*)').firstMatch(chunk)?.group(1)?.trim() ?? '';
+    final name =
+        RegExp(r'rw-name">([^<]*)').firstMatch(chunk)?.group(1)?.trim() ?? '';
+    final date =
+        RegExp(r'rw-date">([^<]*)').firstMatch(chunk)?.group(1)?.trim() ?? '';
+    final fullStars = RegExp(r'class="fas fa-star"').allMatches(chunk).length;
+    final halfStars =
+        RegExp(r'class="fas fa-star-half-alt"').allMatches(chunk).length;
+    final comment =
+        RegExp(
+          r'rw-comment">([\s\S]*?)</div>',
+        ).firstMatch(chunk)?.group(1)?.trim() ??
+        '';
+    items.add(
+      _ReviewItem(
+        initial: _decodeHtmlEntities(initial),
+        name: _decodeHtmlEntities(name),
+        date: date,
+        rating: fullStars + halfStars * 0.5,
+        comment: _decodeHtmlEntities(comment),
+      ),
+    );
+  }
+  return _ReviewsData(score: score, countLabel: label, items: items);
+}
+
+/// Un-escapes the entities `Html::encode()` produces server-side
+/// (`&`, `<`, `>`, `"`, `'`) plus numeric entities, so review names/
+/// comments containing those characters display correctly instead of
+/// literally.
+String _decodeHtmlEntities(String value) {
+  return value
+      .replaceAllMapped(
+        RegExp(r'&#(\d+);'),
+        (m) => String.fromCharCode(int.parse(m.group(1)!)),
+      )
+      .replaceAllMapped(
+        RegExp(r'&#x([0-9a-fA-F]+);'),
+        (m) => String.fromCharCode(int.parse(m.group(1)!, radix: 16)),
+      )
+      .replaceAll('&amp;', '&')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#039;', "'")
+      .replaceAll('&apos;', "'");
+}
+
 class _ReviewsDialog extends ConsumerStatefulWidget {
   const _ReviewsDialog({required this.courseId});
   final int courseId;
@@ -86,6 +141,34 @@ class _ReviewsDialog extends ConsumerStatefulWidget {
 }
 
 class _ReviewsDialogState extends ConsumerState<_ReviewsDialog> {
+  bool _loading = true;
+  String? _error;
+  _ReviewsData? _data;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final html = await ref
+          .read(ReviewsRepository.provider)
+          .fetchReviewsHtml(widget.courseId);
+      final data = _parseReviewsHtml(html);
+      if (mounted) setState(() => _data = data);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Unable to load reviews.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final maxHeight = MediaQuery.sizeOf(context).height * 0.75;
@@ -124,12 +207,7 @@ class _ReviewsDialogState extends ConsumerState<_ReviewsDialog> {
                   // CSS ref: .modal-body--reviews — padding 32px 28px 28px.
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
-                    // No fetch happens right now — see the doc comment on
-                    // showReviewsModal for why. Once a real API exists,
-                    // this becomes a normal loading/error/data switch
-                    // (identical shape to every other screen in this app)
-                    // instead of always going straight to the empty state.
-                    child: _buildEmptyState(),
+                    child: _buildBody(),
                   ),
                 ),
               ),
@@ -140,9 +218,7 @@ class _ReviewsDialogState extends ConsumerState<_ReviewsDialog> {
               Positioned(
                 top: 16,
                 right: 16,
-                child: _CloseButton(
-                  onTap: () => Navigator.of(context).pop(),
-                ),
+                child: _CloseButton(onTap: () => Navigator.of(context).pop()),
               ),
             ],
           ),
@@ -151,19 +227,102 @@ class _ReviewsDialogState extends ConsumerState<_ReviewsDialog> {
     );
   }
 
-  // CSS ref: .rw-empty — column, centered, gap 8px, padding 48px 0, color
-  // #9CA3AF, 14px; icon 36px color #D1D5DB.
-  Widget _buildEmptyState() {
-    return const ColoredBox(
-      color: Colors.white,
-      child: Center(
+  Widget _buildBody() {
+    if (_loading) return _buildLoading();
+    if (_error != null) return _buildError();
+    final data = _data;
+    if (data == null) return _buildEmptyState();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _SummaryRow(summary: data),
+        // CSS ref: .rw-divider — height 1px, bg #F3F4F6, margin-bottom 20.
+        Container(
+          height: 1,
+          margin: const EdgeInsets.only(bottom: 20),
+          color: const Color(0xFFF3F4F6),
+        ),
+        if (data.items.isEmpty)
+          _buildEmptyState()
+        else
+          for (var i = 0; i < data.items.length; i++)
+            _ReviewCard(
+              item: data.items[i],
+              isLast: i == data.items.length - 1,
+            ),
+      ],
+    );
+  }
+
+  // CSS ref: .reviews-loading — column, gap 12, padding 60px 0, color
+  // #9CA3AF, 14px. .reviews-spinner — 28x28, 3px ring, spins.
+  Widget _buildLoading() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 60),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.star_border_rounded, size: 36, color: Color(0xFFD1D5DB)),
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 3, color: _purple),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'Loading reviews...',
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline_rounded,
+              size: 36,
+              color: Color(0xFFD1D5DB),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _error ?? 'Unable to load reviews.',
+              style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            TextButton(onPressed: _fetch, child: const Text('Retry')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // CSS ref: .rw-empty — column, centered, gap 8px, padding 48px 0, color
+  // #9CA3AF, 14px; icon (`fa-comment-dots`) 36px color #D1D5DB.
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 36,
+              color: Color(0xFFD1D5DB),
+            ),
             SizedBox(height: 8),
             Text(
-              'No reviews yet',
+              'No reviews yet. Be the first to share your feedback!',
+              textAlign: TextAlign.center,
               style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
             ),
           ],
@@ -174,17 +333,10 @@ class _ReviewsDialogState extends ConsumerState<_ReviewsDialog> {
 }
 
 // ── Summary row ──────────────────────────────────────────────────────────
-//
-// Unused for now (see the doc comment on showReviewsModal) — kept ready
-// for when a real reviews API exists: pass its data through
-// _ReviewSummary/_ReviewItem and render `_SummaryRow(summary: ...)` +
-// `_ReviewCard(item: ..., isLast: ...)` per item in place of
-// _buildEmptyState() above.
 
-// ignore: unused_element
 class _SummaryRow extends StatelessWidget {
   const _SummaryRow({required this.summary});
-  final _ReviewSummary summary;
+  final _ReviewsData summary;
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +373,6 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
-// ignore: unused_element
 class _StarRow extends StatelessWidget {
   const _StarRow({required this.rating, required this.size});
   final double rating;
@@ -248,7 +399,6 @@ class _StarRow extends StatelessWidget {
 
 // ── Review card ───────────────────────────────────────────────────────────
 
-// ignore: unused_element
 class _ReviewCard extends StatelessWidget {
   const _ReviewCard({required this.item, required this.isLast});
   final _ReviewItem item;
@@ -261,11 +411,10 @@ class _ReviewCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        border: isLast
-            ? null
-            : const Border(
-                bottom: BorderSide(color: Color(0xFFF3F4F6)),
-              ),
+        border:
+            isLast
+                ? null
+                : const Border(bottom: BorderSide(color: Color(0xFFF3F4F6))),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,26 +505,28 @@ class _CloseButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return HoverBuilder(
-      builder: (context, hovering) => InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: hovering ? 0.1 : 0.05),
-            shape: BoxShape.circle,
+      builder:
+          (context, hovering) => InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: hovering ? 0.1 : 0.05),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                size: 14,
+                color:
+                    hovering
+                        ? const Color(0xFF374151)
+                        : const Color(0xFF9CA3AF),
+              ),
+            ),
           ),
-          child: Icon(
-            Icons.close_rounded,
-            size: 14,
-            color: hovering
-                ? const Color(0xFF374151)
-                : const Color(0xFF9CA3AF),
-          ),
-        ),
-      ),
     );
   }
 }

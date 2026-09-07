@@ -6340,3 +6340,55 @@ file, which uses plain `TextStyle` throughout.
 **Verification**: `dart format` + `flutter analyze` on
 `notifications_page.dart` - 0 issues. Full-project `flutter analyze` -
 43 issues (current baseline, unchanged).
+
+## Follow-up: Reviews modal now fetches real review data
+
+**Report**: screenshot of the real site's course-reviews modal (score,
+star summary, review count, individual review cards) plus a Thunder
+Client capture of `GET /api/web/lms-screen/review-modal?course_id=620` -
+a Bearer-token-authed REST endpoint returning `payload.reviews_html`
+(the same static server-rendered HTML fragment the legacy web route
+returns). Asked to build this modal's UI.
+
+**Context**: the modal chrome (`showReviewsModal`,
+`lib/app/features/courses/view/widgets/reviews_modal.dart`) already
+existed and was already pixel-matched against the real site's CSS - but
+an earlier session's doc comment flagged that no Bearer-token REST
+endpoint existed yet for the actual review content, so it permanently
+showed "No reviews yet" regardless of a course's real reviews, with the
+summary/card-rendering widgets (`_SummaryRow`/`_ReviewItem`/`_StarRow`/
+`_ReviewCard`) already built and marked `unused_element`, waiting for
+this exact endpoint.
+
+**Fix**:
+- New `ReviewsRepository`
+  (`lib/app/features/courses/repository/reviews_repository.dart`) -
+  `fetchReviewsHtml(courseId)` hits the endpoint and returns
+  `payload.reviews_html` as a raw string.
+- `reviews_modal.dart` now actually fetches on open (loading → data/error
+  state machine, matching this app's usual DataState-style screens) and
+  parses that HTML via regex into `_ReviewsData`/`_ReviewItem` - a fixed
+  server template (`_course_reviews.php`), not arbitrary markup, so regex
+  is reliable here and avoids adding a full HTML-parser dependency the
+  project doesn't otherwise need. Handles HTML entity decoding
+  (`&amp;`/`&lt;`/numeric entities` Html::encode()` produces server-side)
+  so names/comments with special characters render correctly.
+- Added a real loading state (spinner + "Loading reviews...", matching
+  the modal shell's own `.reviews-loading`/`.reviews-spinner` CSS) and an
+  error/retry state, neither of which existed before (only the permanent
+  empty state did).
+- Corrected the empty-state copy/icon to match `_course_reviews.php`'s
+  actual `.rw-empty` block exactly: "No reviews yet. Be the first to
+  share your feedback!" with a comment-bubble icon (was a shortened "No
+  reviews yet" with a star-outline icon). Also fixed a real template
+  detail this session hadn't seen before: the summary bar (score + stars
+  + count) always renders even at 0 reviews - the empty state only
+  replaces the review-cards section below the divider, not the whole
+  modal body.
+
+**Verification**: `dart format` + `flutter analyze` on both new/touched
+files - 0 issues. Full-project `flutter analyze` - 43 issues (current
+baseline, unchanged) - confirming the four existing `showReviewsModal`
+call sites (`courses_page.dart`, `course_classes_page.dart`,
+`enrolled_courses_page.dart`, `required_courses_page.dart`) still compile
+against the unchanged public signature.
