@@ -1677,10 +1677,14 @@ class _SessionRow extends StatelessWidget {
             height: 18 / 12,
           ),
         ),
-        // Design ref: separator + time are "hidden sm:inline" — desktop only
-        if (isTablet &&
-            event.startTime != null &&
-            event.startTime!.isNotEmpty) ...[
+        // CSS ref: .session-time shows date + time together, no
+        // responsive hiding — its only rule lives inside the ≤480px media
+        // block (bluetheme-layout.css:2334), meaning the real site shows
+        // this at phone widths too. Previously gated to isTablet-only on a
+        // "hidden sm:inline" comment that doesn't match anything in
+        // origin/staging's actual markup/CSS — same pattern as the
+        // Continue Learning description bug.
+        if (event.startTime != null && event.startTime!.isNotEmpty) ...[
           Text(
             ' • ',
             style: GoogleFonts.inter(
@@ -1689,14 +1693,18 @@ class _SessionRow extends StatelessWidget {
               height: 18 / 12,
             ),
           ),
-          Text(
-            event.endDateTime != null
-                ? '${_formatTime(event.startDateTime)} – ${_formatTime(event.endDateTime!)}'
-                : _formatTime(event.startDateTime),
-            style: GoogleFonts.inter(
-              color: const Color(0xFF9CA3AF),
-              fontSize: 12,
-              height: 18 / 12,
+          Flexible(
+            child: Text(
+              event.endDateTime != null
+                  ? '${_formatTime(event.startDateTime)} – ${_formatTime(event.endDateTime!)}'
+                  : _formatTime(event.startDateTime),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF9CA3AF),
+                fontSize: 12,
+                height: 18 / 12,
+              ),
             ),
           ),
         ],

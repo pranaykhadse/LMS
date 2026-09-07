@@ -5993,3 +5993,29 @@ for it.
 **Verification**: `dart format` + `flutter analyze` on `dashboard_page.dart`
 - same 14 pre-existing baseline issues, none new. Full-project
 `flutter analyze` - 43 issues (current baseline, unchanged).
+
+## Follow-up: Upcoming Virtual Classes — session time hidden on phone width
+
+**Report**: "Same for the date in Upcoming Virtual Classes" - flagging the
+same kind of bug just fixed in Continue Learning.
+
+**Root cause**: `_SessionRow`'s date row
+(`lib/app/features/dashboard/view/dashboard_page.dart`) gated the
+separator + start/end time behind `isTablet &&`, on a comment claiming a
+`"hidden sm:inline"` web reference. Same pattern as the Continue Learning
+description bug - that string doesn't exist anywhere in `origin/staging`.
+The real `.session-time` rule (`bluetheme-layout.css:2334`) renders date
+and time together unconditionally; its only CSS definition sits inside
+the `≤480px` media block, meaning the real site shows time at phone
+widths too, not less.
+
+**Fix**: removed the `isTablet &&` gate so the time renders at every
+width whenever `event.startTime` is present. Wrapped the time `Text` in
+`Flexible` (maxLines 1, ellipsis) since the phone-width row has less
+horizontal room and the date+time combination could otherwise overflow
+horizontally on narrow screens - the tablet/desktop layout already had
+enough room and is unaffected.
+
+**Verification**: `dart format` + `flutter analyze` on `dashboard_page.dart`
+- same 14 pre-existing baseline issues, none new. Full-project
+`flutter analyze` - 43 issues (current baseline, unchanged).
