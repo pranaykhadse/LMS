@@ -711,70 +711,52 @@ class LearningEvent {
   }
 }
 
-/// The earliest still-open (start through end) Virtual Class (typeCode '3')
-/// session across the course's classes - and nothing else. Scoped to
-/// Virtual Class only: other content types (video/PDF/article/...) can also
-/// carry a `learning_events` array in the API response, and picking up a
-/// date from one of those produced a bogus countdown on courses with no
-/// real session at all.
+/// The soonest still-in-the-future session (Virtual Class or In Person,
+/// typeCode '2'/'3') across classes the learner is actually REGISTERED for
+/// (item.isEnrolledInClass) - the one the course-level LAUNCHES IN countdown
+/// should count down to.
 ///
-/// Picks which session across every Virtual Class / In Person class the
-/// learner is actually REGISTERED for (item.isEnrolledInClass) the
-/// course-level LAUNCHES IN countdown should point at:
-///
-///  1. If any session across any registered class hasn't started yet, the
-///     soonest one of those - shown as a positive "LAUNCHES IN" countdown.
-///  2. Otherwise (every registered session has already started), the one
-///     that's currently open longest / ended most recently (an in-progress
-///     session's end time is still in the future, so it naturally wins
-///     over anything already finished) - shown as a negative "STARTED"
-///     countdown, same as before.
+/// CSS/JS ref: `origin/staging`'s joinCourse.php only ever runs its header
+/// countdown (`#days`/`#hour`/`#min`/`#sec`) off a still-open, registered
+/// session's own per-row timer - and once that session's already started
+/// (or ended), the real site just leaves the header digits blank rather
+/// than counting up/showing an elapsed-time state. Matching that: this
+/// returns null (blank countdown, `LAUNCHES IN` label with empty boxes -
+/// the label itself is static text on the real site, it never becomes
+/// "STARTED") whenever every registered session has already started, even
+/// if one is still technically in progress. An earlier version of this app
+/// deliberately deviated here (showing a live elapsed-time countdown with a
+/// "STARTED" label instead of blank boxes) - reverted per explicit
+/// instruction to match the real site's literal (if visually empty-looking)
+/// behavior instead.
 ///
 /// A class the learner hasn't registered for isn't something they're
 /// actually launching into, regardless of how soon its session starts, so
-/// it's excluded entirely rather than just being deprioritized.
-///
-/// Previously this only ever picked the earliest still-open session
-/// (started-but-not-ended OR not-yet-started, whichever came first
-/// chronologically) restricted to Virtual Class ('3') items, which could
-/// surface an already-started session while a genuinely upcoming one
-/// existed, ignored In Person ('2') classes entirely, and didn't check
-/// registration at all.
+/// it's excluded entirely rather than just being deprioritized. Scoped to
+/// Virtual Class/In Person only: other content types (video/PDF/article/...)
+/// can also carry a `learning_events` array in the API response, and
+/// picking up a date from one of those produced a bogus countdown on
+/// courses with no real session at all.
 LearningEvent? _earliestUpcomingVirtualClassEvent(
   List<CourseStructureItem> structures,
 ) {
   final now = DateTime.now();
   LearningEvent? soonestFuture;
-  LearningEvent? mostRecentlyEnded;
 
   for (final item in structures) {
     if (item.typeCode != '2' && item.typeCode != '3') continue;
     if (!item.isEnrolledInClass) continue;
     for (final event in item.learningEvents) {
       final start = event.startDateTime;
-      if (start == null) continue;
-
-      if (start.isAfter(now)) {
-        if (soonestFuture == null ||
-            start.isBefore(soonestFuture.startDateTime!)) {
-          soonestFuture = event;
-        }
-        continue;
-      }
-
-      final end = event.endDateTime ?? start;
-      final currentEnd =
-          mostRecentlyEnded == null
-              ? null
-              : (mostRecentlyEnded.endDateTime ??
-                  mostRecentlyEnded.startDateTime!);
-      if (mostRecentlyEnded == null || end.isAfter(currentEnd!)) {
-        mostRecentlyEnded = event;
+      if (start == null || !start.isAfter(now)) continue;
+      if (soonestFuture == null ||
+          start.isBefore(soonestFuture.startDateTime!)) {
+        soonestFuture = event;
       }
     }
   }
 
-  return soonestFuture ?? mostRecentlyEnded;
+  return soonestFuture;
 }
 
 /// The earliest still-registerable event within a single class's own

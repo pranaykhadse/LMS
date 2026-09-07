@@ -590,23 +590,26 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   Widget build(BuildContext context) {
     final detail = widget.detail;
     final launchDate = detail.launchDate;
-    // Left signed rather than clamped to zero once the target time passes -
-    // the session is still open (this is only ever sourced from a still-open,
-    // start-through-end session; see nextVirtualClassEvent), so time elapsed
-    // since it started is meaningful to show, not just a flat 00:00:00:00.
-    Duration? remaining;
-    if (launchDate != null) {
-      remaining = launchDate.difference(DateTime.now());
-    }
-    final isPast = (remaining?.isNegative ?? false);
-    final remainingAbs = remaining?.abs();
+    // Web ref: joinCourse.php's `#days`/`#hour`/`#min`/`#sec` spans only
+    // ever get filled in while a registered session hasn't ended yet - once
+    // every registered session has started (or there's none at all),
+    // launchDate is null (see _earliestUpcomingVirtualClassEvent) and the
+    // real site just leaves the boxes blank. Matched literally here rather
+    // than showing a computed elapsed-time state.
+    final remaining = launchDate?.difference(DateTime.now());
     final phone = MediaQuery.sizeOf(context).width < 768;
 
-    final hasCountdown = launchDate != null && detail.isEnrolled;
+    // Web ref: `.flex-item-1` starts `d-none` but `#launches-haad
+    // .flex-item-1 { display: flex !important; }` unconditionally forces it
+    // visible regardless - so the box (label + boxes, even blank) always
+    // shows once enrolled, it just won't have real digits unless there's an
+    // actual still-open registered session to count down to.
+    final hasCountdown = detail.isEnrolled;
     // CSS ref: `#launches-haad .flex-item-1 h6` — 13px/weight700/
     // uppercase/color var(--text-secondary) #6B7280/letter-spacing 0.5px.
+    // Static text on the real site - "Launches in" never becomes "Started".
     final countLabel = Text(
-      isPast ? 'STARTED' : 'LAUNCHES IN',
+      'LAUNCHES IN',
       style: GoogleFonts.inter(
         color: Color(0xFF6B7280),
         fontSize: 13,
@@ -618,22 +621,10 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (isPast)
-          Padding(
-            padding: EdgeInsets.only(right: 2),
-            child: Text(
-              '-',
-              style: GoogleFonts.inter(
-                color: _detailInk,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        _timeEntry(remainingAbs?.inDays ?? 0, 'DAYS'),
-        _timeEntry((remainingAbs?.inHours ?? 0) % 24, 'HRS'),
-        _timeEntry((remainingAbs?.inMinutes ?? 0) % 60, 'MIN'),
-        _timeEntry((remainingAbs?.inSeconds ?? 0) % 60, 'SEC'),
+        _timeEntry(remaining?.inDays, 'DAYS'),
+        _timeEntry(remaining == null ? null : remaining.inHours % 24, 'HRS'),
+        _timeEntry(remaining == null ? null : remaining.inMinutes % 60, 'MIN'),
+        _timeEntry(remaining == null ? null : remaining.inSeconds % 60, 'SEC'),
       ],
     );
     // Desktop (`flex-item-1`): the h6 label and the .timer sit on the SAME
@@ -706,10 +697,16 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                       const SizedBox(height: 16),
                     ],
                     // #launches-haad .flex-item-4 — mobile centers the
-                    // status pill horizontally.
-                    Center(child: statusBadge),
-                    const SizedBox(height: 16),
-                    SizedBox(width: double.infinity, child: _actionButton()),
+                    // status pill horizontally. Web ref: `.flex-item-2`
+                    // (this pill) only exists in the DOM at all when
+                    // `empty($courseUser)` - i.e. not yet enrolled - so
+                    // skip its box gap entirely once enrolled rather than
+                    // leaving a blank 16px gap where it used to sit.
+                    if (!detail.isEnrolled) ...[
+                      Center(child: statusBadge),
+                      const SizedBox(height: 16),
+                    ],
+                    SizedBox(width: double.infinity, child: _actionSlot()),
                   ],
                 );
               }
@@ -723,7 +720,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
                 children: [
                   if (hasCountdown) countdown,
                   Expanded(child: Center(child: statusBadge)),
-                  _actionButton(),
+                  _actionSlot(),
                 ],
               );
             },
@@ -858,7 +855,15 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
   /// Status pill: a full ring when the course is closed (nothing left to
   /// complete), or the learner's actual completion percentage when it's
   /// still open.
+  ///
+  /// Web ref: `#launches-haad`'s `.booked`/`.pie_progress` widget (the
+  /// closest real-site equivalent) only renders when `empty($courseUser)`
+  /// - i.e. before enrolling - as a seat-booking indicator, not a personal
+  /// progress ring. For an already-enrolled course the real site shows
+  /// nothing in this slot at all, so this returns empty once enrolled
+  /// instead of always showing a progress pill here.
   Widget _statusBadge(CourseJoinDetail detail) {
+    if (detail.isEnrolled) return const SizedBox.shrink();
     final isClosed = detail.launchStatus.toLowerCase().contains('closed');
     final progress = isClosed ? 1.0 : detail.progressPercentage;
     // CSS ref: #launches-haad .booked — bg #F5F3FF (was #F6F3FF), border
@@ -917,6 +922,36 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
         ],
       ),
     );
+  }
+
+  /// Web ref: joinCourse.php's `.flex-item-4` shows the Cancel Registration
+  /// button only while `Course::getCourseStatus(...) < 50`; at 50% or
+  /// higher it's replaced outright by plain bold text
+  /// (`<p class="mt-2 font-weight-bold">Over 50% Complete</p>`) - once
+  /// enrolled, there's no way to cancel from this screen past the halfway
+  /// mark. `detail.progressPercentage` (0.0-1.0, from the same
+  /// `course_progress_percentage` the real site's status check is based
+  /// on) stands in for that server-side check.
+  Widget _actionSlot() {
+    final detail = widget.detail;
+    if (detail.isEnrolled && detail.progressPercentage >= 0.5) {
+      // CSS ref: `#launches-haad .flex-item-4 p` — 14px/weight600/#EF4444
+      // (red) — shared by this text and the "met your registration limit"
+      // message at the top of this same conditional on the real site.
+      // Centered (not stretched) — only `.primary-btn` itself gets
+      // `width: 100%` on mobile, this plain text doesn't.
+      return Center(
+        child: Text(
+          'Over 50% Complete',
+          style: GoogleFonts.inter(
+            color: const Color(0xFFEF4444),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      );
+    }
+    return _actionButton();
   }
 
   Widget _actionButton() {
@@ -1005,7 +1040,7 @@ class _LaunchPanelState extends ConsumerState<_LaunchPanel> {
     );
   }
 
-  Widget _timeEntry(int value, String label) {
+  Widget _timeEntry(int? value, String label) {
     // Web: .timer { gap: 8px } — each box contributes half via horizontal
     // padding, so 4px each side = 8px gap exactly.
     const hPad = 4.0;
@@ -2491,7 +2526,10 @@ class _CompactLaunchCountdown extends StatelessWidget {
 
 class _TimeBox extends StatelessWidget {
   const _TimeBox({required this.value, required this.label});
-  final int value;
+  // Web ref: `<span id="days"></span>` etc. start (and stay) empty until
+  // JS actually has a countdown to report - null renders blank, matching
+  // that, instead of a placeholder "00".
+  final int? value;
   final String label;
 
   @override
@@ -2531,7 +2569,7 @@ class _TimeBox extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            value.toString().padLeft(2, '0'),
+            value == null ? '' : value!.toString().padLeft(2, '0'),
             style: GoogleFonts.inter(
               color: _detailPurple,
               fontSize: phone ? 15 : 18,

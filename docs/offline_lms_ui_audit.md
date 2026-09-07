@@ -6019,3 +6019,79 @@ enough room and is unaffected.
 **Verification**: `dart format` + `flutter analyze` on `dashboard_page.dart`
 - same 14 pre-existing baseline issues, none new. Full-project
 `flutter analyze` - 43 issues (current baseline, unchanged).
+
+## Follow-up: Course Detail launches-box — three real divergences from the web app
+
+**Report**: screenshots comparing the real web app's course-detail header
+(course id 613, "Leadership Excellence...") against the Flutter app for
+the same course/data, plus the raw `join-course-detail` API payload.
+Asked what differs.
+
+Traced the real behavior against `origin/staging`'s `joinCourse.php` +
+`bluetheme-layout.css` and found three distinct, unrelated divergences.
+User chose "match the real site exactly" for all three.
+
+**1. "LAUNCHES IN" vs "STARTED" + a computed elapsed-time countdown**
+
+Root cause: the real site's countdown label is static text - it never
+becomes "STARTED". Its `#days`/`#hour`/`#min`/`#sec` spans only get
+populated by JS while a *registered, not-yet-ended* session's own per-row
+timer is running; once every registered session has started (or there's
+none), the header box just sits there empty - visible (a CSS rule with
+`!important` force-overrides the `d-none` class it starts with) but blank.
+An earlier pass in this app deliberately replaced that with a nicer
+computed "STARTED - elapsed time" state.
+
+Fix: `_earliestUpcomingVirtualClassEvent`
+(`lib/app/features/courses/model/course_join_detail.dart`) now only
+considers strictly-future session starts (dropped the "most recently
+ended" fallback entirely), so `launchDate`/`nextVirtualClassEvent` is null
+whenever nothing is genuinely upcoming. The countdown widget's `build()`
+in `lib/app/features/courses/view/course_classes_page.dart` now always
+shows the static "LAUNCHES IN" label and renders blank digits (`_TimeBox.value`
+is now `int?`, empty string when null) instead of computing/showing an
+elapsed-time "STARTED" state. `hasCountdown` now only requires
+`detail.isEnrolled` (matching the CSS-forced-visible box), not also a
+non-null `launchDate`.
+
+Known simplification (documented, not fixed): the real site's JS would,
+in a genuinely rare edge case (a registered session that's started but not
+yet ended), display negative/quirky digit math rather than leaving the box
+blank. That specific edge case isn't replicated - out of scope, unconfirmed
+by any live evidence, and arguably an unintended bug in the real site's own
+JS rather than a state worth reproducing.
+
+**2. "OPEN 69%" status pill always showing**
+
+Root cause: the real site's equivalent widget (`.booked`/`.pie_progress`,
+a seat-booking indicator) only renders when `empty($courseUser)` - i.e.
+before enrolling. For an already-enrolled course, nothing shows in that
+slot at all. `_statusBadge` (`course_classes_page.dart`) rendered
+unconditionally.
+
+Fix: `_statusBadge` now returns `SizedBox.shrink()` whenever
+`detail.isEnrolled`. On mobile, the `Center(child: statusBadge)` +
+its 16px gap are now skipped entirely when enrolled (`if
+(!detail.isEnrolled)`), rather than leaving a blank gap where the pill
+used to sit; the desktop `Expanded` around it is left as-is since an empty
+child there already reproduces the same "pushed to opposite ends" flex
+result as the pill not existing in the DOM at all.
+
+**3. Cancel Registration button always available, any progress %**
+
+Root cause: the real site only shows Cancel Registration while
+`Course::getCourseStatus(...) < 50`; at 50%+ it's replaced by plain text
+(`<p class="mt-2 font-weight-bold">Over 50% Complete</p>`, styled red via
+`#launches-haad .flex-item-4 p` - 14px/weight600/#EF4444) with no way to
+cancel from this screen. `_actionButton()` had no such gating.
+
+Fix: added `_actionSlot()` (`course_classes_page.dart`), called from both
+the mobile and desktop layout instead of `_actionButton()` directly -
+returns the red "Over 50% Complete" text (centered) when
+`detail.isEnrolled && detail.progressPercentage >= 0.5`, otherwise falls
+through to the existing `_actionButton()`.
+
+**Verification**: `dart format` + `flutter analyze` on both touched files
+- 6 issues, all pre-existing baseline (confirmed via `git diff` that none
+of the flagged lines were touched by this change). Full-project
+`flutter analyze` - 43 issues (current baseline, unchanged).
