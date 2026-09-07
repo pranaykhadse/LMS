@@ -17,6 +17,7 @@ import 'package:lms/app/core/views/elements/unauthorized_handler.dart';
 import 'package:lms/app/features/authentication/app_state/auth_state_provider.dart';
 import 'package:lms/app/features/authentication/model/auth_state.dart';
 import 'package:lms/app/features/dashboard/model/user_profile_detail.dart';
+import 'package:lms/app/features/dashboard/view/country_states_data.dart';
 import 'package:lms/app/features/dashboard/viewmodel/account_settings_view_model.dart';
 
 const _asPurple = FigmaTokens.primaryPurple;
@@ -143,10 +144,13 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
   bool _enableTwoFactorAuth = false;
   int? _selectedPrimaryGroupId;
 
-  // Picking a new state updates this immediately; converted to a numeric
-  // id via stateIdForName() on Save, using the real id table sourced from
-  // the live web app's State dropdown HTML - see stateIdForName's own doc
-  // comment.
+  // Picking a new state from _StatePickerDialog sets both of these
+  // together (the id straight from the picked StateOption, not derived
+  // from the name afterwards) - state/region names aren't unique across
+  // the ~192 countries in kCountryStates (e.g. many countries share
+  // province names), so the id has to come from the actual selection,
+  // not a name lookup.
+  int? _selectedStateId;
   String? _selectedStateName;
 
   @override
@@ -173,6 +177,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     );
     _countryCode = p.countryCode?.toString();
     _countryIso = p.countryIso?.toString();
+    _selectedStateId = loginExtras?.stateId;
     _selectedStateName = loginExtras?.stateName;
     _enableTwoFactorAuth = u.enableTwoFactorAuth == 1;
     _selectedPrimaryGroupId = u.primaryGroup ?? loginExtras?.user?.primaryGroup;
@@ -213,6 +218,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
     _supervisorEmailCtrl.text = loginExtras?.supervisor?.email ?? '';
     _countryCode = p.countryCode?.toString();
     _countryIso = p.countryIso?.toString();
+    _selectedStateId = loginExtras?.stateId;
     _selectedStateName = loginExtras?.stateName;
     _enableTwoFactorAuth = u.enableTwoFactorAuth == 1;
     _selectedPrimaryGroupId = u.primaryGroup ?? loginExtras?.user?.primaryGroup;
@@ -312,7 +318,7 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
           supervisorEmail: _supervisorEmailCtrl.text.trim(),
           primaryGroupId: _selectedPrimaryGroupId,
           enableTwoFactorAuth: _enableTwoFactorAuth,
-          stateId: stateIdForName(_selectedStateName),
+          stateId: _selectedStateId,
           stateName: _selectedStateName,
         );
     if (!mounted) return;
@@ -573,21 +579,25 @@ class _AccountSettingsBodyState extends ConsumerState<_AccountSettingsBody> {
                                 // `disabled: true`, but a live screenshot of the
                                 // real site shows it's actually open/searchable
                                 // there — trusting that live evidence over the
-                                // static source.
+                                // static source. The real dropdown lists every
+                                // country's states/regions (kCountryStates, ~192
+                                // countries/4852 entries), not just the US, so
+                                // the picker mirrors that in full.
                                 // API ref: PUT /api/web/user-profile/{id} now
-                                // accepts state_id - state_id/name mapping
-                                // applied per stateIdForName's own doc
-                                // comment (real ids sourced from the live
-                                // web app's State dropdown HTML).
+                                // accepts state_id - the id comes straight from
+                                // the picked StateOption (see kCountryStates),
+                                // not a name lookup.
                                 _StateFieldRow(
                                   value: _selectedStateName,
                                   isEditing: _isEditing,
                                   onChanged:
                                       _isEditing
-                                          ? (name) => setState(
-                                            () => _selectedStateName = name,
-                                          )
+                                          ? (opt) => setState(() {
+                                            _selectedStateId = opt.id;
+                                            _selectedStateName = opt.name;
+                                          })
                                           : null,
+                                  selectedId: _selectedStateId,
                                 ),
                                 _FieldRow(
                                   label: 'Location',
@@ -1985,14 +1995,20 @@ class _StateFieldRow extends StatefulWidget {
     required this.value,
     required this.isEditing,
     required this.onChanged,
+    this.selectedId,
   });
 
   final String? value;
   final bool isEditing;
 
+  /// The currently selected state's id, so the picker can highlight the
+  /// right entry even when its name collides with a same-named state in
+  /// another country.
+  final int? selectedId;
+
   /// Null (not just a no-op) while not editing, so the field renders
   /// non-interactive rather than merely un-tappable-looking.
-  final ValueChanged<String>? onChanged;
+  final ValueChanged<StateOption>? onChanged;
 
   @override
   State<_StateFieldRow> createState() => _StateFieldRowState();
@@ -2002,9 +2018,9 @@ class _StateFieldRowState extends State<_StateFieldRow> {
   Future<void> _open(BuildContext context) async {
     final onChanged = widget.onChanged;
     if (onChanged == null) return;
-    final selected = await showDialog<String>(
+    final selected = await showDialog<StateOption>(
       context: context,
-      builder: (_) => _StatePickerDialog(selected: widget.value),
+      builder: (_) => _StatePickerDialog(selectedId: widget.selectedId),
     );
     if (selected != null) onChanged(selected);
   }
@@ -2095,12 +2111,14 @@ class _StateFieldRowState extends State<_StateFieldRow> {
 }
 
 /// Searchable, country-grouped state list — matches the web's Select2
-/// (`United States` header, states listed under it, the current selection
-/// highlighted). US-only for now since that's every state this app's users
-/// have ever had on their profile.
+/// exactly: every country it lists (`kCountryStates`, sourced from the
+/// real dropdown's own HTML — "United States" first, then every other
+/// country alphabetically, same order as the live markup), each with its
+/// own header and states/regions beneath it, current selection
+/// highlighted.
 class _StatePickerDialog extends StatefulWidget {
-  const _StatePickerDialog({required this.selected});
-  final String? selected;
+  const _StatePickerDialog({required this.selectedId});
+  final int? selectedId;
 
   @override
   State<_StatePickerDialog> createState() => _StatePickerDialogState();
@@ -2113,10 +2131,21 @@ class _StatePickerDialogState extends State<_StatePickerDialog> {
   @override
   Widget build(BuildContext context) {
     final query = _query.trim().toLowerCase();
+    // Same per-country filtering the old US-only list did (substring match
+    // on the state name), just applied across every country instead of
+    // just one — a country is only shown if at least one of its
+    // states/regions matches.
     final results =
-        query.isEmpty
-            ? kUsStates
-            : kUsStates.where((s) => s.toLowerCase().contains(query)).toList();
+        <CountryStates>[
+          for (final country in kCountryStates)
+            if (query.isEmpty)
+              country
+            else
+              CountryStates(country.country, [
+                for (final state in country.states)
+                  if (state.name.toLowerCase().contains(query)) state,
+              ]),
+        ].where((country) => country.states.isNotEmpty).toList();
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -2205,59 +2234,62 @@ class _StatePickerDialogState extends State<_StatePickerDialog> {
                   child: ListView(
                     shrinkWrap: true,
                     children: [
-                      // CSS ref: Select2 optgroup label — bold, non-
-                      // selectable header grouping the states beneath it.
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        child: Text(
-                          'United States',
-                          style: TextStyle(
-                            color: _asInk,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            height: 1.5,
+                      for (final country in results) ...[
+                        // CSS ref: Select2 optgroup label — bold, non-
+                        // selectable header grouping the states beneath it.
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          child: Text(
+                            country.country,
+                            style: const TextStyle(
+                              color: _asInk,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              height: 1.5,
+                            ),
                           ),
                         ),
-                      ),
-                      for (final state in results)
-                        Builder(
-                          builder: (context) {
-                            final isSelected = state == widget.selected;
-                            return HoverBuilder(
-                              builder:
-                                  (context, hovering) => InkWell(
-                                    onTap:
-                                        () => Navigator.of(context).pop(state),
-                                    child: Container(
-                                      color:
-                                          isSelected
-                                              ? _asPurple
-                                              : hovering
-                                              ? const Color(0xFFF3F4F6)
-                                              : null,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
-                                      ),
-                                      child: Text(
-                                        state,
-                                        style: TextStyle(
-                                          color:
-                                              isSelected
-                                                  ? Colors.white
-                                                  : _asInk,
-                                          fontSize: 13,
-                                          height: 1.5,
+                        for (final state in country.states)
+                          Builder(
+                            builder: (context) {
+                              final isSelected = state.id == widget.selectedId;
+                              return HoverBuilder(
+                                builder:
+                                    (context, hovering) => InkWell(
+                                      onTap:
+                                          () =>
+                                              Navigator.of(context).pop(state),
+                                      child: Container(
+                                        color:
+                                            isSelected
+                                                ? _asPurple
+                                                : hovering
+                                                ? const Color(0xFFF3F4F6)
+                                                : null,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 8,
+                                        ),
+                                        child: Text(
+                                          state.name,
+                                          style: TextStyle(
+                                            color:
+                                                isSelected
+                                                    ? Colors.white
+                                                    : _asInk,
+                                            fontSize: 13,
+                                            height: 1.5,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                            );
-                          },
-                        ),
+                              );
+                            },
+                          ),
+                      ],
                     ],
                   ),
                 ),
@@ -2269,129 +2301,20 @@ class _StatePickerDialogState extends State<_StatePickerDialog> {
   }
 }
 
-/// Every US state/territory the real site's Select2 lists under "United
-/// States" — see [stateIdForName] for how a numeric `state_id` is derived
-/// from this list.
-/// `state_id` values taken verbatim from the real web app's rendered
-/// `<select id="accountform-timezone_id">` markup (the live "United States"
-/// optgroup's `<option value="N">StateName</option>` entries) - NOT a
-/// derived/alphabetical guess. The real table is Alaska-first (Alaska=1)
-/// with Alabama anomalously appended at the end (64); a stray non-state
-/// "Lima" option (65) in that optgroup has no counterpart in [kUsStates]
-/// and is intentionally omitted. This replaces an earlier alphabetical-
-/// index guess (Alabama=1) that the Swagger example's `state_id: 27`
-/// seemed to confirm (as "Nebraska") but was actually wrong - the real
-/// id 27 is Nevada.
-const _kStateIds = <String, int>{
-  'Alaska': 1,
-  'Arizona': 2,
-  'Arkansas': 3,
-  'California': 4,
-  'Colorado': 5,
-  'Connecticut': 6,
-  'Delaware': 7,
-  'Florida': 8,
-  'Georgia': 9,
-  'Hawaii': 10,
-  'Idaho': 11,
-  'Illinois': 12,
-  'Indiana': 13,
-  'Iowa': 14,
-  'Kansas': 15,
-  'Kentucky': 16,
-  'Louisiana': 17,
-  'Maine': 18,
-  'Maryland': 19,
-  'Massachusetts': 20,
-  'Michigan': 21,
-  'Minnesota': 22,
-  'Mississippi': 23,
-  'Missouri': 24,
-  'Montana': 25,
-  'Nebraska': 26,
-  'Nevada': 27,
-  'New Hampshire': 28,
-  'New Jersey': 29,
-  'New Mexico': 30,
-  'New York': 31,
-  'North Carolina': 32,
-  'North Dakota': 33,
-  'Ohio': 34,
-  'Oklahoma': 35,
-  'Oregon': 36,
-  'Pennsylvania': 37,
-  'Rhode Island': 38,
-  'South Carolina': 39,
-  'South Dakota': 40,
-  'Tennessee': 41,
-  'Texas': 42,
-  'Utah': 43,
-  'Vermont': 44,
-  'Virginia': 45,
-  'Washington': 46,
-  'West Virginia': 47,
-  'Wisconsin': 48,
-  'Wyoming': 49,
-  'Alabama': 64,
-};
-
-int? stateIdForName(String? name) {
-  if (name == null) return null;
-  return _kStateIds[name];
-}
-
-const kUsStates = <String>[
-  'Alabama',
-  'Alaska',
-  'Arizona',
-  'Arkansas',
-  'California',
-  'Colorado',
-  'Connecticut',
-  'Delaware',
-  'Florida',
-  'Georgia',
-  'Hawaii',
-  'Idaho',
-  'Illinois',
-  'Indiana',
-  'Iowa',
-  'Kansas',
-  'Kentucky',
-  'Louisiana',
-  'Maine',
-  'Maryland',
-  'Massachusetts',
-  'Michigan',
-  'Minnesota',
-  'Mississippi',
-  'Missouri',
-  'Montana',
-  'Nebraska',
-  'Nevada',
-  'New Hampshire',
-  'New Jersey',
-  'New Mexico',
-  'New York',
-  'North Carolina',
-  'North Dakota',
-  'Ohio',
-  'Oklahoma',
-  'Oregon',
-  'Pennsylvania',
-  'Rhode Island',
-  'South Carolina',
-  'South Dakota',
-  'Tennessee',
-  'Texas',
-  'Utah',
-  'Vermont',
-  'Virginia',
-  'Washington',
-  'West Virginia',
-  'Wisconsin',
-  'Wyoming',
-];
+// The full state/region list (kCountryStates, ~192 countries/4852
+// entries) and its StateOption(id, name) type live in
+// country_states_data.dart - generated verbatim from the real web app's
+// rendered `<select id="accountform-timezone_id">` markup, NOT a derived
+// or alphabetical guess. An earlier version of this app kept its own
+// US-only `kUsStates` list and derived `state_id` from
+// `kUsStates.indexOf(name) + 1` (Alabama=1), which the Swagger doc's own
+// example (`"state_id": 27`) seemed to confirm as "Nebraska" - but the
+// real table is Alaska-first (Alaska=1) with Alabama anomalously
+// appended at the end (64), so id 27 is actually Nevada. Now that the
+// picker returns the real StateOption(id, name) directly, there's no
+// name-to-id lookup left to get wrong. A stray non-state "Lima" option
+// under "United States" in the live markup is included as-is, matching
+// the real dropdown exactly.
 
 /// Same layout as [_FieldRow], but for the phone number: while editing, a
 /// country picker (flag + dial code) sits in front of the number field so

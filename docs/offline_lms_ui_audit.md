@@ -6643,3 +6643,41 @@ stale comments referencing the old "alphabetical position" mapping in
 **Verification**: `dart format` + `flutter analyze` on both touched
 files - 0 issues. Full-project `flutter analyze` - 43 issues (baseline,
 unchanged).
+
+## Follow-up: 2026-09-07 - State picker expanded to every country, not just the US
+
+**Report**: "Not only US states, but should have all the states that is
+there in the html code" - the real dropdown HTML pasted earlier wasn't
+US-only; it's one giant Select2 covering 192 countries and ~4,852
+state/region entries total (`United States` first, then every other
+country alphabetically). The app's picker had only ever shown the 50 US
+states.
+
+**Fix**:
+- New `lib/app/features/dashboard/view/country_states_data.dart` -
+  `StateOption(id, name)` + `CountryStates(country, states)`, and
+  `kCountryStates`, a `const` list of all 192 countries with their
+  states/regions exactly as they appear in the real markup (same order,
+  same ids) - generated directly from the pasted HTML, not hand-typed.
+- Removed the old US-only `kUsStates` list and the `_kStateIds`/
+  `stateIdForName()` name-to-id lookup entirely. Names aren't unique
+  across 192 countries (many share province names), so a name-based
+  lookup can no longer be correct in general - the picker now returns
+  the actual `StateOption(id, name)` the user tapped, and both the id and
+  name are stored directly (`_selectedStateId`/`_selectedStateName`) with
+  no lookup step on save.
+- `_StatePickerDialog` now renders every country's group (header + its
+  states), filtered per-country by the same substring search as before,
+  instead of a single hardcoded "United States" header over a flat list.
+  Highlights the current selection by id, not name.
+- `_StateFieldRow` gained a `selectedId` param (for that highlighting) and
+  its `onChanged` now hands back a `StateOption` instead of a bare
+  `String`.
+- `AccountSettingsViewModel.update()`/`AuthStateNotifier.updateAccountExtras()`
+  signatures unchanged - they already took `stateId`/`stateName`
+  separately, so this was purely a picker/data-source change on the view
+  side.
+
+**Verification**: `dart format` + `flutter analyze` on all three touched
+files - 0 issues. Full-project `flutter analyze` - 43 issues (baseline,
+unchanged).

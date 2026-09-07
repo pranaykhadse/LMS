@@ -108,12 +108,13 @@ class AccountSettingsViewModel
     String? supervisorEmail,
     int? primaryGroupId,
     bool? enableTwoFactorAuth,
-    // state_id is looked up from the real web app's live State dropdown
-    // HTML - see account_settings_page.dart's _kStateIds/stateIdForName
-    // for the verified id table. stateName is passed alongside purely so
-    // it can be synced into AuthState's own stateName display field
-    // without this viewmodel needing to import the view's kUsStates list
-    // back.
+    // state_id comes straight from the StateOption the user picked in
+    // account_settings_page.dart's state picker (see country_states_data.dart
+    // for the full id table, sourced from the real web app's live State
+    // dropdown HTML - every country, not just the US). stateName is passed
+    // alongside purely so it can be synced into AuthState's own stateName
+    // display field without this viewmodel needing to import the view's
+    // data back.
     int? stateId,
     String? stateName,
   }) async {
