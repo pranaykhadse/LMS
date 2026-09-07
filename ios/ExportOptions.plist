@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App Store export that avoids Xcode's broken `rsync -E` Symbols copy
+	     step (macOS Tahoe ships openrsync as /usr/bin/rsync, which rejects
+	     the Apple-only -E flag). With uploadSymbols=false the export skips
+	     the Symbols staging copy and proceeds to the ditto-based IPA zip.
+	     Trade-off: crash reports in App Store Connect won't be symbolicated
+	     for this build; dSYMs stay in the .xcarchive and can be uploaded
+	     separately later if needed. -->
+	<key>method</key>
+	<string>app-store</string>
+	<key>teamID</key>
+	<string>K82H7C692L</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>destination</key>
+	<string>export</string>
+	<key>manageAppVersionAndBuildNumber</key>
+	<true/>
+	<key>uploadSymbols</key>
+	<false/>
+	<key>stripSwiftSymbols</key>
+	<true/>
+</dict>
+</plist>
