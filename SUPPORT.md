@@ -1,3 +1,7 @@
+---
+title: Support
+---
+
 # Leadership Edge Live Support
 
 Welcome to Leadership Edge Live Support.
