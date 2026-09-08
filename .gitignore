@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+.vscode/
+
+# Claude Code agent worktrees - ephemeral, local-only. Each has its own
+# nested .git, so if ever accidentally `git add`ed, git records it as a
+# submodule gitlink with no matching .gitmodules entry - which breaks any
+# recursive checkout (e.g. GitHub Pages' build) with "No url found for
+# submodule path ... in .gitmodules", exit code 128.
+.claude/worktrees/
