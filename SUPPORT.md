@@ -4,17 +4,23 @@ Welcome to Leadership Edge Live Support.
 
 ## Frequently Asked Questions (FAQ)
 
-**Q: How do I access my purchased courses?**
-A: Go to the "My Courses" tab. All purchased content (Videos/PDFs) is available there 24/7.
+**Q: Is Leadership Edge Live free to use?**
+A: Yes. All courses are freely accessible with your account — there are no in-app purchases or subscriptions.
 
-**Q: I bought a course, but it's not showing up.**
-A: Please try tapping "Restore Purchases" on the app settings page. If that fails, email us.
+**Q: How do I access my courses?**
+A: Go to the "My Courses" tab to see everything you're enrolled in, in progress, or have completed.
 
-**Q: Can I get a refund?**
-A: Payments are handled by Apple. Please request refunds directly through Apple's Report a Problem page.
+**Q: Can I use the app without an internet connection?**
+A: Yes. Turn on "Go Offline" to browse previously-viewed course content without a network connection.
 
-**Q: The app shows a test payment screen?**
-A: You are using a beta version. Please download the live version from the App Store.
+**Q: How do I join a live virtual class?**
+A: Open the course from Course Catalog or My Courses — upcoming sessions show a countdown and an "Attend Class" button once the session is live.
+
+**Q: How do I change my account details, notification preferences, or profile photo?**
+A: Go to your profile menu → Account Settings. You can edit your details, choose how you receive notifications, and upload or remove your profile photo there.
+
+**Q: I'm having trouble logging in or with my account.**
+A: Please contact us below and we'll help.
 
 ## Contact Us
 
@@ -24,5 +30,4 @@ If the FAQ does not solve your issue, please contact our developer support:
 - **Response Time:** Within 24-48 hours.
 
 ---
-*Leadership Edge Live - Version 1.0*
-
+*Leadership Edge Live*
