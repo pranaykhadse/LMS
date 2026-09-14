@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- App Store export that avoids Xcode's broken `rsync -E` Symbols copy
+	     step (macOS Tahoe ships openrsync as /usr/bin/rsync, which rejects
+	     the Apple-only -E flag) - the exact same "Copy failed" the
+	     Organizer's own Distribute App wizard hits for this app on both
+	     iOS and macOS, since that wizard always forces uploadSymbols=true
+	     regardless of this file. Mirrors ios/ExportOptions.plist's fix.
+	     Trade-off: crash reports in App Store Connect won't be
+	     symbolicated for this build; dSYMs stay in the .xcarchive and can
+	     be uploaded separately later if needed. -->
+	<key>method</key>
+	<string>app-store</string>
+	<key>teamID</key>
+	<string>K82H7C692L</string>
+	<key>signingStyle</key>
+	<string>automatic</string>
+	<key>destination</key>
+	<string>export</string>
+	<key>uploadSymbols</key>
+	<false/>
+</dict>
+</plist>
