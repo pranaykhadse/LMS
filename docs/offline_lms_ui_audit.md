@@ -6834,3 +6834,40 @@ something like that"
 - same 4 pre-existing issues as the previous follow-up, none from this
   change. Full-project `flutter analyze` - 43 issues (baseline,
   unchanged).
+
+## Follow-up: 2026-09-14 - "Watch Recording" streams through the in-app player instead of a WebView
+
+**Report**: "This error is coming for all the breakpoints when click on
+the Watch Recording button" - a screenshot showing the in-app WebView's
+error state: "Could not load session -
+domain=WebKitErrorDomain, code=204, Plug-in handled load".
+
+**Root cause**: "Watch Recording" opened `recordingUrl` via
+`_openUrl()` → `InAppWebViewPage.showWithAuth()`, i.e. as a top-level
+WKWebView navigation. Recording URLs are direct video files (the exact
+same URLs `DownloadButton` fetches and plays through
+`VideoContentViewer`/media_kit) - WebKit can't render raw video as a
+page and hands the load off to its internal "plug-in" handler instead
+of erroring gracefully, which is exactly WebKitErrorDomain code 204.
+This wasn't new - it's a pre-existing bug the previous two follow-ups'
+reordering work happened to put in front of the user while testing.
+
+**Fix** (`course_classes_page.dart`):
+- Watch Recording's `onPressed` now opens the same
+  `ContentViewPage.show()` + `VideoContentViewer` flow `DownloadButton`
+  already uses for playback, just with `FileCacheState(url:
+  recordingUrl)` (no local `file`) instead of a downloaded one -
+  `VideoContentViewer._source` already falls back to `widget.file.url`
+  when there's no local file, so it streams directly via media_kit
+  (libmpv) without needing a WebView at all.
+- Since Watch now goes through the same player as Play (downloaded),
+  it gets the same real "30%-watched" completion signal instead of the
+  old blunt "mark complete the instant it's opened" - that fallback
+  only ever existed because the WebView path had no way to observe
+  actual playback progress. Removed the now-dead `_markRecordingWatched()`
+  helper and its now-unused `RoasterViewModel` import.
+
+**Verification**: `dart format` + `flutter analyze` on the touched file
+- same 4 pre-existing issues as the last two follow-ups, none from this
+  change (confirmed the removed method/import left no new warnings).
+  Full-project `flutter analyze` - 43 issues (baseline, unchanged).

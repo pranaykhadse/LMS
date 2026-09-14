@@ -34,7 +34,6 @@ import 'package:lms/app/features/courses/view/widgets/reviews_modal.dart';
 import 'package:lms/app/features/courses/viewmodel/course_catalog_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/course_join_detail_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/file_cache_view_model.dart';
-import 'package:lms/app/features/courses/viewmodel/roaster_view_model.dart';
 import 'package:lms/app/features/courses/viewmodel/sync_view_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -1725,41 +1724,45 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     );
   }
 
-  /// Marks this Virtual Class as completed (POST
-  /// learning-event/learning-event-completion) when the learner opens its
-  /// recording in an external browser - there's no way to track how much
-  /// they actually watch there, so open is the only signal available.
-  /// Downloading no longer marks it complete on its own; when the
-  /// recording is played in the in-app player instead, completion is
-  /// driven by actual watch progress (see VideoContentViewer's 30%
-  /// threshold) rather than this method.
-  void _markRecordingWatched() {
-    final classId = widget.item.classId;
-    if (classId == null) return;
-    ref
-        .read(RoasterViewModel.provider(widget.courseId.toString()).notifier)
-        .markAsRead(
-          CourseClass(
-            courseId: widget.courseId.toString(),
-            classId: classId.toString(),
-          ),
-        );
-  }
-
-  /// The Watch/Download button pair for a single recording - Watch
-  /// (browser) or Download (offline) + play in the in-app player.
-  /// Watching in the browser has no way to track progress, so that
-  /// still marks the class completed on open; downloading no longer
-  /// does - completion for the in-app player instead fires once 30% of
-  /// the video has actually played (see VideoContentViewer).
+  /// The Watch/Download button pair for a single recording. Both stream
+  /// through the same in-app player (VideoContentViewer/media_kit) now -
+  /// Watch plays [recordingUrl] directly over the network (no local
+  /// file), Download saves it first and plays the on-disk copy.
+  ///
+  /// Watch used to open the raw video URL in the in-app WebView, which
+  /// only works for an actual web page - a direct video file loaded as
+  /// a top-level WKWebView navigation fails on iOS with
+  /// "Could not load session (WebKitErrorDomain, code=204, Plug-in
+  /// handled load)", since WebKit hands media it can't render inline
+  /// off to a plug-in instead of erroring gracefully. Recording URLs
+  /// are direct video files (the same ones Download fetches and plays
+  /// via VideoContentViewer), never HTML pages, so there was never a
+  /// case where the WebView path actually worked.
+  ///
+  /// Streaming through VideoContentViewer also means Watch now shares
+  /// its real 30%-watched completion signal (see the class doc comment
+  /// there) instead of the old blunt "mark complete as soon as it's
+  /// opened" - which was only ever a fallback for the WebView path
+  /// having no way to observe actual playback progress.
   List<Widget> _recordingButtons(String recordingUrl) {
     return [
       _OnlineActionButton(
         icon: Icons.play_circle_outline_rounded,
         label: 'Watch Recording',
         onPressed: () {
-          _openUrl(context, ref, recordingUrl, title: 'Watch Recording');
-          _markRecordingWatched();
+          ContentViewPage.show(
+            context: context,
+            // Matches the sibling DownloadButton call below (courseClass:
+            // null) - ContentViewPage's own courseClass param isn't read
+            // by this viewer; completion tracking goes through the
+            // courseId/classId passed to VideoContentViewer instead.
+            courseClass: null,
+            child: VideoContentViewer(
+              file: FileCacheState(url: recordingUrl),
+              courseId: widget.courseId.toString(),
+              classId: widget.item.classId?.toString(),
+            ),
+          );
         },
       ),
       DownloadButton(
