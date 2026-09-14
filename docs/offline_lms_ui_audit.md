@@ -6769,3 +6769,44 @@ existing camera badge only ever handled the upload case.
 **Verification**: `dart format` + `flutter analyze` on all three touched
 files - 0 issues. Full-project `flutter analyze` - 43 issues (baseline,
 unchanged).
+
+## Follow-up: 2026-09-14 - Virtual Class recordings: only the first shows inline, rest collapse behind a toggle
+
+**Report**: "when multiple recordings being received in Virtual class, then
+just show the recording button for the first recording and not for the
+others and for others just give dropdown arrow which will opens the
+dropdown and show buttons for other recordings" - a class with multiple
+recordings (e.g. re-recorded after a technical issue) was rendering a
+full Watch/Download button pair per recording, flooding the action
+column. Requested for every breakpoint.
+
+**Fix** (`course_classes_page.dart`, `_StructureItemCardState`):
+- New `_recordingButtons(String recordingUrl)` - factors the existing
+  Watch Recording (`_OnlineActionButton`) + Download/Play
+  (`DownloadButton`) pair out of the old `for` loop into a reusable
+  method returning both widgets for one recording.
+- New `_recordingsToggleButton(int hiddenCount)` - same "Outline CTA"
+  style as the existing Details button (white bg, grey border, purple
+  on hover), with a chevron that flips (`expand_more`/`expand_less`)
+  and a label naming how many more recordings are hidden ("N More
+  Recordings" / "Show Less").
+- New `_recordingsExpanded` bool state field, toggled by that button.
+- The action-list construction now always renders
+  `item.recordingUrls.first`'s pair inline; if there's more than one
+  recording, the rest only render when `_recordingsExpanded` is true,
+  with the toggle button appended after them.
+- No new layout plumbing needed for breakpoints: both the phone
+  (stacked `Column`) and desktop (`Wrap`) action layouts already
+  consume the same `actions` list built once per card, so collapsing
+  extra recordings inside that list works identically at every
+  breakpoint - deliberately implemented as an inline expand within the
+  existing action Wrap/Column rather than a separate floating
+  `PopupMenuButton` overlay, which would need its own breakpoint-aware
+  positioning and risks losing a `DownloadButton`'s in-flight download
+  state if the popup route closes underneath it.
+
+**Verification**: `dart format` + `flutter analyze` on the touched file
+- 4 issues, all pre-existing (line 2319 unused `danger` param, lines
+  2851/2885/2901 curly-braces style notices - none introduced by this
+  change). Full-project `flutter analyze` - 43 issues (baseline,
+  unchanged).

@@ -1590,6 +1590,12 @@ class _StructureItemCard extends ConsumerStatefulWidget {
 class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
   bool _cancelling = false;
   Timer? _timer;
+  // Only the first recording's Watch/Download buttons show inline by
+  // default - a class with multiple recordings (e.g. re-recorded after a
+  // technical issue) would otherwise flood the action row with a
+  // duplicate button pair per recording. The rest stay collapsed behind
+  // a toggle until expanded.
+  bool _recordingsExpanded = false;
 
   @override
   void initState() {
@@ -1740,6 +1746,104 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
         );
   }
 
+  /// The Watch/Download button pair for a single recording - Watch
+  /// (browser) or Download (offline) + play in the in-app player.
+  /// Watching in the browser has no way to track progress, so that
+  /// still marks the class completed on open; downloading no longer
+  /// does - completion for the in-app player instead fires once 30% of
+  /// the video has actually played (see VideoContentViewer).
+  List<Widget> _recordingButtons(String recordingUrl) {
+    return [
+      _OnlineActionButton(
+        icon: Icons.play_circle_outline_rounded,
+        label: 'Watch Recording',
+        onPressed: () {
+          _openUrl(context, ref, recordingUrl, title: 'Watch Recording');
+          _markRecordingWatched();
+        },
+      ),
+      DownloadButton(
+        url: recordingUrl,
+        label: 'Recording',
+        icon: Icons.videocam_rounded,
+        courseClass: null,
+        // Full-width only on small screens — on desktop the Play/Open
+        // row reverts to the compact chip (matches the sibling action
+        // buttons on large layouts).
+        fullWidth: !Responsive.isDesktop(context),
+        builder:
+            (ctx, file) => VideoContentViewer(
+              file: file,
+              courseId: widget.courseId.toString(),
+              classId: widget.item.classId?.toString(),
+            ),
+      ),
+    ];
+  }
+
+  /// Toggles whether recordings beyond the first are shown - same
+  /// "Outline CTA" style as the Details button (white bg, grey border,
+  /// purple on hover), just with a chevron that flips direction and a
+  /// label naming how many more recordings are hidden.
+  Widget _recordingsToggleButton(int hiddenCount) {
+    return HoverBuilder(
+      builder:
+          (context, hovering) => Container(
+            constraints: const BoxConstraints(minHeight: 38),
+            decoration: const BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x05000000),
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: OutlinedButton.icon(
+              onPressed:
+                  () => setState(
+                    () => _recordingsExpanded = !_recordingsExpanded,
+                  ),
+              icon: Icon(
+                _recordingsExpanded
+                    ? Icons.expand_less_rounded
+                    : Icons.expand_more_rounded,
+                size: 14,
+                color: hovering ? _detailPurple : const Color(0xFF111827),
+              ),
+              label: Text(
+                _recordingsExpanded
+                    ? 'Show Less'
+                    : '$hiddenCount More Recording${hiddenCount == 1 ? '' : 's'}',
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor:
+                    hovering ? _detailPurple : const Color(0xFF111827),
+                backgroundColor:
+                    hovering ? const Color(0xFFF5F3FF) : Colors.white,
+                side: BorderSide(
+                  color: hovering ? _detailPurple : const Color(0xFFE5E7EB),
+                  width: 1.5,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                minimumSize: const Size(0, 38),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                textStyle: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final item = widget.item;
@@ -1859,37 +1963,21 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             label: 'Attend Class',
             onPressed: () => _attendClass(item),
           ),
-        // Recordings — Watch (browser) or Download (offline) + play in
-        // the in-app player. Watching in the browser has no way to
-        // track progress, so that still marks the class completed on
-        // open; downloading no longer does - completion for the
-        // in-app player instead fires once 30% of the video has
-        // actually played (see VideoContentViewer).
-        for (final recordingUrl in item.recordingUrls) ...[
-          _OnlineActionButton(
-            icon: Icons.play_circle_outline_rounded,
-            label: 'Watch Recording',
-            onPressed: () {
-              _openUrl(context, ref, recordingUrl, title: 'Watch Recording');
-              _markRecordingWatched();
-            },
-          ),
-          DownloadButton(
-            url: recordingUrl,
-            label: 'Recording',
-            icon: Icons.videocam_rounded,
-            courseClass: null,
-            // Full-width only on small screens — on desktop the Play/Open
-            // row reverts to the compact chip (matches the sibling action
-            // buttons on large layouts).
-            fullWidth: !Responsive.isDesktop(context),
-            builder:
-                (ctx, file) => VideoContentViewer(
-                  file: file,
-                  courseId: widget.courseId.toString(),
-                  classId: item.classId?.toString(),
-                ),
-          ),
+        // Recordings — only the first one's Watch/Download buttons show
+        // inline; any additional recordings (e.g. a class re-recorded
+        // after a technical issue) stay collapsed behind a "N More
+        // Recordings" toggle instead of flooding the action row with a
+        // duplicate button pair per recording. Lives in this same Wrap
+        // as every other action button, so it reflows naturally at every
+        // breakpoint rather than needing its own positioned popup.
+        if (item.recordingUrls.isNotEmpty) ...[
+          ..._recordingButtons(item.recordingUrls.first),
+          if (item.recordingUrls.length > 1) ...[
+            if (_recordingsExpanded)
+              for (final recordingUrl in item.recordingUrls.skip(1))
+                ..._recordingButtons(recordingUrl),
+            _recordingsToggleButton(item.recordingUrls.length - 1),
+          ],
         ],
         _OnlineActionButton(
           // Web ref: the Cancel action renders `cancel.svg` — a 25px
