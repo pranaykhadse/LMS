@@ -6810,3 +6810,27 @@ column. Requested for every breakpoint.
   2851/2885/2901 curly-braces style notices - none introduced by this
   change). Full-project `flutter analyze` - 43 issues (baseline,
   unchanged).
+
+## Follow-up: 2026-09-14 - Recordings toggle: show the newest recording, not the oldest; relabel
+
+**Report**: "it should have been reversed like the last recording button
+should be visible and other recordings buttons should be in dropdown
+like in order of 3,2,1 if 4 recordings are there and instead of 1 more
+recording dropdown title only, it should be 1 more older recording or
+something like that"
+
+**Fix** (`course_classes_page.dart`):
+- Inline button pair now comes from `item.recordingUrls.last` (the
+  newest recording, since the list is oldest-first) instead of
+  `.first`.
+- The collapsed set now reads `item.recordingUrls.reversed.skip(1)` -
+  for `[1,2,3,4]`, recording 4 shows inline and the toggle reveals
+  3, then 2, then 1 (reverse chronological, newest-of-the-hidden-ones
+  first), matching the requested order exactly.
+- Toggle label changed from "N More Recordings" to "N Older
+  Recordings" to name what's actually behind it.
+
+**Verification**: `dart format` + `flutter analyze` on the touched file
+- same 4 pre-existing issues as the previous follow-up, none from this
+  change. Full-project `flutter analyze` - 43 issues (baseline,
+  unchanged).

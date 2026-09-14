@@ -1781,10 +1781,11 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
     ];
   }
 
-  /// Toggles whether recordings beyond the first are shown - same
-  /// "Outline CTA" style as the Details button (white bg, grey border,
-  /// purple on hover), just with a chevron that flips direction and a
-  /// label naming how many more recordings are hidden.
+  /// Toggles whether the older recordings (everything but the most
+  /// recent one) are shown - same "Outline CTA" style as the Details
+  /// button (white bg, grey border, purple on hover), just with a
+  /// chevron that flips direction and a label naming how many older
+  /// recordings are hidden.
   Widget _recordingsToggleButton(int hiddenCount) {
     return HoverBuilder(
       builder:
@@ -1814,7 +1815,7 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
               label: Text(
                 _recordingsExpanded
                     ? 'Show Less'
-                    : '$hiddenCount More Recording${hiddenCount == 1 ? '' : 's'}',
+                    : '$hiddenCount Older Recording${hiddenCount == 1 ? '' : 's'}',
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor:
@@ -1963,18 +1964,23 @@ class _StructureItemCardState extends ConsumerState<_StructureItemCard> {
             label: 'Attend Class',
             onPressed: () => _attendClass(item),
           ),
-        // Recordings — only the first one's Watch/Download buttons show
-        // inline; any additional recordings (e.g. a class re-recorded
-        // after a technical issue) stay collapsed behind a "N More
-        // Recordings" toggle instead of flooding the action row with a
-        // duplicate button pair per recording. Lives in this same Wrap
-        // as every other action button, so it reflows naturally at every
-        // breakpoint rather than needing its own positioned popup.
+        // Recordings — only the most recent one's Watch/Download buttons
+        // show inline (recordingUrls' own last entry - a class with
+        // multiple recordings, e.g. re-recorded after a technical issue,
+        // lists them oldest-first, so the newest is the one worth
+        // surfacing by default). The rest stay collapsed behind an
+        // "N Older Recordings" toggle, newest-of-the-hidden-ones first
+        // (i.e. reverse chronological - for [1,2,3,4] recording 4 shows
+        // inline and the toggle reveals 3, then 2, then 1), instead of
+        // flooding the action row with a duplicate button pair per
+        // recording. Lives in this same Wrap as every other action
+        // button, so it reflows naturally at every breakpoint rather
+        // than needing its own positioned popup.
         if (item.recordingUrls.isNotEmpty) ...[
-          ..._recordingButtons(item.recordingUrls.first),
+          ..._recordingButtons(item.recordingUrls.last),
           if (item.recordingUrls.length > 1) ...[
             if (_recordingsExpanded)
-              for (final recordingUrl in item.recordingUrls.skip(1))
+              for (final recordingUrl in item.recordingUrls.reversed.skip(1))
                 ..._recordingButtons(recordingUrl),
             _recordingsToggleButton(item.recordingUrls.length - 1),
           ],
