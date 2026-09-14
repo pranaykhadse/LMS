@@ -32,5 +32,15 @@
 	<string>public.app-category.education</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Leadership Edge Live needs access to your photo library so you can choose a profile avatar.</string>
+	<!-- Declares this app uses only standard, exempt encryption (HTTPS/TLS
+	     via dio and flutter_inappwebview - no custom or proprietary
+	     crypto). Mirrors ios/Runner/Info.plist's own key. Without this,
+	     App Store Connect runs the full interactive export-compliance
+	     interview on every build upload - including, if the app is
+	     marked available in France, demanding an actual French
+	     government CERT export-compliance declaration be uploaded before
+	     the build can be submitted, which doesn't apply here. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
